@@ -1,0 +1,73 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: active-jwk
+title: ActiveJwk
+---
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+```graphql
+type ActiveJwk {
+  alg: String
+  e: String
+  epoch: Epoch
+  iss: String
+  kid: String
+  kty: String
+  n: String
+}
+```
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>ActiveJwk.<b>alg</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The JWK algorithm parameter, (RFC 7517, Section 4.4).
+
+#### [<code style={{ fontWeight: 'normal' }}>ActiveJwk.<b>e</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The JWK RSA public exponent, (RFC 7517, Section 9.3).
+
+#### [<code style={{ fontWeight: 'normal' }}>ActiveJwk.<b>epoch</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Epoch</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/epoch.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The most recent epoch in which the JWK was validated.
+
+#### [<code style={{ fontWeight: 'normal' }}>ActiveJwk.<b>iss</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The string (Issuing Authority) that identifies the OIDC provider.
+
+#### [<code style={{ fontWeight: 'normal' }}>ActiveJwk.<b>kid</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The string (Key ID) that identifies the JWK among a set of JWKs, (RFC 7517, Section 4.5).
+
+#### [<code style={{ fontWeight: 'normal' }}>ActiveJwk.<b>kty</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The JWK key type parameter, (RFC 7517, Section 4.1).
+
+#### [<code style={{ fontWeight: 'normal' }}>ActiveJwk.<b>n</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The JWK RSA modulus, (RFC 7517, Section 9.3).
+
+### Member Of
+
+[`ActiveJwkConnection`](/references/sui-api/sui-graphql/beta/reference/types/objects/active-jwk-connection.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ActiveJwkEdge`](/references/sui-api/sui-graphql/beta/reference/types/objects/active-jwk-edge.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

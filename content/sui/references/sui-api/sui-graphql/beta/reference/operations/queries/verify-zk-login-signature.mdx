@@ -1,0 +1,95 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: verify-zk-login-signature
+title: verifyZkLoginSignature
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+:::warning[DEPRECATED]
+
+Use `verifySignature` instead, which supports all signature types.
+
+:::
+
+Verify a zkLogin signature is from the given `author`.
+
+Returns successfully if the signature is valid. If the signature is invalid, returns an error with the reason for the failure.
+
+- `bytes` are either the bytes of a serialized personal message, or `TransactionData`, Base64-encoded.
+- `signature` is a serialized zkLogin signature, also Base64-encoded.
+- `intentScope` indicates whether `bytes` are to be parsed as a personal message or `TransactionData`.
+- `author` is the signer's address.
+
+
+```graphql
+verifyZkLoginSignature(
+  bytes: Base64!
+  signature: Base64!
+  intentScope: ZkLoginIntentScope!
+  author: SuiAddress!
+): ZkLoginVerifyResult @deprecated
+```
+
+
+
+
+### Arguments
+
+#### [<code style={{ fontWeight: 'normal' }}>verifyZkLoginSignature.<b>bytes</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>verifyZkLoginSignature.<b>signature</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>verifyZkLoginSignature.<b>intentScope</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ZkLoginIntentScope!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/enums/zk-login-intent-scope.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="enum"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>verifyZkLoginSignature.<b>author</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+### Type
+
+#### [<code style={{ fontWeight: 'normal' }}><b>ZkLoginVerifyResult</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-verify-result.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The result of the zkLogin signature verification.

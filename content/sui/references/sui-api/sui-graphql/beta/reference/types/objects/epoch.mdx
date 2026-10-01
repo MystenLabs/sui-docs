@@ -1,0 +1,271 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: epoch
+title: Epoch
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Activity on Sui is partitioned in time, into epochs.
+
+Epoch changes are opportunities for the network to reconfigure itself (perform protocol or system package upgrades, or change the committee) and distribute staking rewards. The network aims to keep epochs roughly the same duration as each other.
+
+During a particular epoch the following data is fixed:
+
+- protocol version,
+- reference gas price,
+- system package versions,
+- validators in the committee.
+
+
+```graphql
+type Epoch implements Node {
+  checkpoints(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: CheckpointFilter
+  ): CheckpointConnection
+  coinDenyList: Object
+  endTimestamp: DateTime
+  epochId: UInt53!
+  fundInflow: BigInt
+  fundOutflow: BigInt
+  fundSize: BigInt
+  id: ID!
+  liveObjectSetDigest: String
+  netInflow: BigInt
+  protocolConfigs: ProtocolConfigs
+  referenceGasPrice: BigInt
+  startTimestamp: DateTime
+  systemPackages(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): MovePackageConnection
+  systemState: MoveValue
+  totalCheckpoints: UInt53
+  totalGasFees: BigInt
+  totalStakeRewards: BigInt
+  totalStakeSubsidies: BigInt
+  totalTransactions: UInt53
+  transactions(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: TransactionFilter
+  ): TransactionConnection
+  validatorSet: ValidatorSet
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>checkpoints</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>CheckpointConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/checkpoint-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The epoch's corresponding checkpoints.
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.checkpoints.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.checkpoints.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.checkpoints.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.checkpoints.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.checkpoints.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>CheckpointFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/checkpoint-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>coinDenyList</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Object</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+State of the Coin DenyList object (0x403) at the start of this epoch.
+
+The DenyList controls access to Regulated Coins. Writes to the DenyList are accumulated and only take effect on the next epoch boundary. Consequently, it's possible to determine the state of the DenyList for a transaction by reading it at the start of the epoch the transaction is in.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>endTimestamp</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DateTime</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/date-time.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The timestamp associated with the last checkpoint in the epoch (or `null` if the epoch has not finished yet).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>epochId</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The epoch's id as a sequence number that starts at 0 and is incremented by one at every epoch change.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>fundInflow</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The storage fees paid for transactions executed during the epoch (or `null` if the epoch has not finished yet).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>fundOutflow</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The storage fee rebates paid to users who deleted the data associated with past transactions (or `null` if the epoch has not finished yet).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>fundSize</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The storage fund available in this epoch (or `null` if the epoch has not finished yet).
+This fund is used to redistribute storage fees from past transactions to future validators.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>id</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ID!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/id.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The epoch's globally unique identifier, which can be passed to `Query.node` to refetch it.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>liveObjectSetDigest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+A commitment by the committee at the end of epoch on the contents of the live object set at that time.
+This can be used to verify state snapshots.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>netInflow</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The difference between the fund inflow and outflow, representing the net amount of storage fees accumulated in this epoch (or `null` if the epoch has not finished yet).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>protocolConfigs</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ProtocolConfigs</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/protocol-configs.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The epoch's corresponding protocol configuration, including the feature flags and the configuration options.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>referenceGasPrice</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The minimum gas price that a quorum of validators are guaranteed to sign a transaction for in this epoch.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>startTimestamp</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DateTime</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/date-time.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The timestamp associated with the first checkpoint in the epoch.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>systemPackages</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MovePackageConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The system packages used by all transactions in this epoch.
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.systemPackages.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.systemPackages.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.systemPackages.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.systemPackages.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>systemState</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveValue</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-value.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The contents of the system state inner object at the start of this epoch.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>totalCheckpoints</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The total number of checkpoints in this epoch.
+
+Returns `None` when no checkpoint is set in scope (e.g. execution scope).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>totalGasFees</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The total amount of gas fees (in MIST) that were paid in this epoch (or `null` if the epoch has not finished yet).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>totalStakeRewards</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The total MIST rewarded as stake (or `null` if the epoch has not finished yet).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>totalStakeSubsidies</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The amount added to total gas fees to make up the total stake rewards (or `null` if the epoch has not finished yet).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>totalTransactions</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The total number of transaction blocks in this epoch.
+
+If the epoch has not finished yet, this number is computed based on the number of transactions at the latest known checkpoint.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>transactions</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The transactions in this epoch, optionally filtered by transaction filters.
+
+Returns `None` when no checkpoint is set in scope (e.g. execution scope).
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.transactions.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.transactions.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.transactions.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.transactions.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Epoch.transactions.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/transaction-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Epoch.<b>validatorSet</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ValidatorSet</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/validator-set.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Validator-related properties, including the active validators.
+
+
+### Interfaces
+
+#### [<code style={{ fontWeight: 'normal' }}><b>Node</b></code>](/references/sui-api/sui-graphql/beta/reference/types/interfaces/node.mdx) <Badge class="badge badge--secondary " text="interface"/> 
+An interface implemented by types that can be uniquely identified by a globally unique `ID`, following the GraphQL Global Object Identification specification.
+
+
+
+
+
+
+### Returned By
+
+[`epoch`](/references/sui-api/sui-graphql/beta/reference/operations/queries/epoch.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`multiGetEpochs`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-epochs.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>
+
+### Member Of
+
+[`ActiveJwk`](/references/sui-api/sui-graphql/beta/reference/types/objects/active-jwk.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`AuthenticatorStateExpireTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/authenticator-state-expire-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`AuthenticatorStateUpdateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/authenticator-state-update-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ChangeEpochTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/change-epoch-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Checkpoint`](/references/sui-api/sui-graphql/beta/reference/types/objects/checkpoint.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ConsensusCommitPrologueTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/consensus-commit-prologue-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`EpochConnection`](/references/sui-api/sui-graphql/beta/reference/types/objects/epoch-connection.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`EpochEdge`](/references/sui-api/sui-graphql/beta/reference/types/objects/epoch-edge.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Transaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`TransactionEffects`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-effects.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ValidatorAggregatedSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/validator-aggregated-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

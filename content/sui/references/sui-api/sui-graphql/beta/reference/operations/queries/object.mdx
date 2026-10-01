@@ -1,0 +1,102 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: object
+title: object
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Fetch an object by its address.
+
+If `version` is specified, the object will be fetched at that exact version.
+
+If `rootVersion` is specified, the object will be fetched at the latest version at or before this version. Nested dynamic field accesses will also be subject to this bound. This can be used to fetch a child or ancestor object bounded by its root object's version. For any wrapped or child (object-owned) object, its root object can be defined recursively as:
+
+- The root object of the object it is wrapped in, if it is wrapped.
+- The root object of its owner, if it is owned by another object.
+- The object itself, if it is not object-owned or wrapped.
+
+Specifying a `version` or a `rootVersion` disables nested queries for paginating owned objects or dynamic fields (these queries are only supported at checkpoint boundaries).
+
+If `atCheckpoint` is specified, the object will be fetched at the latest version as of this checkpoint. This will fail if the provided checkpoint is after the RPC's latest checkpoint.
+
+If none of the above are specified, the object is fetched at the checkpoint being viewed.
+
+It is an error to specify more than one of `version`, `rootVersion`, or `atCheckpoint`.
+
+Returns `null` if an object cannot be found that meets this criteria.
+
+
+```graphql
+object(
+  address: SuiAddress!
+  version: UInt53
+  rootVersion: UInt53
+  atCheckpoint: UInt53
+): Object
+```
+
+
+
+
+### Arguments
+
+#### [<code style={{ fontWeight: 'normal' }}>object.<b>address</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>object.<b>version</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>object.<b>rootVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>object.<b>atCheckpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+### Type
+
+#### [<code style={{ fontWeight: 'normal' }}><b>Object</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+An Object on Sui is either a typed value (a Move Object) or a Package (modules containing functions and types).
+
+Every object on Sui is identified by a unique address, and has a version number that increases with every modification. Objects also hold metadata detailing their current owner (who can sign for access to the object and whether that access can modify and/or delete the object), and the digest of the last transaction that modified the object.

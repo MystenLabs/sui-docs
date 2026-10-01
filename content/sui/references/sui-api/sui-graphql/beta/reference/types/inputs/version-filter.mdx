@@ -1,0 +1,75 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: version-filter
+title: VersionFilter
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Filter for paginating the history of an Object or MovePackage.
+
+
+```graphql
+input VersionFilter {
+  afterVersion: UInt53
+  beforeVersion: UInt53
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>VersionFilter.<b>afterVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Filter to versions that are strictly newer than this one, defaults to fetching from the earliest version known to this RPC (this could be the initial version, or some later version if the initial version has been pruned).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>VersionFilter.<b>beforeVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Filter to versions that are strictly older than this one, defaults to fetching up to the latest version (inclusive).
+
+
+
+
+
+
+### Member Of
+
+[`objectVersions`](/references/sui-api/sui-graphql/beta/reference/operations/queries/object-versions.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`packageVersions`](/references/sui-api/sui-graphql/beta/reference/operations/queries/package-versions.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>

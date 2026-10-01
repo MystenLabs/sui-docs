@@ -1,0 +1,233 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: address
+title: Address
+---
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+```graphql
+type Address implements Node, IAddressable {
+  address: SuiAddress!
+  addressAt(
+    rootVersion: UInt53
+    checkpoint: UInt53
+  ): Address
+  asObject: Object
+  asTransactionObject(
+    transactionDigest: String
+  ): TransactionObject
+  balance(
+    coinType: String!
+  ): Balance
+  balances(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): BalanceConnection
+  defaultNameRecord: NameRecord
+  dynamicField(
+    name: DynamicFieldName!
+  ): DynamicField
+  dynamicFields(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): DynamicFieldConnection
+  dynamicObjectField(
+    name: DynamicFieldName!
+  ): DynamicField
+  id: ID!
+  multiGetBalances(
+    keys: [String!]!
+  ): [Balance!]
+  multiGetDynamicFields(
+    keys: [DynamicFieldName!]!
+  ): [DynamicField]!
+  multiGetDynamicObjectFields(
+    keys: [DynamicFieldName!]!
+  ): [DynamicField]!
+  objects(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: ObjectFilter
+  ): MoveObjectConnection
+  transactions(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    relation: AddressTransactionRelationship
+    filter: TransactionFilter
+  ): TransactionConnection
+}
+```
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>address</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The Address' identifier, a 32-byte number represented as a 64-character hex string, with a lead "0x".
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>addressAt</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Address</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Fetch the address as it was at a different root version, or checkpoint.
+
+If no additional bound is provided, the address is fetched at the latest checkpoint known to the RPC.
+##### [<code style={{ fontWeight: 'normal' }}>Address.addressAt.<b>rootVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.addressAt.<b>checkpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>asObject</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Object</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Attempts to fetch the object at this address.
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>asTransactionObject</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionObject</b></code>](/references/sui-api/sui-graphql/beta/reference/types/unions/transaction-object.mdx) <Badge class="badge badge--secondary " text="union"/> 
+How this address (interpreted as an object ID) was referenced by a specific transaction.
+
+Returns `null` if the object was not referenced, or was present only as a non-object marker variant of unchanged consensus input (e.g. cancelled, stream-ended, per-epoch).
+
+The `transactionDigest` argument may be omitted when the query is scoped under a transaction context (e.g. a parent `Transaction`, `TransactionEffects`, or `Event`); the field then resolves against the in-scope transaction.
+
+Passing an explicit `transactionDigest` other than the in-scope transaction in subscription context is not supported; for arbitrary transaction lookups, use the indexed Query API.
+##### [<code style={{ fontWeight: 'normal' }}>Address.asTransactionObject.<b>transactionDigest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>balance</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Balance</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/balance.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Fetch the balance for `coinType` (e.g. `0x2::sui::SUI`) owned by this address.
+
+The result includes the total balance, the balance held in coin objects, and the balance held in the address's balance accumulator. Returns `null` when no checkpoint is set in scope (e.g. execution scope). If this address has no balance of that type, all three values are zero.
+##### [<code style={{ fontWeight: 'normal' }}>Address.balance.<b>coinType</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>balances</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BalanceConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/balance-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Balances held by this address, grouped by coin type.
+
+Each result includes the total balance, the balance held in coin objects, and the balance held in the address's balance accumulator.
+##### [<code style={{ fontWeight: 'normal' }}>Address.balances.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.balances.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.balances.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.balances.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>defaultNameRecord</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>NameRecord</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/name-record.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The domain explicitly configured as the default Name Service name for this address.
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>dynamicField</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicField</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Access a dynamic field on an object using its type and BCS-encoded name.
+
+Returns `null` if a dynamic field with that name could not be found attached to the object with this address.
+##### [<code style={{ fontWeight: 'normal' }}>Address.dynamicField.<b>name</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicFieldName!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>dynamicFields</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicFieldConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Dynamic fields owned by this address.
+
+The address must correspond to an object (account addresses cannot own dynamic fields), but that object may be wrapped.
+##### [<code style={{ fontWeight: 'normal' }}>Address.dynamicFields.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.dynamicFields.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.dynamicFields.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.dynamicFields.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>dynamicObjectField</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicField</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Access a dynamic object field on an object using its type and BCS-encoded name.
+
+Returns `null` if a dynamic object field with that name could not be found attached to the object with this address.
+##### [<code style={{ fontWeight: 'normal' }}>Address.dynamicObjectField.<b>name</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicFieldName!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>id</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ID!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/id.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The address's globally unique identifier, which can be passed to `Query.node` to refetch it.
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>multiGetBalances</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[Balance!]</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/balance.mdx) <Badge class="badge badge--secondary " text="list"/> <Badge class="badge badge--secondary " text="object"/> 
+Fetch balances keyed by coin types (e.g. `0x2::sui::SUI`) owned by this address.
+
+Each result includes the total balance, the balance held in coin objects, and the balance held in the address's balance accumulator. Returns `null` when no checkpoint is set in scope (e.g. execution scope). If this address has no balance of a given type, all three values are zero for that type.
+##### [<code style={{ fontWeight: 'normal' }}>Address.multiGetBalances.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[String!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>multiGetDynamicFields</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[DynamicField]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="object"/> 
+Access dynamic fields on an object using their types and BCS-encoded names.
+
+Returns a list of dynamic fields that is guaranteed to be the same length as `keys`. If a dynamic field in `keys` could not be found in the store, its corresponding entry in the result will be `null`.
+##### [<code style={{ fontWeight: 'normal' }}>Address.multiGetDynamicFields.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[DynamicFieldName!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>multiGetDynamicObjectFields</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[DynamicField]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="object"/> 
+Access dynamic object fields on an object using their types and BCS-encoded names.
+
+Returns a list of dynamic object fields that is guaranteed to be the same length as `keys`. If a dynamic object field in `keys` could not be found in the store, its corresponding entry in the result will be `null`.
+##### [<code style={{ fontWeight: 'normal' }}>Address.multiGetDynamicObjectFields.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[DynamicFieldName!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>objects</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveObjectConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Objects owned by this address, optionally filtered by type.
+##### [<code style={{ fontWeight: 'normal' }}>Address.objects.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.objects.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.objects.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.objects.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.objects.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ObjectFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/object-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>transactions</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Transactions associated with this address.
+
+Similar behavior to the `transactions` in Query but supporting the additional `AddressTransactionRelationship` filter, which defaults to `SENT`.
+##### [<code style={{ fontWeight: 'normal' }}>Address.transactions.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.transactions.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.transactions.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.transactions.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.transactions.<b>relation</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>AddressTransactionRelationship</b></code>](/references/sui-api/sui-graphql/beta/reference/types/enums/address-transaction-relationship.mdx) <Badge class="badge badge--secondary " text="enum"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.transactions.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/transaction-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+### Interfaces
+
+#### [<code style={{ fontWeight: 'normal' }}><b>Node</b></code>](/references/sui-api/sui-graphql/beta/reference/types/interfaces/node.mdx) <Badge class="badge badge--secondary " text="interface"/> 
+An interface implemented by types that can be uniquely identified by a globally unique `ID`, following the GraphQL Global Object Identification specification.
+
+#### [<code style={{ fontWeight: 'normal' }}><b>IAddressable</b></code>](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iaddressable.mdx) <Badge class="badge badge--secondary " text="interface"/> 
+Interface implemented by GraphQL types representing entities that are identified by an address.
+
+An address uniquely represents either the public key of an account, or an object's ID, but never both. It is not possible to determine which type an address represents up-front. If an object is wrapped, its contents will not be accessible via its address, but it will still be possible to access other objects it owns.
+
+### Returned By
+
+[`address`](/references/sui-api/sui-graphql/beta/reference/operations/queries/address.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`multiGetAddresses`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-addresses.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>
+
+### Member Of
+
+[`Address`](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`AddressOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/address-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`BalanceChange`](/references/sui-api/sui-graphql/beta/reference/types/objects/balance-change.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ConsensusAddressOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/consensus-address-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Event`](/references/sui-api/sui-graphql/beta/reference/types/objects/event.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`GasInput`](/references/sui-api/sui-graphql/beta/reference/types/objects/gas-input.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`IAddressable`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iaddressable.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveValue`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-value.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`NameRecord`](/references/sui-api/sui-graphql/beta/reference/types/objects/name-record.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ObjectOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/object-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Transaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

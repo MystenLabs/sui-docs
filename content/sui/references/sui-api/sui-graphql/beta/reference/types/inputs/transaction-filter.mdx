@@ -1,0 +1,80 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: transaction-filter
+title: TransactionFilter
+---
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+```graphql
+input TransactionFilter {
+  affectedAddress: SuiAddress
+  affectedObject: SuiAddress
+  afterCheckpoint: UInt53
+  atCheckpoint: UInt53
+  beforeCheckpoint: UInt53
+  function: String
+  kind: TransactionKindInput
+  sentAddress: SuiAddress
+}
+```
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>affectedAddress</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Limit to transactions that interacted with the given address.
+The address could be a sender, sponsor, or recipient of the transaction.
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>affectedObject</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Limit to transactions that interacted with the given object.
+The object could have been created, read, modified, deleted, wrapped, or unwrapped by the transaction.
+Objects that were passed as a `Receiving` input are not considered to have been affected by a transaction unless they were actually received.
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>afterCheckpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Filter to transactions that occurred strictly after the given checkpoint.
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>atCheckpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Filter to transactions in the given checkpoint.
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>beforeCheckpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Filter to transaction that occurred strictly before the given checkpoint.
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>function</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Filter transactions by move function called. Calls can be filtered by the `package`, `package::module`, or the `package::module::name` of their function.
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>kind</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionKindInput</b></code>](/references/sui-api/sui-graphql/beta/reference/types/enums/transaction-kind-input.mdx) <Badge class="badge badge--secondary " text="enum"/> 
+An input filter selecting for either system or programmable transactions.
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionFilter.<b>sentAddress</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Limit to transactions that were sent by the given address.
+
+### Member Of
+
+[`transactions`](/references/sui-api/sui-graphql/beta/reference/operations/queries/transactions.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>

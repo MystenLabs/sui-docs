@@ -1,0 +1,62 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: base-64
+title: Base64
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+String containing Base64-encoded binary data.
+
+
+```graphql
+scalar Base64
+```
+
+
+
+
+
+
+
+
+### Member Of
+
+[`Checkpoint`](/references/sui-api/sui-graphql/beta/reference/types/objects/checkpoint.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicFieldName`](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx)  <Badge class="badge badge--secondary badge--relation" text="input"/><Bullet />[`Ed25519PublicKey`](/references/sui-api/sui-graphql/beta/reference/types/objects/ed-25519-public-key.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Ed25519Signature`](/references/sui-api/sui-graphql/beta/reference/types/objects/ed-25519-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Event`](/references/sui-api/sui-graphql/beta/reference/types/objects/event.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`executeTransaction`](/references/sui-api/sui-graphql/beta/reference/operations/mutations/execute-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="mutation"/><Bullet />[`IMoveObject`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/imove-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`IObject`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iobject.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`MoveModule`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-module.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveValue`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-value.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`PasskeyPublicKey`](/references/sui-api/sui-graphql/beta/reference/types/objects/passkey-public-key.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`PasskeySignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/passkey-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`PublishCommand`](/references/sui-api/sui-graphql/beta/reference/types/objects/publish-command.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Pure`](/references/sui-api/sui-graphql/beta/reference/types/objects/pure.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`RandomnessStateUpdateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/randomness-state-update-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Secp256K1PublicKey`](/references/sui-api/sui-graphql/beta/reference/types/objects/secp-256-k1-public-key.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Secp256K1Signature`](/references/sui-api/sui-graphql/beta/reference/types/objects/secp-256-k1-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Secp256R1PublicKey`](/references/sui-api/sui-graphql/beta/reference/types/objects/secp-256-r1-public-key.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Secp256R1Signature`](/references/sui-api/sui-graphql/beta/reference/types/objects/secp-256-r1-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Transaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`TransactionEffects`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-effects.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`UpgradeCommand`](/references/sui-api/sui-graphql/beta/reference/types/objects/upgrade-command.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`UserSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/user-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ValidatorAggregatedSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/validator-aggregated-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`verifySignature`](/references/sui-api/sui-graphql/beta/reference/operations/queries/verify-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`verifyZkLoginSignature`](/references/sui-api/sui-graphql/beta/reference/operations/queries/verify-zk-login-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>

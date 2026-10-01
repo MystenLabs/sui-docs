@@ -1,0 +1,94 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: verify-signature
+title: verifySignature
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Verify a signature is from the given `author`.
+
+Supports all signature types: Ed25519, Secp256k1, Secp256r1, MultiSig, ZkLogin, and
+Passkey.
+
+Returns successfully if the signature is valid. If the signature is invalid, returns an
+error with the reason for the failure.
+
+- `message` is either a serialized personal message or `TransactionData`, Base64-encoded.
+- `signature` is a serialized signature, also Base64-encoded.
+- `intentScope` indicates whether `message` is to be parsed as a personal message or
+`TransactionData`.
+- `author` is the signer's address.
+
+
+```graphql
+verifySignature(
+  message: Base64!
+  signature: Base64!
+  intentScope: IntentScope!
+  author: SuiAddress!
+): SignatureVerifyResult
+```
+
+
+
+
+### Arguments
+
+#### [<code style={{ fontWeight: 'normal' }}>verifySignature.<b>message</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>verifySignature.<b>signature</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>verifySignature.<b>intentScope</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>IntentScope!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/enums/intent-scope.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="enum"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>verifySignature.<b>author</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+### Type
+
+#### [<code style={{ fontWeight: 'normal' }}><b>SignatureVerifyResult</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/signature-verify-result.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The result of signature verification.

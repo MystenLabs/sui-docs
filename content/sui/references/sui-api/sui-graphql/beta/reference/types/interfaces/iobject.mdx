@@ -1,0 +1,201 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: iobject
+title: IObject
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Interface implemented by versioned on-chain values that are addressable by an ID (also referred to as its address). This includes Move objects and packages.
+
+
+```graphql
+interface IObject {
+  digest: String
+  objectAt(
+    version: UInt53
+    rootVersion: UInt53
+    checkpoint: UInt53
+  ): Object
+  objectBcs: Base64
+  objectVersionsAfter(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: VersionFilter
+  ): ObjectConnection
+  objectVersionsBefore(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: VersionFilter
+  ): ObjectConnection
+  owner: Owner
+  previousTransaction: Transaction
+  receivedTransactions(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: TransactionFilter
+  ): TransactionConnection
+  storageRebate: BigInt
+  version: UInt53
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>digest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+32-byte hash that identifies the object's contents, encoded in Base58.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>objectAt</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Object</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Fetch the object with the same ID, at a different version, root version bound, or checkpoint.
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectAt.<b>version</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectAt.<b>rootVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectAt.<b>checkpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>objectBcs</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The Base64-encoded BCS serialization of this object, as an `Object`.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>objectVersionsAfter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ObjectConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Paginate all versions of this object after this one.
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsAfter.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsAfter.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsAfter.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsAfter.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsAfter.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>VersionFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/version-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>objectVersionsBefore</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ObjectConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Paginate all versions of this object before this one.
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsBefore.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsBefore.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsBefore.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsBefore.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.objectVersionsBefore.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>VersionFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/version-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>owner</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Owner</b></code>](/references/sui-api/sui-graphql/beta/reference/types/unions/owner.mdx) <Badge class="badge badge--secondary " text="union"/> 
+The object's owner kind.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>previousTransaction</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Transaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The transaction that created this version of the object
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>receivedTransactions</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The transactions that sent objects to this object.
+##### [<code style={{ fontWeight: 'normal' }}>IObject.receivedTransactions.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.receivedTransactions.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.receivedTransactions.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.receivedTransactions.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>IObject.receivedTransactions.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/transaction-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>storageRebate</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The SUI returned to the sponsor or sender of the transaction that modifies or deletes this object.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>IObject.<b>version</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The version of this object that this content comes from.
+
+
+
+
+
+
+### Implemented By
+
+[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

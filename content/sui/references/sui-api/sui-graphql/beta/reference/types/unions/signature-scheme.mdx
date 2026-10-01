@@ -1,0 +1,88 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: signature-scheme
+title: SignatureScheme
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+The structured details of a signature, varying by scheme.
+
+
+```graphql
+union SignatureScheme = Ed25519Signature | Secp256K1Signature | Secp256R1Signature | MultisigSignature | ZkLoginSignature | PasskeySignature
+```
+
+
+
+
+### Possible types
+
+#### [<code style={{ fontWeight: 'normal' }}>SignatureScheme.<b>Ed25519Signature</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/ed-25519-signature.mdx) <Badge class="badge badge--secondary " text="object"/> 
+An Ed25519 signature.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>SignatureScheme.<b>Secp256K1Signature</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/secp-256-k1-signature.mdx) <Badge class="badge badge--secondary " text="object"/> 
+A Secp256k1 signature.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>SignatureScheme.<b>Secp256R1Signature</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/secp-256-r1-signature.mdx) <Badge class="badge badge--secondary " text="object"/> 
+A Secp256r1 signature.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>SignatureScheme.<b>MultisigSignature</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/multisig-signature.mdx) <Badge class="badge badge--secondary " text="object"/> 
+An aggregated multisig signature.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>SignatureScheme.<b>ZkLoginSignature</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-signature.mdx) <Badge class="badge badge--secondary " text="object"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>SignatureScheme.<b>PasskeySignature</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/passkey-signature.mdx) <Badge class="badge badge--secondary " text="object"/> 
+
+
+
+
+
+
+
+### Member Of
+
+[`MultisigSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/multisig-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`PasskeySignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/passkey-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`UserSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/user-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ZkLoginSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

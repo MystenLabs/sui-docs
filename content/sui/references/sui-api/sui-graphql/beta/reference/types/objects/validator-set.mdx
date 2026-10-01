@@ -1,0 +1,94 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: validator-set
+title: ValidatorSet
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Representation of `0x3::validator_set::ValidatorSet`.
+
+
+```graphql
+type ValidatorSet {
+  activeValidators(
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): ValidatorConnection
+  contents: MoveValue
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>ValidatorSet.<b>activeValidators</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ValidatorConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/validator-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The validators currently in the committee for this validator set.
+##### [<code style={{ fontWeight: 'normal' }}>ValidatorSet.activeValidators.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>ValidatorSet.activeValidators.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>ValidatorSet.activeValidators.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>ValidatorSet.activeValidators.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>ValidatorSet.<b>contents</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveValue</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-value.mdx) <Badge class="badge badge--secondary " text="object"/> 
+On-chain representation of the underlying `0x3::validator_set::ValidatorSet` value.
+
+
+
+
+
+
+### Member Of
+
+[`Epoch`](/references/sui-api/sui-graphql/beta/reference/types/objects/epoch.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

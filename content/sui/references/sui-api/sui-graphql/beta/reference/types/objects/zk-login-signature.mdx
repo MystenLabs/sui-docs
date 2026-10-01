@@ -1,0 +1,65 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: zk-login-signature
+title: ZkLoginSignature
+---
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+```graphql
+type ZkLoginSignature {
+  inputs: ZkLoginInputs
+  jwkId: ZkLoginJwkId
+  maxEpoch: UInt53
+  publicIdentifier: ZkLoginPublicIdentifier
+  signature: SignatureScheme
+}
+```
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>ZkLoginSignature.<b>inputs</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ZkLoginInputs</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-inputs.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The zkLogin inputs including proof, claim details, and JWT header.
+
+#### [<code style={{ fontWeight: 'normal' }}>ZkLoginSignature.<b>jwkId</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ZkLoginJwkId</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-jwk-id.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The JWK identifier used to verify the zkLogin proof.
+
+#### [<code style={{ fontWeight: 'normal' }}>ZkLoginSignature.<b>maxEpoch</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The maximum epoch for which this signature is valid.
+
+#### [<code style={{ fontWeight: 'normal' }}>ZkLoginSignature.<b>publicIdentifier</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ZkLoginPublicIdentifier</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-public-identifier.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The public identifier (issuer + address seed) for this zkLogin authenticator.
+
+#### [<code style={{ fontWeight: 'normal' }}>ZkLoginSignature.<b>signature</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SignatureScheme</b></code>](/references/sui-api/sui-graphql/beta/reference/types/unions/signature-scheme.mdx) <Badge class="badge badge--secondary " text="union"/> 
+The inner user signature (ed25519/secp256k1/secp256r1).
+
+### Implemented By
+
+[`SignatureScheme`](/references/sui-api/sui-graphql/beta/reference/types/unions/signature-scheme.mdx)  <Badge class="badge badge--secondary badge--relation" text="union"/>

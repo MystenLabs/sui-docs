@@ -1,0 +1,82 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: multisig-signature
+title: MultisigSignature
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+An aggregated multisig signature.
+
+
+```graphql
+type MultisigSignature {
+  bitmap: Int
+  committee: MultisigCommittee
+  signatures: [SignatureScheme!]
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>MultisigSignature.<b>bitmap</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+A bitmap indicating which members of the committee signed.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>MultisigSignature.<b>committee</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MultisigCommittee</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/multisig-committee.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The multisig committee (public keys + weights + threshold).
+
+
+#### [<code style={{ fontWeight: 'normal' }}>MultisigSignature.<b>signatures</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[SignatureScheme!]</b></code>](/references/sui-api/sui-graphql/beta/reference/types/unions/signature-scheme.mdx) <Badge class="badge badge--secondary " text="list"/> <Badge class="badge badge--secondary " text="union"/> 
+The individual member signatures, one per signer who participated.
+Compressed signatures within a multisig do not include the signer's public key,
+so `publicKey` will be `null` for simple signature schemes (Ed25519, Secp256k1, Secp256r1).
+
+
+
+
+
+
+### Implemented By
+
+[`SignatureScheme`](/references/sui-api/sui-graphql/beta/reference/types/unions/signature-scheme.mdx)  <Badge class="badge badge--secondary badge--relation" text="union"/>

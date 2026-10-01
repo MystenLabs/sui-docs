@@ -1,2 +1,6 @@
 .cache/
 node_modules/
+sites/*/.generated/
+sites/*/.resolved/
+sites/*/build/
+sites/*/.docusaurus/

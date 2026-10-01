@@ -1,0 +1,62 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: int
+title: Int
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.
+
+
+```graphql
+scalar Int
+```
+
+
+
+
+
+
+
+
+### Member Of
+
+[`checkpoints`](/references/sui-api/sui-graphql/beta/reference/operations/queries/checkpoints.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`epochs`](/references/sui-api/sui-graphql/beta/reference/operations/queries/epochs.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`events`](/references/sui-api/sui-graphql/beta/reference/operations/queries/events.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`ExecutionError`](/references/sui-api/sui-graphql/beta/reference/types/objects/execution-error.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Input`](/references/sui-api/sui-graphql/beta/reference/types/objects/input.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveModule`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-module.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MultisigCommittee`](/references/sui-api/sui-graphql/beta/reference/types/objects/multisig-committee.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MultisigMember`](/references/sui-api/sui-graphql/beta/reference/types/objects/multisig-member.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MultisigSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/multisig-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`objects`](/references/sui-api/sui-graphql/beta/reference/operations/queries/objects.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`objectVersions`](/references/sui-api/sui-graphql/beta/reference/operations/queries/object-versions.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`packages`](/references/sui-api/sui-graphql/beta/reference/operations/queries/packages.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`packageVersions`](/references/sui-api/sui-graphql/beta/reference/operations/queries/package-versions.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`RandomnessStateUpdateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/randomness-state-update-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ServiceConfig`](/references/sui-api/sui-graphql/beta/reference/types/objects/service-config.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`TransactionEffects`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-effects.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`transactions`](/references/sui-api/sui-graphql/beta/reference/operations/queries/transactions.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`TxResult`](/references/sui-api/sui-graphql/beta/reference/types/objects/tx-result.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ValidatorAggregatedSignature`](/references/sui-api/sui-graphql/beta/reference/types/objects/validator-aggregated-signature.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ZkLoginClaim`](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-claim.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

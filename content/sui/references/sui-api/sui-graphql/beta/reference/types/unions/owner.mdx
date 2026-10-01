@@ -1,0 +1,84 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: owner
+title: Owner
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+The object's owner kind.
+
+
+```graphql
+union Owner = AddressOwner | ObjectOwner | Shared | Immutable | ConsensusAddressOwner
+```
+
+
+
+
+### Possible types
+
+#### [<code style={{ fontWeight: 'normal' }}>Owner.<b>AddressOwner</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/address-owner.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Object is exclusively owned by a single address, and is mutable.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Owner.<b>ObjectOwner</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object-owner.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Object is exclusively owned by a single object, and is mutable. Note that the owning object may be inaccessible because it is wrapped.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Owner.<b>Shared</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/shared.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Object is shared, can be used by any address, and is mutable.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Owner.<b>Immutable</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/immutable.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Object is accessible to all addresses, and is immutable.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Owner.<b>ConsensusAddressOwner</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/consensus-address-owner.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Object is exclusively owned by a single adderss and sequenced via consensus.
+
+
+
+
+
+
+### Member Of
+
+[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`IObject`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iobject.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

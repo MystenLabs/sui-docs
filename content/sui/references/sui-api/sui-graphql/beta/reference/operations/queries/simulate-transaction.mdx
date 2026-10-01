@@ -1,0 +1,88 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: simulate-transaction
+title: simulateTransaction
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Simulate a transaction to preview its effects without executing it on chain.
+
+Accepts a JSON transaction matching the [Sui gRPC API schema](https://docs.sui.io/references/fullnode-protocol#sui-rpc-v2-Transaction).
+The JSON format allows for partial transaction specification where certain fields can be automatically resolved by the server.
+
+Alternatively, for already serialized transactions, you can pass BCS-encoded data:
+`{"bcs": {"value": "<base64>"}}`
+
+Unlike `executeTransaction`, this does not require signatures since the transaction is not committed to the blockchain. This allows for previewing transaction effects, estimating gas costs, and testing transaction logic without spending gas or requiring valid signatures.
+
+- `checksEnabled`: If true, enables transaction validation checks during simulation. Defaults to true.
+- `doGasSelection`: If true, enables automatic gas coin selection and budget estimation. Defaults to false.
+
+
+```graphql
+simulateTransaction(
+  transaction: JSON!
+  checksEnabled: Boolean
+  doGasSelection: Boolean
+): SimulationResult!
+```
+
+
+
+
+### Arguments
+
+#### [<code style={{ fontWeight: 'normal' }}>simulateTransaction.<b>transaction</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>JSON!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/json.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>simulateTransaction.<b>checksEnabled</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Boolean</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/boolean.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>simulateTransaction.<b>doGasSelection</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Boolean</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/boolean.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+### Type
+
+#### [<code style={{ fontWeight: 'normal' }}><b>SimulationResult</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/simulation-result.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The result of simulating a transaction, including the predicted effects.

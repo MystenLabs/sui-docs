@@ -24,7 +24,10 @@ const CACHE = process.env.SOURCES_CACHE || path.join(REPO_ROOT, ".cache/sources"
 
 const args = process.argv.slice(2);
 const force = args.includes("--force");
+const codeOnly = args.includes("--code");
 const only = new Set(args.filter((a) => !a.startsWith("--")));
+
+const CODE_CACHE = process.env.CODE_CACHE || path.join(REPO_ROOT, ".cache/code");
 
 const run = (cmd, cmdArgs, cwd) =>
   execFileSync(cmd, cmdArgs, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -68,8 +71,58 @@ function fetchOne(source) {
   return head;
 }
 
+/**
+ * Fetch a code source: the repositories the pages quote but do not render.
+ * Sparse, because an ImportContent path only ever needs a few directories and
+ * MystenLabs/sui is large.
+ */
+function fetchCode(name, cfg) {
+  const dir = path.join(CODE_CACHE, name);
+  if (fs.existsSync(dir) && !force) {
+    const head = run("git", ["-C", dir, "rev-parse", "HEAD"]);
+    console.log(`  ${name}: cached at ${head.slice(0, 12)}`);
+    return head;
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
+  run("git", [
+    "clone", "--quiet", "--depth", "1", "--filter=blob:none", "--sparse",
+    "--branch", cfg.ref,
+    `https://github.com/${cfg.repo}.git`,
+    dir,
+  ]);
+  const paths = (cfg.paths || []).filter((p) => p !== ".");
+  if (paths.length) {
+    run("git", ["-C", dir, "sparse-checkout", "set", "--no-cone", ...paths]);
+  } else {
+    run("git", ["-C", dir, "sparse-checkout", "disable"]);
+  }
+  const head = run("git", ["-C", dir, "rev-parse", "HEAD"]);
+  console.log(`  ${name}: ${cfg.repo}@${cfg.ref} -> ${head.slice(0, 12)} [${(cfg.paths || []).join(", ")}]`);
+  return head;
+}
+
 function main() {
-  const { sources } = load();
+  const { sources, codeSources } = load();
+
+  if (codeOnly) {
+    fs.mkdirSync(CODE_CACHE, { recursive: true });
+    const entries = Object.entries(codeSources).filter(([k]) => k !== "$comment");
+    console.log(`Fetching ${entries.length} code source(s) into ${CODE_CACHE}`);
+    const failed = [];
+    for (const [name, cfg] of entries) {
+      if (only.size && !only.has(name)) continue;
+      try {
+        fetchCode(name, cfg);
+      } catch (e) {
+        console.error(`  ${name}: FAILED ${e.message.split("\n")[0]}`);
+        failed.push(name);
+      }
+    }
+    if (failed.length) process.exit(1);
+    return;
+  }
+
   const wanted = sources.filter((s) => s.ownership === "mirrored" && (!only.size || only.has(s.name)));
 
   if (only.size) {

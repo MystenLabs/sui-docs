@@ -1,0 +1,91 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: balance
+title: Balance
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+The balance of a particular coin type held by an address.
+
+Balances can be held in coin objects, in the address's balance accumulator, or both.
+
+
+```graphql
+type Balance {
+  addressBalance: BigInt
+  coinBalance: BigInt
+  coinType: MoveType
+  totalBalance: BigInt
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>Balance.<b>addressBalance</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The balance held in the address's balance accumulator.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Balance.<b>coinBalance</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The balance held in coin objects owned by the address.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Balance.<b>coinType</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveType</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-type.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Coin type for the balance, such as `0x2::sui::SUI`.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Balance.<b>totalBalance</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The sum of `coinBalance` and `addressBalance`.
+
+
+
+
+
+
+### Returned By
+
+[`multiGetBalances`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-balances.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>
+
+### Member Of
+
+[`Address`](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`BalanceConnection`](/references/sui-api/sui-graphql/beta/reference/types/objects/balance-connection.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`BalanceEdge`](/references/sui-api/sui-graphql/beta/reference/types/objects/balance-edge.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`IAddressable`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iaddressable.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

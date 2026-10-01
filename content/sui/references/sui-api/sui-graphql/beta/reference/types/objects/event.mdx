@@ -1,0 +1,77 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: event
+title: Event
+---
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+```graphql
+type Event {
+  contents: MoveValue
+  eventBcs: Base64
+  sender: Address
+  sequenceNumber: UInt53!
+  timestamp: DateTime
+  transaction: Transaction
+  transactionModule: MoveModule
+}
+```
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>Event.<b>contents</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveValue</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-value.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The Move value emitted for this event.
+
+#### [<code style={{ fontWeight: 'normal' }}>Event.<b>eventBcs</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The Base64 encoded BCS serialized bytes of the entire Event structure from sui-types.
+This includes: package&#x005F;id, transaction&#x005F;module, sender, type, and contents (which itself contains the BCS-serialized Move struct data).
+
+#### [<code style={{ fontWeight: 'normal' }}>Event.<b>sender</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Address</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Address of the sender of the transaction that emitted this event.
+
+#### [<code style={{ fontWeight: 'normal' }}>Event.<b>sequenceNumber</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The position of the event among the events from the same transaction.
+
+#### [<code style={{ fontWeight: 'normal' }}>Event.<b>timestamp</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DateTime</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/date-time.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+Timestamp corresponding to the checkpoint this event's transaction was finalized in.
+All events from the same transaction share the same timestamp.
+
+`null` for simulated/executed transactions as they are not included in a checkpoint.
+
+#### [<code style={{ fontWeight: 'normal' }}>Event.<b>transaction</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Transaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The transaction that emitted this event. This information is only available for events from indexed transactions, and not from transactions that have just been executed or dry-run.
+
+#### [<code style={{ fontWeight: 'normal' }}>Event.<b>transactionModule</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveModule</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-module.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The module containing the function that was called in the programmable transaction, that resulted in this event being emitted.
+
+### Member Of
+
+[`EventConnection`](/references/sui-api/sui-graphql/beta/reference/types/objects/event-connection.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`EventEdge`](/references/sui-api/sui-graphql/beta/reference/types/objects/event-edge.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

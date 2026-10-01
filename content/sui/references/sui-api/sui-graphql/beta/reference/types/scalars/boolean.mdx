@@ -1,0 +1,62 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: boolean
+title: Boolean
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+The `Boolean` scalar type represents `true` or `false`.
+
+
+```graphql
+scalar Boolean
+```
+
+
+
+
+
+
+
+
+### Member Of
+
+[`AccumulatorRootCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/accumulator-root-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`AddressAliasStateCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/address-alias-state-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`AuthenticatorStateCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/authenticator-state-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinDenyListStateCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-deny-list-state-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinRegistryCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-registry-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DisplayRegistryCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/display-registry-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`FeatureFlag`](/references/sui-api/sui-graphql/beta/reference/types/objects/feature-flag.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ForwardingAddressRegistryCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/forwarding-address-registry-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`GasCoin`](/references/sui-api/sui-graphql/beta/reference/types/objects/gas-coin.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Immutable`](/references/sui-api/sui-graphql/beta/reference/types/objects/immutable.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`IMoveObject`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/imove-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`include`](/references/sui-api/sui-graphql/beta/reference/operations/directives/include.mdx)  <Badge class="badge badge--secondary badge--relation" text="directive"/><Bullet />[`MoveDatatypeTypeParameter`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-datatype-type-parameter.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveFunction`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-function.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ObjectChange`](/references/sui-api/sui-graphql/beta/reference/types/objects/object-change.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`OtherCommand`](/references/sui-api/sui-graphql/beta/reference/types/objects/other-command.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`PageInfo`](/references/sui-api/sui-graphql/beta/reference/types/objects/page-info.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`RandomnessStateCreateTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/randomness-state-create-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`SharedInput`](/references/sui-api/sui-graphql/beta/reference/types/objects/shared-input.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`SignatureVerifyResult`](/references/sui-api/sui-graphql/beta/reference/types/objects/signature-verify-result.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`simulateTransaction`](/references/sui-api/sui-graphql/beta/reference/operations/queries/simulate-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`skip`](/references/sui-api/sui-graphql/beta/reference/operations/directives/skip.mdx)  <Badge class="badge badge--secondary badge--relation" text="directive"/><Bullet />[`StoreExecutionTimeObservationsTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/store-execution-time-observations-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`WriteAccumulatorStorageCostTransaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/write-accumulator-storage-cost-transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ZkLoginVerifyResult`](/references/sui-api/sui-graphql/beta/reference/types/objects/zk-login-verify-result.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

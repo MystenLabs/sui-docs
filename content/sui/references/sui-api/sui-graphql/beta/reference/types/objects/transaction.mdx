@@ -1,0 +1,125 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: transaction
+title: Transaction
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Description of a transaction, the unit of activity on Sui.
+
+
+```graphql
+type Transaction implements Node {
+  digest: String!
+  effects: TransactionEffects
+  expiration: Epoch
+  gasInput: GasInput
+  id: ID!
+  kind: TransactionKind
+  sender: Address
+  signatures: [UserSignature!]!
+  transactionBcs: Base64
+  transactionJson: JSON
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>digest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+A 32-byte hash that uniquely identifies the transaction contents, encoded in Base58.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>effects</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionEffects</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-effects.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The results to the chain of executing this transaction.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>expiration</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Epoch</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/epoch.mdx) <Badge class="badge badge--secondary " text="object"/> 
+This field is set by senders of a transaction block. It is an epoch reference that sets a deadline after which validators will no longer consider the transaction valid. By default, there is no deadline for when a transaction must execute.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>gasInput</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>GasInput</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/gas-input.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The gas input field provides information on what objects were used as gas as well as the owner of the gas object(s) and information on the gas price and budget.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>id</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ID!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/id.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The transaction's globally unique identifier, which can be passed to `Query.node` to refetch it.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>kind</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionKind</b></code>](/references/sui-api/sui-graphql/beta/reference/types/unions/transaction-kind.mdx) <Badge class="badge badge--secondary " text="union"/> 
+The type of this transaction as well as the commands and/or parameters comprising the transaction of this kind.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>sender</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Address</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The address corresponding to the public key that signed this transaction. System transactions do not have senders.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>signatures</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[UserSignature!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/user-signature.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="object"/> 
+User signatures for this transaction.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>transactionBcs</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The Base64-encoded BCS serialization of this transaction, as a `TransactionData`.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Transaction.<b>transactionJson</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>JSON</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/json.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The transaction as a JSON blob, matching the gRPC proto format (excluding BCS).
+
+
+### Interfaces
+
+#### [<code style={{ fontWeight: 'normal' }}><b>Node</b></code>](/references/sui-api/sui-graphql/beta/reference/types/interfaces/node.mdx) <Badge class="badge badge--secondary " text="interface"/> 
+An interface implemented by types that can be uniquely identified by a globally unique `ID`, following the GraphQL Global Object Identification specification.
+
+
+
+
+
+
+### Returned By
+
+[`multiGetTransactions`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-transactions.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`transaction`](/references/sui-api/sui-graphql/beta/reference/operations/queries/transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>
+
+### Member Of
+
+[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Event`](/references/sui-api/sui-graphql/beta/reference/types/objects/event.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`IObject`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iobject.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`TransactionConnection`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-connection.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`TransactionEdge`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-edge.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`TransactionEffects`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-effects.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

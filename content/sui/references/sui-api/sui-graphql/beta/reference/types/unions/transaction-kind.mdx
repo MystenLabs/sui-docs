@@ -1,0 +1,98 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: transaction-kind
+title: TransactionKind
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Different types of transactions that can be executed on the Sui network.
+
+
+```graphql
+union TransactionKind = GenesisTransaction | ConsensusCommitPrologueTransaction | ChangeEpochTransaction | RandomnessStateUpdateTransaction | AuthenticatorStateUpdateTransaction | EndOfEpochTransaction | ProgrammableTransaction | ProgrammableSystemTransaction
+```
+
+
+
+
+### Possible types
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>GenesisTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/genesis-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+System transaction that initializes the network and writes the initial set of objects on-chain.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>ConsensusCommitPrologueTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/consensus-commit-prologue-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+System transaction that runs at the beginning of a checkpoint, and is responsible for setting the current value of the clock, based on the timestamp from consensus.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>ChangeEpochTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/change-epoch-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+A system transaction that updates epoch information on-chain (increments the current epoch). Executed by the system once per epoch, without using gas. Epoch change transactions cannot be submitted by users, because validators will refuse to sign them.
+
+This transaction kind is deprecated in favour of `EndOfEpochTransaction`.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>RandomnessStateUpdateTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/randomness-state-update-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+System transaction to update the source of on-chain randomness.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>AuthenticatorStateUpdateTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/authenticator-state-update-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>EndOfEpochTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/end-of-epoch-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+System transaction that supersedes `ChangeEpochTransaction` as the new way to run transactions at the end of an epoch. Behaves similarly to `ChangeEpochTransaction` but can accommodate other optional transactions to run at the end of the epoch.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>ProgrammableTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/programmable-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>TransactionKind.<b>ProgrammableSystemTransaction</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/programmable-system-transaction.mdx) <Badge class="badge badge--secondary " text="object"/> 
+ProgrammableSystemTransaction is identical to ProgrammableTransaction, but GraphQL does not allow multiple variants with the same type.
+
+
+
+
+
+
+### Member Of
+
+[`Transaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

@@ -35,11 +35,11 @@
       "repo": "MystenLabs/seal",
       "ref": "main",
       "sourcePath": "docs/content",
-      "targetPath": "content/seal",
+      "targetPath": "content/sui/sui-stack/seal",
       "transforms": [
         "links"
       ],
-      "linkPrefix": "/seal",
+      "linkPrefix": "/sui-stack/seal",
       "preserve": [
         "sui-stack-seal.mdx"
       ],

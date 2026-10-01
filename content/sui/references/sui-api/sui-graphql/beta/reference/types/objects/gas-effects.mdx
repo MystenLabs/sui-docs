@@ -1,0 +1,75 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: gas-effects
+title: GasEffects
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Effects related to gas (costs incurred and the identity of the smashed gas object returned).
+
+
+```graphql
+type GasEffects {
+  gasObject: Object
+  gasSummary: GasCostSummary
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>GasEffects.<b>gasObject</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Object</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The gas object used to pay for this transaction. If multiple gas coins were provided, this represents the combined coin after smashing.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>GasEffects.<b>gasSummary</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>GasCostSummary</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/gas-cost-summary.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Breakdown of the gas costs for this transaction.
+
+
+
+
+
+
+### Member Of
+
+[`TransactionEffects`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-effects.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

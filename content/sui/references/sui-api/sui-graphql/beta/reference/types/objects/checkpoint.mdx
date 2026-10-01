@@ -1,0 +1,175 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: checkpoint
+title: Checkpoint
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Checkpoints contain finalized transactions and are used for node synchronization and global transaction ordering.
+
+
+```graphql
+type Checkpoint implements Node {
+  artifactsDigest: String
+  contentBcs: Base64
+  contentDigest: String
+  digest: String
+  epoch: Epoch
+  id: ID!
+  networkTotalTransactions: UInt53
+  previousCheckpointDigest: String
+  query: Query
+  rollingGasSummary: GasCostSummary
+  sequenceNumber: UInt53!
+  summaryBcs: Base64
+  timestamp: DateTime
+  transactions(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: TransactionFilter
+  ): TransactionConnection
+  validatorSignatures: ValidatorAggregatedSignature
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>artifactsDigest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+A commitment by the committee at each checkpoint on the artifacts of the checkpoint.
+e.g., object checkpoint states
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>contentBcs</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The Base64 serialized BCS bytes of this checkpoint's contents.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>contentDigest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+A 32-byte hash that uniquely identifies the checkpoint's content, encoded in Base58.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>digest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+A 32-byte hash that uniquely identifies the checkpoint, encoded in Base58. This is a hash of the checkpoint's summary.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>epoch</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Epoch</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/epoch.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The epoch that this checkpoint is part of.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>id</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ID!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/id.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The checkpoint's globally unique identifier, which can be passed to `Query.node` to refetch it.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>networkTotalTransactions</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The total number of transactions in the network by the end of this checkpoint.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>previousCheckpointDigest</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The digest of the previous checkpoint's summary.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>query</b></code>](#)<Bullet /><code style={{ fontWeight: 'normal' }}><b>Query</b></code> <Badge class="badge badge--secondary " text="object"/> 
+Query the RPC as if this checkpoint were the latest checkpoint.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>rollingGasSummary</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>GasCostSummary</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/gas-cost-summary.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The computation cost, storage cost, storage rebate, and non-refundable storage fee accumulated during this epoch, up to and including this checkpoint. These values increase monotonically across checkpoints in the same epoch, and reset on epoch boundaries.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>sequenceNumber</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The checkpoint's position in the total order of finalized checkpoints, agreed upon by consensus.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>summaryBcs</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Base64</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/base-64.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The Base64 serialized BCS bytes of this checkpoint's summary.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>timestamp</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DateTime</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/date-time.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The timestamp at which the checkpoint is agreed to have happened according to consensus. Transactions that access time in this checkpoint will observe this timestamp.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>transactions</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionConnection</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-connection.mdx) <Badge class="badge badge--secondary " text="object"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Checkpoint.transactions.<b>first</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Checkpoint.transactions.<b>after</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Checkpoint.transactions.<b>last</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Int</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Checkpoint.transactions.<b>before</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>Checkpoint.transactions.<b>filter</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>TransactionFilter</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/transaction-filter.mdx) <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Checkpoint.<b>validatorSignatures</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>ValidatorAggregatedSignature</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/validator-aggregated-signature.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The aggregation of signatures from a quorum of validators for the checkpoint proposal.
+
+
+### Interfaces
+
+#### [<code style={{ fontWeight: 'normal' }}><b>Node</b></code>](/references/sui-api/sui-graphql/beta/reference/types/interfaces/node.mdx) <Badge class="badge badge--secondary " text="interface"/> 
+An interface implemented by types that can be uniquely identified by a globally unique `ID`, following the GraphQL Global Object Identification specification.
+
+
+
+
+
+
+### Returned By
+
+[`checkpoint`](/references/sui-api/sui-graphql/beta/reference/operations/queries/checkpoint.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`multiGetCheckpoints`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-checkpoints.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>
+
+### Member Of
+
+[`AvailableRange`](/references/sui-api/sui-graphql/beta/reference/types/objects/available-range.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CheckpointConnection`](/references/sui-api/sui-graphql/beta/reference/types/objects/checkpoint-connection.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CheckpointEdge`](/references/sui-api/sui-graphql/beta/reference/types/objects/checkpoint-edge.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`TransactionEffects`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction-effects.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

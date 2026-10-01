@@ -1,0 +1,75 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: mutate-consensus-stream-ended
+title: MutateConsensusStreamEnded
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+A transaction that wanted to mutate a consensus-managed object but couldn't because it became not-consensus-managed before the transaction executed (for example, it was deleted, turned into an owned object, or wrapped).
+
+
+```graphql
+type MutateConsensusStreamEnded {
+  address: SuiAddress
+  sequenceNumber: UInt53
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>MutateConsensusStreamEnded.<b>address</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The ID of the consensus-managed object.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>MutateConsensusStreamEnded.<b>sequenceNumber</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+The sequence number associated with the consensus stream ending.
+
+
+
+
+
+
+### Implemented By
+
+[`UnchangedConsensusObject`](/references/sui-api/sui-graphql/beta/reference/types/unions/unchanged-consensus-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="union"/>
