@@ -62,6 +62,7 @@ function main() {
         file,
         source: owner.name,
         repo: owner.repo,
+        ref: owner.ref,
         upstreamPath: `${owner.sourcePath}/${file.slice(owner.targetPath.length + 1)}`,
       });
     }
@@ -80,7 +81,7 @@ function main() {
   for (const o of offending) {
     console.log(`::error file=${o.file}::Mirrored from ${o.repo}. Edit ${o.upstreamPath} there instead; this copy is overwritten by the next mirror run.`);
     console.log(`  ${o.file}`);
-    console.log(`    -> https://github.com/${o.repo}/blob/main/${o.upstreamPath}`);
+    console.log(`    -> https://github.com/${o.repo}/blob/${o.ref}/${o.upstreamPath}`);
   }
   console.log(
     `\nThe forward-port workflow can open these as pull requests against the source ` +
