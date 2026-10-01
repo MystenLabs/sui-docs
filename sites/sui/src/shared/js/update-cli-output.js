@@ -30,11 +30,14 @@ const COMMANDS = [
   { cmd: "sui client ptb --help", out: "sui-client-ptb-help.mdx" },
 ];
 
-/** Root for snippet outputs (kept identical to the workflow paths). */
-const SNIPPETS_DIR = path.join(
-  __dirname,
-  "../../../content/snippets/console-output",
-);
+/**
+ * Root for snippet outputs. Resolved through roots.cjs rather than a path
+ * relative to this file: ../../../content resolves to <site>/content, which is
+ * not where any consumer keeps its pages. Node scripts in this tree use
+ * CONTENT_ROOT the way convert-release-notes.cjs does.
+ */
+const { CONTENT_ROOT } = require("../../../scripts/lib/roots.cjs");
+const SNIPPETS_DIR = path.join(CONTENT_ROOT, "snippets/console-output");
 
 function ensureDir(p) {
   if (!fs.existsSync(p)) {

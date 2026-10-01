@@ -6,15 +6,18 @@
 import React from "react";
 
 /**
- * Glob-imports every MDX file under docs/snippets at build time via
- * Webpack's require.context.
+ * Glob-imports every MDX file under the consuming site's snippets directory at
+ * build time via Webpack's require.context.
+ *
+ * Resolved through the @docs alias, not a relative path. This file is shared by
+ * every Sui Stack docs site and they do not agree on where their pages live: the
+ * relative form here pointed at <site>/docs/snippets, which exists in no
+ * consumer, while the copy in ML-shared-docusaurus pointed at
+ * <site>/content/snippets. Each site maps @docs to its own content root, so the
+ * alias is the only form that can be shared. ImportContent already does this.
  */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const req = (require as any).context(
-  "../../../../docs/snippets",
-  true,
-  /\.mdx$/,
-);
+const req = (require as any).context("@docs/snippets", true, /\.mdx$/);
 
 type SnippetModule = { default: React.ComponentType<any> };
 const SNIPPETS: Record<string, React.ComponentType<any>> = {};
