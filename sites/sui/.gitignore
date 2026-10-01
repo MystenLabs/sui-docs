@@ -43,5 +43,10 @@ scripts/.cache/
 ## locally cloned display preview - should only exist during build
 static/display-preview/
 
-## shared components pulled in from ml-shared-components repo
-src/shared
+## src/shared is NOT ignored here.
+## Upstream (MystenLabs/sui) carries this rule, but all 45 files are committed
+## there anyway, so the rule only ever hid them from a fresh checkout -- which is
+## how they failed to come across in this move and left the tree unbuildable.
+## MystenLabs/ML-shared-docusaurus is the nominal origin and is 13 files behind
+## with 13 more diverged, so mirroring from it would delete components that ~71
+## pages import. Tracked here until that is reconciled.

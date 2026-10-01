@@ -6,18 +6,20 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 // Get __dirname equivalent in ES modules
+import roots from "./lib/roots.cjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// The awesome-sui trees are vendored into MystenLabs/sui as a git subtree, so
+// they arrive with the fetched source checkout rather than living here.
+// See scripts/lib/roots.cjs.
+const { CONTENT_ROOT, SOURCE_ROOT } = roots;
+const subtree = (p) => path.join(SOURCE_ROOT, "docs/subtree", p);
+
 // Paths (adjusted for new location)
-const readmePath = path.join(
-  __dirname,
-  "../../subtree/awesome-sui-gaming/README.md",
-);
-const readmeTargetPath = path.join(
-  __dirname,
-  "../../content/references/awesome-sui-gaming.mdx",
-);
+const readmePath = subtree("awesome-sui-gaming/README.md");
+const readmeTargetPath = path.join(CONTENT_ROOT, "references/awesome-sui-gaming.mdx");
 
 // Process the content for the awesome-sui-gaming README structure:
 // - Remove everything up to and including the # Contents section

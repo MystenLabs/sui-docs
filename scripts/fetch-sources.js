@@ -32,6 +32,16 @@ const CODE_CACHE = process.env.CODE_CACHE || path.join(REPO_ROOT, ".cache/code")
 const run = (cmd, cmdArgs, cwd) =>
   execFileSync(cmd, cmdArgs, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 
+/** Files under dir, ignoring .git. Used to catch a fetch that produced nothing. */
+function countFiles(dir) {
+  let n = 0;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.name === ".git") continue;
+    n += e.isDirectory() ? countFiles(path.join(dir, e.name)) : 1;
+  }
+  return n;
+}
+
 /**
  * Sparse-clone one source at its pinned ref. Returns the commit actually
  * fetched, which is what the lockfile records: a ref like "main" moves, and a
@@ -57,13 +67,20 @@ function fetchOne(source) {
     `https://github.com/${source.repo}.git`,
     dir,
   ]);
-  run("git", ["-C", dir, "sparse-checkout", "set", "--no-cone", source.sourcePath]);
+  // "." as a sparse pattern matches nothing, so a whole-repo source has to turn
+  // sparse checkout off instead. Setting it to "." fetches an empty tree and,
+  // because path.join(dir, ".") is dir itself, the check below used to pass.
+  if (source.sourcePath === ".") {
+    run("git", ["-C", dir, "sparse-checkout", "disable"]);
+  } else {
+    run("git", ["-C", dir, "sparse-checkout", "set", "--no-cone", source.sourcePath]);
+  }
 
   const head = run("git", ["-C", dir, "rev-parse", "HEAD"]);
   const content = path.join(dir, source.sourcePath);
-  if (!fs.existsSync(content)) {
+  if (!fs.existsSync(content) || countFiles(content) === 0) {
     throw new Error(
-      `${source.name}: ${source.repo}@${source.ref} has no ${source.sourcePath}. ` +
+      `${source.name}: ${source.repo}@${source.ref} fetched no files from ${source.sourcePath}. ` +
         `The path moved, or sources.json is wrong.`,
     );
   }

@@ -23,10 +23,10 @@ const STDLIB_PATH = frameworkDocs("std");
 //   "../../../../../crates/sui-framework/docs/deepbook",
 // );
 const SUISYS_PATH = frameworkDocs("sui_system");
-const DOCS_PATH = path.join(
-  __dirname,
-  "../../../../content/references/framework",
-);
+// Must resolve against CONTENT_ROOT, not __dirname. The old relative path
+// assumed the site sat inside the docs tree; here it lands in sites/content,
+// outside the content root, and Docusaurus never sees the 113 pages it writes.
+const DOCS_PATH = path.join(CONTENT_ROOT, "references/framework");
 
 // prefix helper for the first path segment only
 const prefixRootDir = (seg) => `sui_${seg}`;

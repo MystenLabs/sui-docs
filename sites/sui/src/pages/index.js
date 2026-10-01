@@ -31,18 +31,22 @@ export default function Home() {
   // Machine-readable entry points. Every one of these is live today and none of
   // them is discoverable from the home page, which is the only reason this
   // section exists.
+  //
+  // llms.txt and the .md export are served files, not Docusaurus routes, so a
+  // site-relative link to them fails the strict build's route check. Absolute
+  // URLs skip that check and match how the hub is meant to move domains later.
   const agentResources = [
     {
       title: "llms.txt",
       description:
         "A page index for language models, with links to the equivalent file on every other Mysten docs site.",
-      to: "/llms.txt",
+      to: "https://docs.sui.io/llms.txt",
     },
     {
       title: "Markdown for any page",
       description:
         "Append .md to any docs.sui.io URL to get clean markdown instead of HTML. Try /develop.md.",
-      to: "/develop.md",
+      to: "https://docs.sui.io/develop.md",
     },
     {
       title: "Agent skills",
