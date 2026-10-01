@@ -1,0 +1,87 @@
+name: Mirror external docs
+
+# Pulls every mirrored source in sources.json and commits what changed.
+#
+# The build reads the committed tree rather than fetching, so three things hold:
+# the repository always shows exactly what the sites last published, a broken or
+# mid-merge upstream state cannot reach a build, and if this job fails the sites
+# freeze on the last good content instead of publishing something half-fetched.
+#
+# Sources push here rather than being polled: a repository_dispatch from a
+# source repo syncs within a minute. The schedule is a safety net for anything
+# the dispatch missed, not the primary path.
+
+on:
+  repository_dispatch:
+    types: [docs-changed]
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Space-separated source names, or empty for all"
+        type: string
+        required: false
+      dry_run:
+        description: "Fetch and compare, commit nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Fetch sources
+        env:
+          SOURCES: ${{ inputs.sources }}
+          # A dispatch names the source that changed, so a push to one repo
+          # does not refetch all nine.
+          DISPATCH_SOURCE: ${{ github.event.client_payload.source }}
+        run: |
+          set -euo pipefail
+          TARGETS="${SOURCES:-${DISPATCH_SOURCE:-}}"
+          echo "targets: ${TARGETS:-<all>}"
+          node scripts/fetch-sources.js --force $TARGETS
+
+      - name: Mirror into content/
+        env:
+          SOURCES: ${{ inputs.sources }}
+          DISPATCH_SOURCE: ${{ github.event.client_payload.source }}
+        run: |
+          set -euo pipefail
+          TARGETS="${SOURCES:-${DISPATCH_SOURCE:-}}"
+          node scripts/mirror.js $TARGETS
+
+      - name: Commit
+        if: inputs.dry_run != true
+        run: |
+          set -euo pipefail
+          git config user.name "mysten-docs-bot[bot]"
+          git config user.email "mysten-docs-bot[bot]@users.noreply.github.com"
+          git add content/ sources.lock.json
+          if git diff --cached --quiet; then
+            echo "No change."
+            exit 0
+          fi
+          git diff --cached --stat
+          git commit -m "mirror: sync external docs"
+          git push
+
+      - name: Report (dry run)
+        if: inputs.dry_run == true
+        run: |
+          git --no-pager diff --stat || true
+          echo "Dry run: nothing committed."

@@ -1,0 +1,19 @@
+{
+	"root": true,
+	"title": "Sui SDK",
+	"description": "TypeScript interfaces for Sui",
+	"pages": [
+		"index",
+		"llm-docs",
+		"clients",
+		"transactions",
+		"cryptography",
+		"utils",
+		"bcs",
+		"zklogin",
+		"executors",
+		"plugins",
+		"sdk-building",
+		"migrations"
+	]
+}

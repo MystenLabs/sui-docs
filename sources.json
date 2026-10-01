@@ -1,0 +1,220 @@
+{
+  "$comment": [
+    "Every external source this repository renders, in one place.",
+    "",
+    "ownership tells you who edits a source and therefore how it behaves here:",
+    "  moved    the pages live in this repo and are edited here.",
+    "  mirrored the pages live in the source repo, are edited there, and are",
+    "           committed here read-only by the mirror job. A pull request that",
+    "           edits a mirrored path is forwarded to the source repo rather",
+    "           than merged here. See scripts/check-mirror-edits.js.",
+    "",
+    "ref pins what gets fetched. 'main' tracks the source's default branch;",
+    "a tag or SHA freezes it. The three sources outside the MystenLabs org",
+    "should be pinned to a SHA rather than a branch someone else controls.",
+    "",
+    "preserve lists files inside a mirrored target that are authored HERE and",
+    "must survive the mirror's clean-and-rewrite. They are exempt from the guard."
+  ],
+  "sources": {
+    "walrus": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/walrus",
+      "ref": "main",
+      "sourcePath": "docs/content",
+      "targetPath": "content/walrus",
+      "transforms": [
+        "links"
+      ],
+      "linkPrefix": "/walrus",
+      "preserve": [],
+      "exclude": []
+    },
+    "seal": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/seal",
+      "ref": "main",
+      "sourcePath": "docs/content",
+      "targetPath": "content/seal",
+      "transforms": [
+        "links"
+      ],
+      "linkPrefix": "/seal",
+      "preserve": [
+        "sui-stack-seal.mdx"
+      ],
+      "exclude": [
+        "Seal_White_Paper_v2.pdf"
+      ],
+      "fileMap": {
+        "index.mdx": "index.mdx",
+        "Aggregator.mdx": "aggregator.mdx",
+        "Design.mdx": "design.mdx",
+        "ExamplePatterns.mdx": "example-patterns.mdx",
+        "GettingStarted.mdx": "getting-started.mdx",
+        "KeyServerCommitteeOps.mdx": "key-server-committee-ops.mdx",
+        "KeyServerOps.mdx": "key-server-ops.mdx",
+        "Pricing.mdx": "pricing.mdx",
+        "SealCLI.mdx": "seal-cli.mdx",
+        "SecurityBestPractices.mdx": "security-best-practices.mdx",
+        "ServerOverview.mdx": "server-overview.mdx",
+        "TermsOfService.md": "terms-of-service.mdx",
+        "UsingSeal.mdx": "using-seal.mdx",
+        "_InfrastructureRequirements.mdx": "_InfrastructureRequirements.mdx",
+        "_SealPackageIds.mdx": "_SealPackageIds.mdx"
+      }
+    },
+    "suins": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/suins-contracts",
+      "ref": "main",
+      "sourcePath": "documentation/content",
+      "targetPath": "content/suins",
+      "transforms": [
+        "links"
+      ],
+      "linkPrefix": "/suins",
+      "preserve": [],
+      "exclude": []
+    },
+    "hashi": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/hashi",
+      "ref": "main",
+      "sourcePath": "design/docs",
+      "targetPath": "content/hashi",
+      "transforms": [
+        "links"
+      ],
+      "linkPrefix": "/hashi",
+      "preserve": [],
+      "exclude": []
+    },
+    "move-book": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/move-book",
+      "ref": "main",
+      "sourcePath": "book",
+      "targetPath": "content/move-book",
+      "transforms": [
+        "links"
+      ],
+      "linkPrefix": "/move-book",
+      "preserve": [],
+      "exclude": []
+    },
+    "ts-sdks": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/ts-sdks",
+      "ref": "main",
+      "sourcePath": "packages/docs/content",
+      "targetPath": "content/ts-sdks",
+      "transforms": [],
+      "linkPrefix": "/ts-sdks",
+      "preserve": [],
+      "exclude": [],
+      "note": "Fumadocs MDX, not Docusaurus MDX. Mirrored for one searchable tree and one audit pipeline; its own site keeps building it."
+    },
+    "messaging": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/sui-stack-messaging",
+      "ref": "main",
+      "sourcePath": "docs/sui-stack-messaging",
+      "targetPath": "content/sui/sui-stack/messaging",
+      "transforms": [
+        "frontmatter",
+        "admonitions",
+        "nav-header",
+        "toc",
+        "links"
+      ],
+      "linkPrefix": "/sui-stack/messaging",
+      "preserve": [
+        "index.mdx",
+        "chat-app.mdx"
+      ],
+      "exclude": [],
+      "fileMap": {
+        "Installation.md": "installation.mdx",
+        "Setup.md": "setup.mdx",
+        "Examples.md": "examples.mdx",
+        "APIRef.md": "api-reference.mdx",
+        "Encryption.md": "encryption.mdx",
+        "Security.md": "security.mdx",
+        "Relayer.md": "relayer.mdx",
+        "Attachments.md": "attachments.mdx",
+        "ArchiveRecovery.md": "archive-recovery.mdx",
+        "GroupDiscovery.md": "group-discovery.mdx",
+        "Extending.md": "extending.mdx",
+        "Testing.md": "testing.mdx",
+        "CommunityContributed.md": "community-contributed.mdx"
+      }
+    },
+    "oyster": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/oyster",
+      "ref": "main",
+      "sourcePath": "docs/src",
+      "targetPath": "content/oyster",
+      "transforms": [
+        "links"
+      ],
+      "linkPrefix": "/oyster",
+      "preserve": [],
+      "exclude": []
+    },
+    "walrus-memory": {
+      "ownership": "mirrored",
+      "repo": "MystenLabs/MemWal",
+      "ref": "dev",
+      "sourcePath": "docs",
+      "targetPath": "content/walrus-memory",
+      "transforms": [
+        "links"
+      ],
+      "linkPrefix": "/walrus-memory",
+      "preserve": [],
+      "exclude": []
+    }
+  },
+  "codeSources": {
+    "$comment": "Fetched so pages can quote and verify source. Never written back, never rendered as pages. The ones outside MystenLabs are called out because nobody here controls their branches.",
+    "sui": {
+      "repo": "MystenLabs/sui",
+      "ref": "main",
+      "paths": [
+        "crates",
+        "examples"
+      ]
+    },
+    "ts-sdks": {
+      "repo": "MystenLabs/ts-sdks",
+      "ref": "main",
+      "paths": [
+        "packages"
+      ]
+    },
+    "deepbookv3": {
+      "repo": "MystenLabs/deepbookv3",
+      "ref": "main",
+      "paths": [
+        "packages"
+      ]
+    },
+    "sui-apis": {
+      "repo": "MystenLabs/sui-apis",
+      "ref": "gen-docs",
+      "paths": [
+        "documentation.json"
+      ]
+    },
+    "playtron-sdk": {
+      "repo": "playtron-os/playtron-sdk",
+      "ref": "main",
+      "paths": [
+        "."
+      ],
+      "external": true
+    }
+  }
+}
