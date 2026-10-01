@@ -48,6 +48,8 @@ Input for withdrawing funds from an accumulator.
 
 ```graphql
 type BalanceWithdraw {
+  allowance: Address
+  funder: Address
   reservation: WithdrawalReservation
   type: MoveType
   withdrawFrom: WithdrawFrom
@@ -58,6 +60,14 @@ type BalanceWithdraw {
 
 
 ### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>BalanceWithdraw.<b>allowance</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Address</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The allowance authorizing the withdrawal, if `withdrawFrom` is `SENDER_ALLOWANCE`. Use `asTransactionObject` to see it as this transaction referenced it.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>BalanceWithdraw.<b>funder</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>Address</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx) <Badge class="badge badge--secondary " text="object"/> 
+The account whose funds are withdrawn, if `withdrawFrom` is `SENDER_ALLOWANCE`.
+
 
 #### [<code style={{ fontWeight: 'normal' }}>BalanceWithdraw.<b>reservation</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>WithdrawalReservation</b></code>](/references/sui-api/sui-graphql/beta/reference/types/unions/withdrawal-reservation.mdx) <Badge class="badge badge--secondary " text="union"/> 
 How much to withdraw from the accumulator.

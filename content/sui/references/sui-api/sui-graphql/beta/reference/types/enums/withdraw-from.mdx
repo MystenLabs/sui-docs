@@ -50,6 +50,7 @@ The account to withdraw funds from.
 enum WithdrawFrom {
   SENDER
   SPONSOR
+  SENDER_ALLOWANCE
 }
 ```
 
@@ -64,6 +65,10 @@ The funds are withdrawn from the transaction sender's account.
 
 #### [<code style={{ fontWeight: 'normal' }}>WithdrawFrom.<b>SPONSOR</b></code>](#)  
 The funds are withdrawn from the sponsor's account.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>WithdrawFrom.<b>SENDER&#x005F;ALLOWANCE</b></code>](#)  
+The funds are withdrawn from the account of an allowance's funder, under an allowance granted to the transaction sender. See `BalanceWithdraw.funder` and `BalanceWithdraw.allowance`.
 
 
 

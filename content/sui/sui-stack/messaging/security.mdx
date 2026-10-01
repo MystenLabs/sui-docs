@@ -30,11 +30,11 @@ Trust levels range from trustless (fully verifiable), to trust-minimized (crypto
 
 This reflects a deliberate architectural shift from fully onchain ordering towards a hybrid trust model optimized for real-time messaging scale while preserving cryptographic security guarantees.
 
-The relayer includes a Walrus Sync component, and the SDK includes a reference walrus-discovery-indexer service that allows clients to recover messages when needed, or load messages across devices without having to configure backups to costlier and centralized storage systems. See [Relayer](/sui-stack/messaging/Relayer) for details.
+The relayer includes a Walrus Sync component, and the SDK includes a reference walrus-discovery-indexer service that allows clients to recover messages when needed, or load messages across devices without having to configure backups to costlier and centralized storage systems. See [Relayer](/sui-stack/messaging/relayer) for details.
 
 ## Security guarantees
 
-- End-to-end encryption: Messages are encrypted client-side with AES-256-GCM before leaving the device. The relayer only stores and serves opaque ciphertext. See [Encryption](/sui-stack/messaging/Encryption) for the full encryption model.
+- End-to-end encryption: Messages are encrypted client-side with AES-256-GCM before leaving the device. The relayer only stores and serves opaque ciphertext. See [Encryption](/sui-stack/messaging/encryption) for the full encryption model.
 - Ciphertext integrity: AES-GCM's 16-byte authentication tag detects any tampering with the ciphertext in transit or at rest.
 - Sender verification: Each message includes a per-message signature over the canonical content (`groupId:encryptedText:nonce:keyVersion`), along with the sender's public key. This protects against message forgery by allowing clients to validate per-message signatures and independently verify that a message was signed by the claimed sender.
 - Permission-gated decryption: Access to the group DEK (Data Encryption Key) is controlled by Seal. Only addresses with `MessagingReader` permission on the group can decrypt the DEK.
@@ -50,7 +50,7 @@ Past messages remain secret even if long-term keys are compromised later.
 
 When a new member joins a group, they receive `MessagingReader` permission, which grants access to the group's DEKs through Seal. The default Seal policy (`seal_approve_reader`) checks that the caller holds `MessagingReader` and that the requested key version exists, but does not restrict which key versions a member can access. A new member can decrypt any key version from 0 to the current version and therefore read all historical messages.
 
-The default model prioritizes usability, recoverability, and cross-device access over forward secrecy with respect to new members. If you require forward secrecy, you can implement an optional custom mechanism on top of the SDK before using it. See the [Extending guide](/sui-stack/messaging/Extending) for examples.
+The default model prioritizes usability, recoverability, and cross-device access over forward secrecy with respect to new members. If you require forward secrecy, you can implement an optional custom mechanism on top of the SDK before using it. See the [Extending guide](/sui-stack/messaging/extending) for examples.
 
 #### No per-message key ratcheting
 
@@ -85,7 +85,7 @@ It can:
 - Influence message delivery and ordering
 - Attribute messages to the wrong sender in the stored `senderAddress` field (though the per-message signature lets clients detect this)
 
-Message confidentiality and authenticity remain cryptographically protected regardless of relayer behavior. To further minimize trust requirements, consider deploying the relayer within [Nautilus](https://docs.sui.io/guides/developer/nautilus/) as a tamper-proof, verifiable relayer that can anchor attestations onchain at periodic intervals. See [Relayer](/sui-stack/messaging/Relayer) for more details on the relayer architecture.
+Message confidentiality and authenticity remain cryptographically protected regardless of relayer behavior. To further minimize trust requirements, consider deploying the relayer within [Nautilus](https://docs.sui.io/guides/developer/nautilus/) as a tamper-proof, verifiable relayer that can anchor attestations onchain at periodic intervals. See [Relayer](/sui-stack/messaging/relayer) for more details on the relayer architecture.
 
 ### Nonce collision risk
 
@@ -105,11 +105,11 @@ These recommendations are best practices rather than mandatory requirements.
 
 4. Check `senderVerified` on received messages. The SDK populates this field after verifying the per-message signature. Messages where `senderVerified` is `false` should be treated with caution.
 
-5. Implement a message recovery service for production. Follow the reference walrus-discovery-indexer or build a custom solution. See [Relayer](/sui-stack/messaging/Relayer) for details.
+5. Implement a message recovery service for production. Follow the reference walrus-discovery-indexer or build a custom solution. See [Relayer](/sui-stack/messaging/relayer) for details.
 
-6. For high-security use cases, consider implementing a custom Seal policy with additional access controls (for example, subscription-gated, NFT-gated, version-restricted). See the [Extending guide](/sui-stack/messaging/Extending) for examples.
+6. For high-security use cases, consider implementing a custom Seal policy with additional access controls (for example, subscription-gated, NFT-gated, version-restricted). See the [Extending guide](/sui-stack/messaging/extending) for examples.
 
-7. Deploy your own relayer for production. The reference relayer is intended as a starting implementation, and you should consider adding rails to better fit your reliability, security, and scalability goals. Consider deploying within [Nautilus](https://docs.sui.io/guides/developer/nautilus/) for verifiable execution. See [Relayer](/sui-stack/messaging/Relayer) for the `RelayerTransport` interface and guidance on custom implementations.
+7. Deploy your own relayer for production. The reference relayer is intended as a starting implementation, and you should consider adding rails to better fit your reliability, security, and scalability goals. Consider deploying within [Nautilus](https://docs.sui.io/guides/developer/nautilus/) for verifiable execution. See [Relayer](/sui-stack/messaging/relayer) for the `RelayerTransport` interface and guidance on custom implementations.
 
 ## Architecture comparison: alpha vs current
 

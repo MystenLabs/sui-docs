@@ -3,10 +3,12 @@
 
 const fs = require("fs");
 const path = require("path");
+const { CONTENT_ROOT } = require("./lib/roots.cjs");
+const CONTENT_REL = (p) => require("path").join(CONTENT_ROOT, p);
 
 const filePath = path.resolve(
   __dirname,
-  "../../content/references/sui-api/sui-graphql/beta/reference/types/objects/checkpoint.mdx",
+  CONTENT_REL("references/sui-api/sui-graphql/beta/reference/types/objects/checkpoint.mdx"),
 );
 
 let content = fs.readFileSync(filePath, "utf8");

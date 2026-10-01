@@ -1,0 +1,69 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: multi-get-derived-objects
+title: multiGetDerivedObjects
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Access derived objects under parent objects using their names and optional version bounds.
+
+Each key can specify at most one of `version`, `rootVersion`, or `atCheckpoint`, with the same semantics as `Query.object`. Returns a list that is guaranteed to be the same length as `keys`. If a derived object has not been claimed, has been deleted, or is not available in the store, its corresponding entry is `null`.
+
+
+```graphql
+multiGetDerivedObjects(
+  keys: [NameKey!]!
+): [MoveObject]!
+```
+
+
+
+
+### Arguments
+
+#### [<code style={{ fontWeight: 'normal' }}>multiGetDerivedObjects.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[NameKey!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/name-key.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+### Type
+
+#### [<code style={{ fontWeight: 'normal' }}><b>MoveObject</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+A MoveObject is a kind of Object that reprsents data stored on-chain.

@@ -1,0 +1,92 @@
+---
+isGraphQlBeta: true
+pagination_next: null
+pagination_prev: null
+hide_table_of_contents: true
+id: name-key
+title: NameKey
+---
+
+
+
+
+export const Bullet = () => <><span style={{ fontWeight: 'normal', fontSize: '.5em', color: 'var(--ifm-color-secondary-darkest)' }}>&nbsp;●&nbsp;</span></>
+
+export const SpecifiedBy = (props) => <>Specification<a className="link" style={{ fontSize:'1.5em', paddingLeft:'4px' }} target="_blank" href={props.url} title={'Specified by ' + props.url}>⎘</a></>
+
+export const Badge = (props) => <><span className={props.class}>{props.text}</span></>
+
+import { useState } from 'react';
+
+export const Details = ({ dataOpen, dataClose, children, startOpen = false }) => {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <details {...(open ? { open: true } : {})} className="details" style={{ border:'none', boxShadow:'none', background:'var(--ifm-background-color)' }}>
+      <summary
+        onClick={(e) => {
+          e.preventDefault();
+          setOpen((open) => !open);
+        }}
+        style={{ listStyle:'none' }}
+      >
+      {open ? dataOpen : dataClose}
+      </summary>
+      {open && children}
+    </details>
+  );
+};
+
+
+
+
+
+
+
+
+Identifies a dynamic field or derived object under a parent object.
+
+At most one of `version`, `rootVersion`, or `atCheckpoint` may be specified.
+
+
+```graphql
+input NameKey {
+  atCheckpoint: UInt53
+  name: DynamicFieldName!
+  parent: SuiAddress!
+  rootVersion: UInt53
+  version: UInt53
+}
+```
+
+
+
+
+### Fields
+
+#### [<code style={{ fontWeight: 'normal' }}>NameKey.<b>atCheckpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+If specified, fetch the latest version of the result as of this checkpoint.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>NameKey.<b>name</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicFieldName!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+The dynamic field name or derived object key.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>NameKey.<b>parent</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>SuiAddress!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/sui-address.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+The parent object that owns the dynamic field or derived object claim.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>NameKey.<b>rootVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+If specified, fetch the latest version of the result at or before this root version.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>NameKey.<b>version</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+If specified, fetch the result at this exact version.
+
+
+
+
+
+
+### Member Of
+
+[`multiGetDerivedObjects`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-derived-objects.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`multiGetDynamicFields`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-dynamic-fields.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/><Bullet />[`multiGetDynamicObjectFields`](/references/sui-api/sui-graphql/beta/reference/operations/queries/multi-get-dynamic-object-fields.mdx)  <Badge class="badge badge--secondary badge--relation" text="query"/>

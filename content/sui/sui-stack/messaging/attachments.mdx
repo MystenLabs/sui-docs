@@ -28,7 +28,7 @@ const client = createMessagingGroupsClient(baseClient, {
 });
 ```
 
-When omitted, `sendMessage` cannot include files and received attachment metadata is not resolvable. See [Setup](/sui-stack/messaging/Setup) for the full configuration reference.
+When omitted, `sendMessage` cannot include files and received attachment metadata is not resolvable. See [Setup](/sui-stack/messaging/setup) for the full configuration reference.
 
 ## Encryption model
 
@@ -51,7 +51,7 @@ Attachments use the same group DEK as message text, but each file gets its own e
 
 Metadata is encrypted separately from file data. This allows clients to decrypt metadata (to display file name, type, and size) without downloading the full file content.
 
-See [Encryption](/sui-stack/messaging/Encryption) for the underlying DEK management and AES-GCM details.
+See [Encryption](/sui-stack/messaging/encryption) for the underlying DEK management and AES-GCM details.
 
 ## Upload flow
 
@@ -128,6 +128,6 @@ The `WalrusHttpStorageAdapter` uses the Walrus HTTP publisher and aggregator:
 
 ## Custom storage adapters
 
-Implement the `StorageAdapter` interface to use any storage backend. The adapter is encryption-unaware: it only handles opaque bytes. See [Extending](/sui-stack/messaging/Extending) for the interface definition and examples.
+Implement the `StorageAdapter` interface to use any storage backend. The adapter is encryption-unaware: it only handles opaque bytes. See [Extending](/sui-stack/messaging/extending) for the interface definition and examples.
 
 

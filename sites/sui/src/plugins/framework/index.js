@@ -9,26 +9,20 @@
 import path from "path";
 import fs from "fs";
 
-const BRIDGE_PATH = path.join(
-  __dirname,
-  "../../../../../crates/sui-framework/docs/bridge",
-);
-const FRAMEWORK_PATH = path.join(
-  __dirname,
-  "../../../../../crates/sui-framework/docs/sui",
-);
-const STDLIB_PATH = path.join(
-  __dirname,
-  "../../../../../crates/sui-framework/docs/std",
-);
+// The generated Move framework docs live in the sui source checkout, not in
+// this repo. See scripts/lib/roots.cjs.
+const { CONTENT_ROOT, SOURCE_ROOT } = require("../../../scripts/lib/roots.cjs");
+const frameworkDocs = (pkg) =>
+  path.join(SOURCE_ROOT, "crates/sui-framework/docs", pkg);
+
+const BRIDGE_PATH = frameworkDocs("bridge");
+const FRAMEWORK_PATH = frameworkDocs("sui");
+const STDLIB_PATH = frameworkDocs("std");
 // const DEEPBOOK_PATH = path.join(
 //   __dirname,
 //   "../../../../../crates/sui-framework/docs/deepbook",
 // );
-const SUISYS_PATH = path.join(
-  __dirname,
-  "../../../../../crates/sui-framework/docs/sui_system",
-);
+const SUISYS_PATH = frameworkDocs("sui_system");
 const DOCS_PATH = path.join(
   __dirname,
   "../../../../content/references/framework",

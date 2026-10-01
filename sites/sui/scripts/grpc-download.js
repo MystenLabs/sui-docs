@@ -11,10 +11,8 @@ const repo = {
   branch: "gen-docs",
   filePath: "documentation.json",
 };
-const PROTOCOL_PATH = path.join(
-  __dirname,
-  "../../content/documentation.json",
-);
+const { CONTENT_ROOT } = require("./lib/roots.cjs");
+const PROTOCOL_PATH = path.join(CONTENT_ROOT, "documentation.json");
 
 const url = `https://raw.githubusercontent.com/${repo.owner}/${repo.name}/${repo.branch}/${repo.filePath}`;
 

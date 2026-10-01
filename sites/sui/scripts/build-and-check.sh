@@ -5,8 +5,18 @@
 
 LOG=$(mktemp)
 
+# The content tree is no longer a fixed hop from this script: it lives at
+# content/<site> in the repo root, and DOCS_CONTENT_ROOT can move it again.
+# Ask the one module that knows rather than counting ../ here.
+CONTENT_DIR="$(node -e 'process.stdout.write(require("./scripts/lib/roots.cjs").CONTENT_ROOT)')"
+if [ -z "$CONTENT_DIR" ] || [ ! -d "$CONTENT_DIR" ]; then
+  echo "Could not resolve the content root (got: ${CONTENT_DIR:-<empty>})"
+  exit 1
+fi
+echo "Content root: $CONTENT_DIR"
+
 # Remove generated framework docs if they exist
-FRAMEWORK_DIR="$(dirname "$0")/../content/references/framework"
+FRAMEWORK_DIR="$CONTENT_DIR/references/framework"
 if [ -d "$FRAMEWORK_DIR" ]; then
   echo "Removing existing framework docs at $FRAMEWORK_DIR"
   rm -rf "$FRAMEWORK_DIR"
@@ -18,7 +28,7 @@ node scripts/validate-gasless-tokens.mjs || { echo "❌ validate-gasless-tokens 
 node scripts/generate-import-context.js || { echo "❌ generate-import-context failed"; exit 1; }
 node scripts/generate-resolved-pages.js || { echo "❌ generate-resolved-pages failed"; exit 1; }
 node scripts/grpc-download.js || { echo "❌ grpc-download failed"; exit 1; }
-docusaurus graphql-to-doc:beta && node scripts/remove-no-desc.mjs ../content/references/sui-api/sui-graphql/beta/reference || { echo "❌ graphql-to-doc step failed"; exit 1; }
+docusaurus graphql-to-doc:beta && node scripts/remove-no-desc.mjs "$CONTENT_DIR/references/sui-api/sui-graphql/beta/reference" || { echo "❌ graphql-to-doc step failed"; exit 1; }
 node scripts/getopenrpcspecs.js || { echo "❌ getopenrpcspecs failed"; exit 1; }
 node scripts/massagegraphql.js || { echo "❌ massagegraphql failed"; exit 1; }
 echo "✅ Pre-build generation complete"
@@ -49,7 +59,7 @@ node src/shared/js/generate-llmstxt.mjs build/markdown/ --sitemap build/sitemap.
 cp static/llms.txt build/llms.txt
 cp static/llms-full.txt build/llms-full.txt
 node scripts/create-markdown-index-duplicates.js || { echo "❌ create-markdown-index-duplicates failed"; exit 1; }
-node src/shared/js/check-links.mjs ../content || { echo "❌ check-links failed"; exit 1; }
+node src/shared/js/check-links.mjs "$CONTENT_DIR" || { echo "❌ check-links failed"; exit 1; }
 
 BUILD_EXIT=${PIPESTATUS[0]}
 

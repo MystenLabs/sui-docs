@@ -70,6 +70,12 @@ type CoinMetadata implements IAddressable, IMoveObject, IObject {
   decimals: Int
   defaultNameRecord: NameRecord
   denyCap: MoveObject
+  derivedObject(
+    name: DynamicFieldName!
+    version: UInt53
+    rootVersion: UInt53
+    atCheckpoint: UInt53
+  ): MoveObject
   description: String
   digest: String
   dynamicField(
@@ -90,6 +96,9 @@ type CoinMetadata implements IAddressable, IMoveObject, IObject {
   multiGetBalances(
     keys: [String!]!
   ): [Balance!]
+  multiGetDerivedObjects(
+    keys: [DerivedObjectKey!]!
+  ): [MoveObject]!
   multiGetDynamicFields(
     keys: [DynamicFieldName!]!
   ): [DynamicField]!
@@ -223,6 +232,28 @@ The domain explicitly configured as the default Name Service name for this addre
 If the currency is regulated, this object represents the capability to modify the deny list. If a capability is known but wrapped, its address can be fetched but other fields will not be accessible.
 
 
+#### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.<b>derivedObject</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveObject</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Access a derived object using its key.
+
+The object can be bounded by at most one of `version`, `rootVersion`, or `atCheckpoint`, with the same semantics as `Query.object`.
+
+Returns `null` if the derived object has not been claimed, has been deleted, or is not available in the store.
+##### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.derivedObject.<b>name</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicFieldName!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.derivedObject.<b>version</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.derivedObject.<b>rootVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+##### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.derivedObject.<b>atCheckpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
 #### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.<b>description</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>String</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
 Description of the coin.
 
@@ -286,6 +317,14 @@ Fetch balances keyed by coin types (e.g. `0x2::sui::SUI`) owned by this address.
 
 Each result includes the total balance, the balance held in coin objects, and the balance held in the address's balance accumulator. Returns `null` when no checkpoint is set in scope (e.g. execution scope). If this address has no balance of a given type, all three values are zero for that type.
 ##### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.multiGetBalances.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[String!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+
+
+#### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.<b>multiGetDerivedObjects</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[MoveObject]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="object"/> 
+Access derived objects using their keys and optional version bounds.
+
+Each key can specify at most one of `version`, `rootVersion`, or `atCheckpoint`, with the same semantics as `Query.object`. Returns a list that is guaranteed to be the same length as `keys`. If a derived object has not been claimed, has been deleted, or is not available in the store, its corresponding entry is `null`.
+##### [<code style={{ fontWeight: 'normal' }}>CoinMetadata.multiGetDerivedObjects.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[DerivedObjectKey!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/derived-object-key.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
 
 
 
@@ -473,4 +512,4 @@ Interface implemented by versioned on-chain values that are addressable by an ID
 
 ### Member Of
 
-[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>
+[`Balance`](/references/sui-api/sui-graphql/beta/reference/types/objects/balance.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

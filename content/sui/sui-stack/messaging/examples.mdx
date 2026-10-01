@@ -2,7 +2,7 @@
 # Example Patterns
 
 
-These examples assume a client has been created through `createMessagingGroupsClient()` and a relayer is running. See [Setup](/sui-stack/messaging/Setup) for client configuration and [Relayer](/sui-stack/messaging/Relayer) for running the relayer.
+These examples assume a client has been created through `createMessagingGroupsClient()` and a relayer is running. See [Setup](/sui-stack/messaging/setup) for client configuration and [Relayer](/sui-stack/messaging/relayer) for running the relayer.
 
 ## Create a group and send messages
 
@@ -76,7 +76,7 @@ for await (const msg of client.messaging.subscribe({
 
 ## File attachments
 
-Requires an `attachments` config with a `StorageAdapter` at client creation. See [Setup](/sui-stack/messaging/Setup). For the full encryption model, see [Attachments](/sui-stack/messaging/Attachments).
+Requires an `attachments` config with a `StorageAdapter` at client creation. See [Setup](/sui-stack/messaging/setup). For the full encryption model, see [Attachments](/sui-stack/messaging/attachments).
 
 ```typescript
 // Send a message with files
@@ -159,7 +159,7 @@ await client.messaging.rotateEncryptionKey({
 });
 ```
 
-See [Security](/sui-stack/messaging/Security) for why `removeMembersAndRotateKey()` is recommended over standalone member removal.
+See [Security](/sui-stack/messaging/security) for why `removeMembersAndRotateKey()` is recommended over standalone member removal.
 
 ## Using `tx.*` with dApp Kit
 
@@ -256,7 +256,7 @@ await client.messaging.archiveGroup({
 
 ## Recover messages from Walrus
 
-Requires a `RecoveryTransport` configured at client creation. See [Archive and Recovery](/sui-stack/messaging/ArchiveRecovery).
+Requires a `RecoveryTransport` configured at client creation. See [Archive and Recovery](/sui-stack/messaging/archive-recovery).
 
 ```typescript
 const { messages, hasNext } = await client.messaging.recoverMessages({

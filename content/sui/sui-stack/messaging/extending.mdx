@@ -257,11 +257,11 @@ Use cases for custom transports:
 - On-chain message storage for applications that prefer full verifiability over cost/speed
 - Custom backend with application-specific routing or filtering logic
 
-See [Relayer](/sui-stack/messaging/Relayer) for the full type definitions of all parameter and result types.
+See [Relayer](/sui-stack/messaging/relayer) for the full type definitions of all parameter and result types.
 
 ## Custom attachment `StorageAdapter`
 
-The `StorageAdapter` interface controls where file attachments are stored. This is separate from the relayer's Walrus Sync (which handles message archival) and the walrus-discovery-indexer (which handles message recovery). See [Attachments](/sui-stack/messaging/Attachments) for the full attachment encryption flow.
+The `StorageAdapter` interface controls where file attachments are stored. This is separate from the relayer's Walrus Sync (which handles message archival) and the walrus-discovery-indexer (which handles message recovery). See [Attachments](/sui-stack/messaging/attachments) for the full attachment encryption flow.
 
 Implement `StorageAdapter` to replace the built-in Walrus adapter:
 
@@ -312,7 +312,7 @@ interface RecoveryTransport {
 }
 ```
 
-When provided, the client exposes a `recoverMessages()` method for fetching messages from the recovery backend. Recovery is read-only and does not require a signer. See [Archive and Recovery](/sui-stack/messaging/ArchiveRecovery) for the full recovery pipeline.
+When provided, the client exposes a `recoverMessages()` method for fetching messages from the recovery backend. Recovery is read-only and does not require a signer. See [Archive and Recovery](/sui-stack/messaging/archive-recovery) for the full recovery pipeline.
 
 ```typescript
 const client = createMessagingGroupsClient(baseClient, {

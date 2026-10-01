@@ -54,6 +54,12 @@ type Address implements Node, IAddressable {
     before: String
   ): BalanceConnection
   defaultNameRecord: NameRecord
+  derivedObject(
+    name: DynamicFieldName!
+    version: UInt53
+    rootVersion: UInt53
+    atCheckpoint: UInt53
+  ): MoveObject
   dynamicField(
     name: DynamicFieldName!
   ): DynamicField
@@ -70,6 +76,9 @@ type Address implements Node, IAddressable {
   multiGetBalances(
     keys: [String!]!
   ): [Balance!]
+  multiGetDerivedObjects(
+    keys: [DerivedObjectKey!]!
+  ): [MoveObject]!
   multiGetDynamicFields(
     keys: [DynamicFieldName!]!
   ): [DynamicField]!
@@ -141,6 +150,20 @@ Each result includes the total balance, the balance held in coin objects, and th
 #### [<code style={{ fontWeight: 'normal' }}>Address.<b>defaultNameRecord</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>NameRecord</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/name-record.mdx) <Badge class="badge badge--secondary " text="object"/> 
 The domain explicitly configured as the default Name Service name for this address.
 
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>derivedObject</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveObject</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Access a derived object using its key.
+
+The object can be bounded by at most one of `version`, `rootVersion`, or `atCheckpoint`, with the same semantics as `Query.object`.
+
+Returns `null` if the derived object has not been claimed, has been deleted, or is not available in the store.
+##### [<code style={{ fontWeight: 'normal' }}>Address.derivedObject.<b>name</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicFieldName!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/dynamic-field-name.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.derivedObject.<b>version</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.derivedObject.<b>rootVersion</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
+##### [<code style={{ fontWeight: 'normal' }}>Address.derivedObject.<b>atCheckpoint</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>UInt53</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/uint-53.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
+
 #### [<code style={{ fontWeight: 'normal' }}>Address.<b>dynamicField</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>DynamicField</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx) <Badge class="badge badge--secondary " text="object"/> 
 Access a dynamic field on an object using its type and BCS-encoded name.
 
@@ -173,6 +196,12 @@ Fetch balances keyed by coin types (e.g. `0x2::sui::SUI`) owned by this address.
 
 Each result includes the total balance, the balance held in coin objects, and the balance held in the address's balance accumulator. Returns `null` when no checkpoint is set in scope (e.g. execution scope). If this address has no balance of a given type, all three values are zero for that type.
 ##### [<code style={{ fontWeight: 'normal' }}>Address.multiGetBalances.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[String!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/string.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="scalar"/> 
+
+#### [<code style={{ fontWeight: 'normal' }}>Address.<b>multiGetDerivedObjects</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[MoveObject]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="object"/> 
+Access derived objects using their keys and optional version bounds.
+
+Each key can specify at most one of `version`, `rootVersion`, or `atCheckpoint`, with the same semantics as `Query.object`. Returns a list that is guaranteed to be the same length as `keys`. If a derived object has not been claimed, has been deleted, or is not available in the store, its corresponding entry is `null`.
+##### [<code style={{ fontWeight: 'normal' }}>Address.multiGetDerivedObjects.<b>keys</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[DerivedObjectKey!]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/inputs/derived-object-key.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="input"/> 
 
 #### [<code style={{ fontWeight: 'normal' }}>Address.<b>multiGetDynamicFields</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>[DynamicField]!</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx) <Badge class="badge badge--secondary badge--non_null" text="non-null"/> <Badge class="badge badge--secondary " text="object"/> 
 Access dynamic fields on an object using their types and BCS-encoded names.
@@ -230,4 +259,4 @@ An address uniquely represents either the public key of an account, or an object
 
 ### Member Of
 
-[`Address`](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`AddressOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/address-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`BalanceChange`](/references/sui-api/sui-graphql/beta/reference/types/objects/balance-change.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ConsensusAddressOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/consensus-address-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Event`](/references/sui-api/sui-graphql/beta/reference/types/objects/event.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`GasInput`](/references/sui-api/sui-graphql/beta/reference/types/objects/gas-input.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`IAddressable`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iaddressable.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveValue`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-value.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`NameRecord`](/references/sui-api/sui-graphql/beta/reference/types/objects/name-record.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ObjectOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/object-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Transaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>
+[`Address`](/references/sui-api/sui-graphql/beta/reference/types/objects/address.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`AddressOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/address-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`BalanceChange`](/references/sui-api/sui-graphql/beta/reference/types/objects/balance-change.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`BalanceWithdraw`](/references/sui-api/sui-graphql/beta/reference/types/objects/balance-withdraw.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`CoinMetadata`](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ConsensusAddressOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/consensus-address-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`DynamicField`](/references/sui-api/sui-graphql/beta/reference/types/objects/dynamic-field.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Event`](/references/sui-api/sui-graphql/beta/reference/types/objects/event.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`GasInput`](/references/sui-api/sui-graphql/beta/reference/types/objects/gas-input.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`IAddressable`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iaddressable.mdx)  <Badge class="badge badge--secondary badge--relation" text="interface"/><Bullet />[`MoveObject`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MovePackage`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-package.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`MoveValue`](/references/sui-api/sui-graphql/beta/reference/types/objects/move-value.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`NameRecord`](/references/sui-api/sui-graphql/beta/reference/types/objects/name-record.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Object`](/references/sui-api/sui-graphql/beta/reference/types/objects/object.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`ObjectOwner`](/references/sui-api/sui-graphql/beta/reference/types/objects/object-owner.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/><Bullet />[`Transaction`](/references/sui-api/sui-graphql/beta/reference/types/objects/transaction.mdx)  <Badge class="badge badge--secondary badge--relation" text="object"/>

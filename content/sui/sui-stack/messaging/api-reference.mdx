@@ -3,7 +3,7 @@
 
 The Messaging SDK APIs follow the lifecycle of a secure communication system: create groups, manage membership, send messages, and maintain encryption state.
 
-All methods are accessed through the `client.messaging` namespace after [setup](/sui-stack/messaging/Setup).
+All methods are accessed through the `client.messaging` namespace after [setup](/sui-stack/messaging/setup).
 
 For permission management (grant, revoke, check membership), use `client.groups`. See the [Sui Groups API Reference](https://github.com/MystenLabs/sui-groups).
 
@@ -78,7 +78,7 @@ interface EditAttachments {
 
 ## Messaging methods
 
-These methods handle E2EE messaging through the relayer transport. Encryption and decryption are automatic. See [Encryption](/sui-stack/messaging/Encryption) for the underlying encryption model.
+These methods handle E2EE messaging through the relayer transport. Encryption and decryption are automatic. See [Encryption](/sui-stack/messaging/encryption) for the underlying encryption model.
 
 ### `sendMessage(options)`
 
@@ -225,7 +225,7 @@ client.messaging.disconnect();
 
 ### `recoverMessages(options)`
 
-Recover messages from an alternative storage backend (for example, Walrus). Requires a `RecoveryTransport` to be configured at client creation. See [Archive and Recovery](/sui-stack/messaging/ArchiveRecovery).
+Recover messages from an alternative storage backend (for example, Walrus). Requires a `RecoveryTransport` to be configured at client creation. See [Archive and Recovery](/sui-stack/messaging/archive-recovery).
 
 Unlike other messaging methods, this does not require a `signer` because recovery is read-only.
 
@@ -275,7 +275,7 @@ await client.messaging.createAndShareGroup({
 
 ### `rotateEncryptionKey(options)`
 
-Rotate the DEK for a group. Generates a new Seal-encrypted DEK for the next key version. Requires `EncryptionKeyRotator` permission. See [Encryption](/sui-stack/messaging/Encryption) for key versioning details.
+Rotate the DEK for a group. Generates a new Seal-encrypted DEK for the next key version. Requires `EncryptionKeyRotator` permission. See [Encryption](/sui-stack/messaging/encryption) for key versioning details.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -286,7 +286,7 @@ Rotate the DEK for a group. Generates a new Seal-encrypted DEK for the next key 
 
 ### `removeMembersAndRotateKey(options)`
 
-Atomically remove members and rotate the encryption key in a single PTB. This is the recommended way to remove members. See [Security](/sui-stack/messaging/Security).
+Atomically remove members and rotate the encryption key in a single PTB. This is the recommended way to remove members. See [Security](/sui-stack/messaging/security).
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -315,7 +315,7 @@ Remove the transaction sender from a group.
 
 **Returns:** `{ digest: string; effects: TransactionEffects }`
 
-`leave()` does not rotate the encryption key. See [Security](/sui-stack/messaging/Security) for implications.
+`leave()` does not rotate the encryption key. See [Security](/sui-stack/messaging/security) for implications.
 
 ### `archiveGroup(options)`
 
@@ -561,7 +561,7 @@ Each BCS type exposes a `.name` property with the fully-qualified Move type name
 
 ## Encryption (`encryption.*`)
 
-Low-level encryption module. Most developers do not need this directly because `sendMessage`, `getMessages`, and `subscribe` handle encryption automatically. See [Encryption](/sui-stack/messaging/Encryption) for the full encryption model.
+Low-level encryption module. Most developers do not need this directly because `sendMessage`, `getMessages`, and `subscribe` handle encryption automatically. See [Encryption](/sui-stack/messaging/encryption) for the full encryption model.
 
 - `encrypt(options)` -- encrypt data with a group's DEK
 - `decrypt(options)` -- decrypt data with a group's DEK
@@ -579,7 +579,7 @@ Direct access to the underlying `RelayerTransport` instance. Useful for low-leve
 const raw = await client.messaging.transport.fetchMessages({ ... });
 ```
 
-See [Relayer](/sui-stack/messaging/Relayer) for the `RelayerTransport` interface definition.
+See [Relayer](/sui-stack/messaging/relayer) for the `RelayerTransport` interface definition.
 
 
 ## Permission types

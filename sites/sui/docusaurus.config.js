@@ -19,7 +19,12 @@ const darkCodeTheme = require("prism-react-renderer").themes.nightOwl;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SIDEBARS_PATH = fileURLToPath(new URL("../content/sidebars.js", import.meta.url));
+// CONTENT_ROOT is the pages this site renders; SOURCE_ROOT is the fetched
+// checkout of MystenLabs/sui that its code imports resolve against. Neither is
+// a fixed hop from here any more. See scripts/lib/roots.cjs.
+const { CONTENT_ROOT, SOURCE_ROOT, REPO_ROOT } = require("./scripts/lib/roots.cjs");
+
+const SIDEBARS_PATH = path.join(CONTENT_ROOT, "sidebars.js");
 
 require("dotenv").config();
 
@@ -124,7 +129,7 @@ const config = {
           if (isServer) return {};
           const fs = require('fs');
           const grayMatter = require('gray-matter');
-          const contentDir = path.resolve(__dirname, '../content');
+          const contentDir = CONTENT_ROOT;
 
           function cleanForMarkdown(raw) {
             const { content } = grayMatter(raw);
@@ -233,7 +238,7 @@ const config = {
                   enforce: "pre", // make sure it runs BEFORE @docusaurus/mdx-loader
                   include: [
                     // adjust these to match where your Markdown lives
-                    path.resolve(__dirname, "../content"),
+                    CONTENT_ROOT,
                   ],
                   use: [
                     {
@@ -254,8 +259,8 @@ const config = {
             },
             resolve: {
               alias: {
-                "@repo": path.resolve(__dirname, "../../"),
-                "@docs": path.resolve(__dirname, "../content/"),
+                "@repo": SOURCE_ROOT,
+                "@docs": CONTENT_ROOT,
               },
             },
           };
@@ -266,8 +271,8 @@ const config = {
       "@graphql-markdown/docusaurus",
       {
         id: "beta",
-        schema: "../../crates/sui-indexer-alt-graphql/schema.graphql",
-        rootPath: "../content",
+        schema: path.join(SOURCE_ROOT, "crates/sui-indexer-alt-graphql/schema.graphql"),
+        rootPath: CONTENT_ROOT,
         baseURL: "references/sui-api/sui-graphql/beta/reference",
         homepage: false,
         docOptions: {
@@ -305,7 +310,7 @@ const config = {
       "classic",
       {
         docs: {
-          path: "../content",
+          path: CONTENT_ROOT,
           routeBasePath: "/",
           sidebarPath: SIDEBARS_PATH,
           // the double docs below is a fix for having the path set to ../content

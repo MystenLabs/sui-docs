@@ -52,6 +52,7 @@ Balances can be held in coin objects, in the address's balance accumulator, or b
 type Balance {
   addressBalance: BigInt
   coinBalance: BigInt
+  coinMetadata: CoinMetadata
   coinType: MoveType
   totalBalance: BigInt
 }
@@ -68,6 +69,12 @@ The balance held in the address's balance accumulator.
 
 #### [<code style={{ fontWeight: 'normal' }}>Balance.<b>coinBalance</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>BigInt</b></code>](/references/sui-api/sui-graphql/beta/reference/types/scalars/big-int.mdx) <Badge class="badge badge--secondary " text="scalar"/> 
 The balance held in coin objects owned by the address.
+
+
+#### [<code style={{ fontWeight: 'normal' }}>Balance.<b>coinMetadata</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>CoinMetadata</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/coin-metadata.mdx) <Badge class="badge badge--secondary " text="object"/> 
+Fetch the CoinMetadata for this balance's coin type.
+
+Returns `null` if no CoinMetadata object exists for the coin type.
 
 
 #### [<code style={{ fontWeight: 'normal' }}>Balance.<b>coinType</b></code>](#)<Bullet />[<code style={{ fontWeight: 'normal' }}><b>MoveType</b></code>](/references/sui-api/sui-graphql/beta/reference/types/objects/move-type.mdx) <Badge class="badge badge--secondary " text="object"/> 

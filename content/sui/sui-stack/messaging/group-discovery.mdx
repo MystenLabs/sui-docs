@@ -102,7 +102,7 @@ groupRef: { uuid: 'my-group-uuid' }
 groupRef: { groupId: '0x...', encryptionHistoryId: '0x...' }
 ```
 
-Using UUIDs is simpler because the SDK derives both IDs from the UUID without RPC calls. The derivation is deterministic and produces the same addresses across all clients. See [Setup](/sui-stack/messaging/Setup) for more on the `GroupRef` pattern.
+Using UUIDs is simpler because the SDK derives both IDs from the UUID without RPC calls. The derivation is deterministic and produces the same addresses across all clients. See [Setup](/sui-stack/messaging/setup) for more on the `GroupRef` pattern.
 
 ### Tracking UUIDs
 
@@ -156,7 +156,7 @@ const metadataMap = await client.messaging.view.groupsMetadata({ groupIds: [grou
 const metadata = metadataMap[groupId];
 ```
 
-See [API Reference](/sui-stack/messaging/APIRef) for the full list of view methods.
+See [API Reference](/sui-stack/messaging/api-reference) for the full list of view methods.
 
 ## Events reference
 

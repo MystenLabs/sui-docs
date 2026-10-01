@@ -6,10 +6,10 @@
 import path from "path";
 import fs from "fs";
 
-const PROTOCOL_PATH = path.join(
-  __dirname,
-  "../../../../content/documentation.json",
-);
+// Resolved through the one module that knows where content lives, rather than
+// four hops that assumed the site sat beside the content tree.
+const { CONTENT_ROOT } = require("../../../scripts/lib/roots.cjs");
+const PROTOCOL_PATH = path.join(CONTENT_ROOT, "documentation.json");
 const MDX_TEST = /fullnode-protocol(?:-types|-messages)?\.mdx$/;
 const SPEC_MD = fs.readFileSync(PROTOCOL_PATH, "utf-8");
 

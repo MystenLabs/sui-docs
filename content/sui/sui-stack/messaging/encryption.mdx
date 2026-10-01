@@ -2,7 +2,7 @@
 # Encryption
 
 
-This document describes how the SDK encrypts and decrypts messages. For security properties, guarantees, and threat model, see [Security](/sui-stack/messaging/Security).
+This document describes how the SDK encrypts and decrypts messages. For security properties, guarantees, and threat model, see [Security](/sui-stack/messaging/security).
 
 ## Envelope encryption model
 
@@ -75,7 +75,7 @@ The SDK performs this verification automatically during decryption and populates
 
 ## Session key management
 
-Seal operations require a **session key**, a short-lived key that authorizes decryption requests to Seal key servers. The SDK manages session keys internally through three tiers. See [Setup](/sui-stack/messaging/Setup) for configuration details.
+Seal operations require a **session key**, a short-lived key that authorizes decryption requests to Seal key servers. The SDK manages session keys internally through three tiers. See [Setup](/sui-stack/messaging/setup) for configuration details.
 
 **Tier 1: Signer-based** (recommended):
 
@@ -117,7 +117,7 @@ The `EncryptionHistory` onchain object stores encrypted DEKs as a versioned list
 - Messages reference their `keyVersion` so receivers know which DEK to use
 - Old versions remain accessible to current group members through Seal
 
-Key rotation creates a new, independent DEK. Old DEKs cannot be derived from new ones and vice versa. The protection rotation provides is against removed members: after rotation, a member who has lost `MessagingReader` permission cannot obtain the new DEK from Seal. See [Security](/sui-stack/messaging/Security) for the full picture on forward secrecy and post-compromise security.
+Key rotation creates a new, independent DEK. Old DEKs cannot be derived from new ones and vice versa. The protection rotation provides is against removed members: after rotation, a member who has lost `MessagingReader` permission cannot obtain the new DEK from Seal. See [Security](/sui-stack/messaging/security) for the full picture on forward secrecy and post-compromise security.
 
 ## DEK caching
 
@@ -129,7 +129,7 @@ Decrypted DEKs are cached in-memory (through `ClientCache` backed by a `TtlMap`)
 
 ## Attachment encryption
 
-Each file attachment is encrypted with the same group DEK but a separate random nonce. File metadata (`fileName`, `mimeType`, `fileSize`) is encrypted separately with its own nonce. See [Attachments](/sui-stack/messaging/Attachments) for the full attachment encryption model.
+Each file attachment is encrypted with the same group DEK but a separate random nonce. File metadata (`fileName`, `mimeType`, `fileSize`) is encrypted separately with its own nonce. See [Attachments](/sui-stack/messaging/attachments) for the full attachment encryption model.
 
 ## Nonce handling
 
