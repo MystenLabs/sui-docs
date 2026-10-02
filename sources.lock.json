@@ -6,7 +6,7 @@
     "sourcePath": "docs/content",
     "targetPath": "content/seal",
     "files": 15,
-    "mirroredAt": "2026-10-01T20:10:30.556Z"
+    "mirroredAt": "2026-10-02T00:26:40.499Z"
   },
   "messaging": {
     "repo": "MystenLabs/sui-stack-messaging",
@@ -15,7 +15,7 @@
     "sourcePath": "docs/sui-stack-messaging",
     "targetPath": "content/sui/sui-stack/messaging",
     "files": 13,
-    "mirroredAt": "2026-10-01T20:10:30.603Z"
+    "mirroredAt": "2026-10-02T00:26:40.528Z"
   },
   "oyster": {
     "repo": "MystenLabs/oyster",
@@ -24,16 +24,16 @@
     "sourcePath": "docs/src",
     "targetPath": "content/oyster",
     "files": 24,
-    "mirroredAt": "2026-10-01T20:10:30.606Z"
+    "mirroredAt": "2026-10-02T00:26:40.530Z"
   },
   "walrus": {
     "repo": "MystenLabs/walrus",
     "ref": "main",
-    "commit": "460c1fae3721ac73733d1af08e88019e296b4e04",
+    "commit": "a79229d8f83a281b319e7d068f9d59149a1f87fe",
     "sourcePath": "docs/content",
     "targetPath": "content/walrus",
     "files": 123,
-    "mirroredAt": "2026-10-01T20:10:30.553Z"
+    "mirroredAt": "2026-10-02T00:26:40.497Z"
   },
   "suins": {
     "repo": "MystenLabs/suins-contracts",
@@ -42,16 +42,16 @@
     "sourcePath": "documentation/content",
     "targetPath": "content/suins",
     "files": 18,
-    "mirroredAt": "2026-10-01T20:10:30.562Z"
+    "mirroredAt": "2026-10-02T00:26:40.503Z"
   },
   "hashi": {
     "repo": "MystenLabs/hashi",
     "ref": "main",
-    "commit": "459c66167ed8ab26d9f68d9e335d4cb3491b0daf",
+    "commit": "4b605ca8caa643167d46975404490af6e6e3c0e3",
     "sourcePath": "design/docs",
     "targetPath": "content/hashi",
     "files": 21,
-    "mirroredAt": "2026-10-01T20:10:30.568Z"
+    "mirroredAt": "2026-10-02T00:26:40.507Z"
   },
   "move-book": {
     "repo": "MystenLabs/move-book",
@@ -60,16 +60,16 @@
     "sourcePath": "book",
     "targetPath": "content/move-book",
     "files": 116,
-    "mirroredAt": "2026-10-01T20:10:30.593Z"
+    "mirroredAt": "2026-10-02T00:26:40.521Z"
   },
   "ts-sdks": {
     "repo": "MystenLabs/ts-sdks",
     "ref": "main",
-    "commit": "1051a8e073743fc1a5e2cbd87fb4481715b35ed0",
+    "commit": "2ba222afd9068989692eef2f4a7077d19422cc12",
     "sourcePath": "packages/docs/content",
     "targetPath": "content/ts-sdks",
     "files": 131,
-    "mirroredAt": "2026-10-01T20:10:30.602Z"
+    "mirroredAt": "2026-10-02T00:26:40.527Z"
   },
   "walrus-memory": {
     "repo": "MystenLabs/MemWal",
@@ -78,6 +78,6 @@
     "sourcePath": "docs",
     "targetPath": "content/walrus-memory",
     "files": 115,
-    "mirroredAt": "2026-10-01T20:10:32.629Z"
+    "mirroredAt": "2026-10-02T00:26:42.017Z"
   }
 }
