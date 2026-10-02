@@ -32,9 +32,9 @@ builder_paths:
     step: Local fee markets
     stage: Gas
 questions:
-  - What is Object-Based Local Fee Markets in Sui?
-  - How does object-based local fee markets work on Sui?
-  - How do I subscribe to object-based local fee markets events?
+  - Why is my transaction on a busy shared object being deferred?
+  - How does Sui limit the write rate to a single shared object?
+  - How do I design around per-object capacity?
 answer: >-
   Object-based local fee markets limit the rate of transactions writing to a
   single shared object, preventing the network from becoming overloaded with

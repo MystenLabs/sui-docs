@@ -33,9 +33,9 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - What is Move Concepts in Sui?
-  - How does move concepts work on Sui?
-  - Why should I use move concepts?
+  - How does Move on Sui differ from Move elsewhere?
+  - What is a module initializer and when does it run?
+  - When should I use an entry function?
 answer: >-
   Move is an open source language for writing safe packages to manipulate
   onchain objects.
@@ -95,7 +95,7 @@ As described in [object-centric global storage](#global-storage), you publish Mo
 
 ### Entry functions {#entry-functions}
 
-The `entry` keyword has a specific use case in Move on Sui. Use `entry` when you want some functionality to be usable by anyone on chain, but not be wrapped around other Move logic. In other words, a function can be called in [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) but not in other Sui packages. For example, this is utilized when using Sui's onchain randomness standard to prevent other smart contract engineers from creating logic to essentially front-run or back-run the randomness generation. Find more information about this in the [on-chain randomness page](/sui-stack/on-chain-primitives/randomness-onchain#use-non-public-entry-functions).
+The `entry` keyword has a specific use case in Move on Sui. Use `entry` when you want some functionality to be usable by anyone on chain, but not be wrapped around other Move logic. In other words, a function can be called in [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) but not in other Sui packages. For example, this is utilized when using Sui's onchain randomness standard to prevent other smart contract engineers from creating logic to essentially front-run or back-run the randomness generation. Find more information about this in the [onchain randomness page](/sui-stack/on-chain-primitives/randomness-onchain#use-non-public-entry-functions).
 
 Make your function private (don't add the `public` visibility keyword) and mark it with the `entry` keyword, as in `entry fun example_function`.
 

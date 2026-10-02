@@ -33,9 +33,8 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - What is Nautilus in Sui?
-  - How do I use cases?
-  - How does nautilus work on Sui?
+  - What is Nautilus?
+  - When should I use a TEE instead of onchain computation?
 answer: Nautilus is a verifiable offchain compute layer on Sui.
 ---
 
@@ -48,7 +47,7 @@ It currently supports self-managed [AWS Nitro Enclave TEEs](https://aws.amazon.c
 ## Features
 
 :::important
-Nautilus is not just about running code in privacy-preserving manner in a TEE. Part of the overall value proposition is on-chain verification of computation integrity:
+Nautilus is not just about running code in privacy-preserving manner in a TEE. Part of the overall value proposition is onchain verification of computation integrity:
 
 1. PCRs (enclave measurements) must be registered and verified onchain
 2. Every computation result could optionally be verified onchain

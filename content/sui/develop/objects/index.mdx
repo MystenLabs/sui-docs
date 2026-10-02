@@ -31,15 +31,14 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - What is Objects in Sui?
-  - What topics does Objects cover?
-  - How does objects work on Sui?
+  - What is a Sui object?
+  - What are the object ownership types on Sui?
 answer: >-
   Learn about the Sui object model, how to use objects, and different object
   ownership methods.
 ---
 
-The Sui object model is the foundation of how Sui stores and manages on-chain state. Objects have unique IDs, owners, and types. Transactions consume and produce objects, and every object change is recorded on-chain.
+The Sui object model is the foundation of how Sui stores and manages onchain state. Objects have unique IDs, owners, and types. Transactions consume and produce objects, and every object change is recorded onchain.
 
 ## What is a Sui object?
 
@@ -65,7 +64,7 @@ public struct TodoList has key {
 }
 ```
 
-The `key` ability marks this struct as a Sui object. The `id` field of type `UID` gives each instance a unique on-chain identifier. When you create a value of this type and transfer it to an address, it becomes an owned object on Sui.
+The `key` ability marks this struct as a Sui object. The `id` field of type `UID` gives each instance a unique onchain identifier. When you create a value of this type and transfer it to an address, it becomes an owned object on Sui.
 
 import DocCardList from '@theme/DocCardList';
 

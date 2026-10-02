@@ -48,9 +48,10 @@ builder_paths:
     step: Developer tools
     stage: Setup
 questions:
-  - What is Developer Tools in Sui?
-  - How do I build apps?
-  - How do I test and debug Move packages on Sui?
+  - Which tools do I need to build on Sui?
+  - Which IDE extensions support Move?
+  - Where do I get Testnet SUI from a faucet?
+  - Which tools audit Move packages?
 answer: >-
   Browse the tools available for developing on Sui. Each tool includes a
   description, installation command, and link to its source.
@@ -415,7 +416,7 @@ IDEs, editor extensions, and language tools for writing Move smart contracts.
 
 <ToolCard
   name="Move Registry CLI (MVR)"
-  description="On-chain package manager for Sui with human-readable names, versioning, and dependency resolution."
+  description="Onchain package manager for Sui with human-readable names, versioning, and dependency resolution."
   github="https://github.com/MystenLabs/mvr"
   install="suiup install mvr"
   notes="Usage: mvr add @deepbook/core, mvr resolve. Integrates with sui move build."
@@ -672,7 +673,7 @@ Tools for unit testing, replaying transactions, and debugging Move execution loc
 <ToolGrid>
 <ToolCard
   name="sui replay"
-  description="Locally re-executes any past on-chain transaction and compares effects."
+  description="Locally re-executes any past onchain transaction and compares effects."
   github="https://github.com/MystenLabs/sui"
   notes="Usage: sui replay --digest <TX_DIGEST>. Use --trace for debugger input."
   docs="/references/cli/replay"
@@ -689,7 +690,7 @@ Tools for unit testing, replaying transactions, and debugging Move execution loc
 
 <ToolCard
   name="Object Display V2 Templates"
-  description="Build and preview Display templates for on-chain objects."
+  description="Build and preview Display templates for onchain objects."
   docs="/develop/objects/display/display-preview"
   website="/develop/objects/display/display-preview"
 />
@@ -789,7 +790,7 @@ Formal verification, source verification, linting, and phishing protection.
 
 ## Data and indexing
 
-Indexers, data APIs, and analytics services for querying on-chain state.
+Indexers, data APIs, and analytics services for querying onchain state.
 
 <ToolGrid>
 
@@ -954,7 +955,7 @@ Block explorers and network monitoring dashboards.
 
 ## Oracles
 
-Price feeds and off-chain data delivery for on-chain contracts.
+Price feeds and off-chain data delivery for onchain contracts.
 
 <ToolGrid>
 <ToolCard
@@ -1204,7 +1205,7 @@ SDKs for building on Sui, grouped by language. Use the filter bar to search by l
 
 <ToolCard
   name="Sui Client Gen (Kuna Labs)"
-  description="Generate TypeScript SDKs for Sui Move smart contracts. Works with source code and on-chain packages, no IDLs or ABIs required."
+  description="Generate TypeScript SDKs for Sui Move smart contracts. Works with source code and onchain packages, no IDLs or ABIs required."
   github="https://github.com/kunalabs-io/sui-client-gen"
   language="TypeScript"
   community

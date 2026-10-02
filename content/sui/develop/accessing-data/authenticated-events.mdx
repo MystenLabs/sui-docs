@@ -51,9 +51,10 @@ builder_paths:
     step: Authenticated events
     stage: Verify & Secure
 questions:
-  - What is Authenticated Events in Sui?
-  - Why authenticated events?
-  - How does authenticated events work on Sui?
+  - How do I emit a cryptographically verifiable event from Move?
+  - Why use authenticated events instead of regular Move events?
+  - Can a light client verify a Sui event without trusting an RPC provider?
+  - Are authenticated events backward compatible with existing events?
 answer: >-
   Cryptographically verifiable Move events that can be verified by a light
   client without trusting any intermediary, suitable for trustless event
