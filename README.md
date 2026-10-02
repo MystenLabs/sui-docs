@@ -56,6 +56,7 @@ node scripts/fetch-sources.js --code                 # the repos the pages quote
 node scripts/mirror.js        [name ...] [--check]   # place into content/
 node scripts/check-mirror-edits.js --base <sha> --head <sha> [--json out.json]
 node scripts/forward-port.js  --json out.json --base <sha> [--pr n] [--dry-run]
+node scripts/publish-shared.js [--dry-run]           # shared components, outward
 ```
 
 `mirror.js --check` writes nothing and exits non-zero if the tree would change,
@@ -137,35 +138,46 @@ reported success.
 
 `sites/sui/src/shared` is the Docusaurus components, plugins and build scripts
 the Sui Stack docs sites have in common. `MystenLabs/ML-shared-docusaurus` is
-its nominal origin, and this repo does **not** mirror from it. Three reasons,
-each checked rather than assumed:
+where other sites consume them from.
 
-- It is stale. Its last commit is 2026-08-10; `sui`'s copy has changes after it.
-- The drift is two-way. Of the 45 files, 19 are identical, 13 differ, and 13
-  exist only in `sui`. Some of the 13 differing files are larger upstream, so
-  neither side is simply ahead.
-- The files are not actually portable. `components/Snippet/index.tsx` resolves
-  `require.context("../../../../docs/snippets")` in `sui` and
-  `"../../../../content/snippets"` upstream: the same shared file, hardcoding
-  two different repo layouts. A mirror would overwrite one with the other and
-  break whichever consumer lost.
+**This repo is the source of truth, and publishes to that one.** That is the
+opposite of every other direction here, and it is a reading of the trees rather
+than a preference:
 
-So the tree is tracked here, which also fixes a smaller problem: `sui` ignores
-`src/shared` in `.gitignore` while committing all 45 files anyway, so the rule
-only hid them from a fresh checkout, and they did not come across in the move at
-all. Without them the build cannot run.
+- It holds every file upstream holds, and fourteen more. Nothing upstream is
+  absent here, so there is nothing to pull.
+- Upstream's last commit is seven weeks old.
+- Where the two differ, upstream is the older one. `var` for `let`, a
+  `require.context` path pointing at a directory no consumer has, and a plugin
+  name that no longer matched the plugin.
 
-What would make it mirrorable is removing the consumer-specific paths — a
-`@snippets`-style alias each site defines, the same pattern as the `@repo` and
-`@docs` aliases already in `sites/sui/docusaurus.config.js`. That is upstream
-work plus one alias per site, and it is the real prerequisite for Phase 4.
+That last one was not cosmetic. `Cards` asked for `hashi-description-plugin`
+while the plugin registered as `sui-description-plugin`, so `usePluginData`
+returned undefined and every `<Card />` written without children rendered as a
+title with nothing under it. Six of those are on the onboarding page. Mirroring
+from upstream would have reintroduced it, and deleted thirteen components that
+around seventy pages import.
 
-Unrelated to the drift, two things in that tree are unreachable from this site
-and were already so in `sui`: `components/Snippet` is registered in no
-`MDXComponents`, imported nowhere, used by no page, and its `require.context`
-target directory does not exist; the three `rehype/*` files have no references
-by name. Unreachable here does not mean deletable — a shared tree exists so
-another site can use them.
+The underlying problem was that the components carried the name of whichever
+consumer they were last copied from. Those names now live once, in
+`src/shared/plugin-names.js`, and the paths that used to be consumer-specific go
+through the `@docs` alias and `roots.cjs` instead.
+
+Publish with the **Publish shared components** workflow, or:
+
+```bash
+node scripts/publish-shared.js --dry-run   # list what would change
+node scripts/publish-shared.js             # open a pull request upstream
+```
+
+It opens a pull request and never pushes to `master`. It needs
+`SHARED_PUBLISH_TOKEN` with write access to that repository.
+
+Two things it does not solve. Other sites still vendor their copy rather than
+depending on a version, so nothing stops one of them editing in place and
+drifting again; a published package would. And `sites/sui/src/shared` is still
+inside one site, so promoting it to the empty `shared/` at the root is still
+the right move once a second site lands here.
 
 ## Sources outside the organisation
 

@@ -1,0 +1,54 @@
+name: Publish shared components
+
+# Pushes sites/sui/src/shared to MystenLabs/ML-shared-docusaurus, the opposite
+# direction to every other workflow here.
+#
+# mirror.yml pulls pages in from the repositories that own them. For the shared
+# components this repo is the owner, so these go out. See the README section
+# "Shared components" for why that is a reading of the trees rather than a
+# preference.
+#
+# Manual, like forward-port: it writes to another repository, so it runs when
+# someone asks. It opens a pull request and never pushes to master.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List what would change without pushing"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to ML-shared-docusaurus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Publish
+        env:
+          # Needs write access to ML-shared-docusaurus. The repo-scoped
+          # GITHUB_TOKEN of this run cannot push to another repository.
+          SHARED_PUBLISH_TOKEN: ${{ secrets.SHARED_PUBLISH_TOKEN }}
+        run: |
+          node scripts/publish-shared.js ${{ inputs.dry_run && '--dry-run' || '' }} \
+            | tee "$RUNNER_TEMP/publish.log"
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo "### Publish shared components${{ inputs.dry_run && ' (dry run)' || '' }}"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/publish.log" 2>/dev/null || echo "nothing to report"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
