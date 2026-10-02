@@ -21,6 +21,13 @@ const url = require('url');
 
 const args = process.argv.slice(2);
 let PORT = parseInt(process.env.PORT, 10) || 3000;
+
+// Default headers mirror production, which means an hour of browser caching.
+// That is the right thing to check before a deploy and the wrong thing while
+// iterating on a page: the browser keeps the stale HTML, the stale HTML names
+// the old hashed stylesheet, and a rebuild appears to do nothing.
+const NO_CACHE = process.argv.includes('--no-cache');
+const cache = (value) => (NO_CACHE ? 'no-store, must-revalidate' : value);
 let buildDir = path.join(__dirname, '../build');
 for (let i = 0; i < args.length; i++) {
   if ((args[i] === '--port' || args[i] === '-p') && args[i + 1]) {
@@ -77,7 +84,7 @@ function serveFile(res, filePath, extraHeaders = {}) {
       const contentType = getContentType(filePath);
       res.writeHead(200, {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': cache('public, max-age=3600'),
         'Link': LINK_HEADER,
         'Vary': 'Accept',
         ...extraHeaders,
@@ -116,7 +123,7 @@ function serveMarkdown(res, pathname) {
       'Content-Type': 'text/markdown; charset=utf-8',
       'Content-Disposition': 'inline',
       'Content-Length': String(byteLength),
-      'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+      'Cache-Control': cache('public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400'),
       'Vary': 'Accept',
       'Link': LINK_HEADER,
       'x-markdown-tokens': String(tokens),
@@ -166,7 +173,7 @@ const server = http.createServer((req, res) => {
         'Content-Type': 'text/markdown; charset=utf-8',
         'Content-Disposition': 'inline',
         'Content-Length': String(byteLength),
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': cache('public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400'),
         'Vary': 'Accept',
         'Link': LINK_HEADER,
         'x-markdown-tokens': String(tokens),
@@ -181,7 +188,7 @@ const server = http.createServer((req, res) => {
     const filePath = path.join(BUILD_DIR, pathname.slice(1));
     if (fs.existsSync(filePath)) {
       serveFile(res, filePath, {
-        'Cache-Control': 'public, max-age=0, must-revalidate',
+        'Cache-Control': cache('public, max-age=0, must-revalidate'),
       });
       return;
     }
@@ -198,7 +205,7 @@ const server = http.createServer((req, res) => {
       // Return 404 instead of falling back to root index.html
       res.writeHead(404, {
         'Content-Type': 'text/plain',
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': cache('public, max-age=300'),
       });
       res.end('404 Not Found');
       return;

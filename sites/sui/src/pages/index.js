@@ -7,7 +7,6 @@ import Layout from "@theme/Layout";
 import Head from "@docusaurus/Head";
 import Link from "@docusaurus/Link";
 import styles from "./index.module.css";
-import docsSites from "../data/docs-sites.json";
 
 // Target for the "Developer Updates" hero link. That page does not exist yet,
 // so this points at the external Sui blog as an interim (external links are not
@@ -16,58 +15,6 @@ import docsSites from "../data/docs-sites.json";
 export const DEVELOPER_UPDATES_URL = "https://blog.sui.io";
 
 export default function Home() {
-  // The other Mysten documentation sites. Read from src/data/docs-sites.json so
-  // this list lives in one place: adding a site there is meant to be the only
-  // edit needed, rather than editing the home page, the search tabs and
-  // llms.txt separately as it works today.
-  const documentationSites = docsSites.sites
-    .filter((site) => !site.self)
-    .map((site) => ({
-      title: site.name,
-      description: site.description,
-      to: site.url,
-    }));
-
-  // Machine-readable entry points. Every one of these is live today and none of
-  // them is discoverable from the home page, which is the only reason this
-  // section exists.
-  //
-  // llms.txt and the .md export are served files, not Docusaurus routes, so a
-  // site-relative link to them fails the strict build's route check. Absolute
-  // URLs skip that check and match how the hub is meant to move domains later.
-  const agentResources = [
-    {
-      title: "llms.txt",
-      description:
-        "A page index for language models, with links to the equivalent file on every other Mysten docs site.",
-      to: "https://docs.sui.io/llms.txt",
-    },
-    {
-      title: "Markdown for any page",
-      description:
-        "Append .md to any docs.sui.io URL to get clean markdown instead of HTML. Try /develop.md.",
-      to: "https://docs.sui.io/develop.md",
-    },
-    {
-      title: "Agent skills",
-      description:
-        "Installable skills that give a coding agent Sui-specific context, with a slug and path for each.",
-      to: "/skills",
-    },
-    {
-      title: "MCP server",
-      description:
-        "Connect a tool-using agent to Sui through the Model Context Protocol.",
-      to: "/getting-started/sui-mcp-server",
-    },
-    {
-      title: "Search every site",
-      description:
-        "Search Sui, SuiNS, the Move Book, the SDKs, and Walrus together from one page.",
-      to: "/search",
-    },
-  ];
-
   const developerResources = [
     {
       title: "Getting Started",
@@ -204,15 +151,21 @@ export default function Home() {
                 powered by the Move programming language. Explore guides,
                 references, and tutorials to start building on Sui.
               </p>
-              <Link to={DEVELOPER_UPDATES_URL} className={styles.devUpdates}>
-                Developer Updates
-              </Link>
+              <div className={styles.heroLinks}>
+                {/* This page is Sui's. /explore is the index across every
+                    Mysten docs site, so it is linked from here rather than
+                    replacing this page. */}
+                <Link to="/explore" className={styles.devUpdates}>
+                  All documentation
+                </Link>
+                <Link to={DEVELOPER_UPDATES_URL} className={styles.devUpdates}>
+                  Developer Updates
+                </Link>
+              </div>
             </div>
           </div>
 
           <Section heading="Developer Resources" items={developerResources} />
-          <Section heading="For Agents and LLMs" items={agentResources} />
-          <Section heading="Documentation Sites" items={documentationSites} />
           <Section heading="Use Cases" items={useCases} />
           <Section heading="Node Operators" items={nodeOperators} />
         </div>

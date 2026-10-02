@@ -431,11 +431,6 @@
       "permanent": true
     },
     {
-      "source": "/explore",
-      "destination": "/getting-started",
-      "permanent": true
-    },
-    {
       "source": "/build/sui-gas-charges",
       "destination": "/develop/transaction-payment/gas-in-sui",
       "permanent": true

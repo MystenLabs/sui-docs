@@ -56,9 +56,12 @@ function getNearestLanguage(start: HTMLElement | null): string {
   return "";
 }
 
-/* ---------- SVG icon paths (extracted to stay under line limits) ------- */
+/* ---------- SVG icon paths (extracted to stay under line limits) -------
+   Exported so a page that wants the same agent icons outside a code block --
+   src/pages/hub.js does -- uses these rather than pasting the path data a
+   second time and letting the two drift. */
 
-const CLAUDE_PATH = [
+export const CLAUDE_PATH = [
   "M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048",
   "-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784",
   "l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652",
@@ -92,7 +95,7 @@ const CLAUDE_PATH = [
   ".061-.746.231-.243 1.908-1.312-.006.006z",
 ].join("");
 
-const CHATGPT_PATH = [
+export const CHATGPT_PATH = [
   "M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078",
   " 10.078 0 0 0-10.855-4.835A9.964 9.964 0 0 0",
   " 18.306.5a10.079 10.079 0 0 0-9.614 6.977 9.967",
@@ -127,7 +130,7 @@ const CHATGPT_PATH = [
   "-4.331-2.5V18z",
 ].join("");
 
-const GEMINI_PATH = [
+export const GEMINI_PATH = [
   "M12 0C12 0 12 6.268 8.134 10.134",
   "C4.268 14 0 14 0 14C0 14 4.268 14 8.134 17.866",
   "C12 21.732 12 28 12 28C12 28 12 21.732 15.866",

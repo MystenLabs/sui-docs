@@ -360,6 +360,10 @@ function build(ratio = 1, { includeFull = false } = {}) {
 
   lines.push("## Machine-readable access", "");
   lines.push(
+    `- [Documentation index](${baseUrl}/explore): every site and product in one page, ` +
+      `with the endpoints below listed on it.`,
+  );
+  lines.push(
     `- Append \`.md\` to any ${baseUrl} page URL to get markdown instead of HTML.`,
     `- [llms-full.txt](${baseUrl}/llms-full.txt): the complete page index.`,
     `- [Agent skills](${baseUrl}/skills): installable Sui context for coding agents.`,

@@ -252,6 +252,13 @@
 }
 
 /* Hero "Developer Updates" link: box colors, pill shape like the topnav button */
+.heroLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
 .devUpdates {
   align-self: center;
   display: inline-block;

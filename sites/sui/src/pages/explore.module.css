@@ -1,0 +1,464 @@
+/*
+// Copyright (c) Mysten Labs, Inc.
+// SPDX-License-Identifier: Apache-2.0
+*/
+
+/* A product index. The job is to get a reader to one of ~90 destinations in a
+   screenful of scanning, so density beats whitespace, but density without
+   hierarchy is just noise: weight and colour do the separating here, not rules
+   and boxes.
+
+   The --sui-* palette is declared once in :root and is not theme-aware
+   (--sui-card-dark is a fixed near-black). The home page can use it because it
+   paints its own dark background underneath; this page sits on the themed page
+   background, so surfaces and text are defined per theme below and every
+   heading sets an explicit colour. Type, accent and max width still come from
+   the site's tokens.
+
+   Radii follow src/pages/skills.js at 8-10px rather than the 2px the older
+   cards use. */
+
+.page {
+  --hub-surface: #ffffff;
+  --hub-raised: #fbfcfd;
+  --hub-sunken: #f4f6f8;
+  --hub-border: #e4e7ec;
+  --hub-border-hover: #b9c0cc;
+  --hub-text: #0a0c10;
+  --hub-muted: #4b515b;
+  --hub-faint: #6c7584;
+  --hub-accent: var(--sui-blue);
+  --hub-accent-text: #1759c4;
+  --hub-lane-bg: linear-gradient(160deg, #f3f8ff 0%, #fbfcfe 60%);
+  --hub-lane-border: #d7e7fb;
+  --hub-code-bg: #0e1116;
+  --hub-code-text: #ddf2ff;
+  --hub-code-border: #242a32;
+  --hub-shadow: 0 1px 2px rgba(10, 12, 16, 0.04);
+  --hub-shadow-hover: 0 6px 20px rgba(10, 12, 16, 0.09);
+
+  width: 100%;
+  /* Not --sui-max-width-desktop (1162px). That is the site's prose measure: the
+     right width for one column of running text, and far too narrow here. This
+     page is a multi-column index with a 14rem rail beside it, so at 1162px the
+     index column was stuck around 750px however large the display, leaving
+     1398px unused on a 2560px screen. A wider cap lets the grid add columns
+     instead of stretching, and the gutter below keeps the margins proportional
+     rather than letting the content reach the edge. */
+  max-width: 1760px;
+  margin: 0 auto;
+  /* Scales with the viewport rather than stepping at breakpoints, so the gutter
+     keeps growing on wide screens instead of the content running to the edge.
+     box-sizing is border-box here, so this eats into max-width and genuinely
+     narrows the text column. */
+  padding: 1.75rem clamp(1.25rem, 3.5vw, 5rem) 6rem;
+  color: var(--hub-text);
+}
+
+[data-theme="dark"] .page {
+  --hub-surface: #15181d;
+  --hub-raised: #191d23;
+  --hub-sunken: #0d1014;
+  --hub-border: #272c34;
+  --hub-border-hover: #3d444e;
+  --hub-text: #ffffff;
+  --hub-muted: #a7aeba;
+  --hub-faint: #858d9a;
+  --hub-accent-text: var(--sui-blue-bright);
+  --hub-lane-bg: linear-gradient(160deg, #0a1522 0%, #0c0f14 60%);
+  --hub-lane-border: #17334f;
+  --hub-code-bg: #0b0e12;
+  --hub-code-text: #ddf2ff;
+  --hub-code-border: #272c34;
+  --hub-shadow: none;
+  --hub-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────── */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.main {
+  min-width: 0;
+}
+
+.rail {
+  display: none;
+}
+
+/* 997px is where the theme drops its own TOC and the doc layout goes single
+   column, so the page does not disagree with the rest of the site. */
+@media (min-width: 997px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .rail {
+    display: block;
+    position: sticky;
+    top: calc(var(--ifm-navbar-height) + 1.5rem);
+    max-height: calc(100vh - var(--ifm-navbar-height) - 3rem);
+    overflow-y: auto;
+    padding-top: 0.25rem;
+  }
+}
+
+/* ── Lede ─────────────────────────────────────────────────────────────── */
+
+.lede {
+  margin-bottom: 2.25rem;
+}
+
+.lede h1 {
+  font-family: var(--headerFont);
+  font-size: clamp(2.25rem, 1.6rem + 2vw, 3.25rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  color: var(--hub-text);
+  margin: 0 0 0.875rem;
+}
+
+.ledeText {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--hub-muted);
+  max-width: 58ch;
+  margin: 0;
+}
+
+/* ── Agent launchers ─────────────────────────────────────────────────── */
+
+.agentBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.agentBarLabel {
+  font-size: 0.8125rem;
+  color: var(--hub-faint);
+  margin-right: 0.125rem;
+}
+
+.launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--hub-border);
+  border-radius: 8px;
+  background-color: var(--hub-surface);
+  color: var(--hub-text);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+.launch:hover {
+  text-decoration: none;
+  color: var(--hub-accent-text);
+  border-color: var(--hub-border-hover);
+  background-color: var(--hub-raised);
+}
+
+.launchIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: 3.5rem;
+  scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+
+.sectionHead {
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeading {
+  font-family: var(--headerFont);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hub-faint);
+  margin: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--hub-border);
+  scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+
+/* ── Agent lane ───────────────────────────────────────────────────────── */
+
+.agentLane {
+  margin-bottom: 3.5rem;
+  border: 1px solid var(--hub-lane-border);
+  border-radius: 12px;
+  background: var(--hub-lane-bg);
+  padding: 1.75rem 1.75rem 1.5rem;
+  scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
+}
+
+.agentLane .sectionHeading {
+  border-bottom-color: var(--hub-lane-border);
+  color: var(--hub-accent-text);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+/* Two, not auto-fit. There are exactly four of these, and auto-fit put three on
+   the first row and orphaned the fourth beside a third of a lane of whitespace.
+   Four divides evenly by two at any width that fits two. */
+@media (min-width: 860px) {
+  .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 2rem;
+  }
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.actionLabel {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--hub-text);
+  margin: 0;
+}
+
+.actionDetail {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--hub-muted);
+  margin: 0;
+}
+
+.command {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--hub-code-bg);
+  border: 1px solid var(--hub-code-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+  min-width: 0;
+}
+
+.commandText {
+  font-family: var(--monoFont);
+  font-size: 0.8125rem;
+  color: var(--hub-code-text);
+  background: none;
+  border: none;
+  padding: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.commandText::-webkit-scrollbar {
+  display: none;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  border: 1px solid #343940;
+  background: transparent;
+  color: #89919f;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.copyBtn:hover {
+  color: #ffffff;
+  border-color: #5b6470;
+}
+
+.agentLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 1.5rem 0 0;
+  padding-top: 1.125rem;
+  border-top: 1px solid var(--hub-lane-border);
+}
+
+.agentLink {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--hub-accent-text);
+}
+
+.agentTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.agentIntro {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--hub-muted);
+  margin: 0;
+  max-width: 34ch;
+}
+
+/* A labelled rule, so the two tiers read as "instant" then "manual" rather than
+   as two unrelated blocks of agent things stacked up. */
+.agentDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hub-faint);
+  margin: 0 0 1.25rem;
+}
+
+.agentDivider::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background-color: var(--hub-lane-border);
+}
+
+/* ── Destination cards ───────────────────────────────────────────────── */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(264px, 1fr));
+  gap: 0.875rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  height: 100%;
+  border: 1px solid var(--hub-border);
+  border-radius: 10px;
+  background-color: var(--hub-surface);
+  box-shadow: var(--hub-shadow);
+  padding: 1.125rem 1.25rem;
+  text-decoration: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.card:hover {
+  text-decoration: none;
+  border-color: var(--hub-border-hover);
+  box-shadow: var(--hub-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.cardName {
+  font-family: var(--headerFont);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--hub-text);
+  margin: 0;
+}
+
+.card:hover .cardName {
+  color: var(--hub-accent-text);
+}
+
+.cardDesc {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--hub-muted);
+  margin: 0;
+  flex-grow: 1;
+}
+
+.cardHost {
+  font-family: var(--monoFont);
+  font-size: 0.6875rem;
+  color: var(--hub-faint);
+  margin-top: 0.625rem;
+}
+
+/* ── Dense section index ─────────────────────────────────────────────── */
+
+.items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.25rem 1.5rem;
+}
+
+.item {
+  padding: 0.5rem 0.75rem;
+  margin-left: -0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: background-color 150ms ease;
+}
+
+.item:hover {
+  background-color: var(--hub-sunken);
+}
+
+.itemLink {
+  display: block;
+  font-weight: 500;
+  color: var(--hub-text);
+}
+
+.item:hover .itemLink {
+  color: var(--hub-accent-text);
+}
+
+.itemDesc {
+  display: block;
+  color: var(--hub-faint);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 600px) {
+  .page { padding: 1.25rem 1.25rem 3.5rem; }
+  .items { grid-template-columns: 1fr; }
+  .actions { grid-template-columns: 1fr; }
+  .agentLane { padding: 1.25rem 1.125rem; }
+}

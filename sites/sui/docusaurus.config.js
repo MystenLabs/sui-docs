@@ -441,6 +441,16 @@ const config = {
           src: "img/sui-logo.svg",
         },
         items: [
+          // First, and outside the dropdowns on purpose. The five that follow
+          // are Sui content categories; this one spans Walrus, the Move Book,
+          // the SDKs and Enoki as well, so it is a sibling of them rather than a
+          // child of any. /skills is the cautionary case: it is nested inside
+          // Getting Started and is effectively unfindable.
+          //
+          // "Explore" rather than "Products", because "Sui Stack" below already
+          // means the products, and two labels for one referent is worse than
+          // one broad label.
+          { to: "/explore", label: "Explore" },
           {
             type: "dropdown",
             label: "Getting Started",

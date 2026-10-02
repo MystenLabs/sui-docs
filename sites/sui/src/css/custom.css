@@ -3027,3 +3027,26 @@ body {
 [data-theme='dark'] .legacy-api-banner a:hover {
   color: #FDE68A;
 }
+
+/* A plain top-level navbar link renders with both navbar__item and navbar__link
+   on the same element; a dropdown trigger gets navbar__link alone. So
+   `.navbar__items .navbar__item.navbar__link` above matches only plain links,
+   and until "Explore" was added there were none at the top level (Skills is
+   nested inside Getting Started). That rule therefore styled nothing, and the
+   moment a plain link appeared it was the only item in --headerFont at a
+   clamped size, visibly smaller than its five neighbours, and blue when active
+   because the rule that strips the active highlight covers dropdowns only.
+
+   Match the plain link to the dropdown triggers rather than restyling the five
+   to match it: they are the established appearance, this is the newcomer. */
+.navbar .navbar__items .navbar__item.navbar__link {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--ifm-font-weight-semibold);
+  letter-spacing: normal;
+}
+
+.navbar .navbar__items .navbar__item.navbar__link.navbar__link--active {
+  color: var(--ifm-navbar-link-color) !important;
+  background: transparent !important;
+}
