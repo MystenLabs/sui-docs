@@ -105,7 +105,7 @@ To check whether the connected wallet is Slush Wallet, compare the wallet name a
 
 ## Sui dApp Kit integration
 
-The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) provides built-in opt-in support for Slush Wallet. Pass `slushWalletConfig` to `createDAppKit` to enable it. The `name` field is required and is shown to the user during the connection flow.
+The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) provides built-in opt-in support for Slush Wallet. Pass `slushWalletConfig` to `createDAppKit` to enable it. The `name` field is required, but it is not shown to the user during the connection flow.
 
 <ImportContent
   source="/packages/dapp-kit/packages/dapp-kit-react/src/components/DAppKitProvider.tsx"
@@ -116,7 +116,7 @@ The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) provides built-in opt-in
   noComments
 />
 
-Users who have the Slush browser extension installed see only the extension in the connection modal. Users without the extension connect through the Slush web app instead.
+Users who have the Slush browser extension installed see only the extension in the connection modal. Users without the extension can use a delegated session key instead.
 
 ## Deep linking
 
