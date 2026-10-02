@@ -30,6 +30,12 @@ jobs:
         with:
           node-version: "22"
 
+      # The guard compares the tree against what the mirror produces, so it needs
+      # the upstream sources on disk. Without them it cannot tell mirror output
+      # from a hand edit, and says so rather than guessing.
+      - name: Fetch the mirrored sources
+        run: node scripts/fetch-sources.js
+
       - name: Check for hand edits to mirrored files
         id: check
         run: |

@@ -18,8 +18,9 @@
 // the forward-port workflow consumes to open the pull request in the right
 // place instead of simply rejecting the author's work.
 
-const { execFileSync } = require("child_process");
+const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
+const path = require("path");
 
 const { mirrored, mirroredOwnerOf } = require("./lib/sources");
 
@@ -75,6 +76,29 @@ function main() {
   if (offending.length === 0) {
     console.log(`No mirrored paths touched (${changed.length} file(s) changed).`);
     return;
+  }
+
+  // A mirrored path changing is not the same as somebody editing it. A pull
+  // request carrying mirror output -- a re-mirror, or a merge that brings one
+  // in -- changes these files legitimately, and the first version of this guard
+  // failed such a pull request with 470 "hand edits" that were nothing of the
+  // sort. The question worth asking is whether the tree is what the mirror would
+  // produce, so ask the mirror.
+  const check = spawnSync(process.execPath, [path.join(__dirname, "mirror.js"), "--check"], {
+    encoding: "utf8",
+  });
+  if (check.status === 0) {
+    console.log(
+      `${offending.length} mirrored file(s) changed, and all of them match what the ` +
+        `mirror produces from the pinned upstream commits. Nothing was hand-edited.`,
+    );
+    return;
+  }
+  if (check.status === null) {
+    console.log(
+      "Could not run the mirror to tell its output apart from a hand edit " +
+        `(${check.error ? check.error.message : "unknown"}). Treating the changes as edits.`,
+    );
   }
 
   console.log(`${offending.length} mirrored file(s) edited. These are read-only here.\n`);

@@ -10,7 +10,13 @@ const glob = require("glob");
 // CONTENT_ROOT is where the pages are; SOURCE_ROOT is where the code they
 // quote is. They are the same checkout today and default to it. See
 // scripts/lib/roots.cjs.
-const { SITE_ROOT, CONTENT_ROOT, SOURCE_ROOT } = require("./lib/roots.cjs");
+const { SITE_ROOT, CONTENT_ROOT, SOURCE_ROOT, requireSource } = require("./lib/roots.cjs");
+
+// Fail here rather than 128 lines later. With no source checkout every
+// ImportContent path misses, this script warns and still exits 0, and the build
+// ships pages whose code samples are empty. A green build with no code in it is
+// worse than a red one, so a missing checkout is an error.
+requireSource();
 
 const OUT_FILE = path.join(SITE_ROOT, ".generated/ImportContentMap.ts");
 
