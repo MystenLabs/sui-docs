@@ -79,9 +79,10 @@ function computeRouteFromFile(docsRootAbs, fileAbs) {
 }
 
 // ---------- plugin ----------
+const { DESCRIPTION_PLUGIN } = require("../../plugin-names");
 const descriptionPlugin = (context, options) => {
   return {
-    name: "sui-description-plugin",
+    name: DESCRIPTION_PLUGIN,
 
     async loadContent() {
       // Find classic preset options robustly

@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from "react";
 import { useHistory } from "@docusaurus/router";
 import { usePluginData } from "@docusaurus/useGlobalData";
+import { DESCRIPTION_PLUGIN } from "../../plugin-names";
 import styles from "@site/src/css/cards.module.css";
 
 interface CardProps {
@@ -25,7 +26,7 @@ export function Card({ title, href, className, children }: CardProps) {
     }
   }, [url]);
 
-  const data = usePluginData("hashi-description-plugin") as
+  const data = usePluginData(DESCRIPTION_PLUGIN) as
     | { descriptions: { id: string; description: string }[] }
     | undefined;
   let h = href;
