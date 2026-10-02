@@ -6,16 +6,16 @@
     "sourcePath": "docs/src",
     "targetPath": "content/oyster",
     "files": 24,
-    "mirroredAt": "2026-10-01T19:42:16.146Z"
+    "mirroredAt": "2026-10-02T15:56:59.514Z"
   },
   "walrus": {
     "repo": "MystenLabs/walrus",
     "ref": "main",
-    "commit": "460c1fae3721ac73733d1af08e88019e296b4e04",
+    "commit": "a79229d8f83a281b319e7d068f9d59149a1f87fe",
     "sourcePath": "docs/content",
     "targetPath": "content/walrus",
     "files": 123,
-    "mirroredAt": "2026-10-01T19:42:16.014Z"
+    "mirroredAt": "2026-10-02T15:56:59.444Z"
   },
   "suins": {
     "repo": "MystenLabs/suins-contracts",
@@ -24,16 +24,16 @@
     "sourcePath": "documentation/content",
     "targetPath": "content/suins",
     "files": 18,
-    "mirroredAt": "2026-10-01T19:42:16.027Z"
+    "mirroredAt": "2026-10-02T15:56:59.449Z"
   },
   "hashi": {
     "repo": "MystenLabs/hashi",
     "ref": "main",
-    "commit": "a017fbed1accd4b06aa9d0a970d85111a30066bc",
+    "commit": "4b605ca8caa643167d46975404490af6e6e3c0e3",
     "sourcePath": "design/docs",
     "targetPath": "content/hashi",
     "files": 21,
-    "mirroredAt": "2026-10-01T19:42:16.039Z"
+    "mirroredAt": "2026-10-02T15:56:59.456Z"
   },
   "move-book": {
     "repo": "MystenLabs/move-book",
@@ -42,24 +42,24 @@
     "sourcePath": "book",
     "targetPath": "content/move-book",
     "files": 116,
-    "mirroredAt": "2026-10-01T19:42:16.107Z"
+    "mirroredAt": "2026-10-02T15:56:59.501Z"
   },
   "ts-sdks": {
     "repo": "MystenLabs/ts-sdks",
     "ref": "main",
-    "commit": "1051a8e073743fc1a5e2cbd87fb4481715b35ed0",
+    "commit": "2ba222afd9068989692eef2f4a7077d19422cc12",
     "sourcePath": "packages/docs/content",
     "targetPath": "content/ts-sdks",
     "files": 131,
-    "mirroredAt": "2026-10-01T19:42:16.139Z"
+    "mirroredAt": "2026-10-02T15:56:59.510Z"
   },
   "walrus-memory": {
     "repo": "MystenLabs/MemWal",
     "ref": "dev",
-    "commit": "1ee78011d823e16c8a643ab55cd653c404abb396",
+    "commit": "f09a412e9587462953fbc442d19dab52fc4d8818",
     "sourcePath": "docs",
     "targetPath": "content/walrus-memory",
     "files": 115,
-    "mirroredAt": "2026-10-01T19:42:20.964Z"
+    "mirroredAt": "2026-10-02T15:57:04.312Z"
   }
 }
