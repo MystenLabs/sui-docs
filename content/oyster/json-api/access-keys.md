@@ -10,15 +10,15 @@ You can have up to **3 active access keys** per account.
 
 ## Managing Access Keys
 
-Access keys are provisioned through the [Admin API](admin.md#s3-access-keys).
+Access keys are provisioned through the [Admin API](/oyster/admin#s3-access-keys).
 An app operator uses admin-key authentication to create, list, and revoke
 keys for accounts they manage.
 
 | Operation | Endpoint | Description |
 |-----------|----------|-------------|
-| [Create](admin.md#create-access-key) | `POST /api/v1/accounts/{account_id}/access-keys` | Create a new key pair |
-| [List](admin.md#list-access-keys) | `GET /api/v1/accounts/{account_id}/access-keys` | List all keys for an account |
-| [Revoke](admin.md#revoke-access-key) | `DELETE /api/v1/accounts/{account_id}/access-keys/{access_key_id}` | Revoke a key |
+| [Create](/oyster/admin#create-access-key) | `POST /api/v1/accounts/{account_id}/access-keys` | Create a new key pair |
+| [List](/oyster/admin#list-access-keys) | `GET /api/v1/accounts/{account_id}/access-keys` | List all keys for an account |
+| [Revoke](/oyster/admin#revoke-access-key) | `DELETE /api/v1/accounts/{account_id}/access-keys/{access_key_id}` | Revoke a key |
 
 ## Key Format
 
