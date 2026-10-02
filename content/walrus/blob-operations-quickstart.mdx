@@ -9,6 +9,8 @@ keywords: [walrus, quickstart, python, http api, cli, store blob, read blob, blo
   prompt="Walk me through storing a file on Walrus, reading it back, and checking its status. Show me how to do each operation with the CLI, the HTTP API, and Python so I can compare them."
 />
 
+test
+
 This quickstart shows the core blob operations, store, read, and check status, three ways: the Walrus CLI, the HTTP API, and Python. Each operation appears in all three so you can pick the surface that fits your stack, or compare them side by side.
 
 Walrus does not ship a dedicated Python SDK. A Python backend integrates with Walrus through the HTTP API, reading from an aggregator and writing to a publisher, or by driving the `walrus` CLI as a subprocess. This page uses the HTTP API for the Python examples because it needs nothing beyond the `requests` library.
