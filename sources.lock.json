@@ -6,7 +6,7 @@
     "sourcePath": "docs/content",
     "targetPath": "content/seal",
     "files": 15,
-    "mirroredAt": "2026-10-02T00:26:40.499Z"
+    "mirroredAt": "2026-10-02T04:11:18.242Z"
   },
   "messaging": {
     "repo": "MystenLabs/sui-stack-messaging",
@@ -15,7 +15,7 @@
     "sourcePath": "docs/sui-stack-messaging",
     "targetPath": "content/sui/sui-stack/messaging",
     "files": 13,
-    "mirroredAt": "2026-10-02T00:26:40.528Z"
+    "mirroredAt": "2026-10-02T04:11:18.291Z"
   },
   "oyster": {
     "repo": "MystenLabs/oyster",
@@ -24,7 +24,7 @@
     "sourcePath": "docs/src",
     "targetPath": "content/oyster",
     "files": 24,
-    "mirroredAt": "2026-10-02T00:26:40.530Z"
+    "mirroredAt": "2026-10-02T04:11:18.294Z"
   },
   "walrus": {
     "repo": "MystenLabs/walrus",
@@ -33,7 +33,7 @@
     "sourcePath": "docs/content",
     "targetPath": "content/walrus",
     "files": 123,
-    "mirroredAt": "2026-10-02T00:26:40.497Z"
+    "mirroredAt": "2026-10-02T04:11:18.239Z"
   },
   "suins": {
     "repo": "MystenLabs/suins-contracts",
@@ -42,7 +42,7 @@
     "sourcePath": "documentation/content",
     "targetPath": "content/suins",
     "files": 18,
-    "mirroredAt": "2026-10-02T00:26:40.503Z"
+    "mirroredAt": "2026-10-02T04:11:18.248Z"
   },
   "hashi": {
     "repo": "MystenLabs/hashi",
@@ -51,7 +51,7 @@
     "sourcePath": "design/docs",
     "targetPath": "content/hashi",
     "files": 21,
-    "mirroredAt": "2026-10-02T00:26:40.507Z"
+    "mirroredAt": "2026-10-02T04:11:18.255Z"
   },
   "move-book": {
     "repo": "MystenLabs/move-book",
@@ -60,7 +60,7 @@
     "sourcePath": "book",
     "targetPath": "content/move-book",
     "files": 116,
-    "mirroredAt": "2026-10-02T00:26:40.521Z"
+    "mirroredAt": "2026-10-02T04:11:18.280Z"
   },
   "ts-sdks": {
     "repo": "MystenLabs/ts-sdks",
@@ -69,7 +69,7 @@
     "sourcePath": "packages/docs/content",
     "targetPath": "content/ts-sdks",
     "files": 131,
-    "mirroredAt": "2026-10-02T00:26:40.527Z"
+    "mirroredAt": "2026-10-02T04:11:18.290Z"
   },
   "walrus-memory": {
     "repo": "MystenLabs/MemWal",
@@ -78,6 +78,6 @@
     "sourcePath": "docs",
     "targetPath": "content/walrus-memory",
     "files": 115,
-    "mirroredAt": "2026-10-02T00:26:42.017Z"
+    "mirroredAt": "2026-10-02T04:11:20.464Z"
   }
 }
