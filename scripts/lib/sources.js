@@ -35,10 +35,12 @@ function load() {
     if (!/^[^/]+\/[^/]+$/.test(cfg.repo)) {
       throw new Error(`${where}.repo must be "owner/name", got ${JSON.stringify(cfg.repo)}`);
     }
-    // A target outside content/ would put mirrored files somewhere the guard
-    // does not watch, which is how a read-only tree quietly becomes writable.
-    if (!cfg.targetPath.startsWith("content/")) {
-      throw new Error(`${where}.targetPath must be under content/, got ${JSON.stringify(cfg.targetPath)}`);
+    // The guard derives what it watches from targetPath itself, so a target
+    // does not have to sit under content/ to be protected: shared-docusaurus
+    // mirrors code into sites/. What must not happen is a target that escapes
+    // the repo, because mirror.js cleans the directory before writing it.
+    if (path.isAbsolute(cfg.targetPath) || /(^|\/)\.\.(\/|$)/.test(cfg.targetPath)) {
+      throw new Error(`${where}.targetPath must stay inside the repo, got ${JSON.stringify(cfg.targetPath)}`);
     }
     sources.push({
       name,

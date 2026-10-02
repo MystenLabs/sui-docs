@@ -1,0 +1,91 @@
+name: Forward-port mirrored edits
+
+# Sends an edit made to a mirrored page to the repository that owns it.
+#
+# The guard stops such an edit from being merged here, because the next mirror
+# run would revert it. On its own that just moves the work onto the author, who
+# still has to find the source repo and redo the change. This opens the pull
+# request there instead.
+#
+# Deliberately manual. It writes to other teams' repositories, so it runs when
+# someone asks it to and not as a side effect of pushing a commit. It opens pull
+# requests and never merges or approves them.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number in this repo whose mirrored edits should be forwarded"
+        required: true
+        type: string
+      dry_run:
+        description: "Print the patches without pushing anything"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  forward-port:
+    name: Open pull requests upstream
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Resolve the pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr view "${{ inputs.pr }}" --repo "$GITHUB_REPOSITORY" \
+            --json baseRefOid,headRefOid,headRefName > pr.json
+          echo "base=$(jq -r .baseRefOid pr.json)" >> "$GITHUB_OUTPUT"
+          echo "head=$(jq -r .headRefOid pr.json)" >> "$GITHUB_OUTPUT"
+          echo "branch=$(jq -r .headRefName pr.json)" >> "$GITHUB_OUTPUT"
+
+      # The script compares the working tree against the mirrored baseline, so
+      # the pull request's own content has to be what is checked out.
+      - name: Check out the pull request head
+        run: git checkout --quiet "${{ steps.pr.outputs.head }}"
+
+      - name: Find the mirrored edits
+        run: |
+          node scripts/check-mirror-edits.js \
+            --base "${{ steps.pr.outputs.base }}" \
+            --head "${{ steps.pr.outputs.head }}" \
+            --json "$RUNNER_TEMP/offending.json" || true
+
+      - name: Forward-port
+        env:
+          # Must reach the source repositories. The repo-scoped GITHUB_TOKEN of
+          # this run cannot push to another repository, so a token with write
+          # access to them is required and the job says so rather than failing
+          # with a confusing permission error.
+          FORWARD_PORT_TOKEN: ${{ secrets.FORWARD_PORT_TOKEN }}
+        run: |
+          node scripts/forward-port.js \
+            --json "$RUNNER_TEMP/offending.json" \
+            --base "${{ steps.pr.outputs.base }}" \
+            --pr "${{ inputs.pr }}" \
+            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            | tee "$RUNNER_TEMP/forward-port.log"
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo "### Forward-port${{ inputs.dry_run && ' (dry run)' || '' }}"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/forward-port.log" 2>/dev/null || echo "nothing to report"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

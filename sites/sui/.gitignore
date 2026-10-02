@@ -1,0 +1,52 @@
+# build spec
+
+open-spec
+
+# Dependencies
+/node_modules
+
+# Production
+/build
+
+# Generated files
+.docusaurus
+.cache-loader
+.generated
+.resolved
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.vercel
+.env*.local
+
+# Generated awesome-sui files
+static/awesome-sui/
+src/static/awesome-sui/
+static/awesome-sui-gaming/
+src/static/awesome-sui-gaming/
+static/awesome-sui/
+
+scripts/.cache/
+
+## Subtrees
+../docs/subtree/
+
+## locally cloned display preview - should only exist during build
+static/display-preview/
+
+## src/shared is NOT ignored here.
+## Upstream (MystenLabs/sui) carries this rule, but all 45 files are committed
+## there anyway, so the rule only ever hid them from a fresh checkout -- which is
+## how they failed to come across in this move and left the tree unbuildable.
+## MystenLabs/ML-shared-docusaurus is the nominal origin and is 13 files behind
+## with 13 more diverged, so mirroring from it would delete components that ~71
+## pages import. Tracked here until that is reconciled.

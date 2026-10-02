@@ -1,0 +1,75 @@
+{
+  "_comment": "Everything documented inside one of the sites in docs-sites.json. The hub renders these in one grid with the sites themselves, so a reader does not have to care which is which. Every url was checked to return 200; the ones with no index page of their own point at their real entry page, which is why some are deeper than you would expect. Hand-maintained, unlike hub-index.json, because what counts as a product is an editorial call rather than a directory listing.",
+  "products": [
+    {
+      "name": "Seal",
+      "description": "Threshold encryption and onchain access control, with key server operation and access policies.",
+      "url": "/sui-stack/seal"
+    },
+    {
+      "name": "SuiNS",
+      "description": "The Sui Name Service: register names, resolve them, and integrate them into an app.",
+      "url": "/sui-stack/suins"
+    },
+    {
+      "name": "Walrus Sites",
+      "description": "Publish a website from Walrus storage, with custom domains and SuiNS names.",
+      "url": "https://docs.wal.app/sites"
+    },
+    {
+      "name": "Oyster",
+      "description": "S3-compatible object storage built on Walrus.",
+      "url": "https://docs.wal.app/oyster"
+    },
+    {
+      "name": "Walrus Memory",
+      "description": "Portable memory for AI agents, stored on Walrus.",
+      "url": "https://docs.wal.app/walrus-memory"
+    },
+    {
+      "name": "DeepBook",
+      "description": "The central limit order book: pools, margin trading, and the indexer.",
+      "url": "/onchain-finance/deepbook"
+    },
+    {
+      "name": "Kiosk",
+      "description": "Primitives for listing, trading, and enforcing rules on owned assets.",
+      "url": "/onchain-finance/kiosk"
+    },
+    {
+      "name": "Hashi",
+      "description": "Cross-chain messaging and asset movement between Sui and other networks.",
+      "url": "/sui-stack/hashi"
+    },
+    {
+      "name": "Nautilus",
+      "description": "Verifiable offchain computation in a trusted execution environment.",
+      "url": "/sui-stack/nautilus"
+    },
+    {
+      "name": "Move Registry",
+      "description": "Name packages and resolve them by name instead of by address.",
+      "url": "/sui-stack/mvr/move-registry"
+    },
+    {
+      "name": "Messaging SDK",
+      "description": "End-to-end encrypted messaging between Sui addresses.",
+      "url": "/sui-stack/messaging"
+    },
+    {
+      "name": "zkLogin",
+      "description": "Sign in with an existing OAuth account, with no seed phrase to manage.",
+      "url": "/sui-stack/zklogin-integration"
+    },
+    {
+      "name": "Onchain primitives",
+      "description": "Randomness, time, and the other building blocks the network provides.",
+      "url": "/sui-stack/on-chain-primitives"
+    },
+    {
+      "name": "SuiPlay0X1",
+      "description": "Building games for the SuiPlay0X1 handheld.",
+      "url": "/sui-stack/suiplay0x1"
+    }
+  ]
+}

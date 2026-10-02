@@ -38,34 +38,31 @@ jobs:
             --head "${{ github.event.pull_request.head.sha }}" \
             --json "$RUNNER_TEMP/offending.json"
 
-      # Runs only when the guard failed, so the author gets the upstream links
-      # in the pull request rather than having to open the job log.
-      - name: Explain on the pull request
+      # Runs only when the guard failed. A job summary rather than a pull request
+      # comment: the ::error annotations the script emits already land inline on
+      # the diff, and this repo does not comment on pull requests.
+      - name: Explain in the job summary
         if: failure() && steps.check.outcome == 'failure'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
+        run: |
+          node -e '
+            const fs = require("fs");
             const { offending } = JSON.parse(
-              fs.readFileSync(process.env.RUNNER_TEMP + '/offending.json', 'utf8'));
-            const rows = offending.map(o =>
-              `| \`${o.file}\` | [\`${o.upstreamPath}\`](https://github.com/${o.repo}/blob/main/${o.upstreamPath}) |`
-            ).join('\n');
-            const body = [
-              '### These files are mirrored, not authored here',
-              '',
-              'They are overwritten by the next mirror run, so an edit made here would be lost.',
-              'Make the change in the source repository instead:',
-              '',
-              '| File in this repo | Edit this instead |',
-              '| --- | --- |',
+              fs.readFileSync(process.env.RUNNER_TEMP + "/offending.json", "utf8"));
+            const rows = offending.map((o) =>
+              `| \`${o.file}\` | [\`${o.upstreamPath}\`](https://github.com/${o.repo}/blob/${o.ref}/${o.upstreamPath}) |`
+            ).join("\n");
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+              "### These files are mirrored, not authored here",
+              "",
+              "They are overwritten by the next mirror run, so an edit made here would be lost.",
+              "",
+              "| File in this repo | Source of truth |",
+              "| --- | --- |",
               rows,
-              '',
-              'Everything else in this pull request is fine. Removing these files from it will clear the check.',
-            ].join('\n');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body,
-            });
+              "",
+              "The forward-port workflow can send these to the source repositories for you:",
+              "run it from the Actions tab on this pull request. Removing these files from the",
+              "pull request also clears this check.",
+              "",
+            ].join("\n"));
+          '

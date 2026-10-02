@@ -134,7 +134,7 @@ The response includes an `ETag` header containing the quoted MD5 digest
 |--------|-----------|
 | `400` | Upload would push the account past its per-account `max_unencoded_bytes` cap (body carries a `cap_exceeded` block) |
 | `401` | Missing or invalid API key |
-| `402` | Pearl-derived wallet lacks WAL/SUI to fund the upload (body carries a `funding_required` block; see [Cross-Cutting Error Contracts](README.md#cross-cutting-error-contracts)) |
+| `402` | Pearl-derived wallet lacks WAL/SUI to fund the upload (body carries a `funding_required` block; see [Cross-Cutting Error Contracts](/oyster/README#cross-cutting-error-contracts)) |
 | `404` | Bucket not found |
 | `412` | `If-Match` or `If-None-Match` condition failed |
 | `413` | Payload exceeds 1 GB, or exceeds the Walrus encoder's per-blob ceiling for the network's `n_shards` (body carries a `payload_too_large` block) |
@@ -165,7 +165,7 @@ through the same `f = encoded_blob_length_for_n_shards` that the upload
 path uses to project the post-upload encoded total, so the
 short-circuit fires before any onchain work. Raise (or lower) the
 cap through the admin
-[Update Storage Cap](admin.md#update-storage-cap) endpoint.
+[Update Storage Cap](/oyster/admin#update-storage-cap) endpoint.
 
 ## Read Blob by Key
 
