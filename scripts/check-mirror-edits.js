@@ -18,11 +18,13 @@
 // the forward-port workflow consumes to open the pull request in the right
 // place instead of simply rejecting the author's work.
 
-const { execFileSync, spawnSync } = require("child_process");
+const { execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
 const { mirrored, mirroredOwnerOf } = require("./lib/sources");
+const { applyTransforms, targetRelPath } = require("./lib/transform");
+const { CACHE } = require("./fetch-sources");
 
 const argv = process.argv.slice(2);
 const arg = (name) => {
@@ -37,6 +39,14 @@ const JSON_OUT = arg("json");
 if (!BASE || !HEAD) {
   console.error("usage: check-mirror-edits.js --base <sha> --head <sha> [--json out.json]");
   process.exit(2);
+}
+
+function listNames(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.isDirectory()) listNames(path.join(dir, e.name), out);
+    else out.push(e.name);
+  }
+  return out;
 }
 
 const git = (args) => execFileSync("git", args, { encoding: "utf8" });
@@ -79,27 +89,50 @@ function main() {
   }
 
   // A mirrored path changing is not the same as somebody editing it. A pull
-  // request carrying mirror output -- a re-mirror, or a merge that brings one
-  // in -- changes these files legitimately, and the first version of this guard
+  // request carrying mirror output -- a re-mirror, or a merge that brings one in
+  // -- changes these files legitimately, and the first version of this guard
   // failed such a pull request with 470 "hand edits" that were nothing of the
-  // sort. The question worth asking is whether the tree is what the mirror would
-  // produce, so ask the mirror.
-  const check = spawnSync(process.execPath, [path.join(__dirname, "mirror.js"), "--check"], {
-    encoding: "utf8",
-  });
-  if (check.status === 0) {
+  // sort.
+  //
+  // Ask the question per file, not per repository. Running the whole mirror in
+  // --check mode answers "is every source up to date", which fails the moment
+  // any upstream moves, and these repositories move daily: the first attempt at
+  // this failed because hashi had advanced while the file in question was
+  // walrus. What matters is only whether each offending file is what the mirror
+  // would write for it.
+  const stillSuspect = [];
+  for (const o of offending) {
+    const source = sources.find((s) => s.name === o.source);
+    const from = path.join(CACHE, source.name, source.sourcePath);
+    if (!fs.existsSync(from)) {
+      // No fetched copy to compare against, so no opinion: treat it as an edit.
+      stillSuspect.push({ ...o, why: "no fetched copy of the source to compare against" });
+      continue;
+    }
+    const rel = o.file.slice(source.targetPath.length + 1);
+    const names = listNames(from);
+    const upstreamRel = o.upstreamPath.slice(source.sourcePath.length + 1);
+    const upstream = path.join(from, upstreamRel);
+    if (!fs.existsSync(upstream)) {
+      stillSuspect.push({ ...o, why: "no longer present upstream" });
+      continue;
+    }
+    const expected = applyTransforms(
+      fs.readFileSync(upstream, "utf8"), source, names, targetRelPath(source, upstreamRel) || rel,
+    );
+    const actual = fs.existsSync(o.file) ? fs.readFileSync(o.file, "utf8") : null;
+    if (actual !== expected) stillSuspect.push({ ...o, why: "differs from what the mirror would write" });
+  }
+
+  if (stillSuspect.length === 0) {
     console.log(
-      `${offending.length} mirrored file(s) changed, and all of them match what the ` +
-        `mirror produces from the pinned upstream commits. Nothing was hand-edited.`,
+      `${offending.length} mirrored file(s) changed, and every one of them is exactly ` +
+        `what the mirror writes for it. Nothing was hand-edited.`,
     );
     return;
   }
-  if (check.status === null) {
-    console.log(
-      "Could not run the mirror to tell its output apart from a hand edit " +
-        `(${check.error ? check.error.message : "unknown"}). Treating the changes as edits.`,
-    );
-  }
+  offending.length = 0;
+  offending.push(...stillSuspect);
 
   console.log(`${offending.length} mirrored file(s) edited. These are read-only here.\n`);
   for (const o of offending) {
