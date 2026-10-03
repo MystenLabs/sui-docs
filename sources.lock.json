@@ -6,7 +6,7 @@
     "sourcePath": "docs/src",
     "targetPath": "content/oyster",
     "files": 24,
-    "mirroredAt": "2026-10-03T04:15:22.745Z"
+    "mirroredAt": "2026-10-03T08:12:11.763Z"
   },
   "walrus": {
     "repo": "MystenLabs/walrus",
@@ -15,7 +15,7 @@
     "sourcePath": "docs/content",
     "targetPath": "content/walrus",
     "files": 123,
-    "mirroredAt": "2026-10-03T04:15:22.679Z"
+    "mirroredAt": "2026-10-03T08:12:11.700Z"
   },
   "suins": {
     "repo": "MystenLabs/suins-contracts",
@@ -24,7 +24,7 @@
     "sourcePath": "documentation/content",
     "targetPath": "content/suins",
     "files": 18,
-    "mirroredAt": "2026-10-03T04:15:22.685Z"
+    "mirroredAt": "2026-10-03T08:12:11.707Z"
   },
   "hashi": {
     "repo": "MystenLabs/hashi",
@@ -33,7 +33,7 @@
     "sourcePath": "design/docs",
     "targetPath": "content/hashi",
     "files": 21,
-    "mirroredAt": "2026-10-03T04:15:22.693Z"
+    "mirroredAt": "2026-10-03T08:12:11.715Z"
   },
   "move-book": {
     "repo": "MystenLabs/move-book",
@@ -42,7 +42,7 @@
     "sourcePath": "book",
     "targetPath": "content/move-book",
     "files": 116,
-    "mirroredAt": "2026-10-03T04:15:22.735Z"
+    "mirroredAt": "2026-10-03T08:12:11.753Z"
   },
   "ts-sdks": {
     "repo": "MystenLabs/ts-sdks",
@@ -51,7 +51,7 @@
     "sourcePath": "packages/docs/content",
     "targetPath": "content/ts-sdks",
     "files": 131,
-    "mirroredAt": "2026-10-03T04:15:22.742Z"
+    "mirroredAt": "2026-10-03T08:12:11.759Z"
   },
   "walrus-memory": {
     "repo": "MystenLabs/MemWal",
@@ -60,6 +60,6 @@
     "sourcePath": "docs",
     "targetPath": "content/walrus-memory",
     "files": 115,
-    "mirroredAt": "2026-10-03T04:15:28.695Z"
+    "mirroredAt": "2026-10-03T08:12:17.994Z"
   }
 }
