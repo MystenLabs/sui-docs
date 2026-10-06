@@ -10,7 +10,7 @@
   "walrus": {
     "repo": "MystenLabs/walrus",
     "ref": "main",
-    "commit": "0b68f3fab333a1d94f16e11cd8e88589fd21d1d1",
+    "commit": "87c9e90347d2e4b9adff4810517e51d3db3e1dcb",
     "sourcePath": "docs/content",
     "targetPath": "content/walrus",
     "files": 123
