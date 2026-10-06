@@ -78,7 +78,38 @@ jobs:
           fi
           git diff --cached --stat
           git commit -m "mirror: sync external docs"
-          git push
+
+          # Anything else pushing to main between this job's checkout and its
+          # push makes the push non-fast-forward. That used to fail the run and
+          # lose the sync until the next schedule, four hours later. Rebase onto
+          # the new tip and retry instead.
+          #
+          # A conflict here should be impossible: the concurrency group
+          # serialises mirror runs, so the other side is a human or another
+          # workflow, and neither writes what this job writes. Mirrored content
+          # is guarded against hand edits, and only this job writes
+          # sources.lock.json. So treat a conflict as a broken assumption and
+          # stop, rather than resolving it blind.
+          for attempt in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "push rejected (attempt $attempt of 3), rebasing onto origin/main"
+            # The default checkout is shallow and has no merge base to rebase
+            # against. Deepen only here, so the common path stays cheap.
+            if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+              git fetch --unshallow origin
+            else
+              git fetch origin
+            fi
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo "::error::mirror commit conflicts with origin/main. Rerun this workflow."
+              exit 1
+            fi
+          done
+          echo "::error::push still rejected after 3 attempts."
+          exit 1
 
       - name: Report (dry run)
         if: inputs.dry_run == true
