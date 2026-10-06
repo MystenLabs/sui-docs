@@ -3,10 +3,9 @@
 
 // The one implementation of what a mirrored file looks like here.
 //
-// mirror.js applies this on the way in. forward-port.js replays it to work out
+// mirror.js applies this on the way in, so that a materialised tree reads
 // what the mirror produced, so it can tell an author's edit apart from the
 // transform's own output and send only the edit upstream. Two copies of this
-// logic would mean the forward-port silently attributing transform differences
 // to the author, so there is exactly one.
 
 const path = require("path");
@@ -36,7 +35,6 @@ function targetRelPath(source, relPath) {
  * extension. Missing one produces a link that resolves upstream and 404s here.
  *
  * Note this is deliberately lossy — four input forms collapse to one output —
- * which is why the forward-port replays it forward rather than trying to invert
  * it.
  */
 function rewriteLinks(content, source, names) {

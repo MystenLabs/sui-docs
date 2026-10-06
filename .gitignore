@@ -37,3 +37,26 @@ sites/sui/static/sui-stack/
 sites/*/static/llms.txt
 sites/*/static/llms-full.txt
 sites/*/static/awesome-sui/
+
+# Mirrored content, materialised on demand rather than committed.
+#
+# These seven sources are `ownership: mirrored` in sources.json: their pages are
+# authored, reviewed and published by the repository that owns them. Committing a
+# copy here meant a guard to stop anyone editing it, a forward-port to let them
+# edit it anyway, and a bot writing to main several times a day, all to maintain
+# a tree nothing in this repo read. The code sources under .cache/ have always
+# worked the other way and have never needed any of it.
+#
+# To get the whole corpus locally, for an audit or a cross-product search:
+#
+#   node scripts/fetch-sources.js && node scripts/mirror.js
+#
+# A source that actually moves here changes to `ownership: moved`, and its pages
+# become this repo's own: tracked, edited and reviewed here like content/sui.
+content/walrus/
+content/suins/
+content/hashi/
+content/move-book/
+content/ts-sdks/
+content/oyster/
+content/walrus-memory/

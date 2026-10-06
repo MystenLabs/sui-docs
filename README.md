@@ -3,8 +3,8 @@
 One repository for Mysten Labs documentation. Content for every docs site lives
 here, whether it is authored here or mirrored from the repository that owns it.
 
-Status: **scaffold**. The mirror, the manifest and the guard work. The sites
-have not moved yet. See `Migration` below for what is still ahead.
+Status: **scaffold**. The manifest and the fetcher work, and the Sui pages are
+here. The other sites have not moved. See `Migration` below.
 
 ## Why this exists
 
@@ -32,8 +32,9 @@ everything else about how it behaves.
 | Pages live in | this repo | the source repo |
 | Edited in | this repo | the source repo, beside its code |
 | Reviewed by | the docs team | the source repo's reviewers |
+| Committed here | yes | no, gitignored and materialised on demand |
 | Deletions propagate | n/a | yes, the mirror cleans before writing |
-| Hand edits here | normal | blocked by `scripts/check-mirror-edits.js` |
+| Hand edits here | normal | there is nothing here to edit |
 
 A source changes category by changing one line. Nothing else moves.
 
@@ -45,7 +46,7 @@ sites/            one Docusaurus site per product (not yet moved)
 shared/           components, theme, frontmatter schema (not yet moved)
 sources.json      every external source, its path and its pinned ref
 sources.lock.json which commit each mirror last came from. Written by the mirror
-scripts/          one fetcher, one mirror, one guard
+scripts/          one fetcher, one mirror
 ```
 
 ## Scripts
@@ -54,8 +55,6 @@ scripts/          one fetcher, one mirror, one guard
 node scripts/fetch-sources.js [name ...] [--force]   # sparse-clone into .cache
 node scripts/fetch-sources.js --code                 # the repos the pages quote
 node scripts/mirror.js        [name ...] [--check]   # place into content/
-node scripts/check-mirror-edits.js --base <sha> --head <sha> [--json out.json]
-node scripts/forward-port.js  --json out.json --base <sha> [--pr n] [--dry-run]
 node scripts/publish-shared.js [--dry-run]           # shared components, outward
 ```
 
@@ -76,42 +75,44 @@ would have deleted it on every run.
 
 ## How mirroring works
 
-A source repo fires `repository_dispatch` when its docs change. The mirror job
-fetches that source at its pinned ref, places it, and commits. That commit is
-what the sites build from. The build does not fetch.
+Mirrored pages are **not committed here**. `content/<source>` is gitignored, and
+you materialise the tree when you want it:
 
-Three things follow, and they are the reason it is built this way:
+```bash
+node scripts/fetch-sources.js && node scripts/mirror.js
+```
 
-- The repository always shows exactly what the sites last published.
-- A broken or mid-merge upstream state cannot reach a build.
-- If the mirror fails, the sites freeze on the last good content rather than
-  publishing something half-fetched.
+That is enough for an audit, a cross-product search, or a link check over every
+Mysten doc at once, and it is more current than a commit would be, because it
+fetches rather than reading whatever the last sync left behind.
 
-A schedule every four hours catches anything a dispatch missed.
+### Why not commit them
 
-## Editing a mirrored page
+It was tried. A committed copy needs a guard to stop anyone editing it, and then
+a forward-port to let them edit it anyway and send the patch upstream. That came
+to roughly 620 lines, a bot writing to `main` several times a day, and 38MB in
+git, to maintain a tree that nothing in this repo read: no site rendered it, and
+no script referenced it.
 
-Don't edit it here; the next mirror run overwrites it. The guard fails the pull
-request and prints the upstream path and a link for each file.
+The five code sources under `.cache/` have always worked the other way. They are
+fetched at build time, never committed, and have needed none of that machinery.
+The asymmetry had no justification, so it is gone.
 
-The forward-port workflow sends it for you. Run **Forward-port mirrored edits**
-from the Actions tab with the pull request number; it defaults to a dry run that
-prints the patches without pushing.
+What `ownership: mirrored` means is that the pages belong to the repository that
+owns them: authored there, reviewed by its reviewers, published from its own
+site. A copy here was never authoritative, so keeping one in git bought nothing
+and cost a guard.
 
-It does not send the file. A mirrored file carries a generated header and has had
-its relative links rewritten, so pushing it back would put this repo's
-presentation into someone else's. Instead the edit is isolated by a three-way
-merge whose base is a replay of the transforms over the upstream commit in
-`sources.lock.json`, which makes `base -> yours` the edit and nothing else. That
-lands on upstream's own text and absorbs any upstream drift since the mirror ran.
+### Editing a mirrored page
 
-An edit to a line the mirror rewrote cannot be separated this way. Those are
-reported per file and left out, because guessing writes a plausible, wrong change
-into another team's repository. Make those by hand upstream.
+Edit it upstream, in the repository that owns it. There is no copy here to edit.
 
-Needs `FORWARD_PORT_TOKEN` with write access to the source repos: a run's
-`GITHUB_TOKEN` cannot push to another repository. The workflow opens pull
-requests and never merges or approves one.
+### When a source should be committed
+
+When its site actually moves here. At that point it becomes `ownership: moved`,
+this repo is its source of truth and deploys it, and its pages are tracked,
+edited and reviewed here exactly like `content/sui`. That is the distinction
+`ownership` exists to express.
 
 ## Migration
 
