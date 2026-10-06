@@ -26,7 +26,7 @@
   "hashi": {
     "repo": "MystenLabs/hashi",
     "ref": "main",
-    "commit": "1c54f442a38c2a0c84d711f3c88c208bbacf16b1",
+    "commit": "07eb5b8f60aaf0638953fbe2841b2bf79b8197a1",
     "sourcePath": "design/docs",
     "targetPath": "content/hashi",
     "files": 21
