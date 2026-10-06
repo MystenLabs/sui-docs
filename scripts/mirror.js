@@ -97,15 +97,30 @@ function main() {
     }
     const result = mirrorOne(source, head);
     totalChanged += result.changed;
-    lock[source.name] = {
-      repo: source.repo,
-      ref: source.ref,
-      commit: head,
-      sourcePath: source.sourcePath,
-      targetPath: source.targetPath,
-      files: result.files,
-      mirroredAt: new Date().toISOString(),
-    };
+
+    // Only rewrite the entry when the mirrored files actually changed.
+    //
+    // This used to stamp a fresh `mirroredAt` on every source on every run, so
+    // the lockfile differed even when nothing else did, the commit step's
+    // `git diff --cached --quiet` was never true, and the job committed and
+    // pushed every run: 24 of the first 30 mirror commits changed nothing but
+    // those timestamps. Bumping `commit` unconditionally does the same thing for
+    // a different reason, since an upstream HEAD moves for reasons that never
+    // touch docs, like a Rust commit in walrus.
+    //
+    // So `commit` is the revision this content came from, not the last revision
+    // anyone looked at. It stays true until the content changes, and the commit
+    // date records when that was.
+    if (result.changed > 0 || !lock[source.name]) {
+      lock[source.name] = {
+        repo: source.repo,
+        ref: source.ref,
+        commit: head,
+        sourcePath: source.sourcePath,
+        targetPath: source.targetPath,
+        files: result.files,
+      };
+    }
   }
 
   // Drop entries for sources that are no longer mirrored. A stale entry still
