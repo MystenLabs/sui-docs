@@ -7,15 +7,21 @@ name: Mirror external docs
 # mid-merge upstream state cannot reach a build, and if this job fails the sites
 # freeze on the last good content instead of publishing something half-fetched.
 #
-# Sources push here rather than being polled: a repository_dispatch from a
-# source repo syncs within a minute. The schedule is a safety net for anything
-# the dispatch missed, not the primary path.
+# The schedule is what actually syncs. The repository_dispatch trigger below
+# works and would sync within a minute, but no source repo sends one yet, so in
+# practice every update waits for the next scheduled run and worst-case
+# staleness is the cron interval. To get minute-level syncing, add a job to each
+# source repo's docs workflow that dispatches `docs-changed` here; until then,
+# do not promise freshness tighter than the cron.
 
 on:
   repository_dispatch:
     types: [docs-changed]
   schedule:
-    - cron: "0 */4 * * *"
+    # Every 30 minutes, because this is the only path that actually syncs (see
+    # above) and a run costs ~30s. Four-hourly meant a source could sit unmirrored
+    # for most of a working day, which is how it was first noticed.
+    - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       sources:
