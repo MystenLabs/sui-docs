@@ -38,7 +38,6 @@ static/awesome-sui/
 scripts/.cache/
 
 ## Subtrees
-../docs/subtree/
 
 ## locally cloned display preview - should only exist during build
 static/display-preview/

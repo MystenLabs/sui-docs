@@ -11,16 +11,17 @@ import roots from "./lib/roots.cjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// The awesome-sui trees are vendored into MystenLabs/sui as a git subtree, so
-// they arrive with the fetched source checkout rather than living here.
-// See scripts/lib/roots.cjs.
-const { CONTENT_ROOT, SOURCE_ROOT } = roots;
-const subtree = (p) => path.join(SOURCE_ROOT, "docs/subtree", p);
+// awesome-sui and awesome-sui-gaming are fetched straight from the repositories
+// that own them, as codeSources in sources.json. They used to arrive inside the
+// MystenLabs/sui checkout, as a git subtree under docs/subtree, which meant the
+// page was generated from whatever snapshot that subtree last took: at the point
+// this changed, nine months behind upstream.
+const { CONTENT_ROOT, codeSource } = roots;
+const src = (p) => path.join(codeSource("awesome-sui"), p);
 
-// Paths (adjusted for new location)
-const readmePath = subtree("awesome-sui/README.md");
-const detailsSourceDir = subtree("awesome-sui/details");
-const mediaSourceDir = subtree("awesome-sui/media");
+const readmePath = src("README.md");
+const detailsSourceDir = src("details");
+const mediaSourceDir = src("media");
 const readmeTargetPath = path.join(CONTENT_ROOT, "references/awesome-sui.mdx");
 const mediaTargetDir = path.join(
   __dirname,
