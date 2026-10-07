@@ -48,7 +48,30 @@ answer: >-
   are met.
 ---
 
-The TPSL (Take Profit Stop Loss) SDK provides functions for managing conditional orders that automatically execute when certain price conditions are met.
+The TPSL (Take Profit Stop Loss) SDK provides functions for managing conditional orders that execute when certain price conditions are met. A conditional order pairs a trigger condition with a pending order. Once the oracle price crosses the trigger price, anyone can execute the pending order on the manager's behalf.
+
+## SDK setup
+
+TPSL functions live on the DeepBook client extension. Create a `SuiGrpcClient` and extend it with `deepbook()`, passing the margin managers you want to address by key.
+
+```tsx
+import { deepbook } from '@mysten/deepbook-v3';
+import { SuiGrpcClient } from '@mysten/sui/grpc';
+
+const client = new SuiGrpcClient({
+	network: 'testnet',
+	baseUrl: 'https://fullnode.testnet.sui.io:443',
+}).$extend(
+	deepbook({
+		address: '<YOUR_ADDRESS>',
+		marginManagers: {
+			MARGIN_MANAGER_1: { address: '0x…', poolKey: 'SUI_DBUSDC' },
+		},
+	}),
+);
+```
+
+All TPSL functions live on `client.deepbook.marginTPSL` and return a callback that accepts a `Transaction` object. Pass the returned function to `tx.add(...)` or call it with an existing `Transaction` instance. For the full client setup, including keypairs and margin manager keys, see [DeepBook Margin SDK](/onchain-finance/deepbook/deepbook-margin-sdk).
 
 ## TPSL functions
 
@@ -61,9 +84,9 @@ Use `addConditionalOrder` to add a conditional order that executes when a price 
 **Parameters**
 
 - `marginManagerKey`: String that identifies the margin manager.
-- `conditionalOrderId`: Number representing the unique ID for this conditional order.
-- `triggerBelowPrice`: Boolean indicating whether to trigger when price falls below the trigger price.
-- `triggerPrice`: Number representing the price at which to trigger the order.
+- `conditionalOrderId`: String representing the unique ID for this conditional order.
+- `triggerBelowPrice`: Boolean indicating whether to trigger once the oracle price falls below the trigger price. Set it to `false` to trigger once the price rises above the trigger price.
+- `triggerPrice`: Number representing the oracle price at which to trigger the order. The trigger must not already have been crossed, otherwise the call aborts with `EInvalidCondition`.
 - `pendingOrder`: Object containing the order details (either `PendingLimitOrderParams` or `PendingMarketOrderParams`).
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginTPSL.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="addConditionalOrder" signatureOnly />
@@ -91,11 +114,11 @@ Use `cancelAllConditionalOrders` to cancel all conditional orders for a margin m
 
 ### `executeConditionalOrders`
 
-Use `executeConditionalOrders` to execute conditional orders that have been triggered. This is a permissionless function that can be called by anyone. The call returns a function that takes a `Transaction` object.
+Use `executeConditionalOrders` to execute conditional orders that have been triggered. This is a permissionless function that anyone can call. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 
-- `managerAddress`: String representing the address of the margin manager whose orders to execute.
+- `managerAddress`: String representing the address of the margin manager whose orders to execute. Unlike the other functions, this one takes the manager address rather than `marginManagerKey`, the string that identifies the margin manager.
 - `poolKey`: String that identifies the DeepBook pool.
 - `maxOrdersToExecute`: Number representing the maximum number of orders to execute in this call.
 
@@ -177,16 +200,16 @@ Query trigger prices for conditional orders. `lowestTriggerAbovePrice` returns t
 ### Set up a stop loss order
 
 ```tsx
-// Example: Create a stop loss order that sells when price drops below 2.0
+// Example: stop loss on a long position, selling once the oracle price drops below 2.0
 const setStopLoss = (tx: Transaction) => {
 	const managerKey = 'MARGIN_MANAGER_1';
-	traderClient.marginTPSL.addConditionalOrder({
+	client.deepbook.marginTPSL.addConditionalOrder({
 		marginManagerKey: managerKey,
-		conditionalOrderId: 1,
-		triggerBelowPrice: true, // Trigger when price falls below
+		conditionalOrderId: '1',
+		triggerBelowPrice: true, // Fires once the oracle price falls below the trigger
 		triggerPrice: 2.0,
 		pendingOrder: {
-			clientOrderId: 100,
+			clientOrderId: '100',
 			quantity: 50,
 			isBid: false, // Sell order
 			payWithDeep: true,
@@ -198,16 +221,16 @@ const setStopLoss = (tx: Transaction) => {
 ### Set up a take profit order
 
 ```tsx
-// Example: Create a take profit order that sells when price rises above 5.0
+// Example: take profit on a long position, selling once the oracle price rises above 5.0
 const setTakeProfit = (tx: Transaction) => {
 	const managerKey = 'MARGIN_MANAGER_1';
-	traderClient.marginTPSL.addConditionalOrder({
+	client.deepbook.marginTPSL.addConditionalOrder({
 		marginManagerKey: managerKey,
-		conditionalOrderId: 2,
-		triggerBelowPrice: false, // Trigger when price rises above
+		conditionalOrderId: '2',
+		triggerBelowPrice: false, // Fires once the oracle price rises above the trigger
 		triggerPrice: 5.0,
 		pendingOrder: {
-			clientOrderId: 101,
+			clientOrderId: '101',
 			price: 5.0, // Limit order at 5.0
 			quantity: 50,
 			isBid: false, // Sell order
@@ -224,6 +247,42 @@ const setTakeProfit = (tx: Transaction) => {
 const executeOrders = (tx: Transaction) => {
 	const managerAddress = '0x...'; // Address of margin manager
 	// Execute up to 10 triggered orders
-	traderClient.marginTPSL.executeConditionalOrders(managerAddress, 'SUI_USDC', 10)(tx);
+	client.deepbook.marginTPSL.executeConditionalOrders(managerAddress, 'SUI_DBUSDC', 10)(tx);
 };
 ```
+
+### Query and cancel orders
+
+```tsx
+// Example: Query all conditional order IDs, then cancel a specific order
+const manageOrders = async () => {
+	const tx = new Transaction();
+	const managerKey = 'MARGIN_MANAGER_1';
+
+	// Query existing conditional order IDs
+	const orderIds = await client.deepbook.getConditionalOrderIds(managerKey);
+
+	// Cancel a specific order by ID
+	if (orderIds.length > 0) {
+		tx.add(client.deepbook.marginTPSL.cancelConditionalOrder(managerKey, orderIds[0]));
+	}
+
+	// Or cancel all conditional orders at once
+	tx.add(client.deepbook.marginTPSL.cancelAllConditionalOrders(managerKey));
+};
+```
+
+## How conditional orders work
+
+A conditional order consists of two parts: a trigger condition and a pending order. `addConditionalOrder` stores both on the margin manager. Nothing onchain watches the price, so the order simply sits there until someone calls `executeConditionalOrders`.
+
+Triggers compare against the margin registry's oracle (Pyth) price, not the order book price. A trigger that the oracle price has already crossed is rejected at registration with `EInvalidCondition`, so you can only register a condition that is still ahead of the market.
+
+Execution is permissionless. Any caller can invoke `executeConditionalOrders` for a given margin manager address. Keeper bots typically monitor trigger prices using `lowestTriggerAbovePrice` and `highestTriggerBelowPrice`, then call `executeConditionalOrders` when the oracle price crosses those thresholds. For stop losses, prefer `executeConditionalOrdersV3`: it repays the loan with each market fill before checking the risk ratio, which lets a stop loss fire when the position is near liquidation, where `executeConditionalOrders` rejects the fill.
+
+`triggerBelowPrice` sets the direction of the trigger, not the intent of the order:
+
+- `triggerBelowPrice: true` fires once the oracle price falls below `triggerPrice`. For a long position this is the stop loss; for a short it is the take profit.
+- `triggerBelowPrice: false` fires once the oracle price rises above `triggerPrice`. For a long position this is the take profit; for a short it is the stop loss.
+
+Pair the trigger condition with either a limit order (`newPendingLimitOrder`) for price-controlled execution or a market order (`newPendingMarketOrder`) for immediate execution at the best available prices. A market order fills against whatever liquidity the book holds at that moment, so it controls timing rather than price.
