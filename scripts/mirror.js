@@ -4,10 +4,17 @@
 
 // Places fetched sources into content/ and records what came from where.
 //
-//   node scripts/mirror.js [name ...] [--check]
+//   node scripts/mirror.js [name ...] [--check] [--write-lock]
 //
-// --check writes nothing and exits non-zero if the tree would change. The
-// mirror workflow uses it to decide whether there is anything to commit.
+// Mirrored content is not committed; content/<source> is gitignored. This is the
+// command that materialises it, for an audit or a cross-product search:
+//
+//   node scripts/fetch-sources.js && node scripts/mirror.js
+//
+// --check writes nothing and exits non-zero if the tree would change.
+// --write-lock updates sources.lock.json. It is off by default so that
+// materialising locally does not dirty a committed file; the lockfile records
+// the last deliberate sync, not the last time somebody looked.
 //
 // The target directory is cleaned before writing, except for `preserve`
 // entries, so a file deleted upstream disappears here too. That is the whole
@@ -22,6 +29,7 @@ const { CACHE } = require("./fetch-sources");
 
 const args = process.argv.slice(2);
 const checkOnly = args.includes("--check");
+const writeLockFile = args.includes("--write-lock");
 const only = new Set(args.filter((a) => !a.startsWith("--")));
 
 function listFiles(dir, base = dir) {
@@ -123,10 +131,8 @@ function main() {
     }
   }
 
-  // Drop entries for sources that are no longer mirrored. A stale entry still
-  // names a targetPath, and forward-port.js reads the lockfile to find the
-  // commit a file was mirrored from, so leaving one behind lets it treat a path
-  // this repo now owns as somebody else's.
+  // Drop entries for sources that are no longer mirrored, so the lockfile does
+  // not keep naming a targetPath this repo has taken ownership of.
   if (!only.size) {
     const live = new Set(sources.map((s) => s.name));
     for (const name of Object.keys(lock)) {
@@ -137,7 +143,7 @@ function main() {
     }
   }
 
-  if (!checkOnly) writeLock(lock);
+  if (!checkOnly && writeLockFile) writeLock(lock);
 
   if (checkOnly && totalChanged > 0) {
     console.log(`\n${totalChanged} change(s) pending.`);

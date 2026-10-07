@@ -3,12 +3,13 @@ name: Publish shared components
 # Pushes sites/sui/src/shared to MystenLabs/ML-shared-docusaurus, the opposite
 # direction to every other workflow here.
 #
-# mirror.yml pulls pages in from the repositories that own them. For the shared
+# scripts/mirror.js pulls pages in from the repositories that own them, on demand
+# and without committing them. For the shared
 # components this repo is the owner, so these go out. See the README section
 # "Shared components" for why that is a reading of the trees rather than a
 # preference.
 #
-# Manual, like forward-port: it writes to another repository, so it runs when
+# Manual: it writes to another repository, so it runs when
 # someone asks. It opens a pull request and never pushes to master.
 
 on:

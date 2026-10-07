@@ -7,7 +7,7 @@
     "  mirrored the pages live in the source repo, are edited there, and are",
     "           committed here read-only by the mirror job. A pull request that",
     "           edits a mirrored path is forwarded to the source repo rather",
-    "           than merged here. See scripts/check-mirror-edits.js.",
+    "           than merged here. Their pages are not committed here; see .gitignore.",
     "",
     "ref pins what gets fetched. 'main' tracks the source's default branch;",
     "a tag or SHA freezes it. The three sources outside the MystenLabs org",
