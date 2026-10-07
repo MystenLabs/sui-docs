@@ -12,6 +12,7 @@ sites/*/.docusaurus/
 content/sui/references/framework/**
 content/sui/references/sui-api/sui-graphql/*
 content/sui/references/release-notes.mdx
+content/sui/developer-updates.mdx
 content/sui/references/awesome-sui.mdx
 content/sui/references/awesome-sui/
 content/sui/references/awesome-sui-gaming.mdx
