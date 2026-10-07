@@ -313,8 +313,14 @@ const config = {
           path: CONTENT_ROOT,
           routeBasePath: "/",
           sidebarPath: SIDEBARS_PATH,
-          // the double docs below is a fix for having the path set to ../content
-          editUrl: "https://github.com/MystenLabs/sui/tree/main/docs/docs",
+          // The function form is given the page's path relative to the docs root,
+          // so this does not depend on where CONTENT_ROOT resolves to. The string
+          // form did: it was a fixed prefix that Docusaurus appended a site-relative
+          // path to, which is why it carried a doubled segment to cancel out
+          // `path: ../content`. That prefix also named `docs/docs` in MystenLabs/sui,
+          // a directory that has never existed, so every Edit this page link 404'd.
+          editUrl: ({ docPath }) =>
+            `https://github.com/MystenLabs/sui-docs/edit/main/content/sui/${docPath}`,
           exclude: [
             "**/snippets/**",
             "**/standards/deepbook-ref/**",
