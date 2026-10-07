@@ -30,6 +30,11 @@ access: it clones five source repositories and fetches several specs. Set
 `GITHUB_TOKEN` in the build environment to avoid rate limits, and to let
 `generate-skills.mjs` read the skills repository.
 
+A scheduled workflow rebuilds the site every hour. Most of the reference
+material is generated from source in other repositories, and none of them push
+here, so without that the generated pages would sit at whatever the last push to
+this repo happened to fetch.
+
 `prebuild` fetches and converts. `build` runs `scripts/build-and-check.sh`,
 which regenerates the framework and GraphQL references, builds the site, writes
 the markdown and `llms.txt` outputs, and then checks links. It greps the
