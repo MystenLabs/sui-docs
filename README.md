@@ -1,103 +1,93 @@
 # sui-docs
 
-One repository for Mysten Labs documentation. Pages authored here are committed
-here; pages owned by another repository are fetched on demand.
+The Sui documentation site, published at `docs.sui.io`.
 
-Status: **scaffold**. The manifest, the fetcher and the Sui site are here. The
-other sites have not moved.
+Pages live in `content/sui`. The site that renders them is `sites/sui`. A large
+part of the reference material is not written by hand: it is generated at build
+time from source in other repositories, listed under **Generated pages** below.
 
 ## Layout
 
 ```
-content/sui/      the Sui pages. Authored, reviewed and published from here
-content/<other>/  mirrored pages. Gitignored, materialised on demand
-sites/sui/        the Sui Docusaurus site, and the shared components
-sources.json      every external source, its path and its ref
-sources.lock.json the commit each mirrored tree last came from
-scripts/          the fetcher, the mirror and the shared-component publisher
-.cache/           fetched sources and quoted code. Gitignored
+content/sui/      the pages. Authored and reviewed here
+sites/sui/        the Docusaurus site, its plugins and the shared components
+sources.json      the repositories the pages quote, under `codeSources`
+scripts/          the fetcher shared by every site in this repo
+.cache/           fetched source. Gitignored, created on first fetch
 ```
 
-## Ownership
-
-`sources.json` gives every source an `ownership`, which determines how it is
-handled.
-
-| | `moved` | `mirrored` |
-| --- | --- | --- |
-| Pages live in | this repo | the source repo |
-| Edited in | this repo | the source repo, beside its code |
-| Reviewed by | the docs team | the source repo's reviewers |
-| Committed here | yes | no, gitignored and materialised on demand |
-| Deletions propagate | n/a | yes, the mirror cleans before writing |
-
-A source changes category by changing that one field.
-
-## Scripts
+## Building
 
 ```bash
-node scripts/fetch-sources.js [name ...] [--force]  # sparse-clone into .cache
-node scripts/fetch-sources.js --code                # the repos the pages quote
-node scripts/mirror.js [name ...] [--check] [--write-lock]
-node scripts/publish-shared.js [--dry-run]          # shared components, outward
+cd sites/sui
+pnpm install
+pnpm build          # prebuild, then scripts/build-and-check.sh
+pnpm start          # prestart, then docusaurus start
 ```
 
-`mirror.js --check` writes nothing and exits non-zero if the tree would change.
-`--write-lock` updates `sources.lock.json`; without it a local run leaves the
-tree clean.
+The build needs Node 24 (`engines` in `sites/sui/package.json`) and network
+access: it clones five source repositories and fetches several specs. Set
+`GITHUB_TOKEN` in the build environment to avoid rate limits, and to let
+`generate-skills.mjs` read the skills repository.
 
-Both read `sources.json` through `scripts/lib/sources.js`, which rejects a
-manifest whose target paths overlap.
-
-## Mirrored content
-
-`content/<source>` is gitignored for every `mirrored` source. To materialise the
-full corpus, for an audit or a cross-product search:
-
-```bash
-node scripts/fetch-sources.js && node scripts/mirror.js
-```
-
-The mirror places each source's pages under its `targetPath`, applies the
-transforms in `scripts/lib/transform.js`, and cleans the target directory first,
-so a file deleted upstream disappears here too.
-
-To change a mirrored page, edit it in the repository that owns it. There is no
-copy here to edit.
-
-When a site moves here, its source becomes `ownership: moved` and its pages are
-tracked, edited and reviewed here like `content/sui`.
-
-## Quoted code
-
-Pages quote source that lives in other repositories: Rust crates, Move packages,
-TypeScript SDK sources, example apps. `sources.json` lists these under
-`codeSources`, and `fetch-sources.js --code` sparse-clones them into
-`.cache/code`. `ImportContent` paths resolve against that checkout.
-
-`sites/sui/scripts/lib/roots.cjs` holds the two roots this depends on:
-`CONTENT_ROOT` for the pages, `SOURCE_ROOT` for the code they quote. Override
-either with `DOCS_CONTENT_ROOT` or `DOCS_SOURCE_ROOT`.
+`prebuild` fetches and converts. `build` runs `scripts/build-and-check.sh`,
+which regenerates the framework and GraphQL references, builds the site, writes
+the markdown and `llms.txt` outputs, and then checks links. It greps the
+Docusaurus log for `[ERROR]`, `MDX compilation failed`, `Missing file for
+ImportContent` and similar, and fails the build on any of them, because
+Docusaurus exits zero on several of those.
 
 ## Generated pages
 
-Several trees under `content/sui` are produced at build time and gitignored:
-the framework reference, the GraphQL schema pages, release notes, and the
-awesome-sui lists. The generators run from `prebuild` in
-`sites/sui/package.json`. Do not edit the output; change the generator or its
-source.
+Do not edit the output; change the generator or its source.
 
-## Migration
+Most of these are gitignored. Two are not. `sites/sui/src/data/skills.json` is
+generated but tracked, so regenerating it shows up as a diff and a hand edit to
+it survives until the next build overwrites it. `sites/sui/static/display-preview`
+is written during the build but is neither ignored nor tracked, so it appears as
+untracked files after a local build.
 
-| Phase | What | State |
+| Output | Generated by | From |
 | --- | --- | --- |
-| 1 | Unpin the scripts that assumed the site, the pages and the quoted source share one checkout | done |
-| 2 | Move `docs/content` and `docs/site` here and get the build green | done |
-| 3 | Cut `docs.sui.io` over, leave redirects, move CODEOWNERS | not started |
-| 4 | Other sites, one at a time | blocked, see Shared components |
+| `content/sui/references/framework/**` | `src/plugins/framework` | `crates/sui-framework/docs/{bridge,deepbook,std,sui,sui_system}` in `MystenLabs/sui` |
+| `content/sui/references/sui-api/sui-graphql/*` | `docusaurus graphql-to-doc:beta`, then `remove-no-desc.mjs` and `massagegraphql.js` | the GraphQL schema |
+| `content/sui/references/release-notes.mdx` | `src/shared/js/convert-release-notes.cjs` | `release-notes` in `MystenLabs/sui` |
+| `content/sui/references/awesome-sui.mdx` and `awesome-sui/` | `convert-awesome-sui.mjs` | `docs/subtree/awesome-sui` in `MystenLabs/sui` |
+| `content/sui/references/awesome-sui-gaming.mdx` and its directory | `convert-awesome-sui-gaming.mjs` | `docs/subtree/awesome-sui-gaming` in `MystenLabs/sui` |
+| `content/sui/documentation.json` | `grpc-download.js` | `documentation.json` in `MystenLabs/sui-apis` |
+| `content/sui/sui-stack/seal/*.mdx` | `fetch-external-docs.js`, then `transform-external-docs.js` | `MystenLabs/seal` |
+| `content/sui/sui-stack/messaging/*.mdx` | the same pair | `MystenLabs/sui-stack-messaging` |
+| `sites/sui/src/data/skills.json` | `generate-skills.mjs` | every `SKILL.md` in `MystenLabs/skills` |
+| `sites/sui/src/open-spec/<branch>` | `getopenrpcspecs.js` | the OpenRPC spec in `MystenLabs/sui`, per branch |
+| `sites/sui/.generated/ImportContentMap.ts` | `generate-import-context.js` | the `ImportContent` tags across the pages |
+| `sites/sui/.resolved/` | `generate-resolved-pages.js` | the pages |
+| `sites/sui/static/display-preview` | cloned and built during `build` | `MystenLabs/display-preview` |
+| `sites/sui/static/llms.txt`, `llms-full.txt` | `src/shared/js/generate-llmstxt.mjs` | the built site and its sitemap |
+| `sites/sui/build/markdown/` | `copy-markdown-files.js` | the built site |
 
-The split roots live in `sites/sui/scripts/lib/roots.cjs` here; `sui`'s own
-`docs/site` is untouched and still builds.
+A few pages in `sui-stack/seal` and `sui-stack/messaging` are hand-written and
+survive the fetch; `.gitignore` negations name them.
+
+## Quoted code
+
+Pages embed source from other repositories with `ImportContent`, naming a path
+with no repository, like `crates/sui-indexer-alt-framework/...` or
+`examples/rust/...`. Those resolve against a checkout fetched into `.cache/code`
+by `node ../../scripts/fetch-sources.js --code`, configured under `codeSources`
+in `sources.json`:
+
+| Repository | Paths |
+| --- | --- |
+| `MystenLabs/sui` | `crates`, `examples`, `release-notes`, `docs/subtree` |
+| `MystenLabs/ts-sdks` | `packages` |
+| `MystenLabs/deepbookv3` | `packages` |
+| `MystenLabs/sui-apis` | `documentation.json` |
+| `playtron-os/playtron-sdk` | whole repository |
+
+`sites/sui/scripts/lib/roots.cjs` resolves the two roots this depends on:
+`CONTENT_ROOT` for the pages, `SOURCE_ROOT` for the code they quote. Override
+either with `DOCS_CONTENT_ROOT` or `DOCS_SOURCE_ROOT`. Nothing should compute
+either by counting `../` from `__dirname`.
 
 ## Shared components
 
@@ -119,14 +109,11 @@ node scripts/publish-shared.js             # open a pull request upstream
 It opens a pull request and never pushes to `master`. It needs
 `SHARED_PUBLISH_TOKEN` with write access to that repository.
 
-`sites/sui/src/shared` sits inside one site. A top-level `shared/` is where it
-belongs once a second site lands here; that directory does not exist yet.
+## Migration
 
-## Sources outside the organisation
-
-`playtron-os/playtron-sdk` is a `codeSource` fetched at build and governed by
-nobody here. It tracks `main`; pin it to a SHA instead if that matters.
-
-`sui-foundation/awesome-sui` and `becky-sui/awesome-sui-gaming` are not fetched
-directly. They arrive inside the `sui` checkout, as subtrees under
-`docs/subtree`, which `codeSources.sui` lists among its paths.
+| Phase | What | State |
+| --- | --- | --- |
+| 1 | Unpin the scripts that assumed the site, the pages and the quoted source share one checkout | done |
+| 2 | Move `docs/content` and `docs/site` here and get the build green | done |
+| 3 | Cut `docs.sui.io` over, leave redirects, move CODEOWNERS | not started |
+| 4 | Other sites, one at a time | not started |
