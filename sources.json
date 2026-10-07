@@ -116,8 +116,7 @@
       "paths": [
         "crates",
         "examples",
-        "release-notes",
-        "docs/subtree"
+        "release-notes"
       ]
     },
     "ts-sdks": {
@@ -148,6 +147,20 @@
         "."
       ],
       "external": true
+    },
+    "awesome-sui": {
+      "repo": "sui-foundation/awesome-sui",
+      "ref": "main",
+      "paths": [
+        "."
+      ]
+    },
+    "awesome-sui-gaming": {
+      "repo": "becky-sui/awesome-sui-gaming",
+      "ref": "main",
+      "paths": [
+        "."
+      ]
     }
   }
 }

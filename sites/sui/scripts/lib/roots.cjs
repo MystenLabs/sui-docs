@@ -51,6 +51,15 @@ const CONTENT_ROOT = fromEnv("DOCS_CONTENT_ROOT", path.join(REPO_ROOT, "content/
  */
 const SOURCE_ROOT = fromEnv("DOCS_SOURCE_ROOT", path.join(REPO_ROOT, ".cache/code/sui"));
 
+/**
+ * The fetch cache for `codeSources` in sources.json. Each source lands at
+ * .cache/code/<name>. SOURCE_ROOT above is just codeSource("sui"), kept as its
+ * own export because 382 ImportContent paths resolve against it.
+ */
+const CODE_CACHE = process.env.CODE_CACHE || path.join(REPO_ROOT, ".cache/code");
+
+const codeSource = (name) => path.join(CODE_CACHE, name);
+
 function requireSource() {
   if (!fs.existsSync(SOURCE_ROOT)) {
     throw new Error(
@@ -81,6 +90,8 @@ function describe() {
 
 module.exports = {
   SITE_ROOT,
+  CODE_CACHE,
+  codeSource,
   REPO_ROOT,
   // Kept so scripts carried over from MystenLabs/sui keep working: there, this
   // was the monorepo root and meant "the code". Here that is SOURCE_ROOT.
