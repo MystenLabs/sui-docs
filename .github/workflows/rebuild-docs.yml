@@ -1,0 +1,56 @@
+name: Rebuild docs.sui.io
+
+# Much of the reference material is generated at build time from source in other
+# repositories: the framework reference from MystenLabs/sui, the release notes,
+# the awesome-sui lists, the OpenRPC specs. None of those repositories push here,
+# so without a scheduled rebuild the generated pages sit at whatever the last
+# push to this repo happened to fetch.
+#
+# While the site lived in MystenLabs/sui this was handled by accident: every push
+# to that repo's main rebuilt the site, which in a representative day meant 11
+# deploys from 11 commits, only 2 of which touched docs at all. Pointing the
+# Vercel project at this repo removes that accident, and this replaces it.
+#
+# VERCEL_DEPLOY_HOOK_URL comes from the Vercel project's Git settings. It is
+# trigger-only: it starts a build of the branch it was created for and can do
+# nothing else. It cannot read this repository or write to it, which is why this
+# job needs no permissions.
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: rebuild-docs
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger a production build
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          # Inert until the secret exists, so this can land before the cutover
+          # without redeploying a site that is still built from another repo.
+          if [ -z "${HOOK:-}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL is not set, so there is nothing to trigger."
+            echo "Create a deploy hook in the Vercel project's Git settings and add it"
+            echo "as a repository secret once docs.sui.io builds from this repo."
+            exit 0
+          fi
+
+          code=$(curl -sS --max-time 30 -o /tmp/hook-body -w '%{http_code}' -X POST "$HOOK")
+          echo "HTTP $code"
+          cat /tmp/hook-body || true
+          echo
+          case "$code" in
+            2*) echo "Build triggered." ;;
+            *)  echo "::error::Deploy hook returned HTTP $code"; exit 1 ;;
+          esac
