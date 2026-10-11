@@ -140,14 +140,14 @@ const bytesToPublish = wasm.serialize(JSON.stringify(compiledModule));
 
 The `updateConstant` method updates constants and takes four arguments:
 
-- `idx` (index): The position the declared constant has in the constant pool. The order is sequential, starting from 0 for the first constant defined in the Move file and incrementing by one for each consecutive constant.
+- `idx` (index): The position the declared constant has in the constant pool. The order is sequential, starting from 0 for the first constant defined in the Move file and incrementing by one for each consecutive constant. In the template module, `TOTAL_SUPPLY` is the first constant declared, which is why it is updated at index `0`, `SYMBOL` at index `1`, and so on.
 - `value`: The updated value of the constant you want to change.
 - `expectedValue`: The current value of the constant.
 - `expectedType`: The current type of the constant.
 
 The last two arguments are required to minimize the risk of accidentally updating the wrong constant because this library directly manipulates compiled bytecode.
 
-The `changeIdentifiers` method updates identifiers, which in this case are the module name and the struct name. This method takes a JSON object as an argument with keys of the current identifier names in the module and values being the desired names you want to change them to.
+The `changeIdentifiers` method updates identifiers, which in this case are the module name and the struct name. This method takes a JSON object as an argument with keys of the current identifier names in the module and values being the desired names you want to change them to. Identifiers are matched by name, unlike constants, which the library addresses by the position they have in the constant pool rather than by their name.
 
 To deploy the changed template module, build and publish:
 
