@@ -94,7 +94,7 @@ Submit a proposal to change the taker fee, maker fee, and stake required. The `b
 <details>
 <summary>Vote</summary>
 
-Users with nonzero voting power can vote on a proposal. All voting power is used on a single proposal. If the user has voted on a different proposal during this epoch, then that vote is removed and recasted into the new proposal. The `balance_manager` must have enough staked DEEP tokens to participate.
+Users with nonzero voting power can vote on a proposal. All voting power is used on a single proposal. If the user has voted on a different proposal during this epoch, then that vote is removed and recasted into the new proposal. The `balance_manager` must have enough staked DEEP tokens to participate. A user's voting power is derived from the amount they have staked, with a voting power cutoff currently set to 100,000 DEEP, and quorum is equivalent to half of the total voting power.
 
 <ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="vote" noComments />
 
@@ -103,7 +103,7 @@ Users with nonzero voting power can vote on a proposal. All voting power is used
 <details>
 <summary>Claim rebates</summary>
 
-Use `claim_rebates` to claim the rewards for the `balance_manager`. The `balance_manager` must have rewards to claim. The `balance_manager` data is updated with the claimed rewards.
+Use `claim_rebates` to claim the rewards for the `balance_manager`. The `balance_manager` must have rewards to claim: during every epoch, a maker is eligible for rebates as long as their DEEP staked is over the stake required and they have contributed maker volume. The `balance_manager` data is updated with the claimed rewards.
 
 <ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="claim_rebates" noComments />
 
