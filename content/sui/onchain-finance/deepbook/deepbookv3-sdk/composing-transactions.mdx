@@ -65,7 +65,7 @@ The third composition supplies to a margin lending pool. Lending and margin trad
 Two guarantees do the work in every composition:
 
 - **Atomicity.** If any command in the block aborts, the whole block rolls back. A composition never half-applies.
-- **Hot potato.** A value with no `store`, `copy`, `drop`, or `key` ability cannot be kept, dropped, or transferred, so you have to consume it before the block ends. DeepBook's flash loan returns one, which is what forces repayment in the same transaction.
+- **Hot potato.** A hot potato is a value you cannot keep, drop, or transfer, so you have to consume it before the block ends. In Move terms, it is a value with no `store`, `copy`, `drop`, or `key` ability. DeepBook's flash loan returns one, which is what forces repayment in the same transaction.
 
 ## Fund and order atomically
 
@@ -79,9 +79,11 @@ Deposit into a `BalanceManager` and place an order in the same block, so both se
 
 Borrow, use, and repay in one block. `borrowBaseAsset` returns the borrowed coin and the `FlashLoan` hot potato; `returnBaseAsset` consumes it. The [cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook#deepbook-flash-loan-borrow-and-repay) and [Flash Loans SDK](/onchain-finance/deepbook/deepbookv3-sdk/flash-loans) cover the quote variants.
 
+The sample calls `borrowBaseAsset`, passes the borrowed coin through a no-op use step, and repays with `returnBaseAsset`, which consumes the `FlashLoan`:
+
 <ImportContent source="examples/deepbook-spot/src/compose.ts" mode="code" tag="flash-loan" />
 
-**Observe:** the block commits only if you return the hot potato. The no-op use step is where a call into another protocol goes: borrow from DeepBook, act on the borrowed funds through any Move call, and repay before the block ends, all under the same atomicity rule. That is the generalization point for cross-protocol composition.
+**Observe:** the block commits only if you return the hot potato. The no-op use step, which does nothing with the borrowed funds in the sample, is where a call into another protocol goes: borrow from DeepBook, act on the borrowed funds through any Move call, and repay before the block ends, all under the same atomicity rule. That is the generalization point for cross-protocol composition.
 
 ## Lend, trade, and stake in one transaction
 
@@ -93,6 +95,8 @@ Supplying needs a `SupplierCap`, a reusable owned object. Mint it once, persist 
 
 With the cap in hand, compose the three legs. Before running it, read your preconditions and size the legs to them: the lend leg pulls its coin from the wallet (keep a SUI gas reserve), and the trade and stake legs both draw DEEP from the `BalanceManager`, so it must hold enough for the order and the stake together.
 
+The sample supplies to the margin pool, places the maker order, and stakes DEEP, all in one block:
+
 <ImportContent source="examples/deepbook-margin/src/compose.ts" mode="code" tag="lend-trade-stake" />
 
 **Observe:** one transaction records the supply to the margin pool, the resting order, and the stake. `getUserSupplyAmount` reflects the new supply, `accountOpenOrders` lists the order, and the staked DEEP moves into the pool's governance for the next epoch. If any leg aborts, none of the three apply.
@@ -103,5 +107,11 @@ A composed block fails as a unit, so a late command's failure discards the earli
 
 - **You do not return the hot potato.** A borrowed `FlashLoan` that you never pass to a return call cannot be dropped or stored, so the block aborts. This is the mechanism that makes flash loans safe, not an edge case.
 - **A later leg reverts, discarding an earlier one.** In the fund-and-order composition, depositing less than the order needs to lock aborts the order leg with `balance_manager` abort code 3 (`EBalanceManagerBalanceTooLow`), and the deposit that ran first rolls back with it, so nothing settles. An off-tick or below-minimum order, or a zero-amount stake (the contract requires a positive stake), aborts the same way. Size and validate each leg, and make a funding leg cover what a later leg consumes, before composing.
-- **A build-time balance shortfall.** When a fund or lend leg sources coins with `coinWithBalance`, requesting more than the wallet holds throws before submission: `Insufficient balance of <coin> for owner <address>. Required: X, Available: Y`. Size each leg to the actual balance.
+- **A build-time balance shortfall.** When a fund or lend leg sources coins with `coinWithBalance`, requesting more than the wallet holds throws before submission:
+
+  ```text
+  Insufficient balance of <coin> for owner <address>. Required: X, Available: Y
+  ```
+
+  Size each leg to the actual balance.
 - **A stale object version.** Building a second transaction against an object a prior transaction just changed, without waiting for finality, fails with a version-unavailable error. Within a single PTB this does not arise, because the commands share one execution; across chained transactions, wait for each to finalize before building the next.
