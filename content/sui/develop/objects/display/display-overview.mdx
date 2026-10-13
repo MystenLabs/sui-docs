@@ -45,7 +45,7 @@ answer: >-
   prompt={"Find Display V1 usage in this package or docs and migrate it to Display V2 and display_registry patterns."}
 />
 
-Object Display is a way to render any object on Sui using templating syntax. It renders Sui Move object values into human-readable strings, JSON, or encoded representations. A Display object defines a set of key-value pairs where both keys and values are format strings.
+Object Display is a way to render any object on Sui using templating syntax. It renders Sui Move object values into human-readable strings, JSON, or encoded representations. A Display object defines a set of key-value pairs where both keys and values are format strings, that is, template strings into which data from an object is substituted when the object is rendered.
 
 Object Display enables onchain management of offchain representation for a type. In other words, the rules for how an object of that type is presented offchain are defined and managed onchain, in a Display object. You can create fully composable and dynamic NFTs by substituting data for an object into a template string.
 
@@ -56,6 +56,8 @@ Check out the [interactive preview application](/develop/objects/display/display
 Object Display V2 is the current Object Display standard. The legacy standard, Display V1, used an event-discovery model. V2 replaces it with a registry-backed model, which means each type has one deterministic `Display<T>` derived from the global display registry and the type. This makes the display for any type predictable: there is exactly one `Display<T>` for each type, and it comes from the registry.
 
 Use the `sui::display_registry` APIs when creating a display from Move code. For legacy displays, use `migrate_v1_to_v2` only if you are explicitly migrating a V1 display that was not already migrated by the system snapshot.
+
+### What features does Display V2 add?
 
 Display V2 brings a richer templating model, improved rendering pipeline, and better tooling, including:
 
