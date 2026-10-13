@@ -64,9 +64,9 @@ The account functions create a trader's shared `AccountWrapper`, move USDC in an
 
 The `client.predict` calls assume the client from [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client).
 
-## Derive the wrapper ID {#wrapper-id}
+## How do I derive the wrapper ID? {#wrapper-id}
 
-Every Predict call that acts on an account takes the owner's `AccountWrapper` object ID as its `wrapper` argument. The account registry derives the wrapper from the owner address, so the SDK computes its ID offchain with no chain read, and the ID is valid before the account exists. The facade derives it from the `owner` you pass, so you need the ID yourself only to compose transactions or to look up the object. [Derive the IDs before you create](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#derive-the-ids) covers the Move side, and [Wrapper ID and account ID](#wrapper-and-account-ids) explains why the wrapper ID is not the account ID that events carry.
+Every Predict call that acts on an account takes the owner's `AccountWrapper` object ID as its `wrapper` argument. The account registry derives the wrapper from the owner address, so the SDK computes its ID offchain with no chain read, and the ID is valid before the account exists. The facade derives it from the `owner` you pass, so you need the ID yourself only to compose transactions or to look up the object. In short, pass the wrapper ID to Predict calls, and expect the account ID, not the wrapper ID, in the `account_id` field of events. [Derive the IDs before you create](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) covers the Move side, and [Wrapper ID and account ID](#wrapper-and-account-ids) explains why the wrapper ID is not the account ID that events carry.
 
 ### `wrapperIdFor` {#wrapper-id-for}
 
@@ -106,13 +106,13 @@ To derive the ID from the account package IDs alone, without a Predict configura
 
 Each account builder returns a new, unsigned `Transaction` that holds only that builder's commands, so you sign and execute each one separately. To combine account commands with others in a single programmable transaction block (PTB), use the [`/account` subpath](#account-subpath) or the composition helpers in [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#compose).
 
-`tx.deposit` and `tx.withdraw` mint an `Auth` bound to the transaction sender, and the contract aborts with `EInvalidOwner` unless the sender owns the account, so the owner must sign them. [The `Auth` hot potato](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#auth) describes that check.
+`tx.deposit` and `tx.withdraw` mint an `Auth` bound to the transaction sender: a hot potato value that proves owner authority and that the next account-loading call in the same transaction must consume. The contract aborts with `EInvalidOwner` unless the sender owns the account, so the owner must sign them. [The `Auth` hot potato](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) describes that check.
 
 ### `tx.createManager` {#create-manager}
 
 Use `tx.createManager` to create the signer's account wrapper and share it. It returns a `Transaction` that holds `account_registry::new` followed by `account::share`. The name survives from DeepBook balance managers, but the object it creates is the account wrapper.
 
-It takes no parameters. The transaction sender becomes the owner, because `account_registry::new` records the sender. The builder does no chain read, so a second creation for the same owner aborts with `EAccountAlreadyExists`, as [Create an account](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#create-a-manager) describes. To create and fund the account in the same transaction, use [`tx.deposit`](#deposit) with `{ create: true }`.
+It takes no parameters. The transaction sender becomes the owner, because `account_registry::new` records the sender. The builder does no chain read, so a second creation for the same owner aborts with `EAccountAlreadyExists`, as [Create an account](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) describes. To create and fund the account in the same transaction, use [`tx.deposit`](#deposit) with `{ create: true }`.
 
 Neither `tx.createManager` nor `tx.deposit` attaches a referrer, and the contract accepts a referrer only at account creation. To create an account that pays a referrer, compose the call yourself, as [Create an account with a referrer](#create-with-referrer) shows. Do this before the user creates an account any other way, because the first creation is the only chance.
 
@@ -128,7 +128,7 @@ It takes these parameters:
 
 - `owner`: The address that owns the account. It must sign the transaction, and without `create` the SDK derives the target wrapper from it.
 - `amountUsdc`: The amount to deposit in USDC, as a decimal `number` or `string` such as `250` or `'12.5'`. The SDK throws `PredictInputError` for a negative value or for more than 6 decimal places.
-- `opts.create`: An optional flag. When `true`, the transaction creates the account wrapper, deposits into it, and shares it last, in a single PTB. If you omit it, the SDK deposits into an existing account.
+- `opts.create`: An optional flag. When `true`, the transaction creates the account wrapper, deposits into it, and shares it last, in a single PTB. If you omit it, the SDK deposits into an existing account. With `create`, the contract creates the wrapper for the transaction sender, not for `owner`, as the following caution explains.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="626-630" />
 
@@ -154,7 +154,7 @@ It takes these parameters:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="668-672" />
 
-The contract aborts with `EBalanceTooLow` when the amount exceeds the account's stored balance after that settlement. Withdrawal lives in the account package, so it keeps working while an admin has paused or frozen Predict trading, as [Predict does not gate withdrawal](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#withdrawal-is-ungated) describes. To use the withdrawn coin in further commands of your own, build the withdrawal with [`AccountContract.withdrawFunds`](#account-contract-withdraw-funds), which returns the coin as a transaction result.
+The contract aborts with `EBalanceTooLow` when the amount exceeds the account's stored balance after that settlement. Withdrawal lives in the account package, so it keeps working while an admin has paused or frozen Predict trading, as [Predict does not gate withdrawal](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) describes. To use the withdrawn coin in further commands of your own, build the withdrawal with [`AccountContract.withdrawFunds`](#account-contract-withdraw-funds), which returns the coin as a transaction result.
 
 ## Account reads {#account-reads}
 
@@ -186,11 +186,11 @@ const { balance } = await client.core.getBalance({
 const walletUsdcRaw = BigInt(balance.balance); // coinBalance plus addressBalance
 ```
 
-The returned `number` is a display value, and above `2^53` raw units it loses precision in the low digits, as [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units) describes. For the PLP shares held in the same account, use [`read.plpBalance`](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity#plp-balance), and for any other coin type, use [`AccountContract.balance`](#account-contract-balance).
+The returned `number` is a display value, and above `2^53` raw units it loses precision in the low digits, as [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units) describes. When you need the exact figure in raw units, simulate [`AccountContract.balance`](#account-contract-balance) for the quote coin type and read the `u64` it returns, which `read.balance` otherwise converts for you. For the PLP shares held in the same account, use [`read.plpBalance`](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity), and for any other coin type, use [`AccountContract.balance`](#account-contract-balance).
 
 ## Builder code functions {#builder-codes}
 
-A builder code adds a builder fee to each mint and live close the account makes after you set it, and the fee collects at the code's address for its owner to claim. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) explains the fee and who earns it. Both builders mint an `Auth` from the sender, so the account owner must sign, and both emit `BuilderCodeSet`. [Builder codes](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#builder-codes) covers the Move functions and the event.
+A builder code adds a builder fee to each mint and live close the account makes after you set it, and the fee collects at the code's address for its owner to claim. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) explains the fee and who earns it. Both builders mint an `Auth` from the sender, so the account owner must sign, and both emit `BuilderCodeSet`. [Builder codes](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) covers the Move functions and the event.
 
 ### `tx.setBuilderCode` {#set-builder-code}
 
@@ -215,7 +215,7 @@ It takes this parameter:
 
 Decode either result with [`decode.builderCode`](#decode-builder-code).
 
-## Operate a builder code {#operate-builder-code}
+## How do I create a builder code and claim its fees? {#operate-builder-code}
 
 The functions above are for the account that carries a code. Nothing in `client.predict` serves the code's owner: no facade builder creates a code or claims its fees. Compose both from the generated bindings that the `/predict` subpath exports, `registryMoveCalls` and `builderCodeMoveCalls`, with `toGeneratedConfig` supplying the shared objects:
 
@@ -294,7 +294,7 @@ The receipt carries 4 fields:
 
 ### `decode.deposit` {#decode-deposit}
 
-Use `decode.deposit` to read a deposit from the `Deposited` event. It returns a `BalanceChangeReceipt`. A redemption payout also surfaces as `Deposited`, as [Balance events](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#balance-events) describes, so the decoder reads that credit too.
+Use `decode.deposit` to read a deposit from the `Deposited` event. It returns a `BalanceChangeReceipt`. A redemption payout also surfaces as `Deposited`, as [Balance events](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) describes, so the decoder reads that credit too.
 
 It takes this parameter:
 
@@ -321,7 +321,7 @@ The receipt carries 5 fields:
 - `accountId`: The canonical account ID.
 - `coinType`: The fully qualified type of the coin that moved.
 - `amount`: The amount moved, as a display value that assumes a 6-decimal coin.
-- `newBalance`: The stored balance after the move, as a display value that excludes unsettled funds.
+- `newBalance`: The stored balance after the move, as a display value that excludes unsettled funds. It can therefore differ from [`read.balance`](#balance), which adds unsettled funds to the stored balance.
 - `raw`: The same `amount` and `newBalance` in raw units, as `bigint` values.
 
 ### `decode.builderCode` {#decode-builder-code}
@@ -496,13 +496,13 @@ It takes these parameters:
 
 ### Wrapper ID and account ID {#wrapper-and-account-ids}
 
-Only the wrapper ID derives from `AccountContract`. The canonical account identity is a second, different derived object whose key is `AccountKey(owner)` rather than `AccountWrapperKey(owner)`, and the SDK derives it with [`SessionsContract.deriveAccountId`](/onchain-finance/deepbook/deepbook-predict-sdk/sessions#derive-ids) in the `/sessions` subpath. Pass the wrapper ID to Predict calls, and expect the account ID in the `account_id` field of events. A live `OrderMinted` carries the account ID, not the wrapper ID.
+Only the wrapper ID derives from `AccountContract`. The canonical account identity is a second, different derived object whose key is `AccountKey(owner)` rather than `AccountWrapperKey(owner)`, and the SDK derives it with [`SessionsContract.deriveAccountId`](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) in the `/sessions` subpath. Pass the wrapper ID to Predict calls, and expect the account ID in the `account_id` field of events. A live `OrderMinted` carries the account ID, not the wrapper ID.
 
-Offchain read services make the same split, and getting it wrong fails quietly. As of 2026-09-14 the only public read services are the Testnet v4 hosts that [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#account-and-portfolio-data) lists, and they index `predict-8-21`, an earlier Testnet deployment, not either current deployment. No read service exists yet for either current deployment, and no SDK read needs one. On those hosts the account and position paths key on the canonical account ID. A request with a wrapper ID returns status `200` with an empty array rather than an error, so a wrong key looks like an empty portfolio until you compare both: in a 2026-09-03 check for a real trader on that deployment, the wrapper ID returned 0 balances and 0 positions while the account ID returned 2 balance rows and 5 open positions. The same wrapper-against-account trap applies to session grants, as [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#enumerate) describes. The wrapper ID stays correct for every onchain call that takes the shared `AccountWrapper` object.
+Offchain read services make the same split, and getting it wrong fails quietly. As of 2026-09-14 the only public read services are the Testnet v4 hosts that [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#account-and-portfolio-data) lists, and they index `predict-8-21`, an earlier Testnet deployment, not either current deployment. No read service exists yet for either current deployment, and no SDK read needs one. On those hosts the account and position paths key on the canonical account ID. A request with a wrapper ID returns status `200` with an empty array rather than an error, so a wrong key looks like an empty portfolio until you compare both: in a 2026-09-03 check for a real trader on that deployment, the wrapper ID returned 0 balances and 0 positions while the account ID returned 2 balance rows and 5 open positions. The same wrapper-against-account trap applies to session grants, as [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) describes. The wrapper ID stays correct for every onchain call that takes the shared `AccountWrapper` object.
 
-### Create an account with a referrer {#create-with-referrer}
+### How do I create an account with a referrer? {#create-with-referrer}
 
-No facade builder creates a referred account: `tx.createManager`, `tx.deposit` with `{ create: true }`, `createAccount`, and `createAccountAndDeposit` all call `account_registry::new`, which records no referrer. Compose `account_registry::new_with_referrer` from the generated bindings instead. [Referrals](/onchain-finance/deepbook/deepbook-predict/design#referrals) explains what the referrer earns and why the choice is permanent.
+No facade builder creates a referred account: `tx.createManager`, `tx.deposit` with `{ create: true }`, `createAccount`, and `createAccountAndDeposit` all call `account_registry::new`, which records no referrer. Compose `account_registry::new_with_referrer` from the generated bindings instead. [Referrals](/onchain-finance/deepbook/deepbook-predict/design) explains what the referrer earns and why the choice is permanent.
 
 The Move call takes the referrer's shared `AccountWrapper`, so the following function derives the wrapper ID from the referrer's owner address, which is what a referral link normally carries. It then shares the new wrapper, the same as `createAccount`:
 
@@ -535,7 +535,12 @@ export function createReferredAccount(referrerOwner: string): Transaction {
 
 The new account's owner must sign, because `new_with_referrer` creates the account for the transaction sender. The transaction aborts with `EAccountAlreadyExists` when the sender already has an account, and at that point the account can no longer take a referrer. Building it fails when no object exists at the referrer's derived wrapper ID, because the SDK cannot resolve the shared object, so check for an object at that ID before you build from an unverified link.
 
-To fund the account in the same transaction, add `accountMoveCalls.generateAuth` and `accountMoveCalls.depositFunds` against the `wrapper` result between `newWithReferrer` and `share`, in the order [`createAccountAndDeposit`](#account-contract-create-account-and-deposit) uses, and keep `share` last.
+To fund the account in the same transaction, add the deposit commands between `newWithReferrer` and `share`, in the order [`createAccountAndDeposit`](#account-contract-create-account-and-deposit) uses:
+
+1. `accountRegistryMoveCalls.newWithReferrer`, which returns the `wrapper` result.
+2. `accountMoveCalls.generateAuth`.
+3. `accountMoveCalls.depositFunds` against the `wrapper` result.
+4. `accountMoveCalls.share`, which must stay last.
 
 Confirm the attribution from the `AccountCreated` event, whose `referrer_account_id` is set. That field holds the referrer's canonical account ID, not the wrapper ID you passed in: the call takes the wrapper, and every event names the account. [`decode.createManager`](#decode-create-manager) does not report the referrer, so read the event itself, for example with the `accountEvents.AccountCreated` BCS struct. An account created by an owner who never used `new_with_referrer` has `referrer_account_id` permanently set to `none`.
 
