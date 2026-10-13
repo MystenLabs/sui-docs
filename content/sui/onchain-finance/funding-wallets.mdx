@@ -40,14 +40,24 @@ answer: >-
   instead of direct funding.
 ---
 
-Before users or agents can transact on Sui, their wallets need tokens. Users who already hold SUI on a centralized exchange can withdraw to their Sui wallet address:
+Before users or agents can transact on Sui, their wallets need tokens. A new wallet that holds nothing cannot pay gas, so it cannot send any transaction until it is funded. Either fund the wallet directly using one of the methods on this page, or have someone else pay gas for its transactions. For agents, use a gas station to sponsor transactions instead of direct funding.
+
+## Which funding method should I use?
+
+- **Exchange withdrawal:** Use when users already hold SUI on a centralized exchange. It needs no integration in your app, so it is the first path to support.
+- **Cross-chain bridge:** Use when users hold assets on Ethereum, Solana, or other blockchains.
+- **Testnet and Devnet faucets:** Use for development and testing only. Faucet tokens have no monetary value.
+
+## How do I withdraw SUI from an exchange?
+
+Users who already hold SUI on a centralized exchange can withdraw to their Sui wallet address:
 
 1. Copy the Sui address from the wallet.
 2. In the exchange, initiate a withdrawal for SUI on the **Sui network**.
-3. Paste the Sui address as the withdrawal destination.
-4. The SUI arrives in the wallet after the exchange processes the withdrawal.
+3. Paste the Sui address as the withdrawal destination, and check that it matches the address in the wallet before confirming.
+4. The SUI arrives in the wallet after the exchange processes the withdrawal. Confirm the wallet balance shows the withdrawn SUI.
 
-## Bridging from other chains
+## How do I bridge tokens from other chains to Sui?
 
 To move assets from Ethereum, Solana, or other blockchains to Sui, use a cross-chain bridge:
 
@@ -57,7 +67,7 @@ To move assets from Ethereum, Solana, or other blockchains to Sui, use a cross-c
 
 Bridged assets arrive as wrapped tokens on Sui. The wrapped token's coin type address differs from the native token's address on the source chain.
 
-## Testnet and Devnet faucets
+## How do I get SUI on Testnet and Devnet?
 
 For development and testing on Testnet and Devnet, see [Get SUI from Faucet](/getting-started/onboarding/get-coins) for CLI and programmatic faucet access.
 
