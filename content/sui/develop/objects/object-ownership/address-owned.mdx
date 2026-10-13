@@ -55,20 +55,22 @@ answer: >-
   objects.
 ---
 
-Address-owned objects are owned by a 32-byte address. 32-byte addresses are either an account address derived from a particular signature scheme or an object ID. An address-owned object is only accessible to its owner. You can transfer objects that you own to different addresses.
+Address-owned objects are owned by a 32-byte address. 32-byte addresses are either an account address derived from a particular signature scheme or an object ID. An address-owned object is only accessible to its owner. You can transfer objects that you own to different addresses. When the owner is an object ID rather than an account address, you access the object through the mechanisms in [Transfer to Object](/develop/objects/transfers/transfer-to-object), as described in [Interact with address-owned objects](#interact-with-address-owned-objects).
 
 ## Create address-owned objects
 
 Use these [`transfer` module](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/transfer.move) functions to create address-owned objects:
 
-- Use the [`sui::transfer::transfer`](/references/framework/sui_sui/transfer#sui_transfer_transfer) function if you are defining [custom transfer rules](/develop/objects/transfers/custom-rules) for the object. 
+- Use the [`sui::transfer::transfer`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/transfer.move) function if you are defining [custom transfer rules](/develop/objects/transfers/custom-rules) for the object. 
 
-- Use the [`sui::transfer::public_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_transfer) function to create an address-owned object if the object has the `store` capability.
+- Use the [`sui::transfer::public_transfer`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/transfer.move) function to create an address-owned object if the object has the `store` capability.
 
 ```
 public fun transfer<T: key>(obj: T, recipient: address)
 public fun public_transfer<T: key + store>(obj: T, recipient: address)
 ```
+
+In both functions, `obj` is the object to transfer and `recipient` is the address that becomes its owner.
 
 An object's ownership can change over the life of that object, either by adding it as a [dynamic object field](/develop/objects/dynamic-fields), transferring it to a different address, or making it [immutable](/develop/objects/object-ownership/immutable). However, after you create an object and set its ownership, it cannot be [shared](/develop/objects/object-ownership/shared).
 
@@ -92,6 +94,8 @@ If the address owner of the object is an account address, then you can use and a
 
 If the address owner of the object corresponds to an object ID, then you must access and dynamically authenticate it during the execution of the transaction using the mechanisms defined in [Transfer to Object](/develop/objects/transfers/transfer-to-object).
 
+The CLI commands in this section use Bash-style environment variables (`$ADDR`, `$ROOT`, `$PACKAGE`, `$OBJECT`); adjust the syntax if you use a different shell.
+
 To interact with an address-owned object through the CLI, first view the objects you own:
 
 ```sh
@@ -101,7 +105,7 @@ $ export ADDR=`sui client active-address`
 $ sui client objects $ADDR
 ```
 
-You can see [`sui::transfer::public_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_transfer) function used in the [`color_object` example module](https://github.com/MystenLabs/sui/blob/main/examples/move/color_object/sources/example.move) tests. The test creates a new address-owned `ColorObject` object, then calls `public_transfer` to transfer it to the owner's address. 
+You can see [`sui::transfer::public_transfer`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/transfer.move) function used in the [`color_object` example module](https://github.com/MystenLabs/sui/blob/main/examples/move/color_object/sources/example.move) tests. The test creates a new address-owned `ColorObject` object, then calls `public_transfer` to transfer it to the owner's address. 
 
 Save the [`color_object` example code](https://github.com/MystenLabs/sui/blob/main/examples/move/color_object/sources/example.move), then publish the `ColorObject` code onchain using the Sui CLI:
 
