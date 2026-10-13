@@ -80,15 +80,15 @@ A struct with `key` but without `store` must be explicitly transferred or destro
 
 Functions contain the executable logic of your module. Move has 3 visibility levels:
 
-- `public`: Callable from any module. Function signatures cannot change after publication.
-- `public(package)`: Callable only from modules in the same package. Signatures can change through upgrades.
+- `public`: Callable from any module. When you upgrade a package, the upgrade policy determines which types of changes are allowed to existing public functions (see [package upgrades](/develop/publish-upgrade-packages)).
+- `public(package)`: Callable only from modules in the same package. As with `public` functions, the upgrade policy determines which types of changes are allowed.
 - `entry`: Callable directly from a transaction but not from other Move modules.
 
 Private functions (no visibility modifier) are callable only within the defining module. See [The Move Book: Functions](https://move-book.com/move-basics/function.html) and [Visibility Modifiers](https://move-book.com/move-basics/visibility.html).
 
 ## Generics
 
-Generics let you write type-parameterized functions and structs. You declare type parameters in angle brackets and optionally constrain them with ability requirements. See [The Move Book: Generics](https://move-book.com/move-basics/generics.html).
+Generics let you write type-parameterized functions and structs. You declare type parameters in angle brackets and optionally constrain them with ability requirements. For example, `<T: store + drop>` declares a type parameter `T` that must have both the `store` and `drop` abilities. See [The Move Book: Generics](https://move-book.com/move-basics/generics.html).
 
 ## Control flow
 
@@ -100,7 +100,7 @@ Move 2024 edition introduces enums and `match` expressions. Enums define a type 
 
 ## Vectors, options, and strings
 
-- **Vector (`vector<T>`):** A growable, ordered collection of elements of a single type. Use `vector::push_back`, `vector::pop_back`, `vector::length`, and index syntax to manipulate vectors. See [The Move Book: Vector](https://move-book.com/move-basics/vector.html).
+- **Vector (`vector<T>`):** A growable, ordered collection of elements of a single type. Use `vector::push_back`, `vector::pop_back`, and `vector::length` to manipulate vectors. See [The Move Book: Vector](https://move-book.com/move-basics/vector.html).
 - **Option (`Option<T>`):** Represents a value that might be absent. Use `option::some(value)` and `option::none()` to construct, and `option::is_some()`, `option::extract()` to access. See [The Move Book: Option](https://move-book.com/move-basics/option.html).
 - **String (`String`):** UTF-8 encoded text. Use `string::utf8(bytes)` to create from a byte vector. See [The Move Book: String](https://move-book.com/move-basics/string.html).
 
@@ -115,7 +115,7 @@ Move uses ownership-based memory safety. Each value has exactly one owner. When 
 - `&T`: Immutable reference (read-only access)
 - `&mut T`: Mutable reference (read and write access)
 
-References prevent copying or moving the original value while the reference is active. See [The Move Book: References](https://move-book.com/move-basics/references.html) and [Ownership and Scope](https://move-book.com/move-basics/ownership-and-scope.html).
+To pass a reference when calling a function, borrow the value with `&value` for an immutable reference or `&mut value` for a mutable reference. References prevent copying or moving the original value while the reference is active. See [The Move Book: References](https://move-book.com/move-basics/references.html) and [Ownership and Scope](https://move-book.com/move-basics/ownership-and-scope.html).
 
 ## Testing
 
