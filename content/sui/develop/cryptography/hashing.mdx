@@ -45,7 +45,11 @@ answer: >-
   functions.
 ---
 
-Cryptographic hash functions map arbitrary-length input to a fixed-length output (the hash value). These functions are one-way, meaning you cannot recover the input from the hash, and collision-resistant, meaning you cannot find two different inputs that produce the same hash. You use hash functions on Sui for data integrity verification, commitment schemes, and content addressing.
+Cryptographic hash functions map arbitrary-length input to a fixed-length output (the hash value). These functions are one-way, meaning you cannot recover the input from the hash, and collision-resistant, meaning you cannot find two different inputs that produce the same hash. You use hash functions on Sui for data integrity verification, commitment schemes, and content addressing (referring to data by its hash value).
+
+## Which hash functions can I use in Move on Sui?
+
+Sui supports four cryptographic hash functions: SHA2-256, SHA3-256, Keccak256, and Blake2b-256. All four produce a 32-byte output.
 
 Sui supports the following cryptographic hash functions:
 
@@ -58,16 +62,15 @@ Sui supports the following cryptographic hash functions:
 
 SHA2-256 and SHA3-256 are in the Move Standard Library (`std::hash`). Keccak256 and Blake2b-256 are in the Sui Framework (`sui::hash`). The difference affects how you import them in your module.
 
-## Usage
+## How do I hash data in a Move contract?
+
+The following examples hash a `vector<u8>` input, store the resulting hash value in an `Output` object, and transfer that object to a recipient.
 
 The SHA2-256 and SHA3-256 hash functions are available in the Move Standard Library in the `std::hash` module. The following example shows how to use the SHA2-256 hash function in a smart contract:
 
 ```move
 module test::hashing_std {
     use std::hash;
-    use sui::object::{Self, UID};
-    use sui::tx_context::TxContext;
-    use sui::transfer;
     use std::vector;
 
     /// Object that holds the output hash value.
@@ -87,14 +90,13 @@ module test::hashing_std {
 }
 ```
 
+To use SHA3-256 instead, replace `hash::sha2_256(data)` with `hash::sha3_256(data)`.
+
 The Keccak256 and Blake2b-256 hash functions are available through the `sui::hash` module in the Sui Move Library. An example of how to use the Keccak256 hash function in a smart contract is shown below. Notice that here, the input to the hash function is given as a reference. This is the case for both Keccak256 and Blake2b-256.
 
 ```move
 module test::hashing_sui {
     use sui::hash;
-    use sui::object::{Self, UID};
-    use sui::tx_context::TxContext;
-    use sui::transfer;
     use std::vector;
 
     /// Object that holds the output hash value.
@@ -113,3 +115,5 @@ module test::hashing_sui {
     }
 }
 ```
+
+To use Blake2b-256 instead, replace `hash::keccak256(&data)` with `hash::blake2b256(&data)`.
