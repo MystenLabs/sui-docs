@@ -67,10 +67,10 @@ Use `supplyToMarginPool` to supply assets to a margin pool and earn interest. Yo
 
 **Parameters**
 
-- `coinKey`: String that identifies the asset type.
+- `coinKey`: String that identifies the asset type, for example `'USDC'`.
 - `supplierCap`: `TransactionObjectArgument` representing the supplier cap.
 - `amountToDeposit`: Number representing the amount to supply.
-- `referralId`: Optional string representing the referral ID.
+- `referralId`: Optional string representing the referral ID, the object ID of a referral created with `mintSupplyReferral`.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginPool.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="supplyToMarginPool" signatureOnly />
 
@@ -156,13 +156,13 @@ createSupplierCap = (tx: Transaction) => {
 };
 ```
 
-### Supply liquidity
+### How do I supply liquidity to a margin pool?
 
 ```tsx
 // Example: Supply 1000 USDC to the margin pool
 supplyLiquidity = (tx: Transaction) => {
 	const coinKey = 'USDC';
-	const supplierCapId = '0x...'; // ID of your supplier cap
+	const supplierCapId = '0x...'; // ID of your supplier cap, created with mintSupplierCap
 	const supplierCap = tx.object(supplierCapId);
 	const amountToSupply = 1000;
 
@@ -171,7 +171,7 @@ supplyLiquidity = (tx: Transaction) => {
 			coinKey,
 			supplierCap,
 			amountToSupply,
-			// Optional: provide referral ID
+			// Optional: provide referral ID to share fees with the referrer
 		),
 	);
 };
@@ -198,7 +198,7 @@ supplyWithReferral = (tx: Transaction) => {
 };
 ```
 
-### Withdraw liquidity
+### How do I withdraw from a margin pool?
 
 ```tsx
 // Example: Withdraw 500 USDC from the margin pool
@@ -221,7 +221,7 @@ withdrawAll = (tx: Transaction) => {
 };
 ```
 
-### Create and manage referrals
+### How do I create referrals and claim referral fees?
 
 ```tsx
 // Example: Create a supply referral
