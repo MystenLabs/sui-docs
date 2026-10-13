@@ -49,8 +49,8 @@ answer: >-
   primary is stale. Unit-test the guard branches on constructed prices.
 builder_paths:
   - path_id: oracle-integration
-    path_name: Oracles for DeFi
-    step: Build a Move price adapter
+    path_name: Oracle Integration
+    step: Build a Move adapter
     stage: Oracles
 ---
 
@@ -58,41 +58,58 @@ Reading a provider feed directly scatters two concerns across every call site: t
 
 The reference module lives in `examples/oracle-adapter/move`. It builds and its tests pass against the real Pyth Testnet package with `sui move test`.
 
-## One normalized price type
+## What price type does the adapter return?
 
 The adapter exposes a single provider-neutral `Price`. A consumer that values collateral or settles a market never sees a `PriceInfoObject` or a provider-specific price struct, so a second provider added later returns the same type:
 
 <ImportContent source="examples/oracle-adapter/move/sources/price_adapter.move" mode="code" struct="Price" />
 
-## Read with a staleness bound
+## How do I read a price with a staleness bound?
 
-The primary reader delegates the staleness gate to Pyth's own `get_price_no_older_than`, which aborts if the feed is older than the bound, then normalizes the result. A consumer picks the maximum age that suits it: the tightest freshness bound for a liquidation, because a liquidation acts on the price now, while a generous max-age is acceptable for a display, and the borrowing decision uses the same tight, checked read a liquidation does.
+Pyth offers two readers that this page uses: `get_price_no_older_than`, which aborts if the feed is older than the bound you pass, and the unchecked `get_price_unsafe`, which does not gate on age. The primary reader delegates the staleness gate to Pyth's own `get_price_no_older_than`, which aborts if the feed is older than the bound, then normalizes the result. A consumer picks the maximum age that suits it: the tightest freshness bound for a liquidation, because a liquidation acts on the price now, while a generous max-age is acceptable for a display, and the borrowing decision uses the same tight, checked read a liquidation does.
 
 <ImportContent source="examples/oracle-adapter/move/sources/price_adapter.move" mode="code" fun="price_from_pyth" />
 
-## Guard the confidence and deviation
+## How do I guard confidence and deviation?
 
 Pyth reports a price with a confidence interval. A wide interval means the sources disagree, which is a signal to pause rather than act on the midpoint. When you value collateral to decide how much a user can borrow, use the low end of the confidence interval (price minus confidence), so a wide interval lends less rather than over-lends. When you value collateral to decide how much a user can borrow, use the low end of the confidence interval (price minus confidence), so a wide interval lends less rather than over-lends. A deviation check against a second source or a time-averaged reference catches a single-feed spike before it drives a liquidation.
 
+`assert_confidence` enforces the confidence-interval bound:
+
 <ImportContent source="examples/oracle-adapter/move/sources/price_adapter.move" mode="code" fun="assert_confidence" />
+
+`assert_within_deviation` enforces the deviation bound against a reference price:
 
 <ImportContent source="examples/oracle-adapter/move/sources/price_adapter.move" mode="code" fun="assert_within_deviation" />
 
-## Fall back without aborting
+## How do I fall back to a second feed without aborting?
 
-Move cannot catch an abort, so a fallback cannot wrap the checked reader in a try. Instead, read the primary with the unchecked `get_price_unsafe`, test freshness without aborting, and only call the checked reader on the fallback if the primary is stale. A consumer gets a fresh price or a clear abort, never a silently stale one, and the defined behavior when both feeds are stale is to pause, not guess.
+Move cannot catch an abort, so a fallback cannot wrap the checked reader in a try. Instead, `price_or_fallback` works in three steps:
+
+1. Read the primary with the unchecked `get_price_unsafe`.
+2. Test the primary's freshness without aborting; if it is fresh, use it.
+3. If the primary is stale, call the checked reader on the fallback, which aborts if the fallback is stale too.
+
+A consumer gets a fresh price or a clear abort, never a silently stale one, and the defined behavior when both feeds are stale is to pause, not guess.
 
 <ImportContent source="examples/oracle-adapter/move/sources/price_adapter.move" mode="code" fun="price_or_fallback" />
 
-## Test the guard branches
+## How do I unit-test the guard branches?
 
 A Move test cannot mint a `PriceInfoObject`, so Testnet execution verifies the reads that touch one. Unit tests cover the guard logic and normalization on constructed prices, one test per branch: fresh and stale, confidence within and over the bound, deviation within and over, and a rejected negative and zero price.
 
+The test below covers the branch where confidence is over the bound:
+
 <ImportContent source="examples/oracle-adapter/move/tests/price_adapter_tests.move" mode="code" fun="confidence_blowout_aborts" />
 
-Run the full suite with `sui move test` in `examples/oracle-adapter/move`.
+Run the full suite from the example directory:
 
-## Keep it provider-neutral
+```sh
+cd examples/oracle-adapter/move
+sui move test
+```
+
+## How do I add a second provider?
 
 The `Price` type and the guards name no provider, so a Switchboard reader is an additive `price_from_switchboard` that returns the same `Price` and reuses the same guards. Consumers never change. The one difference to absorb in the reader: Switchboard's `current_result` does not gate on age, so a Switchboard reader applies `assert_fresh` itself where the Pyth reader relies on `get_price_no_older_than`.
 
