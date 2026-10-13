@@ -59,13 +59,37 @@ answer: >-
 
 import React from 'react';
 
-Browse the tools available for developing on Sui. Each tool includes a description, installation command, and link to its source.
+This page lists developer tools for building, testing, deploying, and auditing Move packages on Sui, including CLI tools, IDE extensions, SDKs, indexers, and community tools. Each tool includes a description, installation command, and link to its source.
 
 :::caution
 
 Tools tagged as Community are maintained by third-party developers. Mysten Labs, Sui Foundation, and Walrus Foundation do not guarantee their functionality, security, or compatibility with the latest platform updates.
 
 :::
+
+## Which tools do I need to start building on Sui?
+
+Start with [suiup](/getting-started/onboarding/sui-install), the installer and version manager for the Sui toolchain. Several install commands on this page, including those for the Sui CLI, Move Analyzer, MVR, and the Walrus CLI, use `suiup install`, so install suiup first. Then:
+
+1. Install the [Sui CLI](/references/cli) with `suiup install sui@testnet` or `suiup install sui@mainnet`.
+2. Add Move language support to your editor with [Move Analyzer](/references/ide/move) (`suiup install move-analyzer`).
+3. Request Testnet SUI from the [Sui Faucet](https://faucet.sui.io/).
+
+The rest of the page groups tools by task. Use the filter bar to search all tools by name, description, or language, or jump to a section:
+
+- [Fundamentals](#fundamentals)
+- [Writing Move](#writing-move)
+- [Building apps](#building-apps)
+- [Testing and debugging](#testing-and-debugging) and [Faucets](#faucets)
+- [Security and auditing](#security-and-auditing)
+- [Data and indexing](#data-and-indexing)
+- [Explorers](#explorers)
+- [Oracles](#oracles)
+- [AI](#ai)
+- [Sui stack tooling](#sui-stack-tooling)
+- [SDKs](#sdks)
+- [APIs](#apis)
+- [Misc](#misc)
 
 export const SearchCtx = React.createContext({ query: '', setQuery: () => {} });
 
@@ -173,7 +197,7 @@ export const SearchBar = () => {
 
 export const GitHubIcon = () => (
   <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.410-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
   </svg>
 );
 
@@ -683,7 +707,7 @@ Tools for unit testing, replaying transactions, and debugging Move execution loc
   name="Move Trace Debugger"
   description="Step-through debugger for Move execution traces with variable inspection and breakpoints."
   github="https://github.com/MystenLabs/sui"
-  notes="Works on traces from sui move test --trace-execution and sui replay --trace.VS Code extension: mysten.move-trace-debug"
+  notes="Works on traces from sui move test --trace-execution and sui replay --trace. VS Code extension: mysten.move-trace-debug"
   docs="/references/ide/debugger"
   website="https://marketplace.visualstudio.com/items?itemName=mysten.move-trace-debug"
 />
@@ -797,7 +821,7 @@ Indexers, data APIs, and analytics services for querying onchain state.
 <ToolCard
   name="Sui GraphQL RPC"
   description="Rich data query interface for Sui."
-  notes="Mainnet: https://graphql.mainnet.sui.io/graphql, Testnet: https://graphql.testnet.sui.io/graphql, Devnet: https://graphql.devnet.sui.io/graphql"
+  notes="Hosted endpoints, nothing to install. Mainnet: https://graphql.mainnet.sui.io/graphql, Testnet: https://graphql.testnet.sui.io/graphql, Devnet: https://graphql.devnet.sui.io/graphql"
 />
 
 <ToolCard
@@ -1025,7 +1049,7 @@ Autonomous agents, verifiable inference, and TEE infrastructure.
 />
 
 <ToolCard
-  name="WaaP CLI"
+  name="human.tech Wallet Protocol (WaaP) CLI"
   description="Agent payments from a headless wallet, with spend caps the AI agent cannot raise. Scoped, expiring grants let it transact autonomously on Sui, Solana and EVM."
   notes="The agent holds no key. Every request passes a policy gate server-side before a signature exists, so a prompt-injected agent has nothing to reach for. Grants are bound by recipient, chain, a cumulative spend ceiling and an expiry. Agentic pay-per-use without a browser or a human in the loop for each transaction."
   install="npm install -g @human.tech/waap-cli"
@@ -1040,7 +1064,7 @@ Autonomous agents, verifiable inference, and TEE infrastructure.
 
 ## Sui stack tooling
 
-Tooling for other pieces of the Sui stack, including Walrus, Seal, and Nautilus.
+Tooling for other pieces of the Sui stack, including Walrus, Seal, and Nautilus. For the Walrus and Seal SDKs, see [SDKs](#sdks).
 
 <ToolGrid>
 <ToolCard
@@ -1275,6 +1299,7 @@ SDKs for building on Sui, grouped by language. Use the filter bar to search by l
   name="Legacy Sui Rust SDK"
   description="Legacy Rust crate providing the wallet and client configuration used by the Sui CLI. Use the current Sui Rust SDK for new integrations."
   github="https://github.com/MystenLabs/sui/tree/main/crates/sui-sdk"
+  notes="Current Sui Rust SDK: https://github.com/MystenLabs/sui-rust-sdk"
   docs="https://mystenlabs.github.io/sui/sui_sdk/index"
   language="Rust"
 />
@@ -1500,6 +1525,8 @@ These SDKs are built and maintained by their respective protocol teams for integ
 </ToolGrid>
 
 ## Misc
+
+Move libraries, decompilers, node and infrastructure tooling, and other tools that do not fit the categories above.
 
 <ToolGrid>
 
