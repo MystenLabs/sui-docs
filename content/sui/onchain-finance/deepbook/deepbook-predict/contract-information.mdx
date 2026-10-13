@@ -72,9 +72,9 @@ answer: >-
 
 DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Version 2.7.0 of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) carries both, so `getConfig` returns the identifiers on this page for either network. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict), and the original Testnet publish from source commit [`4d752fb8`](https://github.com/MystenLabs/deepbookv3/tree/4d752fb82d909a821c85bcc5d3963725efb546f4/packages/predict), whose Move sources are byte-identical to the Mainnet ones.
 
-Both networks have since upgraded `predict` and `sessions` to version 2 from source commit [`8d7d42a0`](https://github.com/MystenLabs/deepbookv3/tree/8d7d42a0f48bc6434bc282d45d2403809b4e492c/packages/predict), which adds the [`mint_exact_cost`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) all-in budget entrypoint and its session wrapper, callable on either network.
+Both networks have since upgraded `predict` and `sessions` to version 2 from source commit [`8d7d42a0`](https://github.com/MystenLabs/deepbookv3/tree/8d7d42a0f48bc6434bc282d45d2403809b4e492c/packages/predict), which adds the [`mint_exact_cost`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) all-in budget entrypoint and its session wrapper, callable on either network.
 
-Both have since taken a further `predict` upgrade, to protocol version 3, which adds [`plp::add_usdc_to_plp`](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#add-usdc). Mainnet still runs protocol version 3.
+Both have since taken a further `predict` upgrade, to protocol version 3, which adds [`plp::add_usdc_to_plp`](/onchain-finance/deepbook/deepbook-predict/contract-information/vault). Mainnet still runs protocol version 3.
 
 Testnet has gone one step further. On 2026-10-09 it upgraded `predict` to protocol version 4 and `sessions` to protocol version 3, published 2 new packages, `deepbook_predict_orders` and `deepbook_predict_math`, and passed the delayed-execution cutover. Every Testnet trade is now a queued order, and the immediate mint and live-redeem entrypoints abort. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) covers the new order flow. The 2 networks therefore no longer expose the same entrypoints.
 
@@ -82,7 +82,7 @@ Every upgrade kept its original ID, so the lineage is unchanged and every object
 
 ### Publish count is not protocol version {#version-numbers}
 
-Two different numbers get called "version", and they have come apart:
+Two different numbers get called "version", and they have come apart. Protocol version decides what a network can do; the publish count only records how often a package was published:
 
 | **Package** | **Publishes** | **Protocol version** |
 | --- | --- | --- |
@@ -125,7 +125,7 @@ Both deployments went live on 2026-09-12 and have since created markets on the 1
 
 :::
 
-## Mainnet deployment {#mainnet}
+## Which IDs does the Mainnet deployment use? {#mainnet}
 
 The deployment manifest is the stable identity record. It names the chain, the source commit, and the checkpoint from which an indexer would start:
 
@@ -184,7 +184,7 @@ Predict has no single top-level object. It splits state across shared objects th
 
 The PLP type carries `predict`'s original ID, `0x89aea622…`, not its version 2 call target. The same holds on Testnet, and [Upgraded packages carry 2 IDs](#two-ids) explains why. Take it from `getConfig(network).coinTypes.plp` rather than building it from a package ID you have to hand.
 
-## Testnet deployment {#testnet}
+## Which IDs does the Testnet deployment use? {#testnet}
 
 | **Parameter** | **Value** |
 | --- | --- |
@@ -280,7 +280,7 @@ The `deepbookCoreAccount` package declares the `account_data::DeepbookCoreAccoun
 
 On both networks, the `AccountRegistry` authorizes `PredictApp`, `SessionsApp`, and `DeepbookCoreAccountApp`. That is live registry state, so read it with `account_registry::is_app_authorized<App>` rather than assuming it.
 
-The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Both deployment manifests record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`: Testnet's DeepBook registry `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d` had not authorized `DeepbookCoreAccountApp` when each deployment was verified, so treat the spot wrappers as unavailable on both networks until you have checked otherwise. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and it can be granted or revoked in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers what that authorization gates.
+The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Both deployment manifests record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`: Testnet's DeepBook registry `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d` had not authorized `DeepbookCoreAccountApp` when each deployment was verified, so treat the spot wrappers as unavailable on both networks until you have checked otherwise. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and it can be granted or revoked in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers what that authorization gates.
 
 ## Units and constants
 
@@ -359,7 +359,7 @@ The strike-exposure template is the policy each new market snapshots at creation
 - Inventory impact rate of 0
 - Expiry fee window of 60 seconds with a 3x maximum multiplier
 
-The contract charges the fee, and applies its minimum, separately at each finite boundary of a range, so a two-sided range pays at least twice the minimum fee. It also applies the entry-probability band to each finite boundary as well as to the range. A market keeps the template it snapshotted for its whole life, so read a live market's own values with the SDK's `read.feePolicy` rather than from the template. [Design](/onchain-finance/deepbook/deepbook-predict/design#fee-components) explains the fee.
+The contract charges the fee, and applies its minimum, separately at each finite boundary of a range, so a two-sided range pays at least twice the minimum fee. It also applies the entry-probability band to each finite boundary as well as to the range. A market keeps the template it snapshotted for its whole life, so read a live market's own values with the SDK's `read.feePolicy` rather than from the template. [Design](/onchain-finance/deepbook/deepbook-predict/design) explains the fee.
 
 ## Public read APIs for the `predict-8-21` Testnet deployment
 
@@ -457,7 +457,7 @@ A wrapper ID passed where an account ID belongs fails silently. The services ans
 
 :::
 
-The wrapper ID stays correct onchain. Every Move call that takes the shared `AccountWrapper` object takes it, and `client.predict.wrapperIdFor(owner)` derives it. Only the read service paths key on the account ID. [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) describes the 2 derived objects, and [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#enumerate) walks through deriving each one.
+The wrapper ID stays correct onchain. Every Move call that takes the shared `AccountWrapper` object takes it, and `client.predict.wrapperIdFor(owner)` derives it. Only the read service paths key on the account ID. [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) describes the 2 derived objects, and [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) walks through deriving each one.
 
 Take every path from the tables on this page rather than guessing at one. The plausible variants `/vault`, `/pool`, `/protocol-config`, and `/accounts/:account_id/apps` all return `404`.
 
@@ -504,6 +504,12 @@ Structure your code so none of these become assumptions:
 - **Admission grid:** Read it from the market. Admission tick size is mutable protocol state.
 - **Testnet timing:** Treat timing you measure on Testnet as an observation rather than a guarantee. Oracle update frequency and settlement latency are properties of the relayers, not of the contracts.
 
+### How do I plan a move to Mainnet? {#plan-for-mainnet}
+
+Moving an app from Testnet to Mainnet changes every deployment-specific value on this page: the package call targets and original IDs, the shared object IDs, the quote and PLP coin types, the oracle objects, the chain ID and indexing start checkpoint, and the trade path. Keep all of them behind the single network-keyed record above rather than in constants scattered through the code, so the switch is one configuration change.
+
+Keep using the identifiers on this page until a newer deployment explicitly replaces them, and ignore older package IDs from earlier deployments, as the caution under [Upgraded packages carry 2 IDs](#two-ids) explains. No page announces a new deployment, so watching the DeepBookV3 source branch is currently the only signal that one exists.
+
 ## Live onchain events
 
 Stream events directly from a full node when a client needs them as they land, and back them with your own store for history. Predict emits its events from 4 modules under the Predict package: `config_events` for lifecycle and configuration, `order_events` for trading, `vault_events` for the pool and its queues, and `builder_code_events` for builder attribution. On Testnet, the queued-order events come from a fifth module, `queue_events`, in the `deepbook_predict_orders` package, so subscribe to both packages there. The following table lists the ones an integrator subscribes to most often, not every event each module declares:
@@ -538,7 +544,7 @@ The `SupplyFilled` and `WithdrawFilled` payloads name their quote amounts `usdc_
 
 Stream Predict events with `SubscriptionService.SubscribeEvents`, filtering on the Predict package ID, and page the same events historically with `LedgerService.ListEvents` under an identical filter. Sui full nodes no longer serve the older WebSocket subscription API, so do not build on `sui_subscribeEvent`.
 
-Subscribe to market creation and settlement on Testnet. For Mainnet, swap in the Mainnet Predict package ID and `fullnode.mainnet.sui.io:443`:
+Subscribe to market creation and settlement on Testnet. The `PACKAGE` value is the Testnet `predict` original ID, because event type prefixes use the original ID rather than the call target. For Mainnet, swap in the Mainnet `predict` original ID, `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba`, not its call target, and `fullnode.mainnet.sui.io:443`:
 
 ```shell
 $ PACKAGE=0x59d71119e990573a738dd3ff9c4c7d28d6893af69c87c1a7f3a2e90e280ce2f4
@@ -579,8 +585,8 @@ Swap the method for `sui.rpc.v2.LedgerService/ListEvents` to page the same event
 Subscriptions begin at the current tip and accept no resume point, so recovering events missed during a disconnect always requires a `ListEvents` backfill. Those mechanics are the same for every gRPC event consumer, and the gRPC pages document them once, for all of them:
 
 - [Subscribe to events with a filter](/develop/accessing-data/grpc/using-grpc#subscribe-to-events-with-a-filter) for the subscription call itself
-- [Pagination with watermarks](/develop/accessing-data/grpc/using-grpc#list-api-pagination) for cursor semantics and the reasons a stream ends
-- [Connection and buffer limits](/develop/accessing-data/grpc/using-grpc#connection-limits) for subscriber buffer sizes and slow-consumer eviction
+- [Pagination with watermarks](/develop/accessing-data/grpc/using-grpc) for cursor semantics and the reasons a stream ends
+- [Connection and buffer limits](/develop/accessing-data/grpc/using-grpc) for subscriber buffer sizes and slow-consumer eviction
 - [Backfill and subscribe without gaps](/develop/accessing-data/grpc/grpc-migration-cookbook#backfill-and-subscribe-without-gaps) and [Reconnect a checkpoint stream](/develop/accessing-data/grpc/grpc-migration-cookbook#reconnect-a-checkpoint-stream) for the pairing pattern and reconnect backoff
 
 `MarketSettled` is the correct trigger for an automated claim worker, because it fires when the contract actually records a settlement price rather than when a market expires. After settlement on Mainnet, `expiry_market::redeem_settled_permissionless` lets anyone claim a settled position on the owner's behalf, and the payout still lands in the owner's account, so a worker closes out user positions without holding their keys. Protocol version 4 limits that function to an admin allowlist of keepers, and on Testnet the queue's own settlement walk pays queued positions with no claim at all. Make that worker idempotent: at-least-once delivery is a property of the backfill-and-subscribe pattern, so the same event can reach a handler twice after a reconnect.
