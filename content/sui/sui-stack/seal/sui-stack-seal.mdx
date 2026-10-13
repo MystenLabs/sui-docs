@@ -110,7 +110,7 @@ sequenceDiagram
 ```
 
 :::caution
-Seal should not be used to protect highly sensitive data such as wallet keys, personal health information, or government-level secrets. Review the [Seal Terms of Service](/sui-stack/seal/terms-of-service) and [security best practices](/sui-stack/seal/security-best-practices) before deploying to production.
+Seal should not be used to protect highly sensitive data such as wallet keys, personal health information, or government-level secrets. Review the Seal Terms of Service and [security best practices](/develop/security/best-practices#seal-encryption-and-access-control) before deploying to production.
 :::
 
 :::caution
@@ -137,7 +137,7 @@ The blob on Walrus is always public. What is secret is the encryption key, and a
 
 ### Seal CLI
 
-The Seal CLI (`seal-cli`) lets you encrypt and decrypt data, generate key pairs, inspect encrypted objects, and fetch keys for testing. It is useful for verifying your Move policy and testing key server connectivity before integrating the SDK. See the [Seal CLI documentation](/sui-stack/seal/seal-cli) for usage.
+The Seal CLI (`seal-cli`) lets you encrypt and decrypt data, generate key pairs, inspect encrypted objects, and fetch keys for testing. It is useful for verifying your Move policy and testing key server connectivity before integrating the SDK. See the Seal CLI documentation for usage.
 
 ### Seal TypeScript SDK
 
@@ -168,7 +168,7 @@ OnlyFins uses `SealClient` in standalone mode. The `createSealClient` factory in
 Some code examples in this guide use older Sui transports: OnlyFins uses `SuiClient` from `@mysten/sui/client`, and the seal-demo standalone script uses `SuiJsonRpcClient` from `@mysten/sui/jsonRpc`, which is deprecated. `SuiGrpcClient` from `@mysten/sui/grpc` is the recommended transport for all new integrations. All `SealClient` constructor and encrypt/decrypt APIs are identical regardless of which transport you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
 :::
 
-The key server object IDs come from `constants.ts`. These IDs point to onchain `KeyServer` objects that always hold the latest URL as the source of truth. See the [Seal documentation](/sui-stack/seal/pricing) for the full list of verified key servers and their modes (open vs. permissioned).
+The key server object IDs come from `constants.ts`. These IDs point to onchain `KeyServer` objects that always hold the latest URL as the source of truth. See the Seal documentation for the full list of verified key servers and their modes (open vs. permissioned).
 
 <ImportContent
   source="frontend/src/constants.ts"
