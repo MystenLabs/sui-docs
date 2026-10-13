@@ -98,7 +98,7 @@ impl Store for MyCustomStore {
 
 ###step Implement the `Connection` trait
 
-The `Connection` trait handles watermark operations for pipeline coordination:
+The `Connection` trait handles watermark operations for pipeline coordination. A watermark records a pipeline's checkpoint progress: the committer watermark tracks the highest checkpoint the pipeline has processed, and the reader watermark tracks the lowest checkpoint available to readers.
 
 ```rust
 #[async_trait]
@@ -125,7 +125,9 @@ impl Connection for MyCustomConnection<'_> {
 }
 ```
 
-For a complete reference, study the `sui-pg-db` implementation on `Connection`:
+For the full set of methods the `Connection` trait requires, expand the `lib.rs` trait definition at the top of this page.
+
+The `todo!("Implement based on your storage system")` placeholders in the preceding snippet are stubs: the code does not compile or run until you replace each one with the query logic for your storage system. For a complete reference, study the `sui-pg-db` implementation on `Connection`:
 
 <ImportContent source="crates/sui-pg-db/src/store.rs" mode="code" impl="Connection" />
 
@@ -239,7 +241,9 @@ The example includes 3 main components:
 
 ## Deserializing Move events {#deserialize}
 
-Decoding BCS yourself makes dependency currency a requirement rather than a preference. See [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers#dependency-currency).
+Whichever store you choose, the checkpoint data your pipelines process includes Move events, which your indexer must deserialize itself.
+
+Decoding BCS yourself makes dependency currency a requirement rather than a preference. See [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers).
 
 When Move smart contracts execute on Sui, they can emit events using the `sui::event` module. These events are stored in checkpoints as **BCS-serialized bytes** that your indexer needs to deserialize to extract meaningful data.
 
@@ -265,7 +269,7 @@ In checkpoint data, these events arrive as **raw BCS bytes** that need to be con
 
 ### Step-by-step deserialization
 
-1. Add BCS dependency.
+1. Add BCS dependency. Because BCS cannot skip a value it does not recognize, keep this dependency and the framework dependency current rather than pinning an old version — see [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers), which applies to any code that performs BCS deserialization.
 
     ```rust
     [dependencies]
