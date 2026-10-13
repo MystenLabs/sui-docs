@@ -62,15 +62,15 @@ The `loyalty.move` source file contains the `examples::loyalty` module code that
 
 <ImportContent source="examples/move/token/sources/loyalty.move" mode="code" struct="LOYALTY" />
 
-The `init` function of the module uses the `LOYALTY` OTW to create the token. It makes use of the OTW `LOYALTY` type defined previously in its call to `create_currency`. The function also defines a policy, sending both the policy capability and treasury capability to the address associated with the publish event. The holder of these capabilities, which can be transferred to other addresses, can mint new `LOYALTY` tokens and modify their policies.
+The `init` function of the module uses the `LOYALTY` OTW to create the token. It makes use of the OTW `LOYALTY` type defined previously in its call to `create_currency`. The function also defines a policy, sending both the policy capability and treasury capability to the address associated with the publish event. Whoever holds these capabilities can mint new `LOYALTY` tokens and modify their policies. The capability objects themselves can be transferred to other addresses, which passes those privileges to the new holder.
+
+<ImportContent source="examples/move/token/sources/loyalty.move" mode="code" fun="init" noComments />
 
 :::info
 
 `init` functions run only once, during the initial publication of the package.
 
 :::
-
-<ImportContent source="examples/move/token/sources/loyalty.move" mode="code" fun="init" noComments />
 
 The `LOYALTY` minting function is called `reward_user`. The holder of the `TreasuryCap` can call this function to mint new loyalty tokens. The function uses the `token::mint` function to create the token and `token::transfer` to send it to the intended recipient.
 
