@@ -79,11 +79,11 @@ The position functions in the DeepBook Predict SDK place and follow queued order
 
 The 2 networks trade differently. Testnet runs Predict protocol version 4, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders) there. Mainnet runs protocol version 3 until its own cutover, where trades fill immediately, so use [Mint functions](#mint-functions) and [Close functions](#close-functions) there. `read.executionMode()` tells your app which path a network is on, so it can switch at the cutover without a redeploy.
 
-Every function is a member of `client.predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) shows how to register. Each builder and quote that targets a market takes the market as a [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets#market-descriptor), then reads the chain to resolve the market object and caches it per client, so those functions are asynchronous. The SDK takes and returns amounts as decimal USDC values and converts them to 6-decimal base units; see [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units).
+Every function is a member of `client.predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) shows how to register. Each builder and quote that targets a market takes the market as a [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets): an object that names the market by its `underlying`, `expiryMs`, and optional `marketId`, plus the strike, as a binary or range position, where the call needs one. The function then reads the chain to resolve the market object and caches it per client, so those functions are asynchronous. The SDK takes and returns amounts as decimal USDC values and converts them to 6-decimal base units; see [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units).
 
 :::caution
 
-The immediate position builders default to uncapped slippage. `tx.mint` sends `U64_MAX` for `maxCost` or `maxProbability` when you omit it, `tx.mintAmount` sends `U64_MAX` when you omit `maxCost`, and `tx.redeem` always sends `0` for both close-side floors. Quote immediately before each trade, derive every mint cap from the quote, and use a builder that takes floors when a close needs them.
+The immediate position builders default to uncapped slippage. `tx.mint` sends `U64_MAX` for `maxCost` or `maxProbability` when you omit it, `tx.mintAmount` sends `U64_MAX` when you omit `maxCost`, and `tx.redeem` always sends `0` for both close-side floors. Quote immediately before each trade, derive every mint cap from the quote, and use a builder that takes floors when a close needs them. [`tx.mint`](#mint), [`tx.mintAmount`](#mint-amount), and [`tx.redeem`](#redeem) describe each default in full.
 
 `tx.mintCost` is the exception: its `spend` is the sizing input, so the debit cannot exceed it and there is no cap to forget. Its `minQuantity` is still yours to set, because a `0` floor accepts however few contracts the budget buys after an adverse move.
 
@@ -195,14 +195,14 @@ The functions in this section and the next are the immediate path, which runs on
 Minting opens a position at the live price, and the SDK offers 3 sizing shapes: `tx.mint` fixes the payout quantity, `tx.mintAmount` fixes the premium budget, and `tx.mintCost` fixes the all-in budget. Every mint builder checks each numeric strike against the market's tick and admission grids, then builds 3 commands: load a fresh pricer from the oracle feeds, generate the account authorization from the sender, and call the Move mint function. Every mint is also subject to 3 limits:
 
 - **Lot size:** A payout quantity moves in whole lots of 0.01 USDC. `tx.mint` and `read.quoteMint` throw `PredictInputError` for a `quantity` that is not a whole lot, before they build anything. The budget builders round the fill down to a lot themselves.
-- **Premium floor:** The contract rejects a mint whose premium, `quantity` multiplied by the quoted entry probability, falls below 1 USDC, with `EPremiumBelowMinimum`. The lot is the granularity, not the minimum: on a Mainnet market with a `0.75` maximum entry probability no strike clears the floor below about 1.34 contracts, and a strike quoting near a 50 percent chance needs roughly 2. See [mint admission errors](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-admission-errors).
-- **No-trade window:** Inside the [no-trade window](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window), the last 10 seconds before expiry on Mainnet as of 2026-10-13, a mint aborts with `ETradeWindowClosed`. The SDK quote runs the same gate, but a quote taken just before the window opens can succeed while the mint that follows aborts.
+- **Premium floor:** The contract rejects a mint whose premium, `quantity` multiplied by the quoted entry probability, falls below 1 USDC, with `EPremiumBelowMinimum`. The lot is the granularity, not the minimum: on a Mainnet market with a `0.75` maximum entry probability no strike clears the floor below about 1.34 contracts, and a strike quoting near a 50 percent chance needs roughly 2. See [mint admission errors](/onchain-finance/deepbook/deepbook-predict/contract-information/predict).
+- **No-trade window:** Inside the [no-trade window](/onchain-finance/deepbook/deepbook-predict/contract-information/predict), the last 10 seconds before expiry on Mainnet as of 2026-10-13, a mint aborts with `ETradeWindowClosed`. The SDK quote runs the same gate, but a quote taken just before the window opens can succeed while the mint that follows aborts.
 
 ### `read.quoteMint` {#quote-mint}
 
 Use `read.quoteMint` to price a mint exactly before you send it. It returns a `Promise<MintQuote>`. It simulates the same mint `tx.mint` builds, with the owner as sender, against the owner's real account and the real fee path, so it throws the same typed errors the mint would, including insufficient balance, and serves as a preflight check. It sends only the options you pass. Called with `{ quantity }`, the dry run carries no slippage cap, because a cap only gates a mint through an abort and never changes its receipt. An options object that also holds `maxCost` or `maxProbability` passes them through, and the quote then aborts on a cap exactly as the mint would.
 
-The owner needs a funded account for the quote to succeed. The Move `expiry_market::quote_mint` is a different call that prices only and checks no account and no slippage cap; see [Quote a mint](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#quote-a-mint).
+The owner needs a funded account for the quote to succeed. The Move `expiry_market::quote_mint` is a different call that prices only and checks no account and no slippage cap; see [Quote a mint](/onchain-finance/deepbook/deepbook-predict/contract-information/predict).
 
 It takes these parameters:
 
@@ -230,10 +230,10 @@ It takes these parameters:
 - `subsidy`: The sponsor-funded part of the trading fee, which you do not pay.
 - `builder`: The builder add-on, 0 when the account carries no builder code.
 - `penalty`: The congestion surcharge.
-- `referral`: The portion of the trading fee and congestion surcharge that the protocol routes to a referrer. It is already inside those amounts, not an extra debit, and it is 0 unless the account was created with a referrer; see [Referrals](/onchain-finance/deepbook/deepbook-predict/design#referrals).
+- `referral`: The portion of the trading fee and congestion surcharge that the protocol routes to a referrer. It is already inside those amounts, not an extra debit, and it is 0 unless the account was created with a referrer; see [Referrals](/onchain-finance/deepbook/deepbook-predict/design).
 - `inventoryImpact`: The inventory-impact charge, a separate charge that `cost` includes.
 
-`cost` is `premium + (trading - subsidy) + builder + penalty + inventoryImpact`, the same total the contract withdraws, so pass `cost` plus a buffer as `maxCost`, never `premium`. [Design](/onchain-finance/deepbook/deepbook-predict/design#fee-components) explains each fee component. `raw` carries no fee amounts, so read exact fees from `decode.mint(result).raw` after execution.
+`cost` is `premium + (trading - subsidy) + builder + penalty + inventoryImpact`, the same total the contract withdraws, so pass `cost` plus a buffer as `maxCost`, never `premium`. `referral` has no term of its own in that sum because it is already counted inside `trading` and `penalty`. [Design](/onchain-finance/deepbook/deepbook-predict/design) explains each fee component. `raw` carries exact amounts for `premium`, `cost`, `quantity`, and `entryProbability` but no fee amounts, so read exact fees from `decode.mint(result).raw`, which carries every fee component as an exact `bigint`, after execution.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="221-250" />
 
@@ -241,7 +241,7 @@ It takes these parameters:
 
 Use `tx.mint` to mint a position of an exact payout quantity, the SDK form of `mint_exact_quantity`. It returns a `Promise<Transaction>`. When you omit `maxCost` or `maxProbability`, the SDK sends `U64_MAX` for it, which caps nothing. The premium is `quantity` multiplied by the entry probability, which the contract caps below 1, so the premium alone cannot exceed `quantity` even uncapped. The protocol charges fees on top of the premium, so `maxCost` is what bounds the total debit, and `maxProbability` bounds the fill price.
 
-A mint whose all-in cost would exceed `quantity` aborts with `EMintCostAboveMaxPayout`. Read the new order ID from `decode.mint(result).orderId` after execution.
+A mint whose all-in cost would exceed `quantity` aborts with `EMintCostAboveMaxPayout`. Read the new order ID from `decode.mint(result).orderId` after execution. For a complete quote-then-mint flow, see the [quote-and-mint sample](#example-mint).
 
 It takes these parameters:
 
@@ -339,7 +339,7 @@ const opts: MintCostOptions = { spend: 25, minQuantity: preview.quantity * 0.99 
 const tx = await client.predict.tx.mintCost(owner, descriptor, opts);
 ```
 
-For a preview that costs no chain call at all, [Predict Cost SDK](/onchain-finance/deepbook/deepbook-predict-sdk/cost#mint-cost-for-budget) runs the same budget search locally from a pricer snapshot.
+For a preview that costs no chain call at all, [Predict Cost SDK](/onchain-finance/deepbook/deepbook-predict-sdk/cost) runs the same budget search locally from a pricer snapshot.
 
 ## Close functions {#close-functions}
 
@@ -377,7 +377,7 @@ It takes these parameters:
 
 Use `tx.redeem` to close all or part of a live position at the current price, the SDK form of `redeem_live`. It returns a `Promise<Transaction>`. It sends `0` for both `min_probability` and `min_proceeds` on every call, and `CloseOptions` has no field to raise them, so the close accepts whatever price the pricer returns at execution.
 
-The floors are reachable through 2 other routes. The `/sessions` subpath's `redeemLive` builder takes `minProbability` and `minProceeds` for a close that a session key signs; see [slippage bounds](/onchain-finance/deepbook/deepbook-predict-sdk/sessions#slippage-bounds). For an owner-signed close, build a `moveCall` against `redeem_live` yourself from the [composition exports](/onchain-finance/deepbook/deepbook-predict-sdk#compose) and the signature under [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position).
+The floors are reachable through 2 other routes. The `/sessions` subpath's `redeemLive` builder takes `minProbability` and `minProceeds` for a close that a session key signs; see [slippage bounds](/onchain-finance/deepbook/deepbook-predict-sdk/sessions). For an owner-signed close, build a `moveCall` against `redeem_live` yourself from the [composition exports](/onchain-finance/deepbook/deepbook-predict-sdk#compose) and the signature under [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict).
 
 A partial close retires the order ID and issues a replacement for the remaining quantity, which `decode.redeem(result).replacementOrderId` reports. A live close in the same timestamp as its mint aborts with `EMintRedeemSameTimestamp`, and a live close inside the no-trade window aborts with `ETradeWindowClosed`. After expiry, wait for settlement and claim instead.
 
@@ -397,7 +397,7 @@ It takes these parameters:
 
 Use `tx.claimSettled` to claim a position whose market has settled, the SDK form of the owner-authorized `redeem_settled`. It works on both networks for a position held in the account, including one minted before Testnet's cutover. It does not pay a queued fill, which the queue's settlement walk pays instead. It returns a `Promise<Transaction>`. A settled claim always closes the order in full, so the builder takes no quantity, and the order ID identifies the position, so it takes no side or strike. It loads no pricer, because settlement has already fixed the price. The payout is the full quantity when the settlement price lands inside the position's range and 0 otherwise.
 
-Before settlement the claim aborts with `EMarketNotSettled`, and expiry alone does not settle a market. Settlement runs through the permissionless `expiry_market::try_settle`, which the SDK does not build; see [Settle a market](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#settle-a-market). The no-trade window does not apply to a claim. The SDK also builds no `redeem_settled_permissionless`, the path that lets any address claim on a holder's behalf.
+Before settlement the claim aborts with `EMarketNotSettled`, and expiry alone does not settle a market. Settlement runs through the permissionless `expiry_market::try_settle`, which the SDK does not build; see [Settle a market](/onchain-finance/deepbook/deepbook-predict/contract-information/predict). The no-trade window does not apply to a claim. The SDK also builds no `redeem_settled_permissionless`, the path that lets any address claim on a holder's behalf.
 
 It takes these parameters:
 
@@ -443,7 +443,7 @@ The receipt decoders turn an executed transaction's events into typed receipts, 
 
 ### `decode.mint` and `decode.mints` {#decode-mint}
 
-Use `decode.mint` to read the receipt of a mint, and `decode.mints` to read every mint in a single transaction. Each decodes the [`OrderMinted`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#order-minted) event and returns a `MintReceipt`, or an array of them. Persist `orderId`, because closing or claiming the position needs it with the market ID. `positionRootId` stays stable across partial-close replacements, `quantity` is the quantity the contract actually minted, which it rounds down to a lot for `tx.mintAmount`, and `raw` carries every fee component as an exact `bigint`.
+Use `decode.mint` to read the receipt of a mint, and `decode.mints` to read every mint in a single transaction. Each decodes the [`OrderMinted`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) event and returns a `MintReceipt`, or an array of them. Persist `orderId`, because closing or claiming the position needs it with the market ID. `positionRootId` stays stable across partial-close replacements, `quantity` is the quantity the contract actually minted, which it rounds down to a lot for `tx.mintAmount`, and `raw` carries every fee component as an exact `bigint`.
 
 It takes this parameter:
 
@@ -455,7 +455,7 @@ It takes this parameter:
 
 ### `decode.redeem` and `decode.redeems` {#decode-redeem}
 
-Use `decode.redeem` to read the receipt of a live close, and `decode.redeems` to read every live close in a single transaction. Each decodes the [`LiveOrderRedeemed`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#live-order-redeemed) event and returns a `RedeemReceipt`, or an array of them. After a partial close, `replacementOrderId` carries the order ID of the remaining quantity: store it in place of the old one, or the next close targets an order that no longer exists. It is `null` after a full close, and `proceeds` is the net amount the close credits, which the SDK computes the same way as in `RedeemQuote`.
+Use `decode.redeem` to read the receipt of a live close, and `decode.redeems` to read every live close in a single transaction. Each decodes the [`LiveOrderRedeemed`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) event and returns a `RedeemReceipt`, or an array of them. After a partial close, `replacementOrderId` carries the order ID of the remaining quantity: store it in place of the old one, or the next close targets an order that no longer exists. It is `null` after a full close, and `proceeds` is the net amount the close credits, which the SDK computes the same way as in `RedeemQuote`.
 
 It takes this parameter:
 
@@ -467,7 +467,7 @@ It takes this parameter:
 
 ### `decode.claim` and `decode.claims` {#decode-claim}
 
-Use `decode.claim` to read the receipt of a settled claim, and `decode.claims` to read every claim in a single transaction. Each decodes the [`SettledOrderRedeemed`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#settled-order-redeemed) event and returns a `ClaimReceipt`, or an array of them, with the `payout` alongside the market, account, and order identifiers.
+Use `decode.claim` to read the receipt of a settled claim, and `decode.claims` to read every claim in a single transaction. Each decodes the [`SettledOrderRedeemed`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) event and returns a `ClaimReceipt`, or an array of them, with the `payout` alongside the market, account, and order identifiers.
 
 It takes this parameter:
 
@@ -481,7 +481,15 @@ It takes this parameter:
 
 The following samples live in the `examples/deepbook-predict` package, which type-checks against version 2.7.0 of `@mysten/deepbook-v3`. They show the immediate path, so they run only on a network before its delayed-execution cutover, and [Queued-order examples](#queued-examples) shows the queued path. None of them signs a transaction: every builder returns an unsigned `Transaction`, and the SDK never holds keys.
 
-### Quote and mint a directional position {#example-mint}
+On the immediate path, a complete mint-then-close flow runs in this order:
+
+1. Call `read.quoteMint` immediately before the trade.
+2. Build the mint with `tx.mint`, passing a `maxCost` and a `maxProbability` derived from the quote.
+3. Sign and execute the transaction with events included, then persist `decode.mint(result).orderId`.
+4. Before settlement, call `read.quoteRedeem` and close with `tx.redeem`. After a partial close, store `decode.redeem(result).replacementOrderId` in place of the old order ID.
+5. After the market settles, claim with `tx.claimSettled` and read the `payout` from `decode.claim(result)`.
+
+### How do I quote and mint a directional position? {#example-mint}
 
 The following sample picks a market with time left to trade, quotes an up or down position, and mints it with `maxCost` and `maxProbability` derived from the quote:
 
@@ -489,7 +497,7 @@ The following sample picks a market with time left to trade, quotes an up or dow
 
 The sample pins the market it read with `marketId`, so the mint targets exactly that object, and it rounds `maxCost` up to 6 decimals, because a finer value throws `PredictInputError`.
 
-### Mint a range position {#example-mint-range}
+### How do I mint a range position? {#example-mint-range}
 
 The following sample centers a range on the market's reference price and mints it through the same quote and builder as a directional position:
 
@@ -497,9 +505,9 @@ The following sample centers a range on the market's reference price and mints i
 
 A range pays out when settlement lands inside `(lower, upper]`, and both bounds must sit on the market's admission grid. The sample widens a band that rounds onto a single tick, because the SDK rejects a range whose `lower` is not below `upper`.
 
-The contract charges the trading fee at each finite boundary, so `fees.trading` for a two-sided range sums 2 boundary fees, each with its own floor, where a directional position pays 1. It also applies the entry-probability band to each finite boundary as well as to the range, so a very wide range aborts with `EEntryProbabilityOutOfBounds` when the probability that settlement lands above its lower bound, or at or below its upper bound, exceeds the band's maximum, even when its range probability sits inside the band. `read.quoteMint` runs both checks, so a quote that succeeds has cleared them. See [mint admission errors](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-admission-errors).
+The contract charges the trading fee at each finite boundary, so `fees.trading` for a two-sided range sums 2 boundary fees, each with its own floor, where a directional position pays 1. It also applies the entry-probability band to each finite boundary as well as to the range, so a very wide range aborts with `EEntryProbabilityOutOfBounds` when the probability that settlement lands above its lower bound, or at or below its upper bound, exceeds the band's maximum, even when its range probability sits inside the band. `read.quoteMint` runs both checks, so a quote that succeeds has cleared them. See [mint admission errors](/onchain-finance/deepbook/deepbook-predict/contract-information/predict).
 
-### Close, claim, and list positions {#example-redeem}
+### How do I close, claim, and list positions? {#example-redeem}
 
 The following sample quotes and closes a live position, decodes the replacement order ID, claims a settled position, and lists open positions:
 
