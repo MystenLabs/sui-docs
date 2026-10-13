@@ -60,6 +60,8 @@ DeepBookV3 Indexer simplifies data retrieval by offering endpoints that enable:
 -	**OHLCV candlestick data:** Access candlestick chart data for technical analysis with configurable intervals.
 -	**DeepBook Margin data:** Query margin trading events including loans, liquidations, and margin pool operations.
 
+## Should you use the public indexer or run your own?
+
 You can either use a publicly available indexer or spin up your own service. The choice you make depends on a few factors.
 
 Use the public service if:
@@ -124,6 +126,8 @@ Following are the decimal places (scalars) used to determine the base unit for e
 
 To convert the returned volume to the standard asset unit, divide the value by 10^SCALAR. For example:
 
+In a pool name such as `SUI_USDC`, the first asset (SUI) is the base asset and the second asset (USDC) is the quote asset.
+
 If the volume returned in the base asset for the SUI/USDC pool is 1,000,000,000 SUI UNIT, the correct volume in SUI is 1,000,000,000 / 10^(SUI_SCALAR) = 1 SUI. Similarly, if the volume returned in the quote asset for the SUI/USDC pool is 1,000,000,000 USDC UNIT, the correct volume is  1,000,000,000 / 10^(USDC_SCALAR) = 1,000 USDC.
 
 Use these conversions to interpret the volumes correctly across all pools and assets.
@@ -131,6 +135,10 @@ Use these conversions to interpret the volumes correctly across all pools and as
 ## API endpoints
 
 You can perform the following tasks using the endpoints that the indexer API for DeepBookV3 provides.
+
+Each endpoint path is relative to the indexer base URL. For example, to get all pools from the Mainnet public indexer, request `https://deepbook-indexer.mainnet.mystenlabs.com/get_pools`.
+
+Time-range query parameters such as `start_time` and `end_time` use Unix timestamp seconds, while timestamps returned in responses (for example, from `/trades`, `/order_updates`, and `/orderbook`) are Unix milliseconds.
 
 <details>
 <summary>Get all pool information</summary>
@@ -296,7 +304,7 @@ Returns the historical volume for all available pools within the time range (if 
 A successful request to the following endpoint
 
 ```http
-/all_historical_volume?start_time=<UNIX_TIMESTAMP_SECONDS>&end_time=<UNIX_TIMESTAMP_SECONDS>&volume_in_base=<BOOLEAN>
+/all_historical_volume?start_time=1731260703&end_time=1731692703&volume_in_base=true
 ```
 
 produces a response similar to
@@ -652,7 +660,7 @@ Returns the orders that were recently placed or canceled in the pool
 ]
 ```
 
-The `timestamp` value is in Unix milliseconds.
+The `timestamp` value is in Unix milliseconds. The `status` value is either `"Placed"` or `"Canceled"`.
 
 #### Example
 
