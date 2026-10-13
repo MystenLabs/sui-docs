@@ -15,6 +15,17 @@ keywords:
   - ysld
   - gasless
   - free tier
+  - usdb
+  - sui_usde
+  - gasless stablecoin transfers
+  - gasless transactions
+  - address balances
+  - send_funds
+  - wallet integration
+  - ptb
+  - programmable transaction block
+  - eligible stablecoins
+  - stablecoin allowlist
 goal:
   description: >-
     Reader understands gasless stablecoin transfers on Sui enable peer-to-peer
@@ -63,7 +74,7 @@ All gasless stablecoin transfers have a minimum transfer balance of 0.01. Transf
 
 :::
 
-## Eligible stablecoins
+## Which stablecoins are eligible for gasless transfers?
 
 The stablecoins eligible for gasless stablecoin transfers are governed by the protocol configuration (`get_gasless_allowed_token_types` in `sui-types`) and can change across protocol versions. The current allowlist is 
 
@@ -84,17 +95,18 @@ The stablecoins eligible for gasless stablecoin transfers are governed by the pr
 
 Gasless stablecoin transfers are narrow by design. A transaction qualifies only when:
 
-- The PTB consists of allowlisted `balance` or `coin` operations on an allowlisted stablecoin type. The primary one is `0x2::balance::send_funds<T>`. A few related helpers (`balance::redeem_funds`, `coin::send_funds`, `coin::into_balance`, and so on) are also allowed and might appear in resolved transactions.
+- The programmable transaction block (PTB) consists of allowlisted `balance` or `coin` operations on an allowlisted stablecoin type. The primary one is `0x2::balance::send_funds<T>`. A few related helpers (`balance::redeem_funds`, `coin::send_funds`, `coin::into_balance`, and so on) are also allowed and might appear in resolved transactions.
 - `gasPayment` is empty and `gasPrice = 0`.
 - No objects are written during the transaction, and all input coins are consumed or converted to address balances.
+- The transfer meets the minimum transfer balance of 0.01.
 
 If the user is sending SUI, sending a non-allowlisted token, or executing any other Move call (NFT mint, swap, app interaction), the gasless stablecoin transfer does not apply and the transaction requires a normal gas payment.
 
-## Monitoring gasless stablecoin transfers
+## How do I monitor gasless stablecoin transfers?
 
 Transactions for gasless stablecoin transfers can be monitored through SuiVision, [such as this example transaction](https://testnet.suivision.xyz/txblock/BptFuauZXfwQZAGX1wbQ6iz4sDnv5kJBBeVEn1ZzewPy). 
 
-## Supporting gasless stablecoin transfers 
+## How do I support gasless stablecoin transfers?
 
 Sui gasless stablecoin transfers are an extension of the [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances) feature, enabled by calling the Address Balances Move API `send_funds()` with `gas=0` and `gas_budget=0`.
 
@@ -102,9 +114,13 @@ The TypeScript SDK automatically detects gasless stablecoin transfers when using
 
 Gasless stablecoin transfers are limited to the Move functions `withdrawal_split`, `redeem_funds`, and `send_funds`. Gasless stablecoin transfers cannot be used to write any object.
 
-### Integrating gasless stablecoins into wallets
+### How do I integrate gasless stablecoins into wallets?
 
-To integrate gasless stablecoins into wallets, wallet builders need to detect eligible transfers and construct them with `@mysten/sui`. To do this, build a PTB that calls `0x2::balance::send_funds<T>` with a `Balance<T>` from `tx.balance()`, then submit it through `SuiGrpcClient`. The SDK detects eligibility during simulate and sets `gasPrice = 0` and `gasBudget = 0`.
+To integrate gasless stablecoins into wallets, wallet builders need to detect eligible transfers and construct them with `@mysten/sui`. To do this:
+
+1. Confirm the coin type is on the eligible stablecoins allowlist and the transfer meets the 0.01 minimum.
+2. Build a PTB that calls `0x2::balance::send_funds<T>` with a `Balance<T>` from `tx.balance()`.
+3. Submit it through `SuiGrpcClient`. The SDK detects eligibility during simulate and sets `gasPrice = 0` and `gasBudget = 0`.
 
 ```tsx
 import { SuiGrpcClient } from '@mysten/sui/grpc';
@@ -134,6 +150,8 @@ const result = await client.signAndExecuteTransaction({
 	signer: keypair,
 });
 ```
+
+This example connects to mainnet. To target a different network, change the `network` and `baseUrl` values passed to `SuiGrpcClient`.
 
 If your wallet builds transactions with gRPC but executes through a different transport, pass the gRPC client to `build` so the gas price still gets set correctly:
 
