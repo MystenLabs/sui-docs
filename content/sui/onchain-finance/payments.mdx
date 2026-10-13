@@ -40,13 +40,13 @@ answer: >-
 Sui provides multiple primitives for building payment flows, from reading balances and constructing multi-step transactions to sponsoring gas fees on behalf of your users. The approach you choose depends on your use case:
 
 - **Reading balances:** Query [address balances](/onchain-finance/asset-custody/address-balances) to display a user's holdings or verify sufficient funds before processing a payment.
-- **Constructing payments:** Use [payment intents](/onchain-finance/payment-intents) to compose multi-step payment workflows (split coins, transfer, merge) into a single atomic [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks).
+- **Constructing payments:** Use [payment intents](/onchain-finance/payment-intents) to compose multi-step payment workflows (split coins, transfer, merge) into a single atomic [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB), a transaction that runs several commands together and succeeds or fails as a whole.
 - **Sponsoring gas:** Use [sponsored transactions](/develop/transaction-payment/sponsor-txn) so your users pay no gas fees. This is common for onboarding flows and stablecoin transfers where you want a Web2-like experience.
 - **Gasless stablecoin transfers:** Sui supports [zero-fee stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers) for eligible transactions, removing gas costs entirely for supported assets.
 - **Recurring and delegated spending:** Use [allowances](/onchain-finance/allowances) to let a service, agent, or team member pull from a user's address balance within limits the user sets and can revoke.
 - **Payment verification:** The [Payment Kit](/onchain-finance/payment-kit) provides secure payment verification, receipt management, and duplicate prevention for production payment systems.
 
-### Choosing a payment approach
+### Which payment approach should I use on Sui?
 
 | **Use case** | **Approach** | **Key benefit** |
 |---|---|---|
@@ -57,8 +57,15 @@ Sui provides multiple primitives for building payment flows, from reading balanc
 | Production payment processing | [Payment Kit](/onchain-finance/payment-kit) | Receipts, verification, duplicate prevention |
 | Subscriptions and agent budgets | [Allowances](/onchain-finance/allowances) | Bounded, revocable pulls from a funder's balance without per-payment signatures |
 
+### How do I accept payments without my users holding SUI?
+
+A new user starts out holding nothing: they can't pay gas, so they can't transact, so they can't acquire the asset they need to pay gas. There are two ways out of this cold-start problem:
+
+- **Someone else pays gas:** With [sponsored transactions](/develop/transaction-payment/sponsor-txn), your application or another sponsor pays the gas fee for the user's transaction.
+- **The transaction qualifies for a gas waiver:** With [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers), eligible transfers of supported assets carry no gas cost at all, so no one needs to pay gas.
+
 :::info Regulatory considerations
 
-Payment applications might be subject to KYC, AML, and money-transmitter licensing requirements depending on your jurisdiction and business model. These requirements are outside the scope of Sui documentation. Consult qualified legal counsel before launching a payment product.
+Payment applications might be subject to KYC, AML, sanctions, and money-transmitter licensing requirements depending on your jurisdiction and business model. Determine with counsel who holds the regulated role: whether a provider holds the license and you refer users to it, or whether your business is itself in the regulated position. These requirements are outside the scope of Sui documentation. Consult qualified legal counsel before launching a payment product.
 
 :::
