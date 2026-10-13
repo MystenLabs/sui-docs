@@ -406,7 +406,7 @@ Anyone that has an address on the Sui network can purchase an item listed from a
 
 You can discover the items listed on the network with the `kiosk::ItemListed` event.
 
-When you use the `kiosk::purchase` function, it returns the purchased asset and the `TransferRequest` for the type associated with the asset. To complete the purchase, you must meet the terms defined in the `TransferPolicy` applied to the asset.
+When you use the `kiosk::purchase` function, it returns the purchased asset and the `TransferRequest` for the type associated with the asset. To complete the purchase, you must meet the terms defined in the `TransferPolicy` applied to the asset. Transfer policy resolution happens within the same PTB as the purchase, ensuring atomicity; see the [PTB Cookbook](/develop/transactions/ptbs/ptb-cookbook#sponsored-kiosk-purchase) for a complete example.
 
 ## Borrow an item from a kiosk
 

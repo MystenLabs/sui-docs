@@ -292,7 +292,7 @@ Key annotations:
 - `diesel(table_name = transaction_digests)`: Maps this Rust struct to the `transaction_digests` table, whose schema is generated in a previous step.
 - `Insertable`: Allows this struct to be inserted into the database using Diesel.
 
-##step Define the `Handler` struct in `handler.rs`
+##step Define the `Handler` struct in `handlers.rs`
 
 Create a `handlers.rs` file in your `src` directory.
 
@@ -368,7 +368,7 @@ The `handlers.rs` file is now complete. Save the file.
 
 <summary>
 
-Complete `handler.rs` file
+Complete `handlers.rs` file
 
 </summary>
 
@@ -433,7 +433,7 @@ Key components explained:
 - `SequentialConfig::default()`: Uses framework defaults for batch sizes and checkpoint lag (how many checkpoints to batch together).
 - `cluster.run()`: Starts processing checkpoints and blocks until completion.
 
-Your indexer is now complete. The next steps walk you through running the indexer and checking its functionality.
+Your indexer is now complete. The framework tracks a `checkpoint_hi_inclusive` watermark for each pipeline, and both concurrent and sequential pipelines rely on `checkpoint_hi_inclusive` to understand where to resume processing on restarts, so an indexer that stops mid-run picks up where it left off. See [the watermark system](/develop/accessing-data/custom-indexer/pipeline-architecture#watermark-system) for details. The next steps walk you through running the indexer and checking its functionality.
 
 ##step Run your indexer
 

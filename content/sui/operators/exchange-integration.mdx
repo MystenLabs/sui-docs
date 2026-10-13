@@ -88,7 +88,7 @@ For the Rust client, use the [`sui-rust-sdk`](https://github.com/MystenLabs/sui-
 
 ### GraphQL RPC
 
-GraphQL exposes a single endpoint where you select exactly the fields you need across addresses, objects, transactions, checkpoints, events, and balances. It is well suited for monitoring dashboards, custom indexers, and queries that join data across several resources. For practical examples including pagination, checkpoint scoping, and transaction submission, see [Querying Data with GraphQL RPC](/develop/accessing-data/graphql/query-with-graphql).
+GraphQL exposes a single endpoint where you select exactly the fields you need across addresses, objects, transactions, checkpoints, events, and balances. It is well suited for monitoring dashboards, custom indexers, and queries that join data across several resources, and it also lets you submit transactions and simulate transactions. For practical examples including pagination, checkpoint scoping, and transaction submission, see [Querying Data with GraphQL RPC](/develop/accessing-data/graphql/query-with-graphql).
 
 ### JSON-RPC (deprecated)
 
@@ -167,7 +167,7 @@ Use checkpoints as the canonical, ordered stream of finalized activity:
 
 - **Checkpoints do not fork.** Once a checkpoint is final, it does not roll back or reorganize.
 
-- **Transactions are final before they are included in a checkpoint.** Checkpoints group finalized transactions for ordered downstream consumption.
+- **Checkpoints carry a quorum of validator signatures.** A node that verifies a checkpoint has proof the network committed those transactions, without trusting the peer it received the checkpoint from.
 
 For real-time pipelines, subscribe to the checkpoint stream over [gRPC](/develop/accessing-data/grpc/using-grpc), and read each checkpoint's transaction and event data from the response through a `FieldMask`. For ad hoc queries and replays, paginate over checkpoints, transactions, and events with [GraphQL](/develop/accessing-data/graphql/query-with-graphql), which supports cursor-based pagination and checkpoint-scoped consistency.
 

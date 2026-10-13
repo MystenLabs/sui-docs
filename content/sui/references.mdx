@@ -83,8 +83,8 @@ sui client publish --gas-budget 100000000
 The right reference depends on how your application interacts with Sui:
 
 - Use the GraphQL RPC reference when querying historical or current chain state from a frontend or backend service.
-- Use the CLI reference when scripting deployments, managing keys, or running administrative commands.
-- Use the Move framework reference when writing smart contracts and looking up built-in types or functions.
+- Use the CLI reference when scripting deployments, managing keys, or running administrative commands with the `client`, `keytool`, `move`, and `validator` subcommands.
+- Use the Move framework reference when writing smart contracts and looking up types, functions, and constants defined in `sui-framework` and `move-stdlib`.
 - Use the SDK reference when integrating Sui into a TypeScript or Rust application, or when building a frontend with the Sui dApp Kit.
 
 import DocCardList from '@theme/DocCardList';

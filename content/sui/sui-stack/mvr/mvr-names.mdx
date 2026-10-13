@@ -43,7 +43,7 @@ To create a new application, you must provide a SuiNS name and a package name, a
 The `register` call returns an `AppCap` object. You can use the `AppCap` immediately to attach packages, or transfer it to a safe address and register packages later.
 
 <Tabs groupId='packageobject'>
-  <TabItem label="Packages" value='packages'>
+    <TabItem label="TypeScript" value='typescript'>
   ```typescript
   const transaction = new Transaction();
 
@@ -62,7 +62,7 @@ The `register` call returns an `AppCap` object. You can use the `AppCap` immedia
   // and register packages later.
   ```
   </TabItem>
-  <TabItem label="Objects" value='objects'>
+    <TabItem label="Sui CLI" value='cli'>
   Example of a PTB after MVR, consistent across networks:
   ```bash
   sui client ptb --move-call @mvr/core::move_registry::register \
