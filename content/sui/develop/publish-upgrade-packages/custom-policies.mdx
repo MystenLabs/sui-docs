@@ -257,7 +257,7 @@ Finally, provide implementations of `commit_upgrade` and `make_immutable` that d
 ```move
 public fun commit_upgrade(
     cap: &mut UpgradeCap,
-    receipt: package::UpgradeReceipt,
+    receipt: UpgradeReceipt,
 ) {
     cap.cap.commit_upgrade(receipt)
 }
