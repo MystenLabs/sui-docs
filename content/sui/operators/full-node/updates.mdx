@@ -40,7 +40,9 @@ answer: >-
   communicated through [official channels](#communication).
 ---
 
-## Sui release process
+This page explains when each Sui network releases a new version, where releases are announced, and what you need to do to keep your full node updated and in sync with the network.
+
+## When does Sui release new versions? {#sui-release-process}
 
 Each Sui network is deployed on a consistent schedule. Extenuating circumstances might delay releases occasionally, but these delays are rare and communicated through [official channels](#communication).
 
@@ -56,7 +58,7 @@ For additional details, see each network's [release schedule and configuration](
 
 Whenever Sui releases a new version, you must update your full node with the release to ensure compatibility with the network it connects to. For example, if you use Sui Testnet you should install the version of Sui running on Sui Testnet.
 
-Any release that contains a protocol change needs to be applied before the protocol upgrade takes place (when enough stake within the validator set upgrades, the new protocol version is enacted in the next epoch).
+Any release that contains a protocol change needs to be applied before the protocol upgrade takes place. Protocol upgrades are enacted by validators: when enough stake within the validator set upgrades, the new protocol version is enacted in the next epoch. Full nodes do not take part in that vote, but they must run a compatible release.
 If you do not update your full node, it cannot connect to the network after the protocol upgrade takes place.
 
 ## Communication
@@ -68,9 +70,9 @@ Releases are announced on the [Sui Discord server](https://discord.com/invite/su
 - `testnet`: [`#tn-validator-announcements`](https://discord.com/channels/916379725201563759/1003660994381353101), [`#testnet-updates`](https://discord.com/channels/916379725201563759/1095151359642304612), and [`#node-announcements`](https://discord.com/channels/916379725201563759/1002231298888306718) channels.
 - `mainnet`: [`#mn-validator-announcements`](https://discord.com/channels/916379725201563759/1093852827627040768), [`#mainnet-updates`](https://discord.com/channels/916379725201563759/1103082453792464906), and [`#node-announcements`](https://discord.com/channels/916379725201563759/1002231298888306718) channels.
 
-## Update your full node 
+## How do I update my full node? {#update-your-full-node}
 
 You can track the latest version of Sui on the [Sui Releases](https://github.com/MystenLabs/sui/releases) page on GitHub.
 The schedule for each network is available in the [Network Release Schedule](https://sui.io/networkinfo) page.
 
-It is reasonable to have to shut down your full node to perform an update, whether that be a rolling restart in Kubernetes, or a systemctl stop on a Linux machine to replace the sui-node binary.
+It is reasonable to have to shut down your full node to perform an update, whether that be a rolling restart in Kubernetes, or a systemctl stop on a Linux machine to replace the sui-node binary. After the restart, check the version your node reports against the latest version on the [Sui Releases](https://github.com/MystenLabs/sui/releases) page on GitHub to confirm the update applied.
