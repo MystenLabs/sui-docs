@@ -47,6 +47,8 @@ answer: >-
 
 The Maintainer SDK provides administrative functions for managing margin pools, configuring interest rates, and controlling which DeepBook pools can access margin lending. These functions are restricted to maintainers with the appropriate capabilities.
 
+Each function returns a function that takes a `Transaction` object. Add it to your transaction with `tx.add()`, as shown in the [examples](#examples).
+
 ## Maintainer functions
 
 The DeepBook Margin SDK provides the following functions for pool administration and configuration.
@@ -172,9 +174,9 @@ Use `adminWithdrawDefaultReferralFees` to withdraw default referral fees from a 
 
 ## Examples
 
-The following examples demonstrate common maintainer operations.
+The following examples demonstrate common maintainer operations. They are written as class methods that call the maintainer functions through `this.maintainerContract`.
 
-### Create a margin pool
+### How do I create a margin pool?
 
 ```tsx
 // Example: Create a USDC margin pool
@@ -207,6 +209,8 @@ createUsdcMarginPool = (tx: Transaction) => {
 
 ### Enable a DeepBook pool for borrowing
 
+Replace the `0x...` placeholder with the ID of your margin pool capability. As the [complete pool setup workflow](#complete-pool-setup-workflow) notes, you get this ID from the pool creation event.
+
 ```tsx
 // Example: Allow SUI/USDC pool to borrow from USDC margin pool
 enablePoolForBorrowing = (tx: Transaction) => {
@@ -220,7 +224,7 @@ enablePoolForBorrowing = (tx: Transaction) => {
 };
 ```
 
-### Update interest rate parameters
+### How do I update interest rate parameters?
 
 ```tsx
 // Example: Update USDC margin pool interest rates
