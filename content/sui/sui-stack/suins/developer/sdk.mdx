@@ -29,9 +29,17 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+Install the SuiNS SDK with `npm i @mysten/suins`, then attach the `suins()` extension to a Sui client with `$extend()`. SuiNS methods are then available under `client.suins`.
+
 Use the SuiNS SDK to interact with the Sui Name Service. Query SuiNS data in a usable way and build transactions that interact with service names.
 
-## Installation
+To get started:
+
+1. Install the SDK.
+1. Attach the `suins()` extension to your Sui client.
+1. Call SuiNS methods under `client.suins`.
+
+## How do I install the SuiNS SDK?
 
 <Tabs>
     <TabItem label="Using @mysten/sui" value="sui">
@@ -48,7 +56,7 @@ Use the SuiNS SDK to interact with the Sui Name Service. Query SuiNS data in a u
     </TabItem>
 </Tabs>
 
-## The `suins` client extension
+## What does the `suins` client extension do?
 
 The `suins()` extension adds SuiNS functionality to any Sui client, exposed under `client.suins`.
 
@@ -58,15 +66,15 @@ You should keep only 1 extended client throughout your app, API, or script. For 
 
 :::
 
-## Attach the extension
+## How do I add SuiNS methods to a Sui client?
 
 :::caution
 
-Always keep the dependency updated so you get the latest constants. If you do not, some of your transactions might fail to build.
+Always keep the dependency updated so you get the latest constants. The SDK's built-in constants include the SuiNS package IDs for Mainnet and Testnet, and these change on every package upgrade. If you do not, some of your transactions might fail to build.
 
 :::
 
-Attach SuiNS to a Sui client with the `suins()` extension. Pass no arguments to use the built-in constants for Mainnet and Testnet, or pass a `packageInfo` object to target any other deployment.
+Attach SuiNS to a Sui client by passing the `suins()` extension to the client's `$extend()` method, which adds the SuiNS methods under `client.suins`. Pass no arguments to use the built-in constants for Mainnet and Testnet, or pass a `packageInfo` object to target any other deployment.
 
 <Tabs groupId='initializer'>
 
@@ -102,6 +110,8 @@ const client = new SuiGrpcClient({
 	baseUrl: 'http://localhost:9000',
 }).$extend(suins({ packageInfo }));
 ```
+
+This example targets a local network at `http://localhost:9000` and is for local development only.
 
 The `PackageInfo` type defines the required fields. For current Mainnet and Testnet values, see the [SuiNS active constants](https://docs.suins.io/developer#active-constants), which SuiNS maintains. Do not copy package IDs from documentation, because they change on every package upgrade.
 
