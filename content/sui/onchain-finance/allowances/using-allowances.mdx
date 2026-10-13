@@ -61,7 +61,7 @@ answer: >-
   sui::allowance::revoke and the AllowanceCap.
 ---
 
-An allowance is a shared object of type `sui::allowance::Allowance<Balance<T>>` that authorizes one spender to withdraw coin type `T` from the funder's [address balance](/onchain-finance/asset-custody/address-balances). The funder issues it, the spender uses it in their own transactions, and the funder revokes it. For the concepts and use cases, see [What Are Allowances?](/onchain-finance/allowances/allowances-overview). For the full module reference, see [`sui::allowance`](/references/framework/sui_sui/allowance).
+An allowance is a shared object of type `sui::allowance::Allowance<Balance<T>>` that authorizes one spender to withdraw coin type `T` from the funder's [address balance](/onchain-finance/asset-custody/address-balances). The funder issues it, the spender uses it in their own transactions, and the funder revokes it. Issuing and revoking take the balance type, for example `Balance<0x2::sui::SUI>`, as the type argument, while spending calls take the coin type, for example `0x2::sui::SUI`. For the concepts and use cases, see [What Are Allowances?](/onchain-finance/allowances/allowances-overview). For the full module reference, see `sui::allowance`.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -104,7 +104,7 @@ The type argument `T` is the balance type, for example `Balance<0x2::sui::SUI>`,
 - `expiration_timestamp_ms`: Optional expiration in milliseconds. Spends at or after it abort.
 - `rate_limit`: Optional recurring cap, built with one of the rate limit constructors below.
 
-Set at least one of `lifetime_cap` and `rate_limit`, and at least one of `expiration_timestamp_ms` and `rate_limit`. The call creates the allowance as a shared object and sends an `AllowanceCap` to the funder. The cap can be used for revocation. It has only the `key` ability, so it cannot be transferred or wrapped.
+Set at least one of `lifetime_cap` and `rate_limit`, and at least one of `expiration_timestamp_ms` and `rate_limit`. The call creates the allowance as a shared object and sends an `AllowanceCap` to the funder. The cap can be used for revocation. It has only the `key` ability, so it cannot be transferred or wrapped inside another object.
 
 ### Rate limits
 
@@ -122,7 +122,7 @@ public fun quarterly_rate_limit(limit: u256): RateLimit
 public fun yearly_rate_limit(limit: u256): RateLimit
 ```
 
-Windows are fixed, not sliding, and unused amounts do not carry over. See the [Allowances FAQ](/onchain-finance/allowances/allowances-faq) for how windows are anchored and how calendar months behave.
+Windows are fixed, not sliding, and unused amounts do not carry over. Periodic windows are counted from the first spend, and calendar windows renew on the anchor's day of month. See the [Allowances FAQ](/onchain-finance/allowances/allowances-faq) for more on how windows are anchored and how calendar months behave.
 
 ### TypeScript SDK
 
@@ -262,13 +262,13 @@ Before the transaction executes, Sui verifies that the allowance is an input of 
 
 ### TypeScript SDK
 
-`tx.balance()` accepts an `allowance` option. The SDK reads the allowance to find the funder, adds the withdrawal input, and calls `balance_spend` for you. The following transaction spends 0.1 SUI through the allowance and deposits it into the spender's address balance:
+`tx.balance()` accepts an `allowance` option. The SDK reads the allowance to find the funder, adds the withdrawal input, and calls `balance_spend` for you. Use it unless you need full control over the transaction. The manual form after this example builds the same 3 parts explicitly. The following transaction spends 0.1 SUI through the allowance and deposits it into the spender's address balance:
 
 ```typescript title='spend-allowance.ts'
 import { Transaction } from '@mysten/sui/transactions';
 import { client, spenderAddress, spenderKeypair } from './setup';
 
-const allowanceId = 'ALLOWANCE_ID'; // from the issuing transaction
+const allowanceId = '<ALLOWANCE_ID>'; // from the issuing transaction
 
 const tx = new Transaction();
 tx.setSender(spenderAddress);
@@ -378,7 +378,7 @@ let pt = builder.finish();
 
 The returned `Balance<C>` behaves like any other balance. Convert it to a coin with `coin::from_balance`, pass it to a Move function, or deposit it into an address balance with `balance::send_funds`.
 
-## Bind an allowance to an app
+## How do I bind an allowance to my app?
 
 An app-bound allowance routes every spend through the Move module that defines the app type `A`. Use it when your contract, not just the spender's key, must decide whether each pull is allowed, or when you need to rotate the spender key without involving the funder.
 
@@ -398,11 +398,12 @@ entry fun propose_for_app<T, A>(
 public fun issue<T, A>(proposal: AllowanceProposal<T>, _: SettingsPermit<A>, ctx: &mut TxContext)
 ```
 
-Your module obtains the permits from `std::internal::permit<A>()`, which only the module that defines `A` can call. A `SettingsPermit<A>` authorizes issuing and rotating the spender, and a `SpendPermit<A>` authorizes a single spend. The following module accepts proposals, spends, and rotates the spender for its `APP` type. Add your own checks before each call:
+Your module obtains the permits from `std::internal::permit<A>()`, which only the module that defines `A` can call. Import it with `use std::internal;`, as in the module below. A `SettingsPermit<A>` authorizes issuing and rotating the spender, and a `SpendPermit<A>` authorizes a single spend. The following module accepts proposals, spends, and rotates the spender for its `APP` type. Add your own checks before each call:
 
 ```move title='allowance_app.move'
 module my_app::allowance_app;
 
+use std::internal;
 use sui::allowance::{Self, Allowance, AllowanceProposal, AllowanceWithdrawal};
 use sui::balance::Balance;
 use sui::clock::Clock;
@@ -449,8 +450,8 @@ From the TypeScript SDK:
 import { Transaction } from '@mysten/sui/transactions';
 import { client, funderAddress, funderKeypair } from './setup';
 
-const allowanceId = 'ALLOWANCE_ID';
-const allowanceCapId = 'ALLOWANCE_CAP_ID';
+const allowanceId = '<ALLOWANCE_ID>';
+const allowanceCapId = '<ALLOWANCE_CAP_ID>';
 
 const tx = new Transaction();
 tx.setSender(funderAddress);
@@ -473,7 +474,7 @@ $ sui client ptb \
 
 After revocation, the allowance no longer exists, so Sui rejects any spend that names it before execution. A spend that was already in flight fails at execution instead. There is no way to update an allowance in place. To change its terms, revoke it and issue a new one.
 
-## Find allowances
+## How do I find the allowances an address has granted?
 
 The funder's `AllowanceCap` objects point at the allowances they granted. List the caps an address owns, filtered by type `0x2::allowance::AllowanceCap<...>`, and read each cap's `allowance` field to get the allowance's object ID. Read the allowance object itself for its settings and cumulative spend:
 
