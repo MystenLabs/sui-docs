@@ -3,8 +3,9 @@ title: Contract Information
 description: >-
   DeepBook Predict packages, shared objects, coin types, unit constants,
   cadences, and oracle objects for the deepbook-predict-mainnet and
-  deepbook-predict-testnet deployments, plus the read services that index the
-  earlier predict-8-21 Testnet deployment.
+  deepbook-predict-testnet deployments, including the delayed-execution
+  packages on Testnet, plus the read services that index the earlier
+  predict-8-21 Testnet deployment.
 keywords:
   - deepbook predict contract information
   - predict package id
@@ -18,8 +19,11 @@ keywords:
   - cadence
   - Mainnet
   - Testnet
-last_verified: 2026-09-23
-verified_against: publication records at deepbookv3 abb4cfd9 (Mainnet predict publish 3, Testnet predict publish 4, sessions publish 2 on both; predict protocol version 3, sessions 2); '@mysten/deepbook-v3' 2.6.1 at ts-sdks 56d51645
+  - deepbook_predict_orders
+  - order desk
+  - delayed execution
+last_verified: 2026-10-13
+verified_against: publication records at deepbookv3 29117434 (Mainnet predict publish 3 at protocol version 3 and sessions publish 2; Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13; '@mysten/deepbook-v3' 2.7.0
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -47,6 +51,7 @@ questions:
   - What units and market cadences do the DeepBook Predict deployments use?
   - Which servers return DeepBook Predict market, oracle, and account data?
   - Which DeepBook Predict package version is live on each network?
+  - What are the DeepBook Predict OrderDesk and QueueRegistry object IDs?
 answer: >-
   DeepBook Predict runs as the deepbook-predict-mainnet deployment on Sui
   Mainnet and the deepbook-predict-testnet deployment on Sui Testnet. Each
@@ -56,18 +61,22 @@ answer: >-
   scale probabilities, prices, and rates by 1e9 and run BTC markets on the 1m
   and 5m cadences. Every package has been upgraded at least once, so each one's
   Move call target is its latest published address while its type tags keep its
-  original one. Both networks run the same code today: predict protocol version
-  3 and sessions protocol version 2. The @mysten/deepbook-v3 SDK ships both
-  deployments and reads every value without an indexer, though 2.6.1 predates
-  the latest predict publication on each network and still resolves the
-  superseded address for both.
+  original one. The networks now run different code. Mainnet runs predict
+  protocol version 3 and sessions protocol version 2, where trades fill
+  immediately. Testnet runs predict protocol version 4 and sessions protocol
+  version 3, plus the deepbook_predict_orders and deepbook_predict_math
+  packages, where every trade is a queued order. Version 2.7.0 of the
+  @mysten/deepbook-v3 SDK resolves the current call targets on both networks
+  and reads every value without an indexer.
 ---
 
-DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Version 2.6.1 or later of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) carries both, so `getConfig` returns the identifiers on this page for either network. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict), and the original Testnet publish from source commit [`4d752fb8`](https://github.com/MystenLabs/deepbookv3/tree/4d752fb82d909a821c85bcc5d3963725efb546f4/packages/predict), whose Move sources are byte-identical to the Mainnet ones.
+DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Version 2.7.0 of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) carries both, so `getConfig` returns the identifiers on this page for either network. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict), and the original Testnet publish from source commit [`4d752fb8`](https://github.com/MystenLabs/deepbookv3/tree/4d752fb82d909a821c85bcc5d3963725efb546f4/packages/predict), whose Move sources are byte-identical to the Mainnet ones.
 
 Both networks have since upgraded `predict` and `sessions` to version 2 from source commit [`8d7d42a0`](https://github.com/MystenLabs/deepbookv3/tree/8d7d42a0f48bc6434bc282d45d2403809b4e492c/packages/predict), which adds the [`mint_exact_cost`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) all-in budget entrypoint and its session wrapper, callable on either network.
 
-Both have since taken a further `predict` upgrade, to protocol version 3, which adds [`plp::add_usdc_to_plp`](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#add-usdc). So the 2 networks run the same code and expose the same entrypoints.
+Both have since taken a further `predict` upgrade, to protocol version 3, which adds [`plp::add_usdc_to_plp`](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#add-usdc). Mainnet still runs protocol version 3.
+
+Testnet has gone one step further. On 2026-10-09 it upgraded `predict` to protocol version 4 and `sessions` to protocol version 3, published 2 new packages, `deepbook_predict_orders` and `deepbook_predict_math`, and passed the delayed-execution cutover. Every Testnet trade is now a queued order, and the immediate mint and live-redeem entrypoints abort. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) covers the new order flow. The 2 networks therefore no longer expose the same entrypoints.
 
 Every upgrade kept its original ID, so the lineage is unchanged and every object, position, account, and session grant created before it stays valid.
 
@@ -78,17 +87,22 @@ Two different numbers get called "version", and they have come apart:
 | **Package** | **Publishes** | **Protocol version** |
 | --- | --- | --- |
 | Mainnet `predict` | 3 | 3 |
-| Testnet `predict` | 4 | 3 |
-| `sessions`, both networks | 2 | 2 |
+| Mainnet `sessions` | 2 | 2 |
+| Testnet `predict` | 5 | 4 |
+| Testnet `sessions` | 3 | 3 |
+| Testnet `predictOrders` | 1 | 1 |
+| Testnet `predictMath` | 1 | None. The library has no version gate |
 
 - **Publishes** is what `Published.toml` records: how many times that package has been published on that network. It only counts events, so a Testnet-only rehearsal of an upgrade leaves Testnet permanently a publish ahead.
 - **Protocol version** is `constants::current_version!()`, compiled into the code. It gates behavior: [`assert_version`](#version-gate) aborts unless it is at or above the `ProtocolConfig` watermark, and it is what determines whether an entrypoint exists.
 
-Testnet `predict` is on its 4th publish and Mainnet's on its 3rd, yet both run protocol version 3 and behave identically. Compare protocol versions, never publish counts, when you want to know what a network can do.
+Testnet `predict` is on its 5th publish and runs protocol version 4, because an earlier Testnet-only rehearsal left it a publish ahead. Compare protocol versions, never publish counts, when you want to know what a network can do.
 
 ### The version gate {#version-gate}
 
 Every version-gated call runs `assert_version`, which aborts with `EPackageVersionDisabled` unless `constants::current_version!() >= ProtocolConfig.version_watermark`. An older package therefore keeps working until an admin raises the watermark past it, at which point every call through it stops. That is what makes a stale call target in a client library a deferred failure rather than an immediate one.
+
+A chain read on 2026-10-13 found the watermark at 1 on Mainnet, so every Mainnet `predict` version still runs, and at 4 on Testnet, where only protocol version 4 runs. Testnet's `SessionsConfig` watermark is 3, which retires the earlier Sessions packages there. `deepbook_predict_orders` has a floor of its own on the `OrderDesk`, at 1.
 
 ## Upgraded packages carry 2 IDs {#two-ids}
 
@@ -97,15 +111,9 @@ A Move package upgrade publishes at a new address and keeps its original one. Th
 - **Call target:** the latest published address. Every `moveCall` target, and every `Auth` or capability argument resolved against the package, uses it.
 - **Original ID:** the address the package was first published at. Every type tag keeps it forever, so struct types, event type prefixes, the PLP coin type, and dynamic-field keys are all built from the original ID, never from the call target.
 
-The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs. All 4 now differ from their call targets, because every package is past version 1 on both networks.
+A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. On Testnet, the types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the Testnet version 5 address `0x0654ecbe…`, and the version numbers do not line up across networks, so check the defining ID on each one.
 
-:::caution
-
-`@mysten/deepbook-v3` 2.6.1 predates the latest `predict` publication on both networks. It resolves `0x1cacb9bf…` on Mainnet and `0x30a03c33…` on Testnet, and both are superseded addresses running protocol version 2. Its `sessions` IDs are current on both.
-
-Those predict targets still work, because protocol version 2 is at or above each network's current watermark, but they cannot reach anything added at protocol version 3, so `plp::add_usdc_to_plp` is unreachable through the SDK on either network. They stop working outright once an admin raises a watermark to 3. Take the current call targets from the tables below until a release ships them.
-
-:::
+The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and on Testnet `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. Version 2.7.0 resolves the current call target of every package on both networks. Earlier releases resolve superseded `predict` addresses, which stop working once a watermark passes them, as Testnet's has.
 
 The distinction is easy to get wrong in the direction that fails silently rather than loudly. A call sent to an original ID still *works* for every function that existed at version 1, so nothing breaks until you reach for a version 2 entrypoint, and a type tag built from a call target names a type that does not exist at all.
 
@@ -113,7 +121,7 @@ The distinction is easy to get wrong in the direction that fails silently rather
 
 Every identifier on this page belongs to one of the 2 current deployments. The current deployments supersede every earlier Testnet deployment, and the accounts, positions, and markets on those earlier deployments are not visible on the current ones, so ignore identifiers from them in local configuration files and scripts.
 
-Both deployments went live on 2026-09-12, and Testnet was upgraded to package version 2 on 2026-09-17. As of the last chain read recorded in the deployment manifests, the 4 markets each network created at deployment have expired unsettled, no market has opened since, and no oracle update has landed since deployment. The Mainnet pool holds only the bootstrap minimum. Read `read.markets()`, `read.pool()`, and the `ProtocolConfig` object rather than assuming either network's state.
+Both deployments went live on 2026-09-12 and have since created markets on the 1m and 5m cadences. A chain read on 2026-10-13 found Mainnet's `trading_paused` flag set, as it has been since 2026-09-30, with no Mainnet market created since then, while Testnet was trading. Read `read.markets()`, `read.pool()`, and the `ProtocolConfig` object rather than assuming either network's state.
 
 :::
 
@@ -184,28 +192,32 @@ The PLP type carries `predict`'s original ID, `0x89aea622…`, not its version 2
 | Network | Testnet |
 | Chain ID | `4c78adac` |
 | Deployment source commit | `4d752fb82d909a821c85bcc5d3963725efb546f4` |
-| Upgrade source commits | `8d7d42a0f48bc6434bc282d45d2403809b4e492c`, `153fe3d6535cdfe79e34272baeec503c5eeda14e`, `9a32854c` |
-| `predict` publishes / protocol version | 4 / 3 |
-| `sessions` publishes / protocol version | 2 / 2 |
+| Upgrade source commits | `8d7d42a0f48bc6434bc282d45d2403809b4e492c`, `153fe3d6535cdfe79e34272baeec503c5eeda14e`, `9a32854c`, `0c57993c` |
+| `predict` publishes / protocol version | 5 / 4 |
+| `sessions` publishes / protocol version | 3 / 3 |
+| `predictOrders` and `predictMath` publishes | 1 each |
+| Delayed-execution cutover | 2026-10-09 |
 | Indexing start checkpoint | `382843322` |
 
 ### Testnet packages
 
 On Testnet the `usdc` entry is a test coin that Predict publishes itself. It shares the `usdc::USDC` module path with native USDC, displays with the symbol DUSDC and the name `DeepBook USDC`, and is mintable.
 
-`predict` is on its 4th publish here and `sessions` on its 2nd, so each carries 2 addresses. Call the **call target**; build every type tag from the **original ID**. The other 5 packages have never been upgraded, so the 2 columns coincide:
+`predict` is on its 5th publish here and `sessions` on its 3rd, so each carries 2 addresses. Call the **call target**; build every type tag from the **original ID**. The other packages have never been upgraded, so the 2 columns coincide, and `predictOrders` and `predictMath` exist only on Testnet so far:
 
 | **Package** | **Call target** | **Original ID** | **Contents** |
 | --- | --- | --- | --- |
-| `predict` | `0x6c2c2d3c2394cf282f4b8462a99c2e814bda0c223796de10b47b36d35fd878f5` | `0x59d71119e990573a738dd3ff9c4c7d28d6893af69c87c1a7f3a2e90e280ce2f4` | Markets, trading, protocol configuration, registry, and the PLP pool |
+| `predict` | `0x0654ecbed7c0f2645d9de7cb6cf08e65c2ee05cdbb39a415f17a6bd1cd92e267` | `0x59d71119e990573a738dd3ff9c4c7d28d6893af69c87c1a7f3a2e90e280ce2f4` | Markets, pricing, fills, protocol configuration, registry, and the PLP pool |
+| `predictOrders` | `0xd723ddef890bff70bd492cd384c913b5e7daeb6e8900cb3a5606546ac4f3907f` | Same | `deepbook_predict_orders`: the order desk, the market queues, and every queued-order entrypoint |
+| `predictMath` | `0x471592f682a9560b7046ca1bbf240e608bf5b2071ff1a9bd129b8011166a43c5` | Same | `deepbook_predict_math`: pricing math and Pyth-verified Lazer prices |
 | `propbook` | `0xa83f9d7651de09672a40cea371c387bf954e0f3092947670d71428d4fbc9edd9` | Same | Oracle registry, Pyth feeds, and Block Scholes stores |
 | `account` | `0x1e57d6554b99e4ca68330322c3e5c409ba1b681642726b603bf1be92c1840ca9` | Same | Account custody, balances, and the `Auth` authorization type |
 | `fixedMath` | `0xf3a38ba24fd40173af692cef151a43850f5935a3e026ae037fc19bb81974c6a8` | Same | Fixed-point arithmetic used by the pricing math |
 | `deepbookCoreAccount` | `0x2a3a5f51e1c566e0a77c667596a8212d036b44aeac32790991c9eb97580fabb1` | Same | DeepBook core account app type |
-| `sessions` | `0xe9daa1e3f98659f45f0e589c0367c7c13877af9a6a1bf1eda40e33e944816b40` | `0x1908eee49d7a08d74a537d7f23766b363a145517fe0d3e0d85635d1682831ffd` | Session support |
+| `sessions` | `0x25cfc04f97ef75c530872e630c1b3e21845e615a5a68d185291372e196cbd3de` | `0x1908eee49d7a08d74a537d7f23766b363a145517fe0d3e0d85635d1682831ffd` | Session support, including the queued-order wrappers |
 | `usdc` | `0xc028557a1ed49e42ed091e115aedefd70a442b184c18fbec5c48d5b6c0b8c184` | Same | Test USDC, which the deployment publishes |
 
-Both upgrades kept their original ID, so the lineage is unchanged and every object, position, and account created before the upgrade stays valid.
+Every upgrade kept its original ID, so the lineage is unchanged and every object, position, and account created before an upgrade stays valid. The delayed-execution types and events that `predict` protocol version 4 introduced carry the version 5 call target, `0x0654ecbe…`, as their defining ID.
 
 ### Testnet shared objects
 
@@ -220,8 +232,14 @@ Both upgrades kept their original ID, so the lineage is unchanged and every obje
 | `deepbookRegistry` | `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` | DeepBook core registry that the `deepbookCoreAccount` app authorization references |
 | `usdcCurrency` | `0x3122f737aa36d0a3a55a6b15a94578b52829d60d45b8d0f48c37f1739aed3ca2` | The test USDC `coin_registry::Currency` record |
 | `plpCurrency` | `0xac6109cb41e5aa3fcfd5e76f45a23fed559f560b2b991a20c1116472de2ea50a` | The PLP `coin_registry::Currency` record |
+| `orderDesk` | `0x160fc026c4143f3dec36acfc6556379d54661d37fe28ad837b6a85e42aeddfea` | `deepbook_predict_orders::desk::OrderDesk`: the delayed-execution policy and the order-flow package's version floor |
+| `queueRegistry` | `0xe9d75ed05b089d52a660a94b94963cdc89aeb7f3c75b57f76771454c81faae1f` | `deepbook_predict_orders::desk::QueueRegistry`: the root every market's `MarketQueue` ID derives from |
+| `pythLazerState` | `0xe2b9096a5ea341a9f1eef126b2203727e29e73fdb0641ade2e1e32942f97e4d8` | Pyth Lazer's `State` object, which a filler reads for the current Lazer package before it verifies signed updates |
+| `denyList` | `0x0000000000000000000000000000000000000000000000000000000000000403` | Framework deny list, which every queue call that can send USDC reads |
 | `accumulatorRoot` | `0x0000000000000000000000000000000000000000000000000000000000000acc` | Framework funds accumulator |
 | `clock` | `0x0000000000000000000000000000000000000000000000000000000000000006` | Framework clock |
+
+Each market's `MarketQueue` is a shared object of its own, at an ID derived from `queueRegistry` and the market ID. Derive it with `queue::queue_id`, or with `client.predict.queueIdFor(marketId)` in the SDK, rather than storing it.
 
 ### Testnet coin types
 
@@ -237,7 +255,7 @@ As on Mainnet, the PLP type carries `predict`'s original ID, `0x59d71119…`, no
 
 Each `ExpiryMarket` is its own shared object, one per underlying and expiry. Market IDs are not deployment configuration: read them from `registry::expiry_market_id` onchain or from `read.markets()` at runtime. Each network's Predict package defines the PLP type, so it differs per network and changes with every redeployment; a package *upgrade* leaves it alone, because it stays at the original ID. The quote coin type differs per network too, so always take it from `getConfig(network).quoteCoinType` rather than from a symbol.
 
-The entrypoint surface is identical across the networks. `expiry_market::mint_exact_cost`, `expiry_market::quote_mint_exact_cost_for_account`, and the `sessions::mint_exact_cost` wrapper arrived at protocol version 2; `plp::add_usdc_to_plp` arrived at `predict` protocol version 3. Both networks run both versions, so every entrypoint is callable on either.
+The entrypoint surface differs across the networks. `expiry_market::mint_exact_cost`, `expiry_market::quote_mint_exact_cost_for_account`, and the `sessions::mint_exact_cost` wrapper arrived at protocol version 2, and `plp::add_usdc_to_plp` arrived at `predict` protocol version 3, so both networks expose them. Protocol version 4, on Testnet only, retires the immediate mints, `redeem_live`, and their session wrappers, and adds the queued-order entrypoints in `deepbook_predict_orders` and the queued session wrappers in `sessions` protocol version 3.
 
 ## Underlyings and oracle objects {#underlyings-and-oracle-objects}
 
@@ -281,13 +299,13 @@ Predict mixes 2 scales, and confusing them is the fastest way to misprice a trad
 
 A probability of `500000000` is 0.5. A price of `110000000000000` is 110,000.00. An amount of `1000000` is 1 USDC. A position quantity of `10000` is one lot, 0.01 contracts.
 
-The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`. The premium is the quantity multiplied by the quoted entry probability, and `max_entry_probability` caps that probability at `990000000`, so the smallest quantity any market accepts is about 1.02 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
+The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `750000000` on Mainnet markets and `850000000` on Testnet markets created since 2026-10-13. The smallest quantity a Mainnet market accepts is therefore about 1.34 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
 
 Read every quantity that arrives as a JSON string with decimal or bigint tooling. Postgres `NUMERIC` columns serialize as strings, and `parseFloat` silently loses precision on them.
 
 ## Configuration
 
-Both deployments ship the same initial configuration, and a chain read on 2026-09-14 showed both `ProtocolConfig` objects and both registries' cadence configurations matching it field for field. Configuration is mutable protocol state, so read the live values from `ProtocolConfig` and `registry::cadence_configs` rather than pinning the ones below.
+The values below come from a chain read of both `ProtocolConfig` objects and both registries' cadence configurations on 2026-10-13. Configuration is mutable protocol state, so read the live values from `ProtocolConfig` and `registry::cadence_configs` rather than pinning the ones below.
 
 ### Cadences
 
@@ -314,33 +332,34 @@ The only finite boundary a market admits off its admission grid is its own refer
 
 ### Protocol values
 
-| **Value** | **Deployed** | **Notes** |
-| --- | --- | --- |
-| Pyth spot freshness | `2000` ms | Live pricing aborts on an older observation |
-| Block Scholes price freshness | `2000` ms | Spot and forward |
-| Block Scholes SVI freshness | `60000` ms | The stochastic volatility inspired (SVI) surface changes more slowly |
-| `no_trade_window_ms` | `2000` | Live mints and live redeems abort with `ETradeWindowClosed` inside the last 2 seconds before expiry |
-| `max_valuation_window_ms` | `300000` | A pool flush must finish within 5 minutes of its snapshot, or a cap holder restarts it |
-| `max_lp_pool_value` | `500000000000` | The pool accepts at most 500,000 USDC of liquidity |
-| `lp_request_limit_flush_attempts` | `1` | The first flush whose mark misses a queued request's floor cancels and refunds it |
-| PLP supply fee | `0` | |
-| PLP withdraw fee | `2000000` | 0.2 percent |
-| Protocol reserve profit share | `100000000` | 10 percent |
-| Referral fee rate | `100000000` | 10 percent |
-| Exponentially weighted moving average (EWMA) congestion penalty | Disabled | |
+| **Value** | **Mainnet** | **Testnet** | **Notes** |
+| --- | --- | --- | --- |
+| Pyth spot freshness | `2000` ms | `2000` ms | Live pricing falls back to the Block Scholes forward on an older observation |
+| Block Scholes price freshness | `2000` ms | `2000` ms | Spot and forward |
+| Block Scholes SVI freshness | `60000` ms | `10000` ms | The stochastic volatility inspired (SVI) surface changes more slowly |
+| `no_trade_window_ms` | `10000` | `10000` | On Mainnet, live mints and live redeems abort with `ETradeWindowClosed` inside the last 10 seconds. On Testnet, no queued order's price instant may fall inside it |
+| `max_valuation_window_ms` | `300000` | `300000` | A pool flush must finish within 5 minutes of its snapshot, or a cap holder restarts it |
+| `max_lp_pool_value` | `500000000000` | `500000000000` | The pool accepts at most 500,000 USDC of liquidity |
+| `lp_request_limit_flush_attempts` | `1` | `1` | The first flush whose mark misses a queued request's floor cancels and refunds it |
+| PLP supply fee | `0` | `0` | |
+| PLP withdraw fee | `2000000` | `2000000` | 0.2 percent |
+| Protocol reserve profit share | `0` | `0` | |
+| Referral fee rate | `100000000` | `100000000` | 10 percent |
+| Exponentially weighted moving average (EWMA) congestion penalty | Disabled | Retired | Protocol version 4 retires the surcharge |
+| `trading_paused` | `true` | `false` | Mainnet has been paused since 2026-09-30 |
 
-The strike-exposure template matches earlier deployments:
+On Testnet the [delayed-execution policy](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#delayed-execution-policy) on the `OrderDesk` adds its own values: an 800 ms delay on Pyth Lazer's 200 ms channel, a 5-second stall timeout, an order fee of 0.02 USDC, and capacities of 100 mints and 100 sells per market with at most 5 waiting orders per account.
 
-- Base fee of 10 percent
+The strike-exposure template is the policy each new market snapshots at creation:
+
+- Base fee of 20.4 percent
 - Minimum fee of 2.2 percent
-- Entry probability band of 1 percent to 99 percent
+- Entry probability band of 25 percent to 75 percent on Mainnet, and 15 percent to 85 percent on Testnet since 2026-10-13
 - Backing buffer lambda of 0.31
 - Inventory impact rate of 0
-- Expiry fee window of 1 day with a 1x maximum multiplier
+- Expiry fee window of 60 seconds with a 3x maximum multiplier
 
-The contract charges the fee, and applies its minimum, separately at each finite boundary of a range, so a two-sided range pays at least twice the minimum fee. It also applies the entry-probability band to each finite boundary as well as to the range. [Design](/onchain-finance/deepbook/deepbook-predict/design#fee-components) explains the fee.
-
-Every package is at version 1 on both networks.
+The contract charges the fee, and applies its minimum, separately at each finite boundary of a range, so a two-sided range pays at least twice the minimum fee. It also applies the entry-probability band to each finite boundary as well as to the range. A market keeps the template it snapshotted for its whole life, so read a live market's own values with the SDK's `read.feePolicy` rather than from the template. [Design](/onchain-finance/deepbook/deepbook-predict/design#fee-components) explains the fee.
 
 ## Public read APIs for the `predict-8-21` Testnet deployment
 
@@ -469,13 +488,14 @@ The SDK carries both deployments' identifiers, so keep them in a single network-
 
 ### Testnet and Mainnet differences
 
-The 2 deployments run the same contracts and the same initial configuration. What differs is around them:
+The 2 deployments now run different protocol versions, and their configuration has drifted apart. What differs is:
 
 - **Quote asset and funding:** Testnet quotes in a test coin you can request for free, and Testnet SUI is free. Mainnet quotes in native USDC, there is no faucet, and any top-up path that assumes free replenishment needs replacing.
-- **Activity:** As of 2026-09-14 no market has opened or settled on either network since the markets created at deployment expired on 2026-09-12. The Mainnet pool holds only the bootstrap minimum. `read.markets()` lists live-and-unsettled markets, which includes an expired market nobody has settled, so check each entry's expiry before you quote against it.
+- **Trade path:** Testnet runs protocol version 4, where every trade is a queued order. Mainnet runs protocol version 3, where trades fill immediately, until its own cutover. Branch on `client.predict.read.executionMode()` rather than on the network name.
+- **Activity:** A chain read on 2026-10-13 found Mainnet's trading paused since 2026-09-30 and Testnet trading. `read.markets()` lists live-and-unsettled markets, which includes an expired market nobody has settled, so check each entry's expiry before you quote against it.
 - **Read services:** None exists for either current deployment as of 2026-09-14.
 - **DeepBook core authorization:** Both deployment manifests record the DeepBook core registry as not having authorized `DeepbookCoreAccountApp`, so treat the session spot wrappers as unavailable on either network until you have read that registry, per [App authorization](#app-authorization).
-- **Package version:** the networks run the same protocol versions today, but they have not been upgraded in lockstep and need not be. Compare protocol versions rather than publish counts, as [Publish count is not protocol version](#version-numbers) explains, and remember that an older call target keeps working only until the `ProtocolConfig` watermark passes it.
+- **Package version:** the networks have not been upgraded in lockstep and need not be. Compare protocol versions rather than publish counts, as [Publish count is not protocol version](#version-numbers) explains, and remember that an older call target keeps working only until the `ProtocolConfig` watermark passes it.
 
 Structure your code so none of these become assumptions:
 
@@ -486,7 +506,7 @@ Structure your code so none of these become assumptions:
 
 ## Live onchain events
 
-Stream events directly from a full node when a client needs them as they land, and back them with your own store for history. Predict emits its events from 4 modules under the Predict package: `config_events` for lifecycle and configuration, `order_events` for trading, `vault_events` for the pool and its queues, and `builder_code_events` for builder attribution. The following table lists the ones an integrator subscribes to most often, not every event each module declares:
+Stream events directly from a full node when a client needs them as they land, and back them with your own store for history. Predict emits its events from 4 modules under the Predict package: `config_events` for lifecycle and configuration, `order_events` for trading, `vault_events` for the pool and its queues, and `builder_code_events` for builder attribution. On Testnet, the queued-order events come from a fifth module, `queue_events`, in the `deepbook_predict_orders` package, so subscribe to both packages there. The following table lists the ones an integrator subscribes to most often, not every event each module declares:
 
 | **Event type** | **Emitted when** |
 | --- | --- |
@@ -495,8 +515,12 @@ Stream events directly from a full node when a client needs them as they land, a
 | `config_events::MarketSettled` | A market settles, with `settlement_source` `0` for Pyth and `1` for Block Scholes |
 | `config_events::ExpiryMarketMintPausedUpdated` | An admin pauses or unpauses minting on one market |
 | `config_events::NoTradeWindowUpdated` | An admin changes `no_trade_window_ms` |
-| `order_events::OrderMinted` | A trader opens a position |
-| `order_events::LiveOrderRedeemed` | A trader closes or reduces a live position before expiry |
+| `order_events::OrderMinted` | A trader opens a position, or on Testnet, a queued mint fills |
+| `order_events::LiveOrderRedeemed` | A trader closes or reduces a live position before expiry, or on Testnet, a queued sell fills |
+| `queue_events::OrderEnqueued` | Testnet only: a trader places a queued order |
+| `queue_events::QueuedOrderFilled` | Testnet only: a queued order fills, beside the Predict order event |
+| `queue_events::QueuedOrderRefunded` | Testnet only: a queued order is refunded, with a reason code |
+| `queue_events::OpenRecordSettled` | Testnet only: the settlement walk pays an Open record |
 | `order_events::SettledOrderRedeemed` | The owner, or a permissionless caller on the owner's behalf, claims a settled position |
 | `vault_events::SupplyRequested` | An account queues a liquidity supply request |
 | `vault_events::SupplyFilled` | The flush fills a queued supply at its mark and mints PLP |
@@ -559,22 +583,24 @@ Subscriptions begin at the current tip and accept no resume point, so recovering
 - [Connection and buffer limits](/develop/accessing-data/grpc/using-grpc#connection-limits) for subscriber buffer sizes and slow-consumer eviction
 - [Backfill and subscribe without gaps](/develop/accessing-data/grpc/grpc-migration-cookbook#backfill-and-subscribe-without-gaps) and [Reconnect a checkpoint stream](/develop/accessing-data/grpc/grpc-migration-cookbook#reconnect-a-checkpoint-stream) for the pairing pattern and reconnect backoff
 
-`MarketSettled` is the correct trigger for an automated claim worker, because it fires when the contract actually records a settlement price rather than when a market expires. After settlement, `expiry_market::redeem_settled_permissionless` lets anyone claim a settled position on the owner's behalf, and the payout still lands in the owner's account, so a worker closes out user positions without holding their keys. Make that worker idempotent: at-least-once delivery is a property of the backfill-and-subscribe pattern, so the same event can reach a handler twice after a reconnect.
+`MarketSettled` is the correct trigger for an automated claim worker, because it fires when the contract actually records a settlement price rather than when a market expires. After settlement on Mainnet, `expiry_market::redeem_settled_permissionless` lets anyone claim a settled position on the owner's behalf, and the payout still lands in the owner's account, so a worker closes out user positions without holding their keys. Protocol version 4 limits that function to an admin allowlist of keepers, and on Testnet the queue's own settlement walk pays queued positions with no claim at all. Make that worker idempotent: at-least-once delivery is a property of the backfill-and-subscribe pattern, so the same event can reach a handler twice after a reconnect.
 
 ## Source pointers
 
-The links below pin every module to DeepBookV3 `main` at `76b11922f3144be5bdaacb66c38c7c3524a02ff3`, whose Move sources are byte-identical to both deployed source commits, so the same links serve both networks. There is no `entry fun` in any Predict package: every integrator call is a `public fun` invoked as a `moveCall`, and several of them return values that a later command in the same transaction must consume.
+The links below pin every module to DeepBookV3 `main` at `2911743402372d3e79ab5d48a0f9ed64f1a32159`, the source of Testnet's protocol version 4. Mainnet's protocol version 3 source is `abb4cfd93b2e51f7925941fe5d53b3fe70fc140c`, which has no `predict_orders` or `predict_math` package. There is no `entry fun` in any Predict package: every integrator call is a `public fun` invoked as a `moveCall`, and several of them return values that a later command in the same transaction must consume.
 
 | **Area** | **Source** |
 | --- | --- |
-| Markets, quoting, trading, and settlement | [`packages/predict/sources/expiry_market.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/predict/sources/expiry_market.move) |
-| Market catalog, cadences, and capabilities | [`packages/predict/sources/registry/registry.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/predict/sources/registry/registry.move) |
-| Protocol configuration and gating | [`packages/predict/sources/config/protocol_config.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/predict/sources/config/protocol_config.move) |
-| PLP pool, liquidity queues, and valuation | [`packages/predict/sources/plp/plp.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/predict/sources/plp/plp.move) |
-| Pool valuation capability | [`packages/predict/sources/capabilities/pool_valuation_cap.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/predict/sources/capabilities/pool_valuation_cap.move) |
-| Account custody and authorization | [`packages/account/sources/account.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/account/sources/account.move) |
-| Oracle registry and bindings | [`packages/propbook/sources/registry.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/propbook/sources/registry.move) |
-| Pyth and Block Scholes feeds | [`packages/propbook/sources/feeds`](https://github.com/MystenLabs/deepbookv3/tree/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/propbook/sources/feeds) |
+| Markets, quoting, trading, and settlement | [`packages/predict/sources/expiry_market.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict/sources/expiry_market.move) |
+| Market catalog, cadences, and capabilities | [`packages/predict/sources/registry/registry.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict/sources/registry/registry.move) |
+| Protocol configuration and gating | [`packages/predict/sources/config/protocol_config.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict/sources/config/protocol_config.move) |
+| PLP pool, liquidity queues, and valuation | [`packages/predict/sources/plp/plp.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict/sources/plp/plp.move) |
+| Pool valuation capability | [`packages/predict/sources/capabilities/pool_valuation_cap.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict/sources/capabilities/pool_valuation_cap.move) |
+| Account custody and authorization | [`packages/account/sources/account.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/account/sources/account.move) |
+| Oracle registry and bindings | [`packages/propbook/sources/registry.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/propbook/sources/registry.move) |
+| Pyth and Block Scholes feeds | [`packages/propbook/sources/feeds`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/propbook/sources/feeds) |
+| Queued orders, the order desk, and queue events, Testnet only | [`packages/predict_orders/sources`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict_orders/sources) |
+| Pricing math and Pyth-verified Lazer prices, Testnet only | [`packages/predict_math/sources`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict_math/sources) |
 
 ### Find the page for a Move abort {#abort-module-map}
 
@@ -583,6 +609,7 @@ A Move abort names the module it came from and a number. Error numbers restart a
 | **Module** | **Reference page** |
 | --- | --- |
 | `expiry_market`, `strike_exposure_config` | [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) |
+| `queue`, `desk`, `delayed_execution_config`, and `lazer_price`, from the Testnet order-flow packages | [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queue-errors) |
 | `order`, `strike_exposure` | [Strikes and Ticks](/onchain-finance/deepbook/deepbook-predict/contract-information/market-keys) |
 | `plp`, `lp_book`, `pool_accounting`, `expiry_cash` | [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) |
 | `pricing` and the propbook modules | [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) |
@@ -596,13 +623,13 @@ These deployments renumbered or extended several tables, so a code memorized fro
 | **Module** | **Codes on these deployments** |
 | --- | --- |
 | `plp` | Renumbered: `EMissingExpiryValuation` `0`, `ENotBootstrapped` `1`, `EAlreadyBootstrapped` `2`, `EBelowMinBootstrapLiquidity` `3`, `EBelowMinFeeIncentiveSponsorship` `4`, `EMaxLiveExpiryMarketsExceeded` `5`. New: `EValuationSnapshotNotSealed` `6`, `EExpiryPricerAlreadySnapshotted` `7`, `EIncompleteValuationSnapshot` `8`, `EExpiredMarketNotSettled` `9`, `EValuationWindowExpired` `10`, `ESnapshotStageOpen` `11`. |
-| `protocol_config` | Codes `0` to `5` unchanged. New: `ESnapshotInProgress` `6`, `ETradeWindowClosed` `7`. |
-| `expiry_market` | Codes `0` to `9` unchanged. New: `EMarketNotPendingValuation` `10`, `EMintCostAboveMaxPayout` `11`. |
+| `protocol_config` | Codes `0` to `5` unchanged. New: `ESnapshotInProgress` `6`, `ETradeWindowClosed` `7`. Protocol version 4 adds `8` to `15`. |
+| `expiry_market` | Codes `0` to `9` unchanged. New: `EMarketNotPendingValuation` `10`, `EMintCostAboveMaxPayout` `11`. Protocol version 4 adds `12` to `22`. |
 | `registry` | New: `EPoolValuationCapNotValid` `3`, `EPoolValuationCapNotFound` `4`. |
 | `config_constants` | New: `EInvalidMaxValuationWindowMs` `23`, `EInvalidNoTradeWindowMs` `24`. |
 | `strike_payout_tree` | New: `EStaleValuationSnapshot` `3`, `ESnapshotSeqNotIncreasing` `4`. |
 
-`PredictMoveError` from the TypeScript SDK carries `module` and `code` for exactly this lookup, and its `abortName` stays `null` for these packages, because they declare their error constants as plain `u64` codes rather than `#[error]` constants. A first mint most often aborts in `strike_exposure_config`, whose code `3` is `EPremiumBelowMinimum`, or in `protocol_config` with code `7`, `ETradeWindowClosed`, when you took the quote inside the last 2 seconds before expiry.
+`PredictMoveError` from the TypeScript SDK carries `module` and `code` for exactly this lookup. The packages declare their error constants as plain `u64` codes rather than `#[error]` constants, so the node cannot name them, and version 2.7.0 of the SDK fills `abortName` from a table generated from the Move sources instead, where earlier releases left it `null`. On Mainnet, a first mint most often aborts in `strike_exposure_config`, whose code `3` is `EPremiumBelowMinimum`, or in `protocol_config` with code `7`, `ETradeWindowClosed`, when you took the quote inside the last 10 seconds before expiry. On Testnet, a first queued order most often aborts in `expiry_market` with code `14`, `EOrderFailsLimits`, for a strike outside the entry band or a premium below the minimum, or in `queue` with code `7`, `EFeeNotCovered`, for an account that cannot pay the order fee.
 
 import DocCardList from '@theme/DocCardList';
 

@@ -18,8 +18,8 @@ keywords:
   - builder code
   - no_trade_window_ms
   - max_valuation_window_ms
-last_verified: 2026-09-23
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8
+last_verified: 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 abb4cfd9 (Mainnet predict protocol version 3) and 29117434 (Testnet predict protocol version 4); both ProtocolConfig objects read 2026-10-13
 goal:
   description: >-
     Reader can look up markets and cadence terms in the Predict Registry, and
@@ -317,7 +317,7 @@ Builder-code creation is the only permissionless function in the registry that c
 
 Anyone can call it. The resulting `BuilderCode` is a shared object derived from the registry UID and keyed by the caller address plus the index you pass, so its address is deterministic and one address can hold many codes. The call returns the code ID and emits `BuilderCodeCreated`.
 
-An account attaches a code with `predict_account::set_builder_code` and detaches it with `predict_account::unset_builder_code`. Builder fees accrue to the code address through the funds accumulator, and only the owner can call `builder_code::claim_all_builder_fees`, which returns a `Coin<USDC>`.
+An account attaches a code with `predict_account::set_builder_code` and detaches it with `predict_account::unset_builder_code`. Builder fees accrue to the code address through the funds accumulator, and only the owner can call `builder_code::claim_all_builder_fees`, which returns a `Coin<USDC>`. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) covers the fee, the attachment rules, and the events, and [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#operate-builder-code) creates a code and claims its fees from TypeScript.
 
 ## Protocol configuration {#protocol-config}
 
@@ -335,12 +335,25 @@ An account attaches a code with `predict_account::set_builder_code` and detaches
 
 | **Setter** | **Field** | **Bounds** | **Deployed** | **Blocked during a flush** | **Abort** |
 | --- | --- | --- | --- | --- | --- |
-| `set_no_trade_window_ms` | `no_trade_window_ms` | `0` to `15000` ms, where `0` disables the window | `2000` | No | `config_constants::EInvalidNoTradeWindowMs` (`24`) |
+| `set_no_trade_window_ms` | `no_trade_window_ms` | `0` to `15000` ms, where `0` disables the window | `10000` on both networks, over a compiled default of `2000` | No | `config_constants::EInvalidNoTradeWindowMs` (`24`) |
 | `set_max_valuation_window_ms` | `max_valuation_window_ms` | 1 minute to 4 hours | `300000` | Yes, with `EValuationInProgress` | `config_constants::EInvalidMaxValuationWindowMs` (`23`) |
 
-`no_trade_window_ms` is the interval before each expiry in which live quotes, mints, and live redeems abort with `ETradeWindowClosed`; see [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window). A flush deliberately does not block it, matching `set_trading_paused`, so a stalled flush cannot trap a safety control. A change emits `NoTradeWindowUpdated`. `max_valuation_window_ms` is the deadline after which an in-flight flush can no longer finish and the operator must restart it; see [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#valuation-window). The setter aborts while a flush is in flight, so no one can move a started flush's deadline under it.
+`no_trade_window_ms` is the interval before each expiry in which, on protocol version 3, live quotes, mints, and live redeems abort with `ETradeWindowClosed`, and on protocol version 4 no queued order's price instant may fall; see [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window). A flush deliberately does not block it, matching `set_trading_paused`, so a stalled flush cannot trap a safety control. A change emits `NoTradeWindowUpdated`. `max_valuation_window_ms` is the deadline after which an in-flight flush can no longer finish and the operator must restart it; see [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#valuation-window). The setter aborts while a flush is in flight, so no one can move a started flush's deadline under it.
 
-They come with 2 permissionless reads: `valuation_in_progress(config): bool` reports whether a flush is in flight, and `no_trade_window_ms(config): u64` returns the live window. Both deployments hold the same values for every `ProtocolConfig` field; the full set is on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information).
+They come with 2 permissionless reads: `valuation_in_progress(config): bool` reports whether a flush is in flight, and `no_trade_window_ms(config): u64` returns the live window. The 2 deployments' values have drifted apart; the full set for each is on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#protocol-values).
+
+### Protocol version 4 controls {#protocol-config-v4}
+
+Protocol version 4, which Testnet runs, adds 4 admin controls to `ProtocolConfig`, each taking `&AdminCap` and each stored as a dynamic field so the published struct layout is unchanged:
+
+| **Function** | **Effect** | **Version-gated** | **Event** |
+| --- | --- | --- | --- |
+| `set_order_flow<W>(config, admin_cap, enabled)` | Allowlists or removes the order-flow witness type `W` that the queued-order primitives accept. Enabling the `deepbook_predict_orders` witness, `order_flow::OrderFlow`, opens queued trading once the watermark reaches 4. `is_order_flow<W>` reads it. | Enabling only, so a removal works while frozen | `OrderFlowUpdated` |
+| `add_flush_operator`, `remove_flush_operator` | Edits the allowlist of addresses that may call `plp::finish_flush`. `is_flush_operator` reads it. | Adding only, so a removal works while frozen | `FlushOperatorUpdated` |
+| `add_settled_redeem_keeper`, `remove_settled_redeem_keeper` | Edits the allowlist of senders that may call `expiry_market::redeem_settled_permissionless`. | Adding only | `SettledRedeemKeeperUpdated` |
+| `set_fee_incentive_subsidy_rate`, `set_fee_incentive_live_target_rate`, `set_template_fee_incentive_lifetime_cap_rate` | Set the 3 fee-incentive rates described on [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#initialization-and-access-control). | Yes | `FeeIncentiveSubsidyRateUpdated` for the subsidy rate, `FeeIncentiveAllocationRatesUpdated` for the other 2 |
+
+Protocol version 4 also retires the EWMA congestion penalty: `set_ewma_params` and `set_ewma_enabled` keep their signatures and abort with `EEwmaRetired`. The order-flow package's own policy lives on its `OrderDesk`, not on `ProtocolConfig`; see [The order-desk policy](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#delayed-execution-policy).
 
 ## Errors
 
@@ -369,7 +382,7 @@ They come with 2 permissionless reads: `valuation_in_progress(config): bool` rep
 | `8` | `EPythFeedNotBoundToUnderlying` | No canonical Pyth binding for the underlying |
 | `9` | `EBlockScholesStoresNotBoundToUnderlying` | No Block Scholes store pair for the underlying |
 
-`deepbook_predict::protocol_config` raises 8 gate errors. The registry's own functions reach only the first and the 2 version gates; the rest surface through the trade and flush calls that read the same object:
+`deepbook_predict::protocol_config` raises 8 gate errors on protocol version 3 and 16 on protocol version 4. The registry's own functions reach only the first and the 2 version gates; the rest surface through the trade and flush calls that read the same object:
 
 | **Code** | **Name** | **Raised when** |
 | --- | --- | --- |
@@ -380,9 +393,17 @@ They come with 2 permissionless reads: `valuation_in_progress(config): bool` rep
 | `4` | `EVersionWatermarkNotAdvanced` | `bump_version_watermark` did not strictly increase the watermark |
 | `5` | `EProtocolFrozen` | A version-gated flow ran while frozen |
 | `6` | `ESnapshotInProgress` | A trade, a settled redeem, or a second `start_pool_valuation` landed inside a flush's snapshot transaction |
-| `7` | `ETradeWindowClosed` | A live quote, mint, or live redeem ran inside the no-trade window |
+| `7` | `ETradeWindowClosed` | A live quote, mint, or live redeem ran inside the no-trade window. Protocol version 3 only in practice, because version 4 retires those trades |
+| `8` | `ESettledRedeemKeeperAlreadyAdded` | Protocol version 4: `add_settled_redeem_keeper` named an address already on the list |
+| `9` | `ESettledRedeemKeeperNotFound` | Protocol version 4: `remove_settled_redeem_keeper` named an address not on the list |
+| `10` | `EFlushOperatorAlreadyAdded` | Protocol version 4: `add_flush_operator` named an address already on the list |
+| `11` | `EFlushOperatorNotFound` | Protocol version 4: `remove_flush_operator` named an address not on the list |
+| `12` | `ENotFlushOperator` | Protocol version 4: `finish_flush` from a sender off the flush-operator allowlist |
+| `13` | `ECutoverNotReached` | Protocol version 4: a queued order arrived before the watermark reached 4 |
+| `14` | `EEwmaRetired` | Protocol version 4: a retired EWMA setter ran |
+| `15` | `EOrderFlowNotAllowed` | Protocol version 4: an order-flow call came from a witness that is not allowlisted |
 
-Setter bounds failures come from `deepbook_predict::config_constants`, codes `0` through `24`, including `EMarketTickSizeTooLarge` (`16`), `EInvalidCadenceWindowSize` (`15`), `EInvalidMaxValuationWindowMs` (`23`), and `EInvalidNoTradeWindowMs` (`24`).
+Setter bounds failures come from `deepbook_predict::config_constants`, codes `0` through `24`, and on protocol version 4 also `EInvalidFeeIncentiveSubsidyRate` (`25`), `EInvalidFeeIncentiveLiveTargetRate` (`26`), and `EInvalidFeeIncentiveLifetimeCapRate` (`27`), including `EMarketTickSizeTooLarge` (`16`), `EInvalidCadenceWindowSize` (`15`), `EInvalidMaxValuationWindowMs` (`23`), and `EInvalidNoTradeWindowMs` (`24`).
 
 ## Events
 

@@ -49,8 +49,8 @@ answer: >-
   same transaction, or with AccountContract from the deepbook-v3 account
   subpath. A single-use Auth hot potato gates access, and Predict keeps
   positions in a PredictData slot attached to the Account.
-last_verified: 2026-09-23
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8
+last_verified: 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4)
 ---
 
 DeepBook Predict has no `PredictManager` and no `predict_manager` module. Custody and identity moved into a standalone `account` package, where each trader owns one shared `AccountWrapper` holding an embedded `Account`. Predict attaches its own per-account data to that `Account` rather than storing positions itself.
@@ -91,8 +91,8 @@ flowchart LR
 |---|---|---|
 | Create | `account_registry::new` then `account::share` | Claims both derived IDs for the sender and shares a new `AccountWrapper`. |
 | Deposit | `account::deposit_funds<T>` | Settles pending accumulator funds, then adds a whole `Coin<T>` to stored balance. |
-| Mint | `expiry_market::mint_exact_quantity`, `expiry_market::mint_exact_amount`, `expiry_market::mint_exact_cost` | Debits the all-in cost and records a position in Predict's account slot. |
-| Redeem | `expiry_market::redeem_live`, `expiry_market::redeem_settled`, `expiry_market::redeem_settled_permissionless` | Removes or replaces the position and credits the payout. |
+| Mint | On protocol version 3, `expiry_market::mint_exact_quantity`, `expiry_market::mint_exact_amount`, `expiry_market::mint_exact_cost`. On protocol version 4, `queue::enqueue_exact_quantity`, `queue::enqueue_exact_amount`, `queue::enqueue_exact_cost` | Version 3 debits the all-in cost and records a position in Predict's account slot. Version 4 debits the budget and the order fee into the order's escrow, and a fill keeps the position in the market's queue as an Open record. |
+| Redeem | On protocol version 3, `expiry_market::redeem_live`. On both, `expiry_market::redeem_settled` and `expiry_market::redeem_settled_permissionless`. On protocol version 4, `queue::enqueue_redeem_open` and the queue's settlement walk | Removes or replaces the position and credits the payout. |
 | Withdraw | `account::withdraw_funds<T>` | Settles pending funds, debits stored balance, and returns a `Coin<T>`. |
 
 Every stage shares 3 properties:
@@ -374,6 +374,8 @@ Predict does not store positions in its own objects. It attaches a `PredictData`
 | `Position` | `root_id` | `u256` | Original mint's order ID, carried forward across partial-close replacements. |
 | `Position` | `opened_at_ms` | `u64` | Onchain time at which the position opened, also carried forward. |
 
+From protocol version 4, which Testnet runs, a queued fill never enters this table. The filled position stays in the market's `MarketQueue` as an Open record owned by the account, so `has_position` and `read.positions` do not see it, and the account follows it by its queue record ID instead. Positions minted into the table before the cutover stay there, and `redeem_settled` still pays them. [Open records and early sells](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#open-records) covers the queue side.
+
 An order ID alone does not identify a position. It carries the quantity and the tick range but not the market, so only the `(expiry_market_id, order_id)` pair binds a position to its market. Never infer market facts from an order ID.
 
 `root_id` is what makes one economic position traceable. A partial close retires the current order ID and issues a replacement, but `root_id` stays fixed, so joining events on `position_root_id` follows the position through its whole life. Predict likewise carries `opened_at_ms` forward, which keeps a seasoned position closable while still rejecting a live redeem in the same millisecond as the mint.
@@ -409,7 +411,7 @@ To value a position, pass its order ID to the market: `expiry_market::live_order
 
 ### Builder codes {#builder-codes}
 
-An account can carry one builder code, which routes an add-on fee to the code's owner on every trade the account makes:
+An account can carry one builder code, which adds a builder fee to each mint and live close the account makes:
 
 ```move title='packages/predict/sources/predict_account.move'
 public fun set_builder_code(
@@ -422,7 +424,7 @@ public fun set_builder_code(
 public fun unset_builder_code(wrapper: &mut AccountWrapper, auth: Auth, ctx: &mut TxContext)
 ```
 
-Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::builder_code_events`, with `builder_code_id` set on one and absent on the other. Attribution is sticky: it applies to trades made after the call, not retroactively. The SDK exposes `client.predict.tx.setBuilderCode(owner, builderCodeId)` and `client.predict.tx.unsetBuilderCode(owner)`.
+Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::builder_code_events`, with `builder_code_id` set on one and absent on the other. Attribution is sticky: it applies to trades made after the call, not retroactively. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) covers what the fee is and how the code's owner collects it. The SDK exposes `client.predict.tx.setBuilderCode(owner, builderCodeId)` and `client.predict.tx.unsetBuilderCode(owner)`.
 
 <details>
 <summary>Predict account function source</summary>

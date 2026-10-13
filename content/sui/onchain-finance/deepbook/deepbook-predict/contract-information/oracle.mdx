@@ -14,8 +14,8 @@ keywords:
   - oracle read
   - pricer
   - oracle freshness
-last_verified: 2026-09-23
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8
+last_verified: 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4); both ProtocolConfig objects read 2026-10-13
 goal:
   description: >-
     Reader can resolve the canonical Propbook oracle objects for an underlying,
@@ -371,8 +371,12 @@ Predict validates whatever objects you pass, so a call fails rather than pricing
 | `expiry_market::try_settle` | Yes | Yes | Yes | No |
 | `expiry_market::set_reference_tick` | Yes | Yes | No | No |
 | `registry::create_and_share_expiry_market` | Yes | No | No | No |
+| `queue::enqueue_*`, protocol version 4 | Yes | Yes | Yes | Yes |
+| `queue::commit`, protocol version 4 | No | No | No | No |
 
 Settlement needs no volatility surface, so `try_settle` takes no SVI store. A reference tick is a single spot reading, so `set_reference_tick` takes only the Pyth feed. Market creation reads no price at all: it takes the registry solely to confirm the underlying has canonical bindings.
+
+On protocol version 4, a queued order reads the oracles at 2 moments. Placement takes all 4 objects and validates the Pyth feed and the 2 Block Scholes stores against the bindings the registry records, the way `load_live_pricer` does, and snapshots the Block Scholes spot, forward, and SVI into the order, and it requires `use_pyth_spot_for_forward` (`EPythForwardRequired`) and an SVI no older than the order desk's `svi_max_age_ms`. It does not require a fresh `PythFeed` spot. The spot the order fills at comes later, from a Pyth Lazer update that the Pyth Lazer verifier checked earlier in the committing transaction and that `deepbook_predict_math::lazer_price` decodes: `queue::commit` takes those verified updates, not the `PythFeed` object, and the fill re-anchors the snapshotted forward basis on that committed price. [Commit and resolve](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#commit-and-resolve) covers which update a cohort accepts.
 
 The pool flush reads oracles in exactly one place. `plp::snapshot_expiry_pricer` takes all 4 objects, loads a live pricer for one market, and freezes it into the vault's valuation snapshot; the later `plp::value_expiry` takes only the vault, the market, and the configuration, and prices the market from that frozen copy, so it can run in a different transaction from the snapshot without touching an oracle. See [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) for the staged flush.
 
@@ -476,14 +480,14 @@ Live pricing stays unavailable until the matching spot lands or a newer forward 
 
 ### Freshness windows
 
-Predict measures freshness against the wall clock, not against how recently a value changed, and the age of an observation is `now - source_timestamp_ms`, the provider's per-update time. The deployed configuration, verified 2026-09-14 on both networks, sets these windows on `ProtocolConfig`:
+Predict measures freshness against the wall clock, not against how recently a value changed, and the age of an observation is `now - source_timestamp_ms`, the provider's per-update time. A chain read on 2026-10-13 found these windows on each network's `ProtocolConfig`:
 
-| **Setting** | **Value** | **Meaning** |
-| --- | --- | --- |
-| `use_pyth_spot_for_forward` | `true` | A fresh Pyth spot reanchors the Block Scholes forward basis |
-| `pyth_spot_freshness_ms` | `2000` | Maximum age of a Pyth spot used to reanchor the forward |
-| `block_scholes_price_freshness_ms` | `2000` | Maximum age of the Block Scholes forward and the spot paired with it |
-| `block_scholes_svi_freshness_ms` | `60000` | Maximum age of a Block Scholes SVI observation |
+| **Setting** | **Mainnet** | **Testnet** | **Meaning** |
+| --- | --- | --- | --- |
+| `use_pyth_spot_for_forward` | `true` | `true` | A fresh Pyth spot reanchors the Block Scholes forward basis |
+| `pyth_spot_freshness_ms` | `2000` | `2000` | Maximum age of a Pyth spot used to reanchor the forward |
+| `block_scholes_price_freshness_ms` | `2000` | `2000` | Maximum age of the Block Scholes forward and the spot paired with it |
+| `block_scholes_svi_freshness_ms` | `60000` | `10000` | Maximum age of a Block Scholes SVI observation |
 
 Both 2,000 ms windows are the package defaults at this pin; the earlier `predict-8-21` deployment ran both at 10,000 ms.
 
@@ -496,7 +500,7 @@ These 4 values are mutable protocol state with no public getter, so read them ra
 | Mainnet | `0x5fa6efbe7691809565a660adde23f0c184ca1d19cefafa4e1c88d655fe279580` |
 | Testnet | `0x422a45c31128e69d0310ab3bed28bd14f730acf9f5681f70936d20c60d26bfb0` |
 
-One route that looks plausible returns nothing. The deployed package declares `PricingConfigUpdated` and `EwmaConfigUpdated` but emits them only when an admin changes a value. As of 2026-09-14 no admin setter has run on either network's `ProtocolConfig`, so an event query for either type returns an empty list, and polling events tells you nothing beyond that the values above are still the deployed ones. The public read services index the earlier `predict-8-21` deployment, not the 2 current deployments, so their `GET /config` is not a source for these values either.
+The package also emits `PricingConfigUpdated` with the complete pricing configuration whenever an admin changes one of these values, which gives a history stream, but an empty result for a network where no setter has run tells you nothing beyond that the deployed values still hold, so read the object for the current values. Protocol version 4 never emits `EwmaConfigUpdated`, because its EWMA setters abort. The public read services index the earlier `predict-8-21` deployment, not the 2 current deployments, so their `GET /config` is not a source for these values either.
 
 ### The same-transaction write guard
 
@@ -511,7 +515,7 @@ A match aborts with `pricing::EOracleWrittenInThisTransaction`, error code `15`.
 
 ### Pricing errors
 
-`deepbook_predict::pricing` raises the full set:
+`deepbook_predict::pricing` raises the full set. Codes `0` to `16` exist on both networks, and codes `17` to `19` only on protocol version 4:
 
 | **Code** | **Name** | **Raised when** |
 | --- | --- | --- |
@@ -532,6 +536,9 @@ A match aborts with `pricing::EOracleWrittenInThisTransaction`, error code `15`.
 | `14` | `EBlockScholesMinVarianceInvalid` | The smallest total variance the surface admits, `min_variance_increment + a`, is not positive |
 | `15` | `EOracleWrittenInThisTransaction` | This transaction wrote a contributing observation |
 | `16` | `EBlockScholesInputTooWide` | A stored `u128` provider value exceeds `u64::MAX` when Predict narrows it to pricing width |
+| `17` | `EPythSpotUnavailable` | Declared in protocol version 4 and raised by no deployed path, because the immediate trades that would refuse a missing Pyth spot are retired there |
+| `18` | `EPythSpotStale` | Declared in protocol version 4 and raised by no deployed path, for the same reason |
+| `19` | `EPythForwardRequired` | Protocol version 4: a queued order's placement ran while `use_pyth_spot_for_forward` is off |
 
 Of those codes, 3 are narrower than their names suggest, and confusing them sends you looking at the wrong input.
 

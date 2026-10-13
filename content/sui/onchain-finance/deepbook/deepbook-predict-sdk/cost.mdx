@@ -52,8 +52,8 @@ answer: >-
   fee component is exported separately. These are local previews for a UI; the
   read.quoteMint, read.quoteMintCost, and read.quoteRedeem dry runs remain the
   pre-trade check against real account and market state.
-last_verified: 2026-09-23
-verified_against: '@mysten/deepbook-v3 2.6.1 (ts-sdks 56d51645); predict protocol version 3 and sessions 2 on both networks, publication records at deepbookv3 abb4cfd9'
+last_verified: 2026-10-13
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434'
 ---
 
 The `cost` namespace on `@mysten/deepbook-v3/predict` prices a Predict trade without touching the chain. It is an exact integer port of the deployed fee path, not an estimate: feed it the same inputs the execution sees and it returns the same raw amounts the contract charges. That makes it the right tool for an order ticket that has to re-price on every keystroke, for a board of candidate strikes, and for sizing a spend before a transaction exists.
@@ -80,7 +80,7 @@ Every entry point in this namespace takes the same 3 kinds of input.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="136-155" />
 
-`cost.SHIPPED_FEE_POLICY` is the template both deployments shipped with: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Use it to get a preview on screen, and verify against the market before you price money on it:
+`cost.SHIPPED_FEE_POLICY` is the template the contracts compile in: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Neither deployment runs it any more. Both now charge a 20.4 percent base fee, ramp the fee to 3 times over the last 60 seconds, and admit entries in a narrow band, 25 to 75 percent on Mainnet, so a preview built from it comes out low. Version 2.7.0 adds `read.feePolicy(market)`, one object read that returns the policy a market snapshotted at creation, ready to pass as `fees`. Use that for a live market:
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="164-174" />
 
@@ -185,7 +185,8 @@ Each term of the fee path is exported on its own, for a UI that itemizes a charg
 | `cost.expiryFeeMultiplier(policy, timeToExpiryMs)` | `strike_exposure_config::expiry_fee_multiplier` | 1.0 outside the ramp window, rising linearly to the maximum at expiry |
 | `cost.tradingFee(policy, boundaries, quantity, timeToExpiryMs)` | The per-leg trading fee | One leg per finite boundary, each floored and ramped on its own |
 | `cost.builderFee(fee, quantity, hasBuilderCode)` | `expiry_market::builder_fee_amount` | The builder's cut of the trading fee, capped as a share of quantity |
-| `cost.feeIncentiveSubsidy(fee, feeIncentiveBalance)` | The sponsor's share of a mint fee | The part of the trading fee the trader does not pay |
+| `cost.feeIncentiveSubsidy(fee, feeIncentiveBalance, rate)` | The sponsor's share of a mint fee | The part of the trading fee the trader does not pay. `rate` defaults to 20 percent |
+| `cost.settledPayout(orderId, settlementPriceRaw, tickSizeRaw)` | What an order pays at a settlement price | Mirrors `strike_exposure::settled_order_payout`. Pass `read.settlement`'s raw price and tick size. It computes what is owed, and the queue's `OpenRecordSettled` event is the payment |
 | `cost.congestionPenaltyRate(policy, state, gasPrice)` | The gas-price congestion surcharge | A per-unit rate, not an amount, so a budget search can re-price it at every candidate |
 | `cost.inventoryImpactPotential(policy, liability)` | `strike_exposure::inventory_impact_potential_for_liability` | The book-level potential a trade is charged the difference of |
 | `cost.mintInventoryImpact(...)` | The mint-side impact charge | The charge added to a mint's debit |
@@ -193,7 +194,7 @@ Each term of the fee path is exported on its own, for a UI that itemizes a charg
 | `cost.rangeProbability(boundaries)` | The range's own probability | `lowerUp` minus `higherUp`, saturating at zero |
 | `cost.boundaryProbabilities(pricer, lower, upper)` | The local pricer | Boundary probabilities from a snapshot and a pair of strikes |
 
-The scale constants are exported too: `cost.FLOAT_SCALING`, `cost.POSITION_LOT_SIZE`, `cost.MIN_PREMIUM`, `cost.BUILDER_FEE_MULTIPLIER`, `cost.MAX_BUILDER_FEE_RATE`, `cost.FEE_INCENTIVE_SUBSIDY_RATE`, and `cost.MAX_QUANTITY_LOTS`.
+The fee subsidy rate became admin-set in Predict protocol version 4, so version 2.7.0 takes it as an input: pass `feeIncentiveSubsidyRate`, the raw 1e9-scaled `protocol_config::fee_incentive_subsidy_rate`, which `read.queue(market).protocol.feeIncentiveSubsidyRate` returns. Omitted, the functions assume 20 percent, which misquotes the subsidy whenever the live rate differs, unless the market's incentive balance caps the subsidy under both rates. On protocol version 4 the congestion surcharge is retired, so leave `penaltyRate` at its default of 0. The scale constants are exported too: `cost.FLOAT_SCALING`, `cost.POSITION_LOT_SIZE`, `cost.MIN_PREMIUM`, `cost.BUILDER_FEE_MULTIPLIER`, `cost.MAX_BUILDER_FEE_RATE`, `cost.FEE_INCENTIVE_SUBSIDY_RATE`, which 2.7.0 deprecates, and `cost.MAX_QUANTITY_LOTS`.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="45-58" />
 

@@ -41,23 +41,25 @@ questions:
   - What do the predict, account, and sessions subpaths of @mysten/deepbook-v3 export?
   - How do I handle errors and decode receipts from the DeepBook Predict SDK?
 answer: >-
-  Install @mysten/deepbook-v3 version 2.6.1 or later with its @mysten/sui
+  Install @mysten/deepbook-v3 version 2.7.0 or later with its @mysten/sui
   version 2.30.0 or later peer dependency, then register the Predict client
-  with client.$extend(predict({ network })). The client exposes transaction
+  with client.$extend(predict({ network })). Version 2.7.0 adds the queued-order
+  flow that Testnet's delayed execution requires, and read.executionMode tells
+  an app which trade path a network is on. The client exposes transaction
   builders that return unsigned transactions, reads that simulate against a
   full node with no indexer, and pure decoders that turn an execution result's
   events into typed receipts. The SDK throws PredictInputError for input it
   rejects before building anything and PredictMoveError for a Move abort during
   a simulation.
-last_verified: 2026-09-23
-verified_against: '@mysten/deepbook-v3 2.6.1 (ts-sdks 56d51645); predict protocol version 3 and sessions 2 on both networks, publication records at deepbookv3 abb4cfd9'
+last_verified: 2026-10-13
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434'
 ---
 
 The DeepBook Predict SDK builds every Predict transaction, reads live Predict state through your Sui client, and decodes the receipts that executed transactions emit. It ships as the `/predict` subpath of the `@mysten/deepbook-v3` TypeScript package, and [DeepBook Predict](/onchain-finance/deepbook/deepbook-predict) explains the markets, positions, and pool behind each call.
 
 ## Install {#install}
 
-Install `@mysten/deepbook-v3` version 2.6.1 or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with its `@mysten/sui` peer dependency at version 2.30.0 or later. The package requires Node.js 22 or later.
+Install `@mysten/deepbook-v3` version 2.7.0 or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with its `@mysten/sui` peer dependency at version 2.30.0 or later. The package requires Node.js 22 or later. Version 2.7.0 is the first release that resolves the current package of every Predict deployment and places queued orders, which every Testnet trade has been since Testnet's delayed-execution cutover on 2026-10-09. Earlier releases build immediate trades that Testnet aborts.
 
 ```sh npm2yarn
 npm install @mysten/deepbook-v3 @mysten/sui
@@ -97,11 +99,13 @@ To construct the client without `$extend`, pass `network`, your Sui client, and 
 
 The Predict client exposes 3 groups of members:
 
-- `client.predict.tx`: Each builder returns a new, unsigned `Transaction` for your wallet or signer to execute, and the SDK never signs or holds keys. The 4 builders that resolve a market, `mint`, `mintAmount`, `redeem`, and `claimSettled`, return a `Promise<Transaction>`.
+- `client.predict.tx`: Each builder returns a new, unsigned `Transaction` for your wallet or signer to execute, and the SDK never signs or holds keys. The builders that resolve a market, such as `mint`, `redeem`, `claimSettled`, `refund`, and the queued `enqueue*` builders, are asynchronous. The queued builders return a `QueuedOrderPlan`, the transaction plus a preview, after a preflight of the queue gates, the balance, and the order's limits. A few checks run only onchain at placement, so a preflight that passes does not guarantee the order lands.
 - `client.predict.read`: Each read runs a simulated transaction or a core object read against the full node, so reads need neither an indexer nor a Predict server.
 - `client.predict.decode`: Each decoder turns an executed transaction's events into a typed receipt with no network call. See [Decode transaction results](#decode).
 
-The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#wrapper-id) covers, and `cfg`, the `PredictConfig` that the client uses.
+The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#wrapper-id) covers, `queueIdFor(marketId)`, which derives a market's queue ID, and `cfg`, the `PredictConfig` that the client uses.
+
+The 2 recorded networks run different trade paths. Testnet runs Predict protocol version 4, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders. Mainnet runs protocol version 3, where `tx.mint` and its siblings fill immediately, until its own cutover. `client.predict.read.executionMode()` returns `'delayed'` or `'immediate'`, so branch on it rather than on the network name. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers both paths.
 
 ## Configuration {#configuration}
 
@@ -112,14 +116,19 @@ The SDK records the Testnet and Mainnet deployments, so you never transcribe a p
 `PredictConfig` holds everything a builder or read needs to address a single deployment:
 
 - `network`: The network name for Testnet or Mainnet, or `'custom'` for a configuration you build yourself.
-- `packages`: The `predict`, `account`, and `propbook` package IDs.
-- `objects`: The 5 shared object IDs that builders and reads pass as arguments.
+- `packages`: The `predict`, `account`, and `propbook` package IDs, `predictV1`, the original Predict ID, and on a network with delayed execution `predictDelayedExecution`, `predictOrders`, and `predictMath`.
+- `objects`: The 5 shared object IDs that builders and reads pass as arguments, plus `orderDesk` and `queueRegistry` on a network with delayed execution.
 - `quoteCoinType`: The coin type that every amount settles in.
 - `coinTypes`: The `plp` and `deep` coin types.
 - `units`: The lot size, fixed-point scale, and decimals the deployment records.
 - `underlyings`: One entry per underlying symbol, such as `BTC`, each with its propbook underlying ID and its 3 oracle object IDs.
+- `oracle`: Optional objects only a queued-order filler needs, such as Pyth Lazer's `pythLazerState`.
 
-<ImportContent source="packages/deepbook-v3/src/predict/config/types.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="29-60" />
+<ImportContent source="packages/deepbook-v3/src/predict/config/types.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="13-41" />
+
+<ImportContent source="packages/deepbook-v3/src/predict/config/types.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="59-110" />
+
+Version 2.7.0's Testnet configuration records the delayed-execution fields, and its Mainnet configuration leaves them unset until the Mainnet rollout is synced, so the queued builders and reads throw `PredictInputError` on Mainnet until then. `predictDelayedExecution` is the Predict version that introduced the delayed-execution types and events, `0x0654ecbe…` on Testnet, which the decoders match those events against.
 
 Resolve the configuration once at startup and pass the result down, rather than inlining an ID at a call site. Every value in it is deployment-specific, and most differ between Mainnet and Testnet. The `config.ts` sample in [Create the client](#client) keeps them in a single network-keyed record: a `NETWORK` constant selects Testnet or Mainnet, and every other value derives from it.
 
@@ -153,6 +162,8 @@ Each value changes per deployment for its own reason:
 | **Value** | **Why it changes per deployment** |
 | --- | --- |
 | `packages.predict`, `packages.account`, `packages.propbook` | Each deployment publishes its own packages. Move call targets and event type prefixes derive from them. |
+| `packages.predictDelayedExecution`, `packages.predictOrders`, `packages.predictMath` | Each deployment publishes its own order-flow and math packages when it rolls out delayed execution, and the Predict version that introduces it differs per network. |
+| `objects.orderDesk`, `objects.queueRegistry` | The order-flow package's publish shares them once per deployment. |
 | `objects.registry`, `objects.protocolConfig`, `objects.poolVault` | Each deployment shares its own Predict state objects, which every trading and liquidity call takes as arguments. |
 | `objects.oracleRegistry`, `objects.accountRegistry` | The Propbook and account packages share their own registries per deployment. |
 | `quoteCoinType` | Mainnet quotes in native USDC. Testnet quotes in a mintable test coin with the same module path and decimals but a different package. |
@@ -196,12 +207,13 @@ The helpers use fixed 6-decimal and 9-decimal scales. Of the configuration's `un
 
 ## Errors {#errors}
 
-Almost every failure you handle in application code surfaces as either of 2 typed errors that `/predict` exports:
+Almost every failure you handle in application code surfaces as one of 3 typed errors that `/predict` exports:
 
 - `PredictInputError`: The SDK rejects an argument before it builds anything. Common causes are a strike off the admission grid, a quantity that is not a whole lot, an amount with more decimals than its coin allows, and an unknown underlying.
-- `PredictMoveError`: A simulation hits a Move abort. It carries 3 fields: `module` names the aborting module, `code` is the exact abort code as a `bigint`, and `abortName` is the `E`-prefixed constant name when the node can decode one.
+- `PredictMoveError`: A simulation hits a Move abort. It carries 3 fields: `module` names the aborting module, `code` is the exact abort code as a `bigint`, and `abortName` is the `E`-prefixed constant name, or `null` when neither the node nor the SDK's table can name it.
+- `PredictPreflightError`: A queued-order builder or plan refuses an order before it builds anything, because the chain would abort it. Its `code` is one of the preflight codes, such as `fee`, `entry-band`, or `stuck`, which [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#enqueue-plan) lists.
 
-The node decodes a constant name only for an error constant that its module declares with `#[error]`, and only over gRPC or GraphQL. The Predict, account, and sessions packages declare their error constants as plain `u64` codes, so `abortName` is `null` for their aborts, and `module` with `code` identifies the error. A simulation that fails without a Move abort throws a plain `Error` carrying the node's message.
+The node decodes a constant name only for an error constant that its module declares with `#[error]`, and only over gRPC or GraphQL. The Predict, account, and sessions packages declare their error constants as plain `u64` codes, so from version 2.7.0 the SDK names most of their aborts itself, from a table generated from the Move sources, and `abortName` carries that name. A module the table does not cover, or an unknown code, still yields `null`, so keep `module` and `code` as the reliable identifier. Earlier releases left it `null` for these packages. `describePredictError(error)` turns a `PredictMoveError` into readable text for the aborts an app meets on the queued paths, such as a stale oracle input, which clears within seconds and deserves a retry rather than an error page. A simulation that fails without a Move abort throws a plain `Error` carrying the node's message.
 
 Resolve `module` before you look up `code`. Error numbers restart at `0` in every module, so the same number means something different depending on where it came from. [Find the page for a Move abort](/onchain-finance/deepbook/deepbook-predict/contract-information#abort-module-map) maps each module to the reference page carrying its table.
 

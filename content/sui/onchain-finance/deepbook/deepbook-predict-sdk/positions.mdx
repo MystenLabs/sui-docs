@@ -2,8 +2,10 @@
 title: Predict Positions SDK
 sidebar_label: Positions
 description: >-
-  Use the DeepBook Predict SDK to quote, mint, close, and claim positions, list
-  the positions an account holds, and decode the receipt of each trade.
+  Use the DeepBook Predict SDK to plan, queue, follow, sell, and refund queued
+  orders on networks past the delayed-execution cutover, to quote, mint,
+  close, and claim positions on the immediate path, and to decode the receipt
+  of each trade.
 keywords:
   - deepbook predict
   - predict SDK
@@ -16,10 +18,15 @@ keywords:
   - redeem position
   - claim settled position
   - order ID
+  - planMint
+  - enqueuePlan
+  - queued order
+  - waitForOutcome
 goal:
   description: >-
-    Developer can quote, mint, close, and claim DeepBook Predict positions with
-    the TypeScript SDK under explicit slippage caps, and track order IDs across
+    Developer can place, follow, sell, and refund queued DeepBook Predict orders
+    with the TypeScript SDK, and on the immediate path quote, mint, close, and
+    claim positions under explicit slippage caps and track order IDs across
     partial closes
   requires:
     - has_frontmatter:
@@ -39,12 +46,21 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
+  - How do I place a queued DeepBook Predict order with the TypeScript SDK?
+  - How do I follow a DeepBook Predict queued order until it fills?
   - How do I mint a DeepBook Predict position with the TypeScript SDK?
   - Does the DeepBook Predict SDK cap slippage on a mint or a close by default?
   - How do I close or claim a DeepBook Predict position with the SDK?
   - How do I spend an exact total on a DeepBook Predict mint?
 answer: >-
-  Call `read.quoteMint` to dry-run the mint against your account, then build it
+  On a network past the delayed-execution cutover, such as Testnet, call
+  `read.planMint` to quote an order and turn a slippage in cents per contract
+  into its limits, build it with `tx.enqueuePlan`, read the record ID with
+  `decode.enqueue`, and follow it with `read.waitForOutcome`. A filled mint is
+  an Open record in the market's queue, which `read.planSell` and
+  `tx.enqueuePlan` sell early and the queue pays at settlement. On the
+  immediate path, call `read.quoteMint` to dry-run the mint against your
+  account, then build it
   with `tx.mint` and pass a `maxCost` and a `maxProbability` derived from the
   quote, because the SDK sends `U64_MAX` for any cap you omit. `tx.mintAmount`
   sizes a mint by premium budget, and its optional `maxCost` is the only bound
@@ -55,29 +71,132 @@ answer: >-
   close-side floors, `tx.claimSettled` claims a settled position in full, and
   the decoded receipts carry the order ID you persist to close a position
   later.
-last_verified: 2026-09-23
-verified_against: '@mysten/deepbook-v3 2.6.1 (ts-sdks 56d51645); predict protocol version 3 and sessions 2 on both networks, publication records at deepbookv3 abb4cfd9'
+last_verified: 2026-10-13
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3, Testnet predict protocol version 4 at deepbookv3 29117434; queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13'
 ---
 
-The position functions in the DeepBook Predict SDK quote, open, close, and claim range positions, list the positions an account holds, and decode the receipt of each trade. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) explains the mint and redeem mechanics that these builders wrap.
+The position functions in the DeepBook Predict SDK place and follow queued orders, quote, open, close, and claim range positions on the immediate path, list the positions an account holds, and decode the receipt of each trade. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) explains the mechanics that these builders wrap.
+
+The 2 networks trade differently. Testnet runs Predict protocol version 4, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders) there. Mainnet runs protocol version 3 until its own cutover, where trades fill immediately, so use [Mint functions](#mint-functions) and [Close functions](#close-functions) there. `read.executionMode()` tells your app which path a network is on, so it can switch at the cutover without a redeploy.
 
 Every function is a member of `client.predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) shows how to register. Each builder and quote that targets a market takes the market as a [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets#market-descriptor), then reads the chain to resolve the market object and caches it per client, so those functions are asynchronous. The SDK takes and returns amounts as decimal USDC values and converts them to 6-decimal base units; see [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units).
 
 :::caution
 
-The position builders default to uncapped slippage. `tx.mint` sends `U64_MAX` for `maxCost` or `maxProbability` when you omit it, `tx.mintAmount` sends `U64_MAX` when you omit `maxCost`, and `tx.redeem` always sends `0` for both close-side floors. Quote immediately before each trade, derive every mint cap from the quote, and use a builder that takes floors when a close needs them.
+The immediate position builders default to uncapped slippage. `tx.mint` sends `U64_MAX` for `maxCost` or `maxProbability` when you omit it, `tx.mintAmount` sends `U64_MAX` when you omit `maxCost`, and `tx.redeem` always sends `0` for both close-side floors. Quote immediately before each trade, derive every mint cap from the quote, and use a builder that takes floors when a close needs them.
 
 `tx.mintCost` is the exception: its `spend` is the sizing input, so the debit cannot exceed it and there is no cap to forget. Its `minQuantity` is still yours to set, because a `0` floor accepts however few contracts the budget buys after an adverse move.
 
 :::
 
+## Queued orders {#queued-orders}
+
+From Predict protocol version 4, a mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement on Testnet, and a keeper or any other caller then fills it at that price or refunds it. Version 2.7.0 of the SDK adds the queued path to `client.predict` and records Testnet's delayed-execution deployment. Its Mainnet configuration does not record one yet, so the queued functions throw `PredictInputError` there until the Mainnet rollout is synced, unless you pass a `config` that sets `packages.predictDelayedExecution`, `packages.predictOrders`, `objects.orderDesk`, and `objects.queueRegistry`.
+
+A queued order differs from an immediate trade in 4 ways:
+
+- **Placement and fill are separate transactions.** The enqueue debits the order's budget and a flat order fee into the order's escrow and returns a record ID. The fill lands about a second later in another caller's transaction. Unused budget comes back at the fill.
+- **The slippage is cents per contract.** `slippageCents` bounds how far the all-in price per `$1` of payout may rise above the quote's price without the fee subsidy, so `slippageCents: 10` lets a contract quoted at 42 cents before the subsidy fill at up to 52 cents, fees included. It is never a percentage. `'auto'` sizes it from a model of the price's movement until τ.
+- **A filled mint is an Open record.** It stays in the market's queue rather than entering the account, so `read.positions` does not list it. Follow it by its record ID, sell it with another queued order, and let the queue's settlement walk pay it after expiry.
+- **A refund is a normal outcome.** An order that misses its limits at τ, or that the market cannot cover, is refunded with a reason code, and a refund for the order's own limits or for admission keeps the order fee.
+
+### `read.executionMode` {#execution-mode}
+
+Use `read.executionMode` to find out which trade path a network is on. It returns a `Promise<ExecutionMode>`, one of `'immediate'`, `'awaiting-cutover'`, `'delayed'`, `'unsupported'`, or `'retired'`. It reads the `ProtocolConfig` version watermark and checks whether the configuration records delayed execution. `'retired'` means a later upgrade raised a version floor above the code this SDK release calls, so upgrade the SDK.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2382-2382" />
+
+### `read.planMint` {#plan-mint}
+
+Use `read.planMint` to build a purchase form's state and the limits a queued mint carries. It returns a `Promise<MintPlan>`. It quotes the order at the current price, for a visitor without an account too, turns the slippage into the enqueue's limits, and runs the enqueue builder's preflight, so `accepting` is `false`, with a typed `refusal`, when the order would be refused now. The preflight covers the queue gates, the balance, and the order's limits, not every onchain check.
+
+It takes these parameters:
+
+- `owner`: The address that owns the account.
+- `m`: The market and strike, as a binary or range market descriptor. Snap a numeric strike onto the admission grid with `snapStrike`, and prefer a strike near the money, because admission refuses an entry probability outside the market's band.
+- `opts`: A `PlanMintOptions` object: either `amount`, an all-in spend in USDC that includes the order fee unless `orderFee` is `'exclusive'`, or `quantity`, an exact payout, plus `slippageCents`.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2459-2463" />
+
+A `MintPlan` carries `potentialPayout`, `minPayout` at the worst price, `payoutMultiple`, `pricePerContract`, `worstPricePerContract`, `orderFee`, `budget`, `totalDebit`, the account's `balance`, `maxNow`, the largest amount the market and the balance take now, a `timing` preview of τ and the deadline, and the `order` the plan builds. The limits are sized from the price without the fee subsidy, because placement checks the order without it. `planMint` throws a `PredictPreflightError` with code `entry-band` for a strike outside the band, `min-premium` for a budget that buys less than 1 USDC of premium, and `past-cutoff` for a market past its expiry, where the chain has no live price to quote. Near the cutoff, the plan's `refusal` is `past-cutoff` instead, and the preview runs on the device clock, so the chain can still refuse an order placed in the last seconds.
+
+### `tx.enqueuePlan` {#enqueue-plan}
+
+Use `tx.enqueuePlan` to queue the order a plan describes. It returns a `Promise<QueuedOrderPlan>`, the `transaction` and a `preview` of τ, the deadline, the escrow, the order fee, and whether a sell needs funding. Pass the descriptor the mint plan was planned with, or the coordinates a sell plan took. It reads the gates and the balance again and throws a `PredictPreflightError` for a refused plan or a balance that now escrows less than the plan's budget, and a `PredictInputError` for an order fee that rose since the plan or for another owner, market, strike, or record than the plan's target. Each enqueue it builds starts with a check that aborts the transaction if the order desk's fee rose between building and execution.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="1934-1938" />
+
+The lower-level builders `tx.enqueueMint`, `tx.enqueueMintAmount`, `tx.enqueueMintCost`, and `tx.enqueueSell` take the limits directly, in SDK units, and run the same preflight. Every queued mint needs a finite cost cap, because the chain aborts a zero or unlimited `max_cost` with `EMintCostCapRequired`.
+
+The preflight codes are `not-live`, `no-queue`, `retired`, `paused`, `stuck`, `past-cutoff`, `queue-full`, `account-cap`, `fee`, `market-cash`, `min-premium`, `entry-band`, `cost-above-payout`, `below-min-sell`, `record-not-open`, and `not-record-owner`. `fee` means the balance cannot cover the order fee, or the plan's whole debit, so prompt a deposit. Some checks run only on chain at placement, such as the market's SVI age and room in the payout tree for a new strike, and those abort the transaction rather than raising a preflight code. `describePredictError` turns any of these aborts into readable text.
+
+### `decode.enqueue` {#decode-enqueue}
+
+Use `decode.enqueue` to read the record ID, τ, deadline, escrow, and order fee from the enqueue's `OrderEnqueued` event. It throws unless the result holds exactly one, and `decode.enqueues` returns every enqueue in a batched transaction. Persist `recordId`: it is the handle for everything that follows, and nothing onchain lists an account's queue records for you.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="3047-3048" />
+
+### `read.waitForOutcome`, `read.order`, and `read.orders` {#wait-for-outcome}
+
+Use `read.waitForOutcome` to poll a record until it is filled, refunded, or closed. It returns a `Promise<QueuedOrderOutcome>` whose `outcome` is `'filled'`, `'refunded'`, `'closed'`, `'gone'`, or `'timeout'`, with the record's `order` view. It polls every 250 ms by default for up to 30 seconds, and keeps polling a record the full node does not show yet. After expiry, `'gone'` for a filled record means the queue paid it out and deleted it, not that the order was lost.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2872-2876" />
+
+`read.order(m, recordId)` and `read.orders(m, recordIds)` read records without waiting. Each record's `view.state` is `'placed'`, `'priced'`, `'refunding'`, `'filled'`, `'refunded'`, or `'closed'`. A filled record's `view.position` carries the packed `orderId` and the held quantity, and `view.sellable` reports whether it can be sold now. A keeper that commits a price and fills in one transaction moves an order from `'placed'` straight to `'filled'`, so do not count on seeing `'priced'`.
+
+### `read.planSell` {#plan-sell}
+
+Use `read.planSell` to plan an early sell of an Open record. It returns a `Promise<SellPlan>` with the `proceeds` at the current price, `net` after the order fee, the `minProceeds` and `minNet` floors at the worst price the slippage allows, and the `order` for `tx.enqueuePlan`. It throws `PredictPreflightError` with code `record-not-open` for a record that is not Open. A sell pays the order fee whatever it returns, so `net` is negative for a sell worth less than the fee. `read.quoteSell` returns the same quote without the plan.
+
+It takes these parameters:
+
+- `owner`: The address that owns the account and the record.
+- `m`: The market's `underlying`, `expiryMs`, and optional `marketId`.
+- `opts`: A `PlanSellOptions` object with the `recordId`, the payout `quantity` to sell, and `slippageCents`.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2762-2766" />
+
+The whole position moves into the sell's own record, so after a sell, including a partial one, the remainder lives under the sell's record ID. A sell the market cannot cover at the fill is refunded and the position returns to an Open record. When a sell's cash need is above the market's spare cash, `tx.enqueueSell` appends `rebalance_expiry_cash` after the enqueue by default, and its `fundMarket` option controls that.
+
+### `tx.refund`, `tx.claimParked`, and `tx.payOpen` {#refund}
+
+Keepers refund an order still unfinished 5 seconds after its τ, so these builders are recovery paths, and each is permissionless:
+
+- **`tx.refund(m, { maxOrders })`** refunds the market's orders past their deadline. Offer it only when a record's `view.canRequestRefund` is `true`, and never prepend it to other transactions. It needs no account and works during the emergency freeze.
+- **`tx.claimParked(m, recordId)`** sends a finished record's parked USDC, a refund or change its receive address could not take while denied, to that address once it is clear.
+- **`tx.payOpen(m, recordId)`** pays a settled Open record that the settlement walk skipped.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2012-2015" />
+
+### `read.settlement` and `cost.settledPayout` {#settlement}
+
+After expiry, `read.market`, `read.price`, and the quotes abort with `ELivePricingExpired`, and the queue's keeper settles the market, pays each Open record, and deletes it, usually within seconds. `read.settlement(m)` still works: it returns the settlement price as a decimal and as `settlementPriceRaw`, with `tickSizeRaw`, or `settled: false` until a keeper settles. Pass the stored `orderId` with those 2 raw values to `cost.settledPayout` for what the position is owed at that price, in raw USDC. That is a calculation, not proof of payment: the payout walk's `OpenRecordSettled` event is the payment to the account's receive address, and a record the walk skipped, because the market was short of cash or the address was denied, emits `OpenRecordPayoutSkipped` instead and stays Open until `tx.payOpen` pays it. `read.pendingFunds(owner)` reports refunds, sell proceeds, and payouts that reached the account but are not settled into its stored balance yet, which `read.balance` already counts.
+
+<ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2973-2973" />
+
+### Queue decoders {#queue-decoders}
+
+`decode.queueEvents` returns every queue event in a result, tagged and in chain order, and `queue.reduceOrderEvents` folds a stream of them into the same order states the reads return, for an indexer or an event feed. The typed decoders are `decode.cohortCommits`, `decode.queuedFills`, `decode.queuedRefunds`, `decode.openRecordPayouts`, `decode.marketPayoutsCompleted`, `decode.recordFunds`, and `decode.queueOps`. They match the order-flow package's events against its original ID, and `decode.queuedFills` sits beside `decode.mints` and `decode.redeems`, which still read the Predict `OrderMinted` and `LiveOrderRedeemed` that every fill emits.
+
+### Queued-order examples {#queued-examples}
+
+The following sample checks the execution mode, picks a strike near the money, plans an all-in budget mint, queues it, and waits for the outcome:
+
+<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-mint" />
+
+The following sample sells an Open record early, offers a manual refund only for an overdue order, and reads a settled result:
+
+<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-sell" />
+
 ## Mint functions {#mint-functions}
+
+The functions in this section and the next are the immediate path, which runs on a network before its delayed-execution cutover. From protocol version 4 the builders `tx.mint`, `tx.mintAmount`, `tx.mintCost`, and `tx.redeem` abort with `EDelayedExecutionRequired`, and version 2.7.0 marks them and `read.quoteRedeem` deprecated. `read.quoteMint` and `read.quoteMintCost` keep working there: on a network whose configuration records delayed execution, they read the protocol version 4 quotes and preview a queued fill, with the order fee reported separately. `tx.claimSettled` keeps working on both for a position held in the account.
 
 Minting opens a position at the live price, and the SDK offers 3 sizing shapes: `tx.mint` fixes the payout quantity, `tx.mintAmount` fixes the premium budget, and `tx.mintCost` fixes the all-in budget. Every mint builder checks each numeric strike against the market's tick and admission grids, then builds 3 commands: load a fresh pricer from the oracle feeds, generate the account authorization from the sender, and call the Move mint function. Every mint is also subject to 3 limits:
 
 - **Lot size:** A payout quantity moves in whole lots of 0.01 USDC. `tx.mint` and `read.quoteMint` throw `PredictInputError` for a `quantity` that is not a whole lot, before they build anything. The budget builders round the fill down to a lot themselves.
-- **Premium floor:** The contract rejects a mint whose premium, `quantity` multiplied by the quoted entry probability, falls below 1 USDC, with `EPremiumBelowMinimum`. The lot is the granularity, not the minimum: no strike clears the floor below about 1.02 contracts, and a strike quoting near a 50 percent chance needs roughly 2. See [mint admission errors](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-admission-errors).
-- **No-trade window:** Inside the [no-trade window](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window), the last 2 seconds before expiry on both deployments, a mint aborts with `ETradeWindowClosed`. The SDK quote runs the same gate, but a quote taken just before the window opens can succeed while the mint that follows aborts.
+- **Premium floor:** The contract rejects a mint whose premium, `quantity` multiplied by the quoted entry probability, falls below 1 USDC, with `EPremiumBelowMinimum`. The lot is the granularity, not the minimum: on a Mainnet market with a `0.75` maximum entry probability no strike clears the floor below about 1.34 contracts, and a strike quoting near a 50 percent chance needs roughly 2. See [mint admission errors](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-admission-errors).
+- **No-trade window:** Inside the [no-trade window](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window), the last 10 seconds before expiry on Mainnet as of 2026-10-13, a mint aborts with `ETradeWindowClosed`. The SDK quote runs the same gate, but a quote taken just before the window opens can succeed while the mint that follows aborts.
 
 ### `read.quoteMint` {#quote-mint}
 
@@ -179,9 +298,7 @@ Use `tx.mintCost` to mint inside an all-in budget, the SDK form of `mint_exact_c
 
 :::info
 
-`tx.mintCost` and `read.quoteMintCost` call an entrypoint that arrived in `predict` package version 2. Both networks run at least that version onchain, so both calls work on either, and `@mysten/deepbook-v3` 2.6.1 addresses Mainnet correctly.
-
-The snippet below still carries the SDK's own comment saying Testnet only, which the Mainnet upgrade has since overtaken. A real lag does remain, on both networks now: 2.6.1 resolves a superseded `predict` address for each, running protocol version 2. These 2 calls arrived at that version, so they still work, but they stop once an admin raises a `ProtocolConfig` watermark to 3. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
+`tx.mintCost` and `read.quoteMintCost` call an entrypoint that arrived in `predict` package version 2, which Mainnet runs. The snippet below still carries the SDK's own comment saying Testnet only, which the Mainnet upgrade has since overtaken. On Testnet, version 2.7.0 of `read.quoteMintCost` reads the protocol version 4 quote instead and previews a queued fill, and `tx.mintCost` aborts there.
 
 :::
 
@@ -226,7 +343,7 @@ For a preview that costs no chain call at all, [Predict Cost SDK](/onchain-finan
 
 ## Close functions {#close-functions}
 
-Closing follows either of 2 paths, depending on whether the market has settled. Before settlement, `tx.redeem` closes all or part of a position at the live price. After settlement, `tx.claimSettled` claims the fixed payout. An order ID is unique only inside a single market, so both builders take the market along with the order ID.
+On the immediate path, closing follows either of 2 paths, depending on whether the market has settled. Before settlement, `tx.redeem` closes all or part of a position at the live price. After settlement, `tx.claimSettled` claims the fixed payout. An order ID is unique only inside a single market, so both builders take the market along with the order ID.
 
 ### `read.quoteRedeem` {#quote-redeem}
 
@@ -278,7 +395,7 @@ It takes these parameters:
 
 ### `tx.claimSettled` {#claim-settled}
 
-Use `tx.claimSettled` to claim a position whose market has settled, the SDK form of the owner-authorized `redeem_settled`. It returns a `Promise<Transaction>`. A settled claim always closes the order in full, so the builder takes no quantity, and the order ID identifies the position, so it takes no side or strike. It loads no pricer, because settlement has already fixed the price. The payout is the full quantity when the settlement price lands inside the position's range and 0 otherwise.
+Use `tx.claimSettled` to claim a position whose market has settled, the SDK form of the owner-authorized `redeem_settled`. It works on both networks for a position held in the account, including one minted before Testnet's cutover. It does not pay a queued fill, which the queue's settlement walk pays instead. It returns a `Promise<Transaction>`. A settled claim always closes the order in full, so the builder takes no quantity, and the order ID identifies the position, so it takes no side or strike. It loads no pricer, because settlement has already fixed the price. The payout is the full quantity when the settlement price lands inside the position's range and 0 otherwise.
 
 Before settlement the claim aborts with `EMarketNotSettled`, and expiry alone does not settle a market. Settlement runs through the permissionless `expiry_market::try_settle`, which the SDK does not build; see [Settle a market](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#settle-a-market). The no-trade window does not apply to a claim. The SDK also builds no `redeem_settled_permissionless`, the path that lets any address claim on a holder's behalf.
 
@@ -296,7 +413,7 @@ The SDK reads positions straight from the account's onchain position table, so n
 
 ### `read.positions` {#positions}
 
-Use `read.positions` to list every open position an owner's account holds. It returns a `Promise<OpenPosition[]>`, an entry for each position, each carrying the `marketId` and `orderId` that `tx.redeem`, `tx.claimSettled`, and `read.hasPosition` take. It returns an empty array for an owner with no Predict account or no Predict positions.
+Use `read.positions` to list every open position an owner's account holds. A queued fill is not one of them: it is an Open record in the market's queue, which `read.order` reads. It returns a `Promise<OpenPosition[]>`, an entry for each position, each carrying the `marketId` and `orderId` that `tx.redeem`, `tx.claimSettled`, and `read.hasPosition` take. It returns an empty array for an owner with no Predict account or no Predict positions.
 
 The SDK caches the account and table IDs per owner once the table exists, so later reads cost 1 request per page of positions. A transport failure throws rather than reading as an empty list, and a table that still has entries after 10 pages throws a plain `Error`. `OpenPosition` carries no underlying or expiry, so supply those yourself when you build the descriptor for a close.
 
@@ -362,7 +479,7 @@ It takes this parameter:
 
 ## Examples {#examples}
 
-The following samples live in the `examples/deepbook-predict` package, which type-checks against version 2.6.1 of `@mysten/deepbook-v3`. None of them signs a transaction: every builder returns an unsigned `Transaction`, and the SDK never holds keys.
+The following samples live in the `examples/deepbook-predict` package, which type-checks against version 2.7.0 of `@mysten/deepbook-v3`. They show the immediate path, so they run only on a network before its delayed-execution cutover, and [Queued-order examples](#queued-examples) shows the queued path. None of them signs a transaction: every builder returns an unsigned `Transaction`, and the SDK never holds keys.
 
 ### Quote and mint a directional position {#example-mint}
 
