@@ -62,7 +62,7 @@ Anyone operating a wallet (custodial, non-custodial, or exchange wallets) might 
 
 Initially, this should not happen often because most of the ecosystem continues to transfer coin objects. However, because there is no way to prevent funds from arriving at any given wallet through an address balance transfer, wallet implementors should be prepared.
 
-User funds can also become split across both coins and address balances. Balance queries through gRPC or GraphQL show the combined total. To send funds that include the address balance portion, you must either:
+User funds can also become split across both coins and address balances. Balance queries through gRPC or GraphQL show the combined total. To see how much of that total is held in coin objects and how much is held in the address balance, read the separate `coinBalance` and `addressBalance` fields described in [Changes to balance queries](#changes-to-balance-queries). To send funds that include the address balance portion, you must either:
 
 - Use `coinWithBalance` from the TypeScript SDK (v2+), which automatically draws from both sources.
 - Implement manual withdrawal logic as described in [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
@@ -116,7 +116,7 @@ The `balance` and `balances` fields on address types now include `addressBalance
 
 Use the balance changes that gRPC or GraphQL provide rather than computing them yourself.
 
-If you compute balance changes from checkpoint data, you must now process accumulator events from `TransactionEffects` in addition to coin object diffs.
+If you compute balance changes from checkpoint data, you must now process accumulator events from `TransactionEffects` in addition to coin object diffs. Accumulator events record address balance withdrawals and deposits, so coin object diffs alone miss funds that move through address balances.
 
 The Sui framework provides a helper for this process:
 
@@ -150,7 +150,7 @@ Each event contains the target address, a balance type, an operation (`Split` fo
 
 ### Existing contracts
 
-Contracts that accept `Coin<T>` or `Balance<T>` remain callable without changes. The `redeem_funds` functions (in the `sui::coin` and `sui::balance` modules respectively) convert withdrawals to the expected types within the PTB. For example:
+Contracts that accept `Coin<T>` or `Balance<T>` remain callable without changes. The `redeem_funds` functions (in the `sui::coin` and `sui::balance` modules respectively) convert withdrawals to the expected types within the programmable transaction block (PTB). For example:
 
 ```
 inputs: [withdrawal<0x2::sui::SUI>(100)]
