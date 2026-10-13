@@ -97,7 +97,7 @@ Collateral is the Move type `usdc::usdc::USDC`. On Mainnet that resolves to nati
 
 :::
 
-## The `ExpiryMarket` shared object {#expiry-market}
+## What is the `ExpiryMarket` shared object? {#expiry-market}
 
 `ExpiryMarket` has the `key` ability, and the registry shares it at creation, so any transaction can name it as an input. Authorization comes from the arguments a function demands, not from object ownership.
 
@@ -113,7 +113,7 @@ Collateral is the Move type `usdc::usdc::USDC`. On Mainnet that resolves to nati
 | `mint_paused` | `bool` | When true, new mints abort. Every other flow stays available. |
 | `valuation_stamp` | `Option<ValuationStamp>` | `some` from a pool flush's snapshot stage until this market's `value_expiry` runs or the stamp goes stale. Trading never reads it and never waits on it. |
 
-The field order in the table is declaration order, which is also the Binary Canonical Serialization (BCS) order of the object. `ValuationStamp` holds the flush sequence number and the market's cash and inventory-impact reserve at the snapshot instant; see [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#the-flush) for the flush that writes it.
+The field order in the table is declaration order, which is also the Binary Canonical Serialization (BCS) order of the object. `ValuationStamp` holds the flush sequence number and the market's cash and inventory-impact reserve at the snapshot instant; see [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) for the flush that writes it.
 
 <details>
 <summary>`ExpiryMarket` source</summary>
@@ -151,6 +151,11 @@ The result has 3 properties that govern how you use it:
 - **Abilities:** `Pricer` has `copy` and `drop` but no `store`. You cannot save it in an object or carry it between transactions, so every transaction that prices anything must call `load_live_pricer` first. Because it has `drop`, a block that ends up not using the value is still valid. Only the package constructs and thaws the storable `FrozenPricer` that a pool flush keeps between transactions, and no trade function accepts it.
 - **Market binding:** A pricer binds to one market. It records `market.id()`, and any priced call that receives a pricer built for a different market aborts with `EWrongPricer`.
 - **Oracle validation:** The load takes 4 Propbook objects and validates 3 of them: it checks the `PythFeed`, the `BlockScholesValueStore`, and the `BlockScholesSVIStore` each against the underlying's current canonical binding, and a mismatch aborts inside `pricing`. The load does not check the `OracleRegistry`, because it is the authority the load checks the other 3 against. The load also rejects an observation written earlier in the same transaction, and it aborts with `pricing::ELivePricingExpired` at or after the market's expiry.
+
+In a programmable transaction block, a priced flow therefore runs in this order:
+
+1. Call `load_live_pricer` for the market.
+1. Pass the resulting `Pricer` to each priced call on that same market in the same block, such as a quote, a mint, `redeem_live`, `current_nav`, or `live_order_value`.
 
 The load judges freshness against each input's own source timestamp: the Pyth feed timestamp and, for the Block Scholes price, forward, and stochastic volatility inspired (SVI) inputs, the provider's per-update timestamp. Both deployments run the Pyth spot and Block Scholes price windows at 2,000 ms. A chain read on 2026-10-13 found the SVI window at 60,000 ms on Mainnet and 10,000 ms on Testnet.
 
@@ -221,11 +226,11 @@ public fun quote_mint_exact_cost_for_account(
 
 The difference is whose terms the quote reflects. `quote_mint` prices an anonymous taker with no builder code. `quote_mint_for_account` reads the account's sticky builder code so the quoted builder fee matches what that account pays, and in budget mode it caps `max_premium` by the account's available USDC, including funds delivered through the accumulator but not yet settled.
 
-Set `exact_quantity` to `true` to price a fixed size, in which case `min_quantity` carries the requested quantity. Set it to `false` to size a lot-rounded fill under the `max_premium` budget. The congestion surcharge each quote reports uses the pre-update congestion estimate, which is the same estimate a mint in the same state charges.
+Set `exact_quantity` to `true` to price a fixed size, in which case `min_quantity` carries the requested quantity. Set it to `false` to size a lot-rounded fill, a quantity in whole lots, under the `max_premium` budget. The Testnet [order-desk policy](#delayed-execution-policy) lists one lot as `10000` base units. The congestion surcharge each quote reports uses the pre-update congestion estimate, which is the same estimate a mint in the same state charges.
 
-`quote_mint_exact_cost_for_account`, new in package version 2, is the read-only twin of [`mint_exact_cost`](#mint-a-position): it runs the same budget search against the same state and returns the fill that budget buys, along with that fill's cost decomposition. It takes the account for the same reasons `quote_mint_for_account` does, plus one more: the chain caps the budget at the account's available USDC before sizing, and the quote reproduces that cap. It is the natural source of a `min_quantity` floor for the mint that follows. Like the other 2 quotes, it does not preflight expiry cash backing or exposure-index capacity.
+`quote_mint_exact_cost_for_account`, new in package version 2, is the read-only twin of [`mint_exact_cost`](#mint-a-position): it runs the same budget search against the same state and returns the fill that budget buys, along with that fill's cost decomposition. It returns the same `MintQuote` struct as the other 2 quotes, so read that fill and its cost decomposition through the getters in [The `MintQuote` struct](#mint-quote). It takes the account for the same reasons `quote_mint_for_account` does, plus one more: the chain caps the budget at the account's available USDC before sizing, and the quote reproduces that cap. It is the natural source of a `min_quantity` floor for the mint that follows. Like the other 2 quotes, it does not preflight expiry cash backing or exposure-index capacity.
 
-Both quotes run the entry-probability band before they size anything. For a two-sided range the band applies 3 times: to the range probability, to the probability that settlement ends above the lower strike, and to the probability that it ends at or below the higher strike. An open end contributes no check, and the finite end of a directional position has the same probability as the position itself. The quoted `trading_fee` sums one fee for each finite boundary, as [Fee components](/onchain-finance/deepbook/deepbook-predict/design#fee-components) describes.
+Both quotes run the entry-probability band before they size anything. For a two-sided range the band applies 3 times: to the range probability, to the probability that settlement ends above the lower strike, and to the probability that it ends at or below the higher strike. An open end contributes no check, and the finite end of a directional position has the same probability as the position itself. The quoted `trading_fee` sums one fee for each finite boundary, as [Fee components](/onchain-finance/deepbook/deepbook-predict/design) describes.
 
 Both Move functions price and stop there. Neither checks the `max_cost` or `max_probability` slippage caps, because neither takes them, and neither checks whether the expiry has the cash to back the resulting payout liability. `quote_mint` in particular knows nothing about an account: it has no `AccountWrapper` argument, so it cannot see a balance, a builder code, or a referrer. One bound both quotes do enforce is that the all-in cost can never exceed the position's maximum payout: a quote whose `all_in_cost` would exceed `quantity` aborts with `EMintCostAboveMaxPayout`.
 
@@ -312,7 +317,7 @@ referral_fee       = referral_fee_basis * referral_fee_rate / 1e9
 
 Protocol version 4 drops `penalty_fee` from the basis, which changes nothing in practice, because the surcharge is always 0 there. The chain then splits the result out of the USDC payment the trader has already made. It comes out of fees already paid, is never an extra debit, and never changes `all_in_cost`, so a trader with a referrer and a trader without one pay exactly the same total for the same trade. The amount is zero unless `new_with_referrer` created the account.
 
-The SDK's `MintQuote.fees.referral` does report it, because that value comes from dry-running the mint and reading the `OrderMinted` event rather than from the Move quote. It is there for visibility, and the SDK deliberately does not add it into `cost`. [Referrals](/onchain-finance/deepbook/deepbook-predict/design#referrals) covers how an account gets a referrer, the rate, and how the payment reaches the referrer.
+The SDK's `MintQuote.fees.referral` does report it, because that value comes from dry-running the mint and reading the `OrderMinted` event rather than from the Move quote. It is there for visibility, and the SDK deliberately does not add it into `cost`. [Referrals](/onchain-finance/deepbook/deepbook-predict/design) covers how an account gets a referrer, the rate, and how the payment reaches the referrer.
 
 ## Queued orders {#queued-orders}
 
@@ -401,7 +406,7 @@ The kind codes are `0` for an exact-quantity mint, `1` for a premium-budget mint
 
 There is no cancel. Once placed, an order fills or is refunded.
 
-### Place an order {#place-an-order}
+### How do I place a queued order? {#place-an-order}
 
 4 entrypoints in the `queue` module place orders. Each takes the market's queue, the market, the account wrapper and an `Auth`, the `OrderDesk`, `ProtocolConfig`, the Propbook `OracleRegistry`, and the canonical `PythFeed`, `BlockScholesValueStore`, and `BlockScholesSVIStore`, and each returns the new record ID as a `u64`. None takes a `Pricer`: placement reads the oracle objects itself and snapshots the volatility inputs into the order. The all-in budget mint and the early sell look like this:
 
@@ -582,7 +587,7 @@ public fun quote_redeem_open(
 
 It prices the close at a live `Pricer` from `load_live_pricer`, with the account's builder fee and the trading fee at the current clock, the way a sell fill prices at its tick. Its `proceeds` are before the order fee. It aborts with `ERecordNotOpen` for a missing or non-Open record, and it does not check that the account owns the record. Position reads such as `live_order_value` and `settled_order_payout` take the packed order ID, which `queue::order(queue, record_id)` returns in the record's `OrderView`.
 
-### Queued-order refunds {#queued-refunds}
+### Why was my queued order refunded? {#queued-refunds}
 
 Every refund returns the record's own escrow to the trader's receive address, keeps the order fee for reasons 1 and 2, and returns any reserved subsidy to the market's incentive balance. A refunded mint becomes Refunded, and a refunded sell returns to Open, holding its position. Each refund emits `QueuedOrderRefunded`.
 
@@ -780,7 +785,7 @@ Version 2.7.0 of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/d
 
 </details>
 
-## Mint a position immediately {#mint-a-position}
+## How do I mint a position immediately? {#mint-a-position}
 
 :::caution
 
@@ -841,7 +846,7 @@ public fun mint_exact_cost(
 
 :::info
 
-`mint_exact_cost` arrived in `predict` package version 2. On Mainnet, call it against the network's current call target, not the original package ID, which has no such function. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
+`mint_exact_cost` arrived in `predict` package version 2. On Mainnet, call it against the network's current call target, not the original package ID, which has no such function. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information).
 
 :::
 
@@ -906,7 +911,7 @@ Live trading closes shortly before each expiry. `ProtocolConfig.no_trade_window_
 blocked when now >= expiry, or when expiry - now <= no_trade_window_ms
 ```
 
-The gate applies to these functions and their `sessions` wrappers:
+The gate applies to these functions and their [`sessions` wrappers](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#predict-wrappers):
 
 - `quote_mint`
 - `quote_mint_for_account`
@@ -1007,7 +1012,7 @@ You have 2 routes to the floors. The `@mysten/deepbook-v3/sessions` subpath's `r
 
 </details>
 
-## Settle a market {#settle-a-market}
+## How does a market settle? {#settle-a-market}
 
 `try_settle` is the single transition from live to settled:
 
@@ -1140,6 +1145,8 @@ The SDK's `client.predict.read.markets`, `read.market`, and `read.pricer` cover 
 
 ## Error codes {#error-codes}
 
+Error numbers repeat across modules, so read the module out of the abort location before you look a number up in any table below.
+
 `expiry_market` declares 12 abort codes on protocol version 3 and 23 on protocol version 4:
 
 | **Code** | **Constant** | **Cause** |
@@ -1244,7 +1251,7 @@ The 2 ordinary failure modes of a first mint are not in the table above. Both li
 
 A two-sided range meets the band at each finite boundary as well: the probability that settlement ends above the lower strike and the probability that it ends at or below the higher strike must each sit inside the band. On a market with a `0.25` to `0.75` band, a range with a 0.8 probability of settling above its lower strike and a 0.3 probability of settling above its higher strike has a range probability of 0.5, inside the band, yet the mint aborts with `EEntryProbabilityOutOfBounds`, because 0.8 exceeds the `0.75` maximum. On protocol version 4 the same failures refund a queued order with reason 2, or abort its placement with `EOrderFailsLimits`, rather than raising these codes.
 
-Because error numbers repeat across modules, the number alone identifies nothing. Read the module out of the abort location before you look the number up. Code `3` is `EPremiumBelowMinimum` in `strike_exposure_config`, `EMintProbabilityAboveMax` in `expiry_market`, `EReferenceTickAlreadySet` in `strike_exposure`, and `EInvalidQuantity` in `order`. See [Strikes and Ticks](/onchain-finance/deepbook/deepbook-predict/contract-information/market-keys#error-codes) for the `order` and `strike_exposure` tables.
+Because error numbers repeat across modules, the number alone identifies nothing. Read the module out of the abort location before you look the number up. Code `3` is `EPremiumBelowMinimum` in `strike_exposure_config`, `EMintProbabilityAboveMax` in `expiry_market`, `EReferenceTickAlreadySet` in `strike_exposure`, and `EInvalidQuantity` in `order`. See [Strikes and Ticks](/onchain-finance/deepbook/deepbook-predict/contract-information/market-keys) for the `order` and `strike_exposure` tables.
 
 ## Order events {#events}
 
@@ -1346,7 +1353,7 @@ Every queue event comes from `deepbook_predict_orders::queue_events`, so an inde
 | `OrderFlowUpdated` | Predict `config_events` | `set_order_flow`, with the witness type name and the new state |
 | `FlushOperatorUpdated` | Predict `config_events` | `add_flush_operator` and `remove_flush_operator` |
 
-`OrderEnqueued`, `QueuedOrderFilled`, and `QueuedOrderRefunded` carry the market's cash, required cash, and waiting cash need after the call, so a keeper can track spare cash from events alone. `CohortCommitted`, `QueuedOrderFilled`, and `QueuedOrderRefunded` carry the transaction sender, so monitoring sees fills by third parties. The 2 Predict events are new types in protocol version 4, so match them against the Predict package version that introduced them rather than Predict's original ID. [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids) explains why.
+`OrderEnqueued`, `QueuedOrderFilled`, and `QueuedOrderRefunded` carry the market's cash, required cash, and waiting cash need after the call, so a keeper can track spare cash from events alone. `CohortCommitted`, `QueuedOrderFilled`, and `QueuedOrderRefunded` carry the transaction sender, so monitoring sees fills by third parties. The 2 Predict events are new types in protocol version 4, so match them against the Predict package version that introduced them rather than Predict's original ID. [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information) explains why.
 
 <details>
 <summary>Order event source</summary>
