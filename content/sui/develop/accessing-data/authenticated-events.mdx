@@ -82,7 +82,7 @@ Use regular events for indexing, telemetry, and dashboards where trusting an RPC
 
 Use the following examples to emit authenticated events from a Move contract and consume them from a client.
 
-### Emitting authenticated events (Move)
+### How do I emit authenticated events from Move?
 
 The following Move module emits an authenticated event:
 
@@ -107,7 +107,7 @@ public entry fun do_something(value: u64) {
 
 The event is automatically associated with the package that defines the event type. Only that package can emit events to its stream.
 
-### Backward compatibility with events
+### Are authenticated events backward compatible with regular events?
 
 Authenticated events are fully backward-compatible with regular Sui events. An authenticated event is a regular event with additional metadata for verification. Existing event consumers continue to work unchanged.
 
@@ -119,9 +119,9 @@ To upgrade:
 
 Existing indexers, explorers, and tools that consume regular events continue to see authenticated events without modification.
 
-### Consuming events (Rust reference client)
+### How do I consume and verify events in Rust?
 
-The reference Rust client verifies and streams events from a package:
+The reference Rust client verifies and streams events from a package. The example assumes `rpc_url`, `genesis_committee`, and `package_id` are defined by your application, and that the code runs in an async function returning a `Result` so that `?` can propagate errors:
 
 ```rust
 use sui_light_client::authenticated_events::AuthenticatedEventsClient;
@@ -159,11 +159,13 @@ while let Some(result) = stream.next().await {
 }
 ```
 
-### Resuming from a checkpoint
+### How do I resume a stream from a checkpoint?
 
 To resume a stream, the client needs a verified starting state. To guarantee completeness, this requires an Object Checkpoint State (OCS) inclusion proof showing the `EventStreamHead` at that checkpoint, which only exists if authenticated events were emitted for the stream at that checkpoint. In practice, this is the checkpoint sequence of the last event the client received before a disconnection.
 
 If the specified checkpoint does not have events for that `stream_id`, the client fails to initialize.
+
+This snippet reuses the `client` and `stream_id` created in the previous example.
 
 ```rust
 let last_checkpoint = 12345;
@@ -223,6 +225,8 @@ Events are batched and settled at checkpoint boundaries through the **accumulato
 3. **Checkpoint settlement**: At each checkpoint, validators execute a settlement transaction that:
    - Appends each consensus commit's merkle root to the stream's MMR
    - Updates the `EventStreamHead` object for that `stream_id` with the new MMR state and event count
+
+Each consensus commit's merkle root becomes one leaf of the stream's MMR, so the per-commit merkle trees sit beneath the MMR rather than replacing it. See [Merkle Mountain Range (MMR)](#merkle-mountain-range-mmr) for how those leaves are organized.
 
 ## API reference
 
@@ -294,7 +298,7 @@ let client = AuthenticatedEventsClient::new_with_config(
 
 ## Merkle Mountain Range (MMR)
 
-An MMR is a forest of perfect binary trees (mountains). After `n` leaves are appended, mountain sizes correspond to the set bits in the binary representation of `n`. For example, when `n = 13 (1101 in binary with bit 3, 2, and 0 set)`, the mountains have sizes `2^3 = 8`, `2^2 = 4`, and `2^0 = 1`. The diagram below shows an expanded MMR (internal nodes and leaves).
+An MMR is a forest of perfect binary trees (mountains). After `n` leaves are appended, mountain sizes correspond to the set bits in the binary representation of `n`. For example, when `n = 13`, which is `8 + 4 + 1` (`1101` in binary, with bits 3, 2, and 0 set), the mountains have sizes `2^3 = 8`, `2^2 = 4`, and `2^0 = 1`. The diagram below shows an expanded MMR (internal nodes and leaves).
 
 The MMR state in `EventStreamHead` is stored as a compact vector of digests indexed by tree height (not the full expanded tree). This keeps onchain state `O(log n)` in the number of appended leaves.
 
@@ -302,7 +306,7 @@ Key properties of an MMR:
 
 - Compact onchain accumulator state: `O(log n)` digests.
 - Append-only updates: new leaves can be incorporated using only the current accumulator state (without the expanded MMR).
-- Inclusion proofs are `O(log n)` in size. Event-level MMR inclusion proofs are not yet exposed by current RPC services (this is separate from OCS inclusion proofs exposed by `ProofService`). These inclusion proofs can lead to many interesting applications, such as moving data storage offchain, efficient cross-chain reads, and proving inclusion in zero-knowledge (ZK) proofs.
+- Inclusion proofs are `O(log n)` in size. Event-level MMR inclusion proofs are not yet exposed by current RPC services (this is separate from the OCS inclusion proofs exposed by `ProofService`, which prove that the `EventStreamHead` object was written at a checkpoint, not that an individual event is in the MMR). These inclusion proofs can lead to many interesting applications, such as moving data storage offchain, efficient cross-chain reads, and proving inclusion in zero-knowledge (ZK) proofs.
 
 ### Expanded MMR with 13 leaves
 
@@ -354,7 +358,7 @@ The client automatically handles epoch transitions and committee changes.
 
 ## Security guarantees
 
-**Completeness**: When you receive event N from a stream, you are guaranteed to have received all events 0..N-1 in the correct order. The MMR structure ensures that any missing or reordered events would cause verification to fail.
+**Completeness**: When you receive verified event N from a stream, you are guaranteed to have received all events 0..N-1 in the correct order. The MMR structure ensures that any missing or reordered events would cause verification to fail.
 
 **What completeness does not guarantee**: An intermediary (for example, an RPC provider) is not obligated to return all events up to a requested checkpoint height. To detect withholding, clients must verify against the onchain `EventStreamHead`, which contains the authoritative event count. The reference client does this automatically. If the events received do not match the onchain commitment, verification fails.
 
@@ -376,7 +380,7 @@ The following table summarizes the error types and how the client handles them:
 |------------|-------------|--------|
 | `TransportError` | Yes | Automatic retry |
 | `RpcError` (Unavailable, DeadlineExceeded) | Yes | Automatic retry |
-| `VerificationError` | No | Stop. Data integrity issue |
-| `InternalError` | No | Stop. Invalid state |
+| `VerificationError` | No | Stop. Data integrity issue; try a different RPC endpoint |
+| `InternalError` | No | Stop. Invalid state; investigate the cause |
 
 The stream automatically retries transient errors. Terminal errors indicate verification failures or invalid state and require investigation.
