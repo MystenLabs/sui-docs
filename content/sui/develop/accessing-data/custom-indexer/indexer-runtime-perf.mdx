@@ -44,11 +44,13 @@ questions:
   - Which ingestion and database settings affect indexer throughput?
   - How do I debug a Sui indexer with Tokio console?
 answer: >-
-  Configuration and resource monitoring deliver performant custom indexers. For
-  example:.
+  To speed up a Sui custom indexer, tune ingestion, database connection, and
+  pipeline-selection settings; debug async runtime issues with Tokio console;
+  expose and extend Prometheus metrics; and prune tables efficiently, for
+  example by partitioning them by checkpoint.
 ---
 
-Configuration and resource monitoring deliver performant custom indexers. For example:
+To speed up a Sui custom indexer and keep it performant, tune its runtime configuration, monitor its resources, and prune its data. Specifically:
 
 - Runtime configuration options for ingestion, database connections, and pipeline selection, as well as purposeful use of debugging tools like `tokio_console` help dial in your indexer performance. 
 
@@ -64,7 +66,7 @@ The indexing framework provides multiple levels of configuration to optimize per
 
 ### Ingestion layer configuration
 
-Control how checkpoint data is fetched and distributed:
+Control how checkpoint data is fetched and distributed. These settings include `min_cohort_boundary`, which controls how pipelines are grouped into ingestion cohorts based on how far behind the tip they are (see the tuning guidelines below):
 
 ```rust
 use std::num::NonZeroUsize;
@@ -159,8 +161,8 @@ Use the following command-line arguments to focus processing. These values are f
 
 For complex configuration scenarios requiring deep understanding of pipeline internals:
 
-- [Sequential pipeline architecture](/develop/accessing-data/custom-indexer/pipeline-architecture#sequential-pipeline-architecture)
-- [Concurrent pipeline architecture](/develop/accessing-data/custom-indexer/pipeline-architecture#concurrent-pipeline-architecture)
+- [Sequential pipeline architecture](/develop/accessing-data/custom-indexer/pipeline-architecture)
+- [Concurrent pipeline architecture](/develop/accessing-data/custom-indexer/pipeline-architecture)
 
 ## Tokio runtime debugging
 
@@ -258,7 +260,7 @@ Key metric categories include:
 
 ### Accessing metrics
 
-By default, metrics are served on `0.0.0.0:9184/metrics` in [Prometheus format](https://prometheus.io/docs/develop/sui-architecture/object-model). You can override this address:
+By default, metrics are served on `0.0.0.0:9184/metrics` in Prometheus format. You can override this address:
 
 - Through the command line:
 
