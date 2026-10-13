@@ -57,11 +57,11 @@ answer: >-
   package manifest version fields actually control.
 ---
 
-[Move packages](/develop/publish-upgrade-packages) are versioned and stored onchain, but follow a different scheme because they are immutable from inception: once a package version is published, its code cannot be changed in place, and an upgrade instead creates a new version of the package. A transaction references a package input by ID alone, with no separate version number.
+[Move packages](/develop/publish-upgrade-packages) are versioned and stored onchain, but follow a different scheme because they are immutable from inception. Immutability does not rule out upgrades: once a package version is published, its code cannot be changed in place, so an upgrade instead creates a new version of the package. A transaction references a package input by ID alone, with no separate version number. Because each version has its own ID, the ID a transaction uses determines which version it calls.
 
 ## How does Sui assign versions to user packages?
 
-Every publish or upgrade generates a new ID. A newly published package starts at version 1; each upgrade increments the version by 1 from the immediately preceding version. Unlike objects, older package versions remain accessible after an upgrade. A package upgraded twice might appear in the store as:
+Every publish or upgrade generates a new ID. A newly published package starts at version 1; each upgrade increments the version by 1 from the immediately preceding version. Unlike objects, older package versions remain accessible after an upgrade. A package upgraded twice might appear in the store as follows (the IDs are examples only):
 
 ```
 (0x17fb7f87e48622257725f584949beac81539a3f4ff864317ad90357c37d82605, 1) => P v1
@@ -69,11 +69,13 @@ Every publish or upgrade generates a new ID. A newly published package starts at
 (0xd24cc3ec3e2877f085bc756337bf73ae6976c38c3d93a0dbaf8004505de980ef, 3) => P v3
 ```
 
-All 3 versions are at different IDs and remain callable, including `v1` even after `v3` exists. An upgrade therefore does not break code that still calls an earlier version.
+All 3 versions are at different IDs and remain callable, including `v1` even after `v3` exists. An upgrade therefore does not break code that still calls an earlier version: older versions stay available for backward compatibility, and a caller chooses a version by using that version's ID.
+
+For the publish and upgrade process itself, see [Move packages](/develop/publish-upgrade-packages).
 
 ## Do framework packages keep their ID across upgrades?
 
-Framework packages, such as the [Move standard library](https://move-book.com/reference/) at `0x1`, the [Sui framework](/references/framework/sui_sui) at `0x2`, the [Sui system library](/references/framework/sui_sui_system) at `0x3`, and [DeepBook](/onchain-finance/deepbook/deepbookv3/deepbook) at `0xdee9`, are a special case. Their IDs must stay the same across upgrades. The network upgrades them through a system transaction at epoch boundaries, preserving IDs while incrementing versions:
+Framework packages, such as the [Move standard library](https://move-book.com/reference/) at `0x1`, the Sui framework at `0x2`, the Sui system library at `0x3`, and [DeepBook](/onchain-finance/deepbook/deepbookv3/deepbook) at `0xdee9`, are a special case. Their IDs must stay the same across upgrades. The network upgrades them through a system transaction at epoch boundaries, preserving IDs while incrementing versions:
 
 ```
 (0x1, 1) => MoveStdlib v1
@@ -83,4 +85,8 @@ Framework packages, such as the [Move standard library](https://move-book.com/re
 
 ## What do package manifest version fields control?
 
-The versions described above are the ones Sui assigns on publish and upgrade, and they are separate from the version fields in package manifests. Package manifest files include version fields in both the `[package]` section and `[dependencies]`. These are for user-level documentation only, as the `publish` and `upgrade` commands do not use them. Two publishes of the same package with different manifest versions are treated as entirely separate packages and cannot be used as dependency overrides for each other.
+The versions described above are the ones Sui assigns on publish and upgrade, and they are separate from the version fields in package manifests. Package manifest files include version fields in both the `[package]` section and `[dependencies]`. These are for user-level documentation only, as the `publish` and `upgrade` commands do not use them. They remain useful for documenting the package for people who read the manifest, but changing them has no effect on the version Sui assigns onchain. Two publishes of the same package with different manifest versions are treated as entirely separate packages and cannot be used as dependency overrides for each other.
+
+## How should I version my Move package?
+
+You do not choose onchain version numbers yourself. Sui assigns version 1 when you publish and increments the version by 1 on each upgrade, giving each version its own ID. To release a new version of an existing package, upgrade it rather than publishing it again: a second publish creates an entirely separate package, not a new version. Treat the version fields in your manifest as documentation, and do not rely on them to link versions together. Because older versions stay callable, code that depends on an earlier version keeps working after you upgrade.
