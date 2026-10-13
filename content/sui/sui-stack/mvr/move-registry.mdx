@@ -43,7 +43,7 @@ MVR default service currently supports Mainnet and Testnet networks.
 
 :::
 
-## Design
+## How is MVR designed?
 
 - `PackageInfo` registration: Exists independently on each network.
 - MVR registration: A single source of truth located on Mainnet.
@@ -52,7 +52,7 @@ The following diagram shows the MVR design at a high level.
 
 ![High level design](/img/mvr/mvr-overall.svg)
 
-## `PackageInfo` objects
+## What are `PackageInfo` objects?
 
 The first step when publishing a package is to register its metadata object. This metadata object serves as a key source of information for:
 
@@ -65,15 +65,17 @@ This metadata object can be reused when authorizing any package upgrades to supp
 
 See [Managing Package Metadata](./managing-package-info.mdx) for examples of working with `PackageInfo` objects.
 
-## MVR name
+## What is an MVR name?
 
 A MVR name consists of a SuiNS name and a package name, in the format `<suins_name>/<pkg_name>`. For example, if your SuiNS name is `myname.sui`, and your package name is `mypackage`, the MVR name can be `@myname/mypackage` or `myname.sui/mypackage`.
 
 The MVR standard supports an optional `/<version>` that allows you to specify which onchain version to resolve to. For example, if your MVR name is `@myname/mypackage` and there are multiple versions of the package, you can specify `@myname/mypackage/2` to use version 2.
 
-## MVR registration
+## How do I register a package with MVR?
 
 MVR registration is separate from the `PackageInfo` registration process. This separation is necessary because the `PackageInfo` object acts as both the source of truth for package metadata and a proof of package ownership, whereas MVR registers applications that MVR tooling can resolve.
+
+The two processes connect in the second step below: you first register the package's `PackageInfo` object as described in the previous section, and MVR registration then links your application name to that object.
 
 To register a package:
 
