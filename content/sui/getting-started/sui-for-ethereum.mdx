@@ -60,13 +60,13 @@ If you have worked with Ethereum Virtual Machine (EVM) before, the biggest diffe
 | Development environment | Hardhat, Foundry | [Move VSCode extension](https://marketplace.visualstudio.com/items?itemName=mysten.move). |
 | Mutate contract state | Sending transactions through compile time ABI interface. | Sending transaction through runtime [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB) construction. |
 
-## Object model
+## Object model: where is data stored on Sui?
 
 Objects store data in Move and everything in Move is an object. This includes the smart contracts (Move packages), onchain addresses, coins, and NFTs.
 
 For simplicity, you can think of objects as assets or NFTs. Objects have ownership.
 
-## Ownership
+## Ownership: who can use an object?
 
 There are some nuances to object ownership, but key types include:
 
@@ -75,7 +75,7 @@ There are some nuances to object ownership, but key types include:
 
 For all types of ownership on Sui, see [Object Ownership](/develop/objects/object-ownership).
 
-## Access control
+## Access control: how do I restrict who can call a function?
 
 Identity or role-based access control is widely used through OpenZeppelin's `Ownable` and `AccessControl` contracts in Solidity.
 
@@ -99,6 +99,8 @@ public fun new(_: &AdminCap, ctx: &mut TxContext): User {
     User { id: object::new(ctx) }
 }
 ```
+
+Here, `User` is an object whose only field is its `id`. To call `new`, the caller passes a reference to an `AdminCap` they own, typically from a PTB. If the signer does not own an `AdminCap`, the call fails.
 
 ## How do I mutate objects?
 
