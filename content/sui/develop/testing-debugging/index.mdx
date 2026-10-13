@@ -40,7 +40,7 @@ Sui provides built-in tools for testing and debugging Move smart contracts at ev
 
 ## What tools can I use to test and debug Move contracts on Sui?
 
-Sui includes a native test framework for Move. You write unit tests directly in your Move source files using the `#[test]` attribute, then run them with `sui move test`. For more complex scenarios, the `test_scenario` module lets you simulate sequences of transactions and inspect object state between steps.
+Sui includes a native test framework for Move. You write unit tests directly in your Move source files using the `#[test]` attribute, which marks a function as a test so that `sui move test` runs it. For more complex scenarios, the `sui::test_scenario` module lets you simulate sequences of transactions and inspect object state between steps. Use plain unit tests for logic you can check in a single call, and use `test_scenario` when a test needs to span multiple transactions or model different user interactions.
 
 To step through execution traces interactively, the Move Trace Debugger integrates with VS Code. When something goes wrong at runtime, the error reference documents common abort codes and their causes.
 
