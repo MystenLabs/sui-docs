@@ -68,6 +68,8 @@ The adapter exposes a single provider-neutral `Price`. A consumer that values co
 
 Pyth offers two readers that this page uses: `get_price_no_older_than`, which aborts if the feed is older than the bound you pass, and the unchecked `get_price_unsafe`, which does not gate on age. The primary reader delegates the staleness gate to Pyth's own `get_price_no_older_than`, which aborts if the feed is older than the bound, then normalizes the result. A consumer picks the maximum age that suits it: the tightest freshness bound for a liquidation, because a liquidation acts on the price now, while a generous max-age is acceptable for a display, and the borrowing decision uses the same tight, checked read a liquidation does.
 
+`price_from_pyth` is that primary reader:
+
 <ImportContent source="examples/oracle-adapter/move/sources/price_adapter.move" mode="code" fun="price_from_pyth" />
 
 ## How do I guard confidence and deviation?
@@ -91,6 +93,8 @@ Move cannot catch an abort, so a fallback cannot wrap the checked reader in a tr
 3. If the primary is stale, call the checked reader on the fallback, which aborts if the fallback is stale too.
 
 A consumer gets a fresh price or a clear abort, never a silently stale one, and the defined behavior when both feeds are stale is to pause, not guess.
+
+`price_or_fallback` implements these three steps:
 
 <ImportContent source="examples/oracle-adapter/move/sources/price_adapter.move" mode="code" fun="price_or_fallback" />
 
