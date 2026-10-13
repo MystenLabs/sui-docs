@@ -81,7 +81,7 @@ answer: >-
   prompt="Set up this machine for Sui development: Install the Sui CLI with curl -sSfL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | sh, then run suiup install sui@testnet to get the Testnet-compatible toolchain. Run sui client to generate your keys and config, then prompt me to visit faucet.sui.io, enter the generated address, and fund it with test tokens."
 />
 
-Install the [Sui CLI](/references/cli) and verify it works. The CLI creates and manages address balances, builds and publishes smart contracts, and queries information from the network.
+Install the Sui CLI and verify it works. The CLI creates and manages address balances, builds and publishes smart contracts, and queries information from the network. See the [Sui CLI reference](/references/cli) for details on its commands.
 
 :::tip Looking for something else?
 
@@ -115,7 +115,7 @@ This page covers installation only. For other common tasks:
 
 ## Quick install 
 
-You use the Sui CLI to interact with the Sui network, deploy packages, and manage assets. To install the Sui CLI, you can use [`suiup`](https://github.com/MystenLabs/suiup).
+You use the Sui CLI to interact with the Sui network, deploy packages, and manage assets. To install the Sui CLI, you can use [`suiup`](https://github.com/MystenLabs/suiup), a tool for installing and switching between versions of Sui stack components.
 
 [`suiup`](https://github.com/MystenLabs/suiup) is the most effective installation method, as it allows you to easily install and switch between different versions of not only the Sui CLI but also other Sui stack components like [`walrus`](https://docs.wal.app/usage/setup) and [`mvr`](https://github.com/MystenLabs/mvr). 
 
@@ -129,11 +129,20 @@ Installations using Homebrew or Chocolatey might take several minutes if you do 
 
 <ImportContent source="quick-install" mode="snippet" />
 
+If you use `suiup`, the install commands are:
+
+```sh
+$ curl -sSfL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | sh
+$ suiup install sui@testnet
+```
+
+`suiup install sui@testnet` installs the Testnet-compatible toolchain. Replace `testnet` with `mainnet` or `devnet` as needed. To get a Sui address and connect to Testnet, [configure a Sui client](/getting-started/onboarding/configure-sui-client) after you verify the installation.
+
 The quick install is suitable for most use cases. For those wanting more control over the installation process, you can [install from source](/getting-started/onboarding/install-source) or [install binaries](/getting-started/onboarding/install-binaries).
 
 If Sui is already installed from a previous development environment, be sure to upgrade to the [latest version](/getting-started/onboarding/install-binaries).
 
-### Verify the installation
+### How do I verify the installation?
 
 After installing, open a new terminal and run:
 
@@ -158,7 +167,7 @@ Then, you can [create a "Hello, World!" example](/getting-started/onboarding/hel
 Refer to the `suiup` repository's [README](https://github.com/MystenLabs/suiup?tab=readme-ov-file#paths-used-by-the-suiup-tool) for information regarding installation files and their locations. 
 
 
-### Default configuration file
+### Where is the default configuration file?
 
 Regardless of whether you used `suiup`, Homebrew, or Chocolately, Sui stores a primary configuration in the `~/.sui/sui_config/client.yaml` file. This file defines settings and preferences for your environment, such as:
 
