@@ -81,7 +81,7 @@ Sui derives the ID of a dynamic field from its type and parent object's ID. Each
 
 Assume a blog platform service already exists to handle uploads to Walrus. When the service creates a blob and its associated `Blob` object on Sui, it also attaches a `Metadata` dynamic field containing key-value pairs for `publisher` (the Sui Address that uploaded the blob), `view_count`, and `title`. The service prevents users from modifying the `publisher` and `view_count` pairs, but allows the `publisher` to update the `title` value.
 
-When a user views a post, the service retrieves the relevant blog post `Metadata` from the indexed database. It then uses the `Owner` field to fetch the blob from the full node. The service uses the liveness of the `Blob` object on Sui to represent whether a blog post is available. If the `Blob` object is wrapped or deleted, the blog post is not accessible through the service, even if the underlying content on Walrus still exists.
+When a user views a post, the service retrieves the relevant blog post `Metadata` from the indexed database. It then uses the indexed `blob_obj_id` value to fetch the `Blob` object from the full node. The service uses the liveness of the `Blob` object on Sui to represent whether a blog post is available. If the `Blob` object is wrapped or deleted, the blog post is not accessible through the service, even if the underlying content on Walrus still exists.
 
 ## Data modeling
 
@@ -105,7 +105,7 @@ LIMIT $2;
 
 ## Custom indexer implementation
 
-This example uses a [sequential pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture#sequential-pipeline-architecture), ensuring each checkpoint is committed once in strict order and as a single atomic operation. The sequential pipeline architecture is not required for this project, but it is a more straightforward option than implementing the concurrent architecture. You can always [scale up to the concurrent pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture#decision-framework) if and when your project requires it.
+This example uses a [sequential pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture), ensuring each checkpoint is committed once in strict order and as a single atomic operation. The sequential pipeline architecture is not required for this project, but it is a more straightforward option than implementing the concurrent architecture. You can always [scale up to the concurrent pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture#decision-framework) if and when your project requires it.
 
 This implementation tracks the latest object state at checkpoint boundary. When the `Metadata` dynamic field is created, mutated, wrapped or deleted, or unwrapped, it appears among the transaction output under the object changes. You can see an [example transaction](https://suivision.xyz/txblock/3Qcuo2FaTZL5wfdi7JzPELcmkuZm7hVfdNrkLrdkKioN?tab=Changes) on Testnet that creates the field. Dynamic fields use the type `0x2::dynamic_field::Field<vector, 0xabc...123::metadata::Metadata>`.
 
@@ -169,6 +169,8 @@ Your indexed rows store `blob_obj_id`, the ID of the Sui `Blob` object. A Walrus
 $ curl "$AGGREGATOR/v1/blobs/by-object-id/$BLOB_OBJ_ID" -o post.md
 ```
 
+Set `$BLOB_OBJ_ID` to the `blob_obj_id` value of a row returned by the `publisher` query in [Putting it all together](#putting-it-all-together).
+
 Set `$AGGREGATOR` to an aggregator endpoint. The Mysten Labs reference endpoint on Mainnet is `https://aggregator.walrus-mainnet.walrus.space`, and on Testnet it is `https://aggregator.walrus-testnet.walrus.space`. Do not hardcode a single community endpoint in production. For the complete endpoint list and the rest of the HTTP API, see the [Walrus network reference](https://docs.wal.app/docs/network-reference) and [Reading Blobs with the HTTP API](https://docs.wal.app/docs/http-api/reading-blobs).
 
 ## Why use a custom indexer instead of querying the full node directly?
@@ -177,7 +179,7 @@ Querying a Sui full node for every read operation does not scale well for a blog
 
 The indexer processes each checkpoint once and writes the results to a PostgreSQL database (or another store). Your service then runs fast SQL queries against that database rather than making repeated RPC calls. This separation also lets you add application-specific query patterns, such as sorting posts by title, filtering by publisher, and paginating results, without constructing complex onchain queries.
 
-The [sequential pipeline architecture](/develop/accessing-data/custom-indexer/pipeline-architecture#sequential-pipeline-architecture) is well suited to this use case because blog post state changes are low-frequency and order matters for consistency. If your platform grows to require higher throughput, you can migrate to the concurrent pipeline without changing your data model.
+The [sequential pipeline architecture](/develop/accessing-data/custom-indexer/pipeline-architecture) is well suited to this use case because blog post state changes are low-frequency and order matters for consistency. If your platform grows to require higher throughput, you can migrate to the concurrent pipeline without changing your data model.
 
 ## Why does blob lifetime tracking require additional pipelines?
 
