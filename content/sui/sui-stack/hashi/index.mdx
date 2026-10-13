@@ -38,7 +38,7 @@ answer: >-
   with ownership represented as a fungible Coin<BTC> on Sui.
 ---
 
-Hashi is the Sui native Bitcoin orchestrator. It is a protocol for securing and managing BTC for use on Sui through threshold cryptography ([Hashi documentation](https://mystenlabs.github.io/hashi/design/)). You deposit BTC into a managed pool, and Hashi represents your ownership as a fungible `Coin<BTC>` on Sui. You can then use this coin in Sui apps, DeFi protocols, and [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks) like any other Sui coin.
+Hashi is the Sui native Bitcoin orchestrator. It is a protocol for securing and managing BTC for use on Sui through threshold cryptography, where a committee of operators jointly controls the Bitcoin keys (see [How Hashi works](#how-hashi-works) and the [Hashi documentation](https://mystenlabs.github.io/hashi/design/)). You deposit BTC into a managed pool, and Hashi represents your ownership as a fungible `Coin<BTC>` on Sui. You can then use this coin in Sui apps, DeFi protocols, and [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks) like any other Sui coin.
 
 :::info
 
@@ -52,8 +52,15 @@ Hashi uses a committee of operators running threshold cryptography to manage a B
 
 The protocol supports 2 core flows:
 
-- **Deposit:** You send BTC to a Hashi-managed Bitcoin address derived for your Sui address. Once the Bitcoin transaction is confirmed, Hashi mints an equivalent `Coin<BTC>` on Sui and delivers it to your address.
-- **Withdrawal:** You burn your `Coin<BTC>` on Sui and specify a Bitcoin destination address. The committee signs and broadcasts a Bitcoin transaction to send BTC to your destination.
+- **Deposit:**
+  1. You send BTC to a Hashi-managed Bitcoin address derived for your Sui address.
+  2. The Bitcoin transaction is confirmed.
+  3. Hashi mints an equivalent `Coin<BTC>` on Sui and delivers it to your address.
+- **Withdrawal:**
+  1. You burn your `Coin<BTC>` on Sui and specify a Bitcoin destination address.
+  2. The committee signs and broadcasts a Bitcoin transaction to send BTC to your destination.
+
+To run these flows programmatically, use the [Hashi SDK](#hashi-sdk). For withdrawal ordering and cancellation, see [Security](#security).
 
 ### Security
 
