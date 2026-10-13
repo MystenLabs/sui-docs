@@ -50,9 +50,11 @@ answer: >-
 
 Address balances provide a canonical balance for each coin type tied directly to a Sui address. Funds sent through `sui::coin::send_funds` and `sui::balance::send_funds` merge automatically into a single balance per coin type, with no object management required. For the conceptual model and a comparison with coin objects, see [Address Balances overview](/onchain-finance/asset-custody/address-balances). For the full specification, see [SIP-58: Sui Address Balances](https://github.com/sui-foundation/sips/blob/main/sips/sip-58.md).
 
-## Sending funds
+## How do I send funds to an address balance?
 
 Use `send_funds` to deposit directly into a recipient address balance. The recipient balance increases without creating new objects, and multiple deposits from different senders all merge into one balance.
+
+SUI amounts on this page are given in MIST, where 1 SUI is 1,000,000,000 MIST.
 
 ### TypeScript SDK
 
@@ -127,9 +129,13 @@ public fun send_funds<T>(coin: Coin<T>, recipient: address)
 
 Learn more at [sui-framework/sources/balance.move](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/balance.move#L102) and [sui-framework/sources/coin.move](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/coin.move#L176).
 
-## Withdrawing funds
+## How do I withdraw from an address balance?
 
-Create a withdrawal input and redeem it to get a `Coin<T>`:
+To withdraw funds:
+
+1. Create a withdrawal input with `tx.withdrawal()`.
+2. Redeem it with `0x2::coin::redeem_funds` to get a `Coin<T>`, or with `0x2::balance::redeem_funds` to get a `Balance<T>`.
+3. Use the result in later commands in the same PTB, such as `tx.transferObjects()`.
 
 ```tsx
 const tx = new Transaction();
@@ -266,7 +272,7 @@ public fun withdrawal_split<T: store>(withdrawal: &mut Withdrawal<T>, sub_limit:
 public fun withdrawal_join<T: store>(withdrawal: &mut Withdrawal<T>, other: Withdrawal<T>)
 ```
 
-## Paying for gas from address balances
+## How do I pay for gas from an address balance?
 
 When you pay gas from an address balance, you do not select or provide coin objects, so there is no gas coin selection or merge workflow. As a result, [gas smashing](/develop/transaction-payment/gas-smashing) does not apply, and the network resolves the gas fee as a withdrawal from your address balance.
 
@@ -277,7 +283,7 @@ const tx = new Transaction();
 tx.setGasPayment([]); // Empty array = use address balance for gas
 ```
 
-In Rust, set `gas_data.payment` to an empty vector and use [`ValidDuring`](https://github.com/MystenLabs/sui/blob/main/crates/sui-types/src/transaction.rs) expiration:
+In Rust, set `gas_data.payment` to an empty vector and use [`ValidDuring`](https://github.com/MystenLabs/sui/blob/main/crates/sui-types/src/transaction.rs) expiration, which provides replay protection for transactions that carry no gas payment:
 
 ```rust
 TransactionData::V1(TransactionDataV1 {
@@ -393,7 +399,7 @@ const result = await client.executeTransaction({
 
 Both sender and sponsor must sign. Storage rebates are credited to the sponsor address balance.
 
-## Querying balances
+## How do I query address balances?
 
 ### TypeScript SDK
 
@@ -464,9 +470,11 @@ Copy the examples below into [GraphQL IDE (Testnet)](https://graphql.testnet.sui
 }
 ```
 
-For more details, see [GraphQL Reference - `IAddressable.balance`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iaddressable).
+For more details, see the GraphQL reference for `IAddressable.balance`.
 
 ## Computing balance changes from checkpoint data
+
+Deposits to and withdrawals from address balances do not show up as coin objects in a transaction's inputs and outputs. Instead, they are recorded as accumulator events: a `Merge` operation records funds deposited to an address balance, and a `Split` operation records funds withdrawn from it.
 
 With address balances, you must also process accumulator events from `TransactionEffects` when computing balance changes:
 
