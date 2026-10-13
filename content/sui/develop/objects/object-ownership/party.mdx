@@ -53,7 +53,7 @@ Party objects currently support only single-address ownership. The `sui::party::
 
 :::
 
-## Party, address-owned, and shared objects compared
+## How do party objects differ from shared and address-owned objects?
 
 Party objects sit between [address-owned](/develop/objects/object-ownership/address-owned) objects and [shared](/develop/objects/object-ownership/shared) objects. They keep single-address ownership like address-owned objects, but they are sequenced by [consensus](/develop/sui-architecture/consensus) like shared objects. The following table summarizes the practical differences.
 
@@ -67,7 +67,7 @@ Party objects sit between [address-owned](/develop/objects/object-ownership/addr
 | `Coin<SUI>` gas payment | Supported. | Not supported. Convert the coin back to address-owned first. | Not supported. |
 | Transfer to object | Supported. | Not supported when the owning address is an object ID. | Not applicable. |
 
-## Create party objects
+## How do I create a party object?
 
 Use these [`transfer` module](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/transfer.move) functions to create party objects:
 
@@ -101,11 +101,11 @@ The following example creates an object and transfers it to a single-owner party
 
 After creation, a party object behaves like an [address-owned](/develop/objects/object-ownership/address-owned) object: you can transfer it to another address or ownership type, wrap it, or make it [immutable](/develop/objects/object-ownership/immutable).
 
-## When to use party objects
+## When should I use party objects?
 
 Use party objects when you want an object to remain owned by one address but be versioned by [consensus](/develop/sui-architecture/consensus), such as for operational convenience. If you only use an object together with other party or [shared](/develop/objects/object-ownership/shared) objects, converting it to a party object has no additional performance cost.
 
-Party objects can be used by multiple inflight transactions at the same time, but only one transaction can modify the object at a time. This contrasts with [address-owned](/develop/objects/object-ownership/address-owned) objects, which allow only a single inflight transaction at a time. Because consensus manages the versioning of a party object, many applications can pipeline several transactions against the same object without waiting for one to finalize before submitting the next.
+Party objects can be used by multiple inflight transactions at the same time, but only one transaction can modify the object at a time. This contrasts with [address-owned](/develop/objects/object-ownership/address-owned) objects, which allow only a single inflight transaction at a time. Because consensus manages the versioning of a party object, many applications can pipeline several transactions against the same object: that is, submit the next transaction without waiting for the previous one to finalize.
 
 :::info
 
@@ -113,9 +113,9 @@ A `Coin` can be a party object, including a `Coin<SUI>`. However, you cannot use
 
 :::
 
-## Transfer a party object
+## How do I transfer a party object?
 
-You can transfer an existing object to a single-owner party from the CLI or the TypeScript SDK. Both approaches build the same programmable transaction: they construct a single-owner party for the recipient and call `public_party_transfer`.
+You can transfer an existing object to a single-owner party from the CLI or the TypeScript SDK. Transferring an address-owned object this way converts it into a party object. Both approaches build the same programmable transaction: they construct a single-owner party for the recipient and call `public_party_transfer`.
 
 ### Use the Sui CLI
 
@@ -124,6 +124,8 @@ The `sui client party-transfer` command transfers one object to a recipient as a
 ```bash
 $ sui client party-transfer --to RECIPIENT_ADDRESS --object-id OBJECT_ID
 ```
+
+Replace `RECIPIENT_ADDRESS` with the recipient's address or keystore alias, and `OBJECT_ID` with the ID of the object to transfer.
 
 The command accepts the standard gas and transaction processing options, so you can add flags such as `--gas` to choose a gas coin, or `--serialize-unsigned-transaction` to output transaction bytes for offline signing instead of executing immediately.
 
