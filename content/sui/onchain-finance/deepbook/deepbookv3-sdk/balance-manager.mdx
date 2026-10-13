@@ -53,6 +53,8 @@ answer: >-
 
 The `BalanceManager` is a core component of DeepBookV3 that holds all asset balances. The SDK provides comprehensive functions to create, manage, and interact with balance managers.
 
+Most functions on this page identify a balance manager by `managerKey`, a string that identifies the balance manager. The trade proof functions `generateProofAsOwner` and `generateProofAsTrader` instead take `managerId`, the ID of the balance manager. Use `id` to get the ID of a balance manager from its `managerKey`.
+
 ## Balance manager functions
 
 The DeepBookV3 SDK provides the following functions for managing balance managers.
@@ -159,7 +161,7 @@ Use `checkManagerBalance` to check the balance of a specific coin in a balance m
 <details>
 <summary>generateProof</summary>
 
-Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set. The call returns a function that takes a `Transaction` object.
+Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set: either `generateProofAsOwner` or `generateProofAsTrader`, both described in this section. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 
@@ -291,7 +293,7 @@ Use `setBalanceManagerReferral` to set a pool-specific referral for the balance 
 **Parameters**
 
 - `managerKey`: String that identifies the balance manager.
-- `referral`: String representing the referral ID (DeepBookPoolReferral).
+- `referral`: String representing the ID of the pool referral (`DeepBookPoolReferral`). Pass the ID string, as in the referral examples below.
 - `tradeCap`: `TransactionArgument` representing the trade cap for permission.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/balanceManager.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="setBalanceManagerReferral" signatureOnly/>
@@ -400,7 +402,7 @@ Use `balanceManagerReferralPoolId` to get the pool ID associated with a pool ref
 
 The following examples demonstrate common balance manager operations.
 
-### Create and share a balance manager
+### How do I create and share a balance manager?
 
 ```tsx
 // Example: Create and share a new balance manager
@@ -424,7 +426,7 @@ createManagerWithOwner = (tx: Transaction) => {
 };
 ```
 
-### Deposit and withdraw funds
+### How do I deposit and withdraw funds?
 
 ```tsx
 // Example: Deposit USDC into a balance manager
@@ -493,7 +495,7 @@ withdrawWithCapability = (tx: Transaction) => {
 };
 ```
 
-### Generate trade proofs
+### How do I generate a trade proof?
 
 ```tsx
 // Example: Generate a trade proof and use it to place an order
@@ -565,4 +567,3 @@ completeSetup = async (tx: Transaction) => {
 	tx.transferObjects([depositCap, withdrawCap, tradeCap], ownerAddress);
 };
 ```
-
