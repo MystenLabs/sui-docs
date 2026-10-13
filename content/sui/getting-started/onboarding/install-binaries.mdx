@@ -36,9 +36,11 @@ answer: >-
   can download these binaries from GitHub and use them to install Sui.
 ---
 
+Each Sui release provides a set of binaries for several operating systems. You can download these binaries from GitHub and use them to install Sui. This page covers installing the prebuilt binaries on Linux, macOS, and Windows, building the binaries locally, upgrading with Cargo, and verifying the installation.
+
 <ImportContent source="info-easy-install" mode="snippet" />
 
-Each Sui release provides a set of binaries for several operating systems. You can download these binaries from GitHub and use them to install Sui.
+## How do I install Sui from prebuilt binaries? {#install-prebuilt-binaries}
 
 <Tabs groupId="operating-systems">
 
@@ -108,7 +110,7 @@ Each Sui release provides a set of binaries for several operating systems. You c
 
 </Tabs>
 
-## Build binaries locally
+## How do I build Sui binaries locally? {#build-binaries-locally}
 
 You can download the Sui repo and build the binaries locally. The binaries are exported to the `target/release` directory.
     
@@ -116,11 +118,11 @@ You can download the Sui repo and build the binaries locally. The binaries are e
 $ cargo build --profile release --bin sui --features tracing
 ```
 
-The `--features tracing` flag enables Move test coverage and debugger support. Include other packages as needed.
+The `--features tracing` flag enables Move test coverage and debugger support. These features are not available unless you include it. Include other packages as needed.
 
 <ImportContent source="lists/binaries-file-list" mode="snippet" />
 
-## Upgrade from Cargo
+## How do I upgrade Sui binaries installed with Cargo? {#upgrade-from-cargo}
 
 :::info
 Consider switching to [`suiup`](/getting-started/onboarding/sui-install) for upgrades. It handles version pinning and network-specific builds without long compile times.
@@ -142,7 +144,7 @@ The `tracing` feature enables Move test coverage and debugger support in the Sui
 
 <ImportContent source="install-sui-node" mode="snippet" />
 
-## Verify the installation
+## How do I verify my Sui binary installation? {#verify-the-installation}
 
 After installing, open a new terminal and run:
 
