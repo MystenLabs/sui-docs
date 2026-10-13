@@ -48,9 +48,9 @@ answer: >-
   Connect, Wormhole Portal Bridge, or ZetaChain.
 ---
 
-Bridging is the process of moving tokens from one blockchain to another. When you use a bridge to move tokens between incompatible blockchains, the tokens are wrapped and converted to a derivative token for the target blockchain. You can transfer tokens from other blockchains to Sui, or transfer SUI tokens to other blockchains.
+Bridging is the process of moving tokens from one blockchain to another. When you use a bridge to move tokens between incompatible blockchains, the tokens are wrapped and converted to a derivative token for the target blockchain (for example, Wormhole-minted tokens or ZetaChain ZRC-20 tokens, described below). You can transfer tokens from other blockchains to Sui, or transfer SUI tokens to other blockchains.
 
-Sui supports bridging through Sui Bridge, Wormhole Connect, Wormhole Portal Bridge, and ZetaChain. Each bridge offers different features and capabilities to suit various use cases.
+Sui supports bridging through [Sui Bridge](#sui-bridge), [Wormhole Connect](#wormhole-connect), [Wormhole Portal Bridge](#wormhole-portal-bridge), and [ZetaChain](#zetachain). Each bridge offers different features and capabilities to suit various use cases. To confirm the Sui address of a bridged token, see the [Token address list](#token-address-list).
 
 ## Sui Bridge
 
@@ -64,7 +64,7 @@ Sui Bridge is operated and governed by Sui validators, the same set that secures
 
 To learn how to set up a Sui Bridge full node, see [Sui Bridge Validator Node Configuration](/operators/bridge-node-configuration).
 
-### Supported assets
+### Which assets does Sui Bridge support? {#supported-assets}
 
 Sui Bridge supports bridging between Sui and other networks with the following assets:
 
@@ -76,7 +76,7 @@ Sui Bridge supports bridging between Sui and other networks with the following a
 | Wrapped Ethereum (WETH) | Tokenized representation of native ETH. |
 | Tether (USDT) | Stablecoin pegged to the US dollar. |
 
-### Package IDs and contract addresses
+### What are the Sui Bridge package IDs and contract addresses? {#package-ids-and-contract-addresses}
 
 The following package IDs and addresses are reserved for Sui Bridge:
 
@@ -111,7 +111,7 @@ Audit reports:
 
 - [Zellic](https://github.com/sui-foundation/security-audits/blob/main/docs/Sui_Bridge_v1_Zellic.pdf)  
 
-### Global limiter {#global-limiter}
+### How does the global limiter work? {#global-limiter}
 
 A limiter protects funds by constraining the total value of assets leaving Sui Bridge in a 24-hour window. It tracks value hourly and aggregates from the last 24 hours, refreshing every hour. The limit applies globally and varies by direction (Ethereum → Sui versus Sui → Ethereum). It also caps the maximum single transfer.
 
@@ -121,7 +121,7 @@ Limits are set by validator committee vote and announced in the [mn-validator-an
 
 Sui Bridge v1 uses static pricing to calculate limits. ETH is priced at $2,600. One ETH consumes $2,600 of the limit. The validator committee governs pricing through voting.
 
-### Minimum and maximum transfers
+### What are the minimum and maximum transfer amounts? {#minimum-and-maximum-transfers}
 
 There is no minimum transfer, but very small fractions can be rounded down. For ETH and WETH, reduced precision of eight decimals rounds 10.0000000000000001 down to 10.
 
@@ -132,7 +132,7 @@ There is no minimum transfer, but very small fractions can be rounded down. For 
 
 The maximum transfer equals the global USD limit. See [Global limiter](#global-limiter).
 
-### Finality and confirmation depth
+### When is a bridge transfer complete? {#finality-and-confirmation-depth}
 
 Bridge transfers are not instant. Each direction has a different finality requirement:
 
