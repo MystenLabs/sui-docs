@@ -41,7 +41,7 @@ Unlike traditional blockchains that create blocks before execution, Sui creates 
 
 Both [validators](/operators/validator) and [full nodes](/operators/full-node/sui-full-node) consume checkpoints to remain synchronized with the network.
 
-## Verifying checkpoints
+## How does a client verify Sui checkpoints?
 
 Full nodes and validators verify a checkpoint to trust it. This verification confirms that the Sui [validator committee](/develop/sui-architecture/epochs) created it and that it is authentic. Checkpoint verification requires 2 interdependent steps:
 
@@ -65,7 +65,7 @@ This process creates an apparent circular dependency. The client needs to know t
 
 This process allows the client to verify all checkpoints up to the present time.
 
-## Checkpoint commitments
+## What is a checkpoint commitment?
 
 After a client verifies a checkpoint, it can use the information to execute transactions and confirm results. A checkpoint contains a list of transactions, so a full node can fetch and execute them. Because transactions are identified by their digest in the form of a cryptographic hash, the client can be sure they have not been altered.
 
