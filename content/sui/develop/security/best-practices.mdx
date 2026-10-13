@@ -54,11 +54,11 @@ questions:
 answer: Overview of security best practices on Sui.
 ---
 
-Overview of security best practices on Sui.
+To build securely on Sui, audit and govern your packages, enforce access control with capabilities, protect coin capabilities and keys, use onchain randomness safely, validate offchain data, and apply the specific practices for Seal and Nautilus.
 
 This page describes a few recommended security best practices when developing applications on Sui. These recommendations are not comprehensive for all application types, use cases, or architectures. Do your own research and have production applications audited thoroughly.
 
-## Smart contract security
+## What are the main smart contract security risks on Sui?
 
 #### Audit your contracts
 
@@ -94,7 +94,7 @@ Emit [events](/develop/accessing-data/using-events) for admin changes, allowlist
 
 #### Limit what follows a random call in a PTB
 
-Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable.
+Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable.
 
 #### Mark randomness-consuming functions as private `entry`
 
@@ -114,6 +114,8 @@ For high-stakes applications, consider a two-transaction commit-reveal pattern t
 
 ## Seal (Encryption and Access Control)
 
+Seal provides encryption and access control for your data. You express access rules in Move code in `seal_approve*` functions, and you rely on key servers that you choose. The following practices cover choosing key servers, structuring encryption, and keeping your access policy correct.
+
 Choose trusted key server operators and diversify across organizations, jurisdictions, and infrastructure providers.
 
 Use threshold encryption (for example, 2-of-3) to tolerate compromised servers while maintaining availability.
@@ -125,6 +127,8 @@ Use envelope encryption for sensitive or large data: encrypt data with your own 
 The Move code in `seal_approve*` functions must accurately express your intended access rules. If the package containing `seal_approve*` remains upgradeable, whoever controls its upgrade path can change future access policy. Govern that upgrade path like a security-critical capability.
 
 ## Nautilus
+
+Nautilus runs code in an enclave, a trusted execution environment (TEE), and the enclave signs the output it produces. The practices below cover keeping enclave code small, verifying that an enclave runs the image you expect, and handling its signed payloads safely.
 
 #### Minimize enclave code
 
@@ -150,7 +154,7 @@ Apply signed payload hygiene to every message the enclave signs. Use domain or i
 
 A trusted execution environment reduces risk but does not remove it. Combine it with the other practices on this page.
 
-## Coin and capability security
+## How do I protect capabilities and coins in Move?
 
 #### Protect TreasuryCap
 
@@ -220,7 +224,7 @@ When a capability governs a specific object, store the object's ID in the capabi
 
 Anyone can submit a transaction that references a [shared object](/develop/objects/object-ownership/shared). A `public` function that takes a shared object runs for any caller unless the function itself checks authorization. Never assume access to a shared object is restricted. Require a capability, validate the sender, or check object ownership inside every privileged function that touches shared state.
 
-## Oracle and offchain data
+## How should I handle oracle and offchain data safely?
 
 #### Validate offchain data before you use it
 
