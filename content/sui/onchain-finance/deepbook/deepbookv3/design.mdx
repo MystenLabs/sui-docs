@@ -54,7 +54,7 @@ At a high level, the DeepBookV3 design follows the following flow, which revolve
 
 - `Pool`: A shared object that represents one market and is responsible for managing its order book, users, stakes, and so on. See the [Pool shared object](#pool) section to learn more.
 - `PoolRegistry`: Used only during pool creation, it makes sure that duplicate pools are not created and maintains package versioning.
-- `BalanceManager`: Sources a user's funds when placing orders. A single `BalanceManager` can be used between all pools. See [BalanceManager](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager) to learn more.
+- `BalanceManager`: Sources a user's funds when placing orders. A single `BalanceManager` can be used between all pools. After each transaction, the pool's [vault](#vault) deducts funds from or adds funds to the `BalanceManager` to settle the user's balances. See [BalanceManager](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager) to learn more.
 
 <p class="flex justify-center">![1](./images/architecture_deepbook-shared-objects_v1.svg)</p>
 
@@ -111,6 +111,8 @@ Every epoch, users with nonzero stake can submit a proposal to change these para
 
 Users can also vote on live proposals. When a proposal exceeds the quorum, the new trade parameters are queued to go live from the following epoch and onwards.  Proposals and votes are reset every epoch. Users can start submitting and voting on proposals the epoch following their stake. Quorum is equivalent to half of the total voting power. A user's voting power is calculated with the following formula where ${V}$ is the voting power, ${S}$ is the amount staked, and ${V_c}$ is the voting power cutoff. ${V_c}$ is currently set to 100,000 DEEP.
 
+In plain terms, stake counts one-for-one toward voting power up to the cutoff, and any stake above the cutoff adds only the difference between the square root of S and the square root of V_c, so voting power grows more slowly for large stakes. Written as plain text, the formula is `V = min(S, V_c) + max(sqrt(S) - sqrt(V_c), 0)`.
+
 <p class="flex justify-center">$\LARGE V=\min\lparen S,V_c \rparen + \max\lparen \sqrt{S} - \sqrt{V_c} ,0 \rparen$</p>
 
 The following diagram helps visualize the governance lifecycle.
@@ -166,11 +168,13 @@ Iteration is supported by exposing access to leaf nodes (slices). Finding the in
 
 Nodes in the B+ Tree are stored as individual dynamic fields hanging off the `BigVector`.
 
-## Place limit order flow
+## What happens when you place a limit order? {#place-limit-order-flow}
 
 The following diagram of the lifecycle of an order placement action helps visualize the book, then state, then vault flow.
 
 <p class="flex justify-center">![Place limit order flow](./images/sequence_deepbook-place-limit-order_v1.svg)</p>
+
+The sections that follow describe each step of this flow in text.
 
 ### Pool
 
@@ -214,4 +218,3 @@ First, the function validates that a trader is authorized to use the `BalanceMan
 Then, for each asset type the process compares `balances_out` against `balances_in`. If the `balances_out` total exceeds `balances_in`, the function splits the difference from the vault's balance and deposits it into the `BalanceManager`. Conversely, if the `balances_in` total exceeds `balances_out`, the function withdraws the difference from the `BalanceManager` and joins it to the vault's balance. 
 
 This process is repeated for base, quote, and DEEP asset balances, ensuring all asset balances are accurately reflected and settled between the vault and the `BalanceManager`.
-
