@@ -50,8 +50,8 @@ answer: >-
   `mintExactCost`,
   `redeemLive`, and `redeemSettled`, which require explicit mint caps and accept
   close-side floors.
-last_verified: 2026-09-23
-verified_against: '@mysten/deepbook-v3 2.6.1 (ts-sdks 56d51645); predict protocol version 3 and sessions 2 on both networks, publication records at deepbookv3 abb4cfd9'
+last_verified: 2026-10-13
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13'
 ---
 
 The `@mysten/deepbook-v3/sessions` subpath exports `SessionsContract`, which builds the owner-signed calls that grant and revoke a time-limited session key and the session-signed calls that trade DeepBook Predict positions for the account. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) explains the contract mechanism behind each call.
@@ -273,7 +273,31 @@ The following example lists an account's grants, splits them at the current time
 
 ## Trade as a session key {#trade}
 
-The 4 Predict builders mirror the `expiry_market` entrypoints of the same name, but the session key signs them instead of the owner. Compared with the owner-signed call, you pass no `Auth`, because the wrapper generates app authorization internally, and each builder adds the `accountRegistry` and `sessionsConfig` arguments from its `SessionsConfig`. Predict still runs its own validation, and the Sessions page lists [the aborts a session caller still meets](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#predict-wrappers). If the account registry does not authorize `SessionsApp`, every trading call aborts with `EAppNotAuthorized`, as the Sessions page explains under [deauthorizing the app](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#deauthorize-is-a-pause).
+The 2 networks take different session builders. On Testnet, which runs Predict protocol version 4 and Sessions protocol version 3, use the [queued-order builders](#queue-as-session). On Mainnet, which runs protocol version 3 and Sessions protocol version 2, use the immediate builders that follow them. Version 2.7.0 marks the immediate mint and live-close builders deprecated, because protocol version 4 always aborts them.
+
+### Queue orders as the session key {#queue-as-session}
+
+4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3, which version 2.7.0's Testnet `getSessionsConfig` records and its Mainnet one does not yet. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
+
+Each takes a `SessionsQueuedOrderTarget` that names the market, the owner's wrapper, the order-flow package's `orderDesk` and `queueRegistry`, the Predict `protocolConfig`, the `oracleRegistry`, and the market's 3 oracle objects. Take the order-flow IDs from `client.predict.cfg.objects` and the oracle objects from `client.predict.cfg.underlyings`. `queueId` defaults to the ID derived from `queueRegistry` and the market.
+
+<ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="85-113" />
+
+`enqueueExactCost` sizes the fill at τ so its all-in cost fits `maxCost`, at least `minQuantity`. The builder throws for a `maxCost` of 0 or `u64::MAX`, which the chain would abort with `EMintCostCapRequired`, because every queued mint needs a finite cap. `enqueueExactQuantity` takes `quantity`, `maxCost`, and `maxProbability`, and `enqueueExactAmount` takes `maxPremium`, `minQuantity`, and `maxCost`.
+
+<ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="577-584" />
+
+`enqueueRedeemOpen` sells the Open record `recordId`, its queue record ID rather than the position's order ID. `minProbability` and `minProceeds` are required: on a delegated key, `0` sells at any price, so pass it only on purpose.
+
+<ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="608-615" />
+
+A session key's raw builder skips the preflight and plan binding that `client.predict.tx.enqueuePlan` runs, so plan the order against the owner with `read.planMint` or `read.planSell`, check `accepting`, and send the plan's own strike and raw limits. An order placed through a session still fills or refunds after the session ends, and a revoked or expired key aborts with `sessions::ESessionNotAuthorized`.
+
+<ImportContent source="examples/deepbook-predict/src/sessions-queue.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="sessions-queue" />
+
+### Immediate builders {#immediate-session-builders}
+
+The 5 immediate Predict builders mirror the `expiry_market` entrypoints of the same name, but the session key signs them instead of the owner. Compared with the owner-signed call, you pass no `Auth`, because the wrapper generates app authorization internally, and each builder adds the `accountRegistry` and `sessionsConfig` arguments from its `SessionsConfig`. Predict still runs its own validation, and the Sessions page lists [the aborts a session caller still meets](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#predict-wrappers). If the account registry does not authorize `SessionsApp`, every trading call aborts with `EAppNotAuthorized`, as the Sessions page explains under [deauthorizing the app](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#deauthorize-is-a-pause).
 
 Every Predict builder follows these conventions:
 
@@ -325,7 +349,7 @@ Use `mintExactCost` to mint inside an all-in budget as the session key, the sess
 
 :::info
 
-`mintExactCost` calls a wrapper that arrived in `sessions` package version 2, which both networks now run, and `@mysten/deepbook-v3` 2.6.1 resolves both call targets correctly. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
+`mintExactCost` calls a wrapper that arrived in `sessions` package version 2, which Mainnet runs, and `@mysten/deepbook-v3` 2.7.0 resolves the current call target on both networks. On Testnet the wrapper aborts through Predict protocol version 4. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
 
 :::
 

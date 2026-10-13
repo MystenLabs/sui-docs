@@ -1,10 +1,11 @@
 ---
 title: Predict
 description: >-
-  Reference for the expiry_market module: the ExpiryMarket shared object,
-  pricer loading, mint quotes, minting, live and settled redemption, the
-  no-trade window, permissionless settlement, read accessors, error codes, and
-  order events.
+  Reference for DeepBook Predict trading: the ExpiryMarket shared object,
+  pricer loading, mint quotes, queued orders in the deepbook_predict_orders
+  package from protocol version 4, the immediate mints and live redemption it
+  retires, settled redemption, the no-trade window, permissionless settlement,
+  read accessors, error codes, and order and queue events.
 keywords:
   - expiry market
   - deepbook predict
@@ -22,11 +23,20 @@ keywords:
   - min_premium
   - no_trade_window_ms
   - ETradeWindowClosed
+  - EDelayedExecutionRequired
+  - redeem_settled_permissionless
+  - queued order
+  - deepbook_predict_orders
+  - enqueue_exact_cost
+  - enqueue_redeem_open
+  - order desk
+  - open record
+  - order fee
 goal:
   description: >-
     Reader can learn the ExpiryMarket shared object, the pricing and quoting
-    calls, the mint and redeem functions, settlement, and the emitted order
-    events
+    calls, how to place, follow, and sell a queued order, the immediate mint
+    and redeem functions, settlement, and the emitted order and queue events
   requires:
     - has_frontmatter:
         - title
@@ -47,23 +57,39 @@ questions:
   - How does a DeepBook Predict market settle?
   - What is the minimum trade size on DeepBook Predict?
   - How do I spend an exact total on a DeepBook Predict mint?
+  - Why does a DeepBook Predict mint abort with EDelayedExecutionRequired?
+  - How do I place a queued order on DeepBook Predict?
+  - Where does a filled DeepBook Predict queued order live?
+  - Why was my DeepBook Predict queued order refunded?
 answer: >-
   DeepBook Predict trading lives in the deepbook_predict::expiry_market module.
   One shared ExpiryMarket object holds each expiry's cash, exposure index, and
-  pause flag. You load a transaction-local Pricer with load_live_pricer, size
-  the trade with quote_mint, then call mint_exact_quantity, mint_exact_amount,
-  mint_exact_cost, redeem_live, or redeem_settled with an account Auth.
-  mint_exact_cost, new in package version 2 and now live on both networks,
-  sizes the fill inside an all-in budget so fees come out of the spend rather
-  than on top of it. Live trades close in the last no_trade_window_ms before expiry, and
-  settlement is the permissionless try_settle.
-last_verified: 2026-09-23
-verified_against: deepbookv3 abb4cfd9; predict protocol version 3 and sessions 2 on both networks
+  pause flag. You load a transaction-local Pricer with load_live_pricer and
+  size a trade with quote_mint. On a network before the delayed-execution
+  cutover, which is Mainnet at protocol version 3, you then call
+  mint_exact_quantity, mint_exact_amount, mint_exact_cost, or redeem_live with
+  an account Auth, and the trade fills in your transaction. From protocol
+  version 4, which Testnet runs, those 4 always abort with
+  EDelayedExecutionRequired and trades are queued orders: you place one through
+  the deepbook_predict_orders package, it fills at Pyth's signed price for an
+  instant about 800 ms later or is refunded, and a filled mint stays in the
+  market's queue as an Open record that settlement pays automatically. Each
+  queued order pays a flat order fee. redeem_settled pays a settled position
+  held in the account on both networks, and settlement is the permissionless
+  try_settle.
+last_verified: 2026-10-13
+verified_against: deepbookv3 abb4cfd9 (Mainnet predict protocol version 3) and 29117434 (Testnet predict protocol version 4, predict_orders and predict_math publish 1); Mainnet and Testnet ProtocolConfig and the Testnet OrderDesk read 2026-10-13; '@mysten/deepbook-v3' 2.7.0; queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
 ---
 
-Trading on DeepBook Predict runs through the `deepbook_predict::expiry_market` module. One shared `ExpiryMarket` object exists per underlying and expiry, and it owns that expiry's USDC custody, strike exposure index, congestion estimator, mint pause flag, and flush stamp. Every call on this page is a `public fun` that you invoke from a programmable transaction block with a `moveCall`. Several of them take values only another command in the same block can produce, a transaction-local `Pricer` and a single-use account `Auth`, so plan the whole flow as one block.
+Trading on DeepBook Predict runs through the `deepbook_predict::expiry_market` module and, from protocol version 4, through the `queue` module of the `deepbook_predict_orders` package. One shared `ExpiryMarket` object exists per underlying and expiry, and it owns that expiry's USDC custody, strike exposure index, congestion estimator, mint pause flag, and flush stamp. Every call on this page is a `public fun` that you invoke from a programmable transaction block with a `moveCall`. Several of them take values only another command in the same block can produce, a transaction-local `Pricer` and a single-use account `Auth`, so plan the whole flow as one block.
 
-The module lives at [`packages/predict/sources/expiry_market.move`](https://github.com/MystenLabs/deepbookv3/blob/76b11922f3144be5bdaacb66c38c7c3524a02ff3/packages/predict/sources/expiry_market.move) on DeepBookV3 `main`. The Move snippets on this page pin DeepBookV3 `main` at `76b11922`, whose sources match both deployments. For the package and object IDs of each network, see [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information).
+The module lives at [`packages/predict/sources/expiry_market.move`](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict/sources/expiry_market.move) on DeepBookV3 `main`. Unless a section says otherwise, the Move snippets on this page pin DeepBookV3 at `abb4cfd9`, the protocol version 3 source that Mainnet runs. For the package and object IDs of each network, see [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information).
+
+:::caution
+
+The 2 networks no longer trade the same way. Mainnet runs Predict protocol version 3, where the mint and live-redeem functions on this page fill inside the trader's own transaction. Testnet runs protocol version 4, which retires those 4 functions: they keep their signatures and always abort with `EDelayedExecutionRequired`, and every trade is a queued order placed through the `deepbook_predict_orders` package. [Queued orders](#queued-orders) covers the queued path. Pricer loading, the quotes, settled redemption, settlement, and the read accessors on this page apply to both networks, with the version 4 differences noted where they arise.
+
+:::
 
 :::info
 
@@ -126,7 +152,7 @@ The result has 3 properties that govern how you use it:
 - **Market binding:** A pricer binds to one market. It records `market.id()`, and any priced call that receives a pricer built for a different market aborts with `EWrongPricer`.
 - **Oracle validation:** The load takes 4 Propbook objects and validates 3 of them: it checks the `PythFeed`, the `BlockScholesValueStore`, and the `BlockScholesSVIStore` each against the underlying's current canonical binding, and a mismatch aborts inside `pricing`. The load does not check the `OracleRegistry`, because it is the authority the load checks the other 3 against. The load also rejects an observation written earlier in the same transaction, and it aborts with `pricing::ELivePricingExpired` at or after the market's expiry.
 
-The load judges freshness against each input's own source timestamp: the Pyth feed timestamp and, for the Block Scholes price, forward, and stochastic volatility inspired (SVI) inputs, the provider's per-update timestamp. Both deployments run the Pyth spot and Block Scholes price windows at 2,000 ms and the SVI window at 60,000 ms.
+The load judges freshness against each input's own source timestamp: the Pyth feed timestamp and, for the Block Scholes price, forward, and stochastic volatility inspired (SVI) inputs, the provider's per-update timestamp. Both deployments run the Pyth spot and Block Scholes price windows at 2,000 ms. A chain read on 2026-10-13 found the SVI window at 60,000 ms on Mainnet and 10,000 ms on Testnet.
 
 See [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) for how to discover the `PythFeed`, `BlockScholesValueStore`, and `BlockScholesSVIStore` object IDs for an underlying.
 
@@ -147,7 +173,7 @@ See [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/ora
 
 ## Quote a mint {#quote-a-mint}
 
-The module has 2 Move functions that price a prospective mint without changing market state. Both apply the live-mint and admission gates, including the no-trade window, so a quote that succeeds tells you the trade is admissible at the current oracle state. Neither is a full preflight, and the section below is careful about which layer each claim belongs to:
+The module has 3 Move functions that price a prospective mint without changing market state. On protocol version 3 they apply the live-mint and admission gates, including the no-trade window, so a quote that succeeds tells you the trade is admissible at the current oracle state. None is a full preflight, and the section below is careful about which layer each claim belongs to:
 
 ```move title='packages/predict/sources/expiry_market.move'
 public fun quote_mint(
@@ -197,13 +223,24 @@ The difference is whose terms the quote reflects. `quote_mint` prices an anonymo
 
 Set `exact_quantity` to `true` to price a fixed size, in which case `min_quantity` carries the requested quantity. Set it to `false` to size a lot-rounded fill under the `max_premium` budget. The congestion surcharge each quote reports uses the pre-update congestion estimate, which is the same estimate a mint in the same state charges.
 
-`quote_mint_exact_cost_for_account`, new in package version 2 and callable on both networks, is the read-only twin of [`mint_exact_cost`](#mint-a-position): it runs the same budget search against the same state and returns the fill that budget buys, along with that fill's cost decomposition. It takes the account for the same reasons `quote_mint_for_account` does, plus one more: the chain caps the budget at the account's available USDC before sizing, and the quote reproduces that cap. It is the natural source of a `min_quantity` floor for the mint that follows. Like the other 2 quotes, it does not preflight expiry cash backing or exposure-index capacity.
+`quote_mint_exact_cost_for_account`, new in package version 2, is the read-only twin of [`mint_exact_cost`](#mint-a-position): it runs the same budget search against the same state and returns the fill that budget buys, along with that fill's cost decomposition. It takes the account for the same reasons `quote_mint_for_account` does, plus one more: the chain caps the budget at the account's available USDC before sizing, and the quote reproduces that cap. It is the natural source of a `min_quantity` floor for the mint that follows. Like the other 2 quotes, it does not preflight expiry cash backing or exposure-index capacity.
 
 Both quotes run the entry-probability band before they size anything. For a two-sided range the band applies 3 times: to the range probability, to the probability that settlement ends above the lower strike, and to the probability that it ends at or below the higher strike. An open end contributes no check, and the finite end of a directional position has the same probability as the position itself. The quoted `trading_fee` sums one fee for each finite boundary, as [Fee components](/onchain-finance/deepbook/deepbook-predict/design#fee-components) describes.
 
 Both Move functions price and stop there. Neither checks the `max_cost` or `max_probability` slippage caps, because neither takes them, and neither checks whether the expiry has the cash to back the resulting payout liability. `quote_mint` in particular knows nothing about an account: it has no `AccountWrapper` argument, so it cannot see a balance, a builder code, or a referrer. One bound both quotes do enforce is that the all-in cost can never exceed the position's maximum payout: a quote whose `all_in_cost` would exceed `quantity` aborts with `EMintCostAboveMaxPayout`.
 
-The SDK's `client.predict.read.quoteMint` is a different thing at a different layer. It dry-runs the transaction `client.predict.tx.mint` builds for the options you pass, against the real account and the real fee path, so it does double as preflight and raises the same typed errors the mint would, including insufficient balance. Called with only `quantity`, it carries no slippage cap. When a page says a quote is a preflight, it means that dry run, not the Move functions above.
+The SDK's `client.predict.read.quoteMint` is a different thing at a different layer. On a network before the cutover, it dry-runs the transaction `client.predict.tx.mint` builds for the options you pass, against the real account and the real fee path, so it does double as preflight and raises the same typed errors the mint would, including insufficient balance. Called with only `quantity`, it carries no slippage cap. When a page says a quote is a preflight, it means that dry run, not the Move functions above.
+
+### Quotes from protocol version 4 {#quotes-v4}
+
+Protocol version 4 keeps all 3 signatures and re-bodies the functions to price the order the way a queued fill prices, at the current clock:
+
+- **No congestion surcharge:** `penalty_fee` is always 0.
+- **Subsidy at the configured rate:** The fee subsidy is the admin-set subsidy rate applied to the trading fee, capped by the market's incentive balance.
+- **Fewer gates:** They check only the pricer binding and that the clock is before expiry, aborting with `EInvalidOrderTiming` at or after it. They have no no-trade-window or trading-pause gate.
+- **One refusal code:** A mint that would be refused at the clock, for the entry-probability band, the minimum premium, or a cost above its maximum payout, aborts with `EOrderFailsLimits` rather than the version 3 error.
+
+The queued fill itself prices at its committed Pyth tick, not at the quote's clock, and placement checks the order without the fee subsidy, so a quote is an estimate of the fill rather than a promise. The SDK's `read.quoteMint` and `read.quoteMintCost` read these functions on Testnet and preview a queued fill, with the order fee reported separately.
 
 <details>
 <summary>Quote source</summary>
@@ -238,7 +275,7 @@ The SDK's `client.predict.read.quoteMint` is a different thing at a different la
 
 `all_in_cost` is `premium + (trading_fee - fee_incentive_subsidy) + builder_fee + penalty_fee + inventory_impact_charge`. Pass that value, not `premium`, as the `max_cost` cap on the mint. See the [Design](/onchain-finance/deepbook/deepbook-predict/design) page for how the package computes each fee component.
 
-The congestion surcharge is one mechanism with 2 names, `penalty_fee` onchain and `penalty` in the SDK. It is zero unless the transaction's gas price is a high statistical outlier against the market's smoothed gas statistics, and the exponentially weighted moving average (EWMA) penalty ships disabled on both deployments, so it reads zero in practice. The sponsor subsidy is the same pairing: `fee_incentive_subsidy` onchain, `subsidy` in the SDK.
+The congestion surcharge is one mechanism with 2 names, `penalty_fee` onchain and `penalty` in the SDK. On protocol version 3 it is zero unless the transaction's gas price is a high statistical outlier against the market's smoothed gas statistics, and the exponentially weighted moving average (EWMA) penalty ships disabled, so it reads zero in practice. Protocol version 4 retires it: its setters abort with `EEwmaRetired`, and every quote and fill reports 0. The sponsor subsidy is the same pairing: `fee_incentive_subsidy` onchain, `subsidy` in the SDK.
 
 <details>
 <summary>`MintQuote` and its getters</summary>
@@ -273,11 +310,483 @@ referral_fee_basis = trading_fee - fee_incentive_subsidy + penalty_fee
 referral_fee       = referral_fee_basis * referral_fee_rate / 1e9
 ```
 
-The chain then splits the result out of the USDC payment the trader has already made. It comes out of fees already paid, is never an extra debit, and never changes `all_in_cost`, so a trader with a referrer and a trader without one pay exactly the same total for the same trade. The amount is zero unless `new_with_referrer` created the account.
+Protocol version 4 drops `penalty_fee` from the basis, which changes nothing in practice, because the surcharge is always 0 there. The chain then splits the result out of the USDC payment the trader has already made. It comes out of fees already paid, is never an extra debit, and never changes `all_in_cost`, so a trader with a referrer and a trader without one pay exactly the same total for the same trade. The amount is zero unless `new_with_referrer` created the account.
 
 The SDK's `MintQuote.fees.referral` does report it, because that value comes from dry-running the mint and reading the `OrderMinted` event rather than from the Move quote. It is there for visibility, and the SDK deliberately does not add it into `cost`. [Referrals](/onchain-finance/deepbook/deepbook-predict/design#referrals) covers how an account gets a referrer, the rate, and how the payment reaches the referrer.
 
-## Mint a position {#mint-a-position}
+## Queued orders {#queued-orders}
+
+From protocol version 4, a mint or an early sell no longer fills inside the trader's own transaction. It becomes a queued order: the trader places it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, called τ, and then any caller can commit that price and fill or refund the order. τ falls about 800 ms after placement on Testnet.
+
+:::info
+
+Testnet passed the delayed-execution cutover on 2026-10-09 and runs protocol version 4, so every Testnet trade is a queued order. Mainnet runs protocol version 3, which fills trades immediately, until its own rollout, and its order-flow packages are not published yet. Read `protocol_config::version_watermark`, or call the SDK's `client.predict.read.executionMode()`, rather than assuming either network's path.
+
+:::
+
+The Move snippets in this section pin DeepBookV3 `main` at [`29117434`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159), the commit that records the Testnet publication. The order-flow sources are at [`packages/predict_orders/sources`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict_orders/sources), and the math library is at [`packages/predict_math/sources`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict_math/sources).
+
+### Why orders wait {#why-orders-wait}
+
+An immediate trade prices off a live pricer built in its own transaction, which normally re-anchors the forward on the onchain Pyth spot and falls back to the Block Scholes forward when that spot is stale. That spot reaches the chain a moment after the price has already moved on faster venues, so a trader watching those venues can know that the fill price is stale before sending the trade. A queued order is priced at Pyth's signed price for a fixed instant after it is placed. Nobody picks that instant or that price, and by τ the price already reflects what the trader could see when placing the order.
+
+### Order-flow packages {#order-flow-packages}
+
+Sui caps a package at 102,400 bytes, and Predict, which can grow only by compatible upgrade, is close to that limit. Delayed execution therefore spans 3 packages:
+
+| **Package** | **Role** |
+| --- | --- |
+| `deepbook_predict` | Upgraded in place to protocol version 4. Keeps the markets, pricing, fills, fees, cash backing, settlement, and the pool. Adds the order-flow primitives the queue drives, one `OrderReceipt` for each queued order, and a per-market `OrderFlowLedger`. |
+| `deepbook_predict_orders` | Published fresh. Holds the shared `OrderDesk` with the delayed-execution policy, one shared `MarketQueue` for each market, each order's escrow, every order entrypoint, the queue reads, and the queue events. |
+| `deepbook_predict_math` | Published fresh. A pure library: the pricing math Predict calls, the order-ID decoder, and `LazerPrice`, a price that only a Pyth-verified Lazer update can produce. |
+
+The dependency runs one way: `deepbook_predict_orders` depends on Predict, and Predict depends on `deepbook_predict_math`. Predict never names a type from the order-flow package, so Predict's own surface does not change when the order-flow package does.
+
+Predict makes every pricing, fill, and solvency decision itself. Each primitive the queue calls is one complete Predict operation that checks its own gates, decides the accounting, and moves the cash. The order-flow package owns what Predict leaves to it: τ and the deadline, capacities and per-account caps, cohort order, escrow custody, refund routing, and the events.
+
+#### Shared objects {#order-flow-objects}
+
+Publishing `deepbook_predict_orders` created and shared 2 objects:
+
+- **`OrderDesk`:** Holds the [delayed-execution policy](#delayed-execution-policy) and the order-flow package's own version floor. Every trading call reads it, and only the admin's policy setters write it.
+- **`QueueRegistry`:** The root that every market's queue ID derives from. Only queue creation writes it, so creating a queue never contends with trading.
+
+Each market has one `MarketQueue`, a shared object at an ID derived from the `QueueRegistry` and the market. `queue::queue_id(registry_id, expiry_market_id)` returns that ID whether or not the queue exists yet, and the SDK's `client.predict.queueIdFor(marketId)` derives the same ID offchain. `queue::create_and_share(registry, desk, market, ctx)` creates a market's queue. Anyone can call it, the caller pays its storage, and a second call for the same market aborts. The protocol's market keeper creates each new market's queue right after it creates the market.
+
+### The cutover and what retired {#cutover}
+
+Predict protocol version 4 compiles `constants::current_version!()` as `4`, and `ProtocolConfig.version_watermark` reaching 4 is the delayed-execution cutover:
+
+- **Admission waits for the cutover.** Predict refuses every queued order with `protocol_config::ECutoverNotReached` until the watermark reaches 4. The bump also retires every older Predict version, so no package that knows nothing about the queue can run while an order waits. The watermark only moves up, so the cutover cannot be undone.
+- **Predict serves only an allowlisted order flow.** An admin runs `protocol_config::set_order_flow<OrderFlow>(true)`, where `OrderFlow` is the order-flow package's witness type. Until then, every admission, commit, and fill aborts with `EOrderFlowNotAllowed`. On Testnet the allowlisting landed on 2026-10-09 and emitted `OrderFlowUpdated`.
+- **The immediate trades always abort.** `mint_exact_quantity`, `mint_exact_amount`, `mint_exact_cost`, and `redeem_live` keep their signatures and abort with `EDelayedExecutionRequired`, at any watermark. Their Sessions wrappers abort through them. [Mint a position immediately](#mint-a-position) documents them for networks before the cutover.
+- **The mint quotes price a queued fill.** `quote_mint`, `quote_mint_for_account`, and `quote_mint_exact_cost_for_account` keep their signatures and now price the order like a queued fill at the current clock. See [Quotes from protocol version 4](#quotes-v4).
+- **The congestion surcharge is gone.** `set_ewma_params` and `set_ewma_enabled` abort with `EEwmaRetired`, and every fill and quote reports `penalty_fee` as 0.
+- **Settled redemption is unchanged for account positions.** `redeem_settled` pays positions that immediate mints left in accounts before the cutover. A queued fill never enters an account, so it never needs it. Protocol version 4 also limits `redeem_settled_permissionless` to an admin allowlist of keepers, as [Redeem a position](#redeem-a-position) describes.
+- **Only flush operators finish a pool flush.** `plp::finish_flush` aborts with `ENotFlushOperator` unless the sender is on an admin-managed allowlist. See [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#finish-stage).
+
+### Who calls what {#roles}
+
+A trader, or a [session](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#predict-wrappers) acting for one, places orders through the `queue` module of `deepbook_predict_orders`. Every step after placement is open to anyone and needs no account authority: `commit`, `resolve`, `refund`, `settle_step`, `cleanup`, `pay_open`, and `claim_parked` in the order-flow package, plus Predict's `rebalance_expiry_cash` and `try_settle`. The protocol's keepers normally make those calls, with no special rights. Only a holder of Predict's `AdminCap` can allowlist the order flow, change the policy, refund orders by ID, bump the order-flow package's version floor, or edit the flush-operator allowlist.
+
+### The order lifecycle {#order-lifecycle}
+
+The queue keeps each order as one record in a table, keyed by a sequential `u64` record ID that restarts in every market. A record ID is not the packed `u256` order ID of a position. Each record holds Predict's `OrderReceipt` for its order and that order's own escrowed USDC, so a refund pays exactly what that order escrowed.
+
+| **Status** | **Code** | **Meaning** | **Leaves the status by** |
+| --- | --- | --- | --- |
+| Pending | `0` | Waiting for its cohort's price | A commit, or a refund |
+| Committed | `1` | Priced, waiting to be resolved | A fill, or a refund |
+| Open | `2` | Holds a position: a filled mint, the rest of a partial sell, or a refunded sell | An early sell, or the settlement payout |
+| Refunded | `3` | A refunded mint | `cleanup` after settlement |
+| Closed | `4` | Its position was sold, moved to a sell, or paid at settlement | `cleanup` after settlement |
+| RefundDue | `5` | Reserved. Nothing sets it at launch | A refund |
+
+```mermaid
+flowchart LR
+  P["Pending"] -- "commit attaches the τ price" --> C["Committed"]
+  C -- "resolve fills a mint or part of a sell" --> O["Open"]
+  C -- "resolve fills a whole sell" --> X["Closed"]
+  P -- "mint refunded" --> R["Refunded"]
+  C -- "mint refunded" --> R
+  P -- "sell refunded, position returned" --> O
+  C -- "sell refunded, position returned" --> O
+  O -- "enqueue_redeem_open moves the position out" --> X
+  O -- "settle_step or pay_open pays it" --> X
+  R -- "cleanup after settlement" --> D["Deleted"]
+  X -- "cleanup after settlement" --> D
+```
+
+The kind codes are `0` for an exact-quantity mint, `1` for a premium-budget mint, `2` for an all-in budget mint, and `4` for an early sell of an Open record. Code `3` is reserved and never used. Status, kind, and refund reason codes are never renumbered, but new ones may be added, so tolerate codes you do not know. The `order_queue` module exposes a getter for every code, such as `order_queue::status_open()`, so a client never has to hard-code the numbers.
+
+There is no cancel. Once placed, an order fills or is refunded.
+
+### Place an order {#place-an-order}
+
+4 entrypoints in the `queue` module place orders. Each takes the market's queue, the market, the account wrapper and an `Auth`, the `OrderDesk`, `ProtocolConfig`, the Propbook `OracleRegistry`, and the canonical `PythFeed`, `BlockScholesValueStore`, and `BlockScholesSVIStore`, and each returns the new record ID as a `u64`. None takes a `Pricer`: placement reads the oracle objects itself and snapshots the volatility inputs into the order. The all-in budget mint and the early sell look like this:
+
+```move title='packages/predict_orders/sources/queue.move'
+public fun enqueue_exact_cost(
+    queue: &mut MarketQueue,
+    market: &mut ExpiryMarket,
+    wrapper: &mut AccountWrapper,
+    auth: Auth,
+    desk: &OrderDesk,
+    config: &ProtocolConfig,
+    propbook_registry: &OracleRegistry,
+    pyth: &PythFeed,
+    bs_values: &BlockScholesValueStore,
+    bs_svi: &BlockScholesSVIStore,
+    lower_tick: u64,
+    higher_tick: u64,
+    max_cost: u64,
+    min_quantity: u64,
+    root: &AccumulatorRoot,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): u64
+
+public fun enqueue_redeem_open(
+    queue: &mut MarketQueue,
+    market: &mut ExpiryMarket,
+    wrapper: &mut AccountWrapper,
+    auth: Auth,
+    desk: &OrderDesk,
+    config: &ProtocolConfig,
+    propbook_registry: &OracleRegistry,
+    pyth: &PythFeed,
+    bs_values: &BlockScholesValueStore,
+    bs_svi: &BlockScholesSVIStore,
+    record_id: u64,
+    close_quantity: u64,
+    min_probability: u64,
+    min_proceeds: u64,
+    root: &AccumulatorRoot,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): u64
+```
+
+The 4 entrypoints differ only in their sizing and limit arguments:
+
+| **Entrypoint** | **Sizing at τ** | **Trader limits** |
+| --- | --- | --- |
+| `enqueue_exact_quantity` | Exactly `quantity` | `max_cost` caps the all-in cost, and `max_probability` caps the entry probability. |
+| `enqueue_exact_amount` | The largest lot-rounded quantity whose premium fits `max_premium` | `min_quantity`, and `max_cost` caps the all-in cost. |
+| `enqueue_exact_cost` | The largest lot-rounded quantity whose all-in cost fits `max_cost` | `min_quantity` |
+| `enqueue_redeem_open` | `close_quantity` of the Open record `record_id` | `min_probability` and `min_proceeds` |
+
+Every queued mint requires a finite `max_cost`: zero and `std::u64::max_value!()` both abort with `EMintCostCapRequired`. The immediate `mint_exact_quantity` accepted `u64::MAX` as no cap, and the queued form does not.
+
+<details>
+<summary>Enqueue source</summary>
+
+<ImportContent
+	source="packages/predict_orders/sources/queue.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	fun="enqueue_exact_quantity,enqueue_exact_amount,enqueue_exact_cost,enqueue_redeem_open"
+	noComments
+/>
+
+</details>
+
+#### What placement checks {#placement-checks}
+
+Placement runs these checks in order, and an abort charges nothing:
+
+1. **Queue checks.** The desk's version floor, the queue's own desk and market (`EWrongDesk`, `EWrongMarket`), the [stuck gate](#queue-limits) (`EQueueStuck`), the side's capacity (`EQueueFull`), and the account's cap on waiting orders in this market (`EAccountOrderCap`).
+1. **Timing.** The order gets its τ, deadline, and cutoff, and τ must fall before the cutoff (`EPastCutoff`).
+1. **Source record, for sells.** The record must be Open (`ERecordNotOpen`, also for a missing ID) and belong to the placing account (`ENotRecordOwner`). `close_quantity` must be at least `min_sell_quantity`, and a partial sell must leave at least that much (`EBelowMinSell`).
+1. **Budget and order fee.** A mint needs an available balance above the order fee (`EFeeNotCovered`), and its budget is `min(max_cost, available - order_fee)`. An exact-quantity mint also caps the budget at `quantity`, because a fill never costs more than its quantity. A sell needs a balance of at least the order fee and escrows nothing else.
+1. **Predict's gates.** The order-flow allowlist, the version gate, so the emergency freeze blocks placement, and the cutover. Mints also check the trading pause and the market's mint pause. An early sell is open during both pauses.
+1. **Predict's timing bounds.** `EInvalidOrderTiming` unless τ sits on the policy channel's grid at most one tick before the clock, τ is before the deadline and before `expiry - no_trade_window_ms`, and the deadline is at least 5 seconds before expiry.
+1. **The volatility snapshot.** Placement validates the oracle objects the way `load_live_pricer` does and copies the Block Scholes spot, forward, and SVI into the order. It requires `use_pyth_spot_for_forward` (`pricing::EPythForwardRequired`) and an SVI no older than the policy's `svi_max_age_ms`. It does not require a fresh onchain Pyth spot.
+1. **A dry run at placement.** Predict prices the order at the placement clock, without the fee subsidy, using the same test a fill applies. An order that would already be refunded for its limits or for admission aborts with `EOrderFailsLimits`, and so does a sell above the held quantity.
+1. **Spare cash, for mints.** The mint's [cash need](#queue-limits) must fit the market's spare cash (`EInsufficientMarketCash`). Sells skip this check.
+1. **Boundary nodes, for mints.** Placement creates both finite boundary nodes of the range in the payout tree if they are missing, and pins them, so a fill never creates a node. The payout tree's node cap applies here.
+1. **Append.** The budget and the order fee move from the account into the record's escrow, and `OrderEnqueued` reports the order.
+
+An early sell moves the whole position, with its receipt, out of its source record into the sell's new record, and marks the source Closed. After any sell, the trader's position therefore lives under the sell's record ID, and `OrderEnqueued.source_record_id` names the record it came from.
+
+#### τ, cohorts, the deadline, and the cutoff {#order-timing}
+
+τ is the last tick of the policy's Pyth Lazer channel at or before `t0 + delay_ms`, where `t0` is the onchain clock of the placing transaction. τ never falls below the market's last τ, and it moves to the next tick when it would otherwise join a price that is already committed. A cohort is every order in a market that shares one τ, so orders placed within one channel tick share one signed update and one commit.
+
+The deadline is `min(τ + stall_timeout_ms, expiry)`, never earlier than the market's last deadline. At or past its deadline an order can only be refunded in full. The cutoff is `expiry - max(no_trade_window_ms, stall_timeout_ms + 5_000)`, and an order whose τ would fall at or past it aborts with `EPastCutoff`. Every deadline therefore falls at least 5 seconds before expiry, so every waiting order is due before the market can settle.
+
+Testnet runs an 800 ms delay on the 200 ms channel, a 5-second stall timeout, and a 10-second no-trade window. τ then falls 600 to 800 ms after placement, the deadline falls 5 seconds after τ, and the cutoff falls 10 seconds before expiry, so new orders stop about 11 seconds before expiry. Each order keeps the τ, deadline, channel, and order fee from its placement, so a change to those reaches only new orders. A change to `pyth_price_buffer_ms` or `gap_wait_ms` also reaches cohorts already waiting, because `commit` reads both from the desk when it runs.
+
+### Commit and resolve {#commit-and-resolve}
+
+2 permissionless calls move a waiting order to its outcome:
+
+```move title='packages/predict_orders/sources/queue.move'
+public fun commit(
+    queue: &mut MarketQueue,
+    market: &mut ExpiryMarket,
+    desk: &OrderDesk,
+    config: &ProtocolConfig,
+    updates: vector<Update>,
+    clock: &Clock,
+    ctx: &TxContext,
+)
+
+public fun resolve(
+    queue: &mut MarketQueue,
+    market: &mut ExpiryMarket,
+    desk: &OrderDesk,
+    config: &ProtocolConfig,
+    max_orders: u64,
+    deny_list: &DenyList,
+    clock: &Clock,
+    ctx: &TxContext,
+): u64
+```
+
+`commit` attaches verified Pyth Lazer prices to waiting cohorts. Each `pyth_lazer::update::Update` in `updates` must come from the Pyth Lazer verifier earlier in the same programmable transaction block. A cohort accepts only the update stamped exactly at its τ on its own channel, or, when the policy's `pyth_price_buffer_ms` is above zero and the clock is at least `gap_wait_ms` past τ, the update one channel tick later. Testnet runs the buffer at zero, so only the exact τ update counts. A cohort commits whole or not at all, a cohort without a usable price never holds back another cohort, and a cohort at or past its deadline is never committed. Committing a mint also reserves its fee subsidy from the market's incentive balance. `commit` emits `CohortCommitted`.
+
+`resolve` fills or refunds committed orders from the market's own cash, walking cohorts in τ order and records in placement order. It visits at most `max_orders` records, and never more than 450 in one call, which keeps a call under Sui's limit of 1,024 events for each transaction. That cap bounds events, not the objects a call loads, so size `max_orders` from measured costs. For each record:
+
+- **Past the deadline:** Refunded with reason 5, never filled.
+- **Receive address denied:** Refunded with reason 9 before anything is priced. See [Denied recipients](#denied-recipients).
+- **Committed:** Filled at its committed price. Predict rebuilds a pricer from the order's own volatility snapshot, re-anchored on the committed Pyth price and rolled to the committed tick, so the trading fee is charged at the tick rather than at the resolve transaction's clock.
+- **Fails at its tick:** Refunded with the reason it failed on, before anything moves.
+- **More than the market's cash covers:** Refunded with reason 8 and the order fee returned. Fills never draw on the pool.
+
+Orders usually fill in placement order, but not always: each cohort is priced and filled on its own, so a caller holding 2 updates can commit and resolve a later cohort first. Each order keeps its own τ price, so fill order changes only which order reaches scarce market cash first.
+
+A mint fill pays from the record's escrow. Market cash receives the premium, the inventory-impact charge, which joins its isolated reserve, the whole trading fee net of any referral share, part of which the reserved subsidy pays, and the order fee. The builder fee and the referral share leave for their addresses, except that a fee owed to an address on USDC's deny list stays in market cash, unused subsidy returns to the market's incentive balance, and unused budget returns to the trader's receive address. A sell fill pays the trader the redeem value plus any inventory-impact rebate, less the trading and builder fees. Predict emits its usual `OrderMinted` or `LiveOrderRedeemed`, with `penalty_fee` 0, and the order-flow package emits `QueuedOrderFilled` beside it.
+
+The protocol's keeper normally commits and resolves each cohort, usually in one transaction within a second of τ. The SDK's `client.predict.tx.fill` builds the same transaction for anyone who holds Pyth Lazer access: it verifies signed Lazer payloads against the current Lazer package, read from Pyth Lazer's `State` object, commits them, and resolves the market's due records.
+
+<details>
+<summary>Commit and resolve source</summary>
+
+<ImportContent
+	source="packages/predict_orders/sources/queue.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	fun="commit,resolve"
+	noComments
+/>
+
+</details>
+
+### Open records and early sells {#open-records}
+
+A queued fill never enters the trader's account. A filled mint stays in the market's queue as an Open record owned by the placing account, holding the open receipt with the position's packed order ID, its root ID, its open time, and its held quantity. The position itself sits in the market's payout tree like any other, so it is backed, valued in the pool's net asset value, and settled the same way. Because the account's position table never sees it, `predict_account` reads and the SDK's `read.positions` do not list it: follow it by its record ID.
+
+An Open record leaves the Open status in one of 2 ways:
+
+- **Sold early.** `enqueue_redeem_open` sells some or all of it before the cutoff. A partial fill leaves the remainder Open under the sell's record ID, and a refunded sell returns the whole position to an Open record.
+- **Paid at settlement.** The [`settle_step`](#queue-settlement) payout walk pays it in cash to the account's receive address, or `pay_open` pays it later when the walk had to skip it.
+
+`quote_redeem_open` prices a prospective early sell without changing anything:
+
+```move title='packages/predict_orders/sources/queue.move'
+public fun quote_redeem_open(
+    queue: &MarketQueue,
+    market: &ExpiryMarket,
+    wrapper: &AccountWrapper,
+    pricer: &Pricer,
+    record_id: u64,
+    close_quantity: u64,
+    clock: &Clock,
+): RedeemQuote
+```
+
+It prices the close at a live `Pricer` from `load_live_pricer`, with the account's builder fee and the trading fee at the current clock, the way a sell fill prices at its tick. Its `proceeds` are before the order fee. It aborts with `ERecordNotOpen` for a missing or non-Open record, and it does not check that the account owns the record. Position reads such as `live_order_value` and `settled_order_payout` take the packed order ID, which `queue::order(queue, record_id)` returns in the record's `OrderView`.
+
+### Queued-order refunds {#queued-refunds}
+
+Every refund returns the record's own escrow to the trader's receive address, keeps the order fee for reasons 1 and 2, and returns any reserved subsidy to the market's incentive balance. A refunded mint becomes Refunded, and a refunded sell returns to Open, holding its position. Each refund emits `QueuedOrderRefunded`.
+
+| **Reason** | **Code** | **When** | **Order fee** |
+| --- | --- | --- | --- |
+| Limits | `1` | The order misses its own limits at its tick. | Kept, into market cash |
+| Admission | `2` | A mint fails admission at its tick, such as the entry-probability band or the minimum premium, or the order cannot be priced there. | Kept, into market cash |
+| No price | `3` | Reserved, unused. | Returned |
+| Missing node | `4` | A pinned payout-tree node is missing at the fill. A backstop, since placement pins both nodes. | Returned |
+| Deadline | `5` | The order reached its deadline unfinished, or the settlement drain refunded it. | Returned |
+| Freeze | `6` | Reserved, unused. | Returned |
+| Admin | `7` | `admin_refund`. | Returned |
+| No cash | `8` | Market cash could not cover the fill. | Returned |
+| Recipient denied | `9` | The receive address is on USDC's deny list, or USDC is globally paused. | Returned, and parked in the record with the rest of the escrow |
+
+A mint misses its limits when its size is zero or below `min_quantity`, when an exact-quantity order's probability is above `max_probability`, or when its all-in cost is above `min(max_cost, budget)`. A sell misses its limits when its probability is below `min_probability` or its proceeds are below `min_proceeds`.
+
+Besides `resolve` and the settlement drain, 2 calls refund waiting orders:
+
+```move title='packages/predict_orders/sources/queue.move'
+public fun refund(
+    queue: &mut MarketQueue,
+    market: &mut ExpiryMarket,
+    desk: &OrderDesk,
+    config: &ProtocolConfig,
+    max_orders: u64,
+    deny_list: &DenyList,
+    clock: &Clock,
+    ctx: &TxContext,
+): u64
+
+public fun admin_refund(
+    queue: &mut MarketQueue,
+    market: &mut ExpiryMarket,
+    _admin_cap: &AdminCap,
+    desk: &OrderDesk,
+    config: &ProtocolConfig,
+    record_ids: vector<u64>,
+    deny_list: &DenyList,
+    clock: &Clock,
+    ctx: &TxContext,
+)
+```
+
+`refund` is permissionless. It refunds waiting orders at or past their deadline with reason 5, stops at the first cohort that is not yet due, visits at most 450 records, and returns how many it refunded, or 0 without aborting when none is due. Keepers refund overdue orders on their own, so an app needs it only for a "refund my order" button that the SDK enables a few seconds past the deadline. It needs no account, and it works during the emergency freeze. `admin_refund` takes Predict's `AdminCap` and refunds the listed waiting orders at once with reason 7, skipping missing and finished IDs.
+
+### Denied recipients and parked funds {#denied-recipients}
+
+Mainnet USDC is a regulated coin, and Sui aborts any transaction that credits USDC to an address on its deny list, or to anyone while USDC is globally paused. Every queue walk restarts at the same record, so one such send could block a market's fills, refunds, and payouts. Predict and the order-flow package therefore read Sui's shared `DenyList` object, `0x403`, read-only, and never send USDC where the send would abort:
+
+- **Fills:** An order whose receive address is denied is refunded with reason 9 before anything moves.
+- **Fees:** A builder or referral fee whose recipient is denied stays in market cash, and the events still report it as charged.
+- **Refunds and change:** Funds the receive address cannot take stay in the record, which emits `RecordFundsParked`. Once the address is clear, `queue::claim_parked(queue, desk, record_id, deny_list, clock, ctx)` sends them there and emits `RecordFundsClaimed`. Anyone can call it, and it returns 0 and changes nothing while the address is still denied.
+- **Settled payouts:** The payout walk skips a nonzero payout to a denied address and emits `OpenRecordPayoutSkipped`. `queue::pay_open(queue, market, desk, config, record_id, deny_list, clock, ctx)` pays that record at any time after settlement, and it also pays a record the walk skipped because market cash was short.
+
+Every call that can send USDC takes `deny_list: &DenyList`: `resolve`, `refund`, `admin_refund`, `settle_step`, `pay_open`, and `claim_parked`. Placement and `commit` send nothing and do not take it.
+
+### The settlement walk and cleanup {#queue-settlement}
+
+Settlement is 2 jobs in 2 packages, and neither waits on the other. Predict's `try_settle` records the settlement price exactly as before and reads nothing from the queue. Settling while orders still wait is safe, because every deadline falls at least 5 seconds before expiry and a waiting order can then only be refunded.
+
+The order-flow package drains and pays its queue with `settle_step`, one bounded phase per call:
+
+```move title='packages/predict_orders/sources/queue.move'
+public fun settle_step(
+    queue: &mut MarketQueue,
+    market: &mut ExpiryMarket,
+    desk: &OrderDesk,
+    config: &ProtocolConfig,
+    deny_list: &DenyList,
+    clock: &Clock,
+    ctx: &TxContext,
+): u8
+```
+
+It returns the phase the next call runs. Anyone can call it, and it aborts with `EMarketNotExpired` before expiry:
+
+| **Phase** | **Code** | **Runs when** | **Does** | **Records visited for each call** |
+| --- | --- | --- | --- | --- |
+| DRAIN | `0` | Unfinished records remain | Refunds them in τ order with reason 5. A refund the receive address cannot take is parked. | Up to `settle_refund_batch`, at most 450 |
+| PAY | `1` | Nothing is unfinished and Predict has settled | Pays each Open record its settled payout, the full quantity for a winner and 0 for a loser, to the receipt's receive address, marks it Closed, and emits `OpenRecordSettled`. A record the market cannot pay, or whose address is denied, stays Open with `OpenRecordPayoutSkipped`. | Up to `settle_payout_batch`, at most 900 |
+| DONE | `2` | The walk reached the last record | The call that gets there emits `MarketPayoutsCompleted` once. | None |
+
+The batch bounds come from Sui's limit of 1,000 dynamic-field loads for each transaction, so the keeper sends one `settle_step` per transaction. Its order is `try_settle` until the market settles, `settle_step` until it returns DONE, then `cleanup`, then `rebalance_expiry_cash`. On Testnet that sequence usually completes within seconds of expiry, so by the time an app looks, a filled record has usually been paid and deleted. Keep each filled record's order ID, and compute what it is owed from the market's settlement price, as the [TypeScript example](#queued-orders-sdk) below does. The `OpenRecordSettled` event is the payment itself.
+
+`queue::cleanup(queue, market, desk, record_ids, clock)` deletes Refunded and Closed records of a settled market, and aborts with `EMarketNotSettled` before settlement. Anyone can call it and keeps the storage rebate. It skips missing IDs, other statuses, and records that still hold a receipt or parked funds, and it never deletes an Open record.
+
+### Queue limits and market cash {#queue-limits}
+
+The policy bounds each queue, and placement aborts when an order would pass a bound:
+
+- **Capacity:** `mint_capacity` and `sell_capacity` bound the unfinished mints and sells in one market (`EQueueFull`). One side can be full while the other still accepts orders.
+- **Per-account cap:** `per_account_cap` bounds one account's unfinished orders in one market (`EAccountOrderCap`).
+- **Stuck gate:** Placement aborts with `EQueueStuck` while an uncommitted cohort is at least `stuck_threshold_ms` past its τ and no later cohort is committed, or while 2 or more uncommitted cohorts are each that far past their τ. `queue::queue_stuck` reads the same check, and an app can show it as "pricing delayed".
+- **Minimum sell:** `min_sell_quantity` bounds the smallest early sell and the smallest remainder (`EBelowMinSell`).
+
+Each order also records its cash need, the most its fill could take out of the market's spare cash, which is market cash minus required cash. Predict computes it at admission, where `p` is the market's minimum entry probability:
+
+```text
+exact quantity:  ceil(quantity * (1 - p)) + 1
+premium budget:  ceil((min(max_premium, budget) + 1) * (1 / p - 1)) + 1
+all-in budget:   ceil((budget + 1) * (1 / p - 1)) + 1
+early sell:      ceil(close_quantity * (1 - backing_buffer_lambda)) + 1
+```
+
+A premium-budget mint buys no more than its premium cap allows, so its cash need uses `min(max_premium, budget)` in place of the escrowed budget.
+
+Admission checks only the mint's own cash need against spare cash, and reserves nothing while the order waits. Predict keeps a running total, `waiting_cash_need`, and `rebalance_expiry_cash` funds a live market to at least required cash plus that total. An order's escrow sits in its record, outside market cash, the pool's net asset value, and payout backing, so a waiting order changes nothing in the pool's mark until it fills.
+
+### Queued orders under pauses and the freeze {#queue-pauses}
+
+- **Trading pause and market mint pause:** Block queued mints only. Early sells, commits, fills, refunds, and settlement keep running.
+- **Order flow disabled:** `set_order_flow<OrderFlow>(false)` stops every admission, commit, and fill. Committed orders pass their deadlines and refund, and Open records keep their positions and are still paid at settlement.
+- **Emergency freeze:** Halts admission, commits, fills, `try_settle`, and the policy setters, so nothing fills. `refund`, `admin_refund`, `settle_step`, `pay_open`, `claim_parked`, and `cleanup` still run, so a waiting order is still refunded at its deadline. An Open record is paid only if its market settled before the freeze.
+- **Pool flush snapshot:** Admission, fills, and refunds that keep an order fee abort inside the single transaction that snapshots the markets, as other trades do.
+
+### The order-desk policy {#delayed-execution-policy}
+
+`DelayedExecutionPolicy` lives in the shared `OrderDesk`. The values below are the launch policy, which a chain read of the Testnet `OrderDesk` on 2026-10-13 matched field for field:
+
+| **Field** | **Testnet value** | **Bound** | **What it does** |
+| --- | --- | --- | --- |
+| `delay_ms` | `800` | 0 to 5,000 | The latest τ may fall after placement |
+| `pyth_channel` | `3`, `fixed_rate@200ms` | `2`, `fixed_rate@50ms`, or `3` | The tick grid for new orders' τ |
+| `stall_timeout_ms` | `5000` | 2,000 to 10,000 | Time from τ to the deadline |
+| `stuck_threshold_ms` | `1500` | 50 to 10,000, and at least one tick | When the stuck gate refuses new orders |
+| `gap_wait_ms` | `2000` | 50 to 10,000 | How long past τ before a backup tick is allowed |
+| `pyth_price_buffer_ms` | `0` | 0 or exactly one tick | Switches the backup tick on or off |
+| `svi_max_age_ms` | `60000` | 1 to 120,000 | The oldest SVI an admission accepts |
+| `mint_capacity` | `100` | 1 to 300 | Unfinished mints in one market |
+| `sell_capacity` | `100` | 1 to 300 | Unfinished sells in one market |
+| `per_account_cap` | `5` | 1 to 300, and at most the smaller capacity | Unfinished orders for one account in one market |
+| `min_sell_quantity` | `10000`, one lot | Positive whole lots, at most an order's maximum quantity | The smallest early sell and the smallest remainder |
+| `order_fee` | `20000`, 0.02 USDC | 0 to 1 USDC | The flat fee for each order |
+| `settle_refund_batch` | `450` | 1 to 450 | Records one `settle_step` call visits while draining |
+| `settle_payout_batch` | `900` | 1 to 900 | Records one `settle_step` call visits while paying |
+
+Times are milliseconds and USDC amounts are base units. `desk::policy(desk)` returns the policy. Three setters change it, each taking Predict's `AdminCap`, refusing while Predict is frozen (`desk::EProtocolFrozen`), and emitting `DelayedExecutionPolicyUpdated` with the complete policy:
+
+- **`desk::set_timing`** sets the delay, stall timeout, stuck threshold, gap wait, price buffer, channel, and SVI age together, and requires `pyth_price_buffer_ms < stuck_threshold_ms <= gap_wait_ms < stall_timeout_ms` (`EInvalidTiming`).
+- **`desk::set_limits`** sets both capacities, the per-account cap, the minimum sell, and both settle batches (`EInvalidLimits` when the per-account cap exceeds the smaller capacity).
+- **`desk::set_order_fee`** sets the order fee.
+
+The order fee is per order, not per contract. A fill moves it into market cash, a refund for reason 1 or 2 also keeps it there, and every other refund returns it.
+
+### Version floors {#version-floors}
+
+3 version floors govern the 3 trading packages, and the math library has none:
+
+| **Package** | **Floor** | **Bumped by** | **Testnet value** |
+| --- | --- | --- | --- |
+| `deepbook_predict` | `ProtocolConfig.version_watermark` | `protocol_config::bump_version_watermark` | `4` |
+| `deepbook_predict_orders` | `OrderDesk.version_watermark` | `desk::bump_version_watermark` | `1` |
+| `sessions` | `SessionsConfig.version_watermark` | `session_config::bump_version_watermark` | `3` |
+
+A package runs the dependency versions it linked when it was published, so the order-flow package and Sessions must be relinked to each new Predict version before Predict's watermark retires the old one. An order-flow package still linked to a retired Predict version aborts on every call into Predict. A Sessions package linked to one aborts its queued wrappers, while placing orders directly keeps working.
+
+### Queue reads {#queue-reads}
+
+Every read below is permissionless and non-mutating:
+
+| **Read** | **Returns** |
+| --- | --- |
+| `queue::order(queue, record_id)` | One record as a copyable `OrderView`, or `none` for a missing or deleted ID |
+| `queue::queue_id(registry_id, expiry_market_id)` | A market's queue ID, whether or not the queue exists yet |
+| `desk::registry_id(registry)` | The queue registry's ID, for deriving queue IDs |
+| `queue::queue_heads(queue)` | `(resolve_head, next_id, last_tau_ms, last_committed_tau_ms)` |
+| `queue::payout_progress(queue)` | `(payout_cursor, next_id, payouts_completed)` |
+| `queue::waiting_cohorts(queue)` | The cohort count, the oldest uncommitted τ, and the oldest uncommitted τ above the newest committed τ |
+| `queue::queue_stuck(queue, desk, clock)` | Whether placement would refuse a new order as stuck now |
+| `queue::pending_counts(queue)` | `(pending_mints, pending_sells)` |
+| `queue::waiting_orders(queue, account_id)` | The account's unfinished orders in this market. Stale after expiry |
+| `queue::oldest_unfinished_tau_ms(queue)` | τ of the oldest cohort with an unfinished order |
+| `desk::policy(desk)`, `desk::version_watermark(desk)` | The policy, and the order-flow package's version floor |
+| `expiry_market::order_flow_state(market)` | `(waiting_cash_need, payout_tree_node_count, min_entry_probability)` |
+| `protocol_config::is_order_flow<W>`, `is_flush_operator`, `version_watermark` | Order-flow allowlisting, flush-operator membership, and the watermark that marks the cutover |
+
+`OrderView` carries the record's status, kind, request, account and receive address, timing, escrow terms, position, committed price, result, the receipt's stage, and the USDC the record holds: escrow while unfinished, parked funds after. Owner, referrer, and builder fields live in the events instead.
+
+### Queue orders from TypeScript {#queued-orders-sdk}
+
+Version 2.7.0 of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) adds the queued-order flow to `client.predict` and records the Testnet deployment: `read.planMint` quotes an order and turns a slippage in cents per contract into its limits, `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits, `decode.enqueue` reads the record ID from the result, and `read.waitForOutcome` polls the record until it fills or refunds. [Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers each method.
+
+<details>
+<summary>Queue a mint and follow it</summary>
+
+<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-mint" />
+
+</details>
+
+<details>
+<summary>Sell an Open record, refund an overdue order, and read a settled result</summary>
+
+<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-sell" />
+
+</details>
+
+## Mint a position immediately {#mint-a-position}
+
+:::caution
+
+This section describes protocol version 3, which Mainnet runs until its delayed-execution cutover. From protocol version 4, which Testnet runs, all 3 mint functions abort with `EDelayedExecutionRequired`, and a mint is a queued order placed with `enqueue_exact_quantity`, `enqueue_exact_amount`, or `enqueue_exact_cost`. See [Place an order](#place-an-order).
+
+:::
 
 Positions open through 3 functions, one per sizing shape: an exact payout quantity, a premium budget, or an all-in budget. All 3 take the strike range as the tick pair `(lower_tick, higher_tick]`, consume an account `Auth`, and return the minted order ID as a `u256`. A `u256` has `drop`, so the transaction is free to ignore that return value; recover the ID from the `OrderMinted` event instead when you do not chain another command onto it:
 
@@ -332,7 +841,7 @@ public fun mint_exact_cost(
 
 :::info
 
-`mint_exact_cost` arrived in `predict` package version 2, which both networks now run or exceed. Call it against the network's current call target, not the original package ID, which has no such function. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
+`mint_exact_cost` arrived in `predict` package version 2. On Mainnet, call it against the network's current call target, not the original package ID, which has no such function. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
 
 :::
 
@@ -380,7 +889,7 @@ You address positions by absolute integer ticks, with `0` as the open lower end 
 
 </details>
 
-The TypeScript SDK wraps all 3 calls, resolves the market from an underlying and expiry, and converts raw strikes to ticks for you. `client.predict.tx.mint` builds `mint_exact_quantity`, `client.predict.tx.mintAmount` builds `mint_exact_amount`, and `client.predict.tx.mintCost` builds `mint_exact_cost`, with `client.predict.read.quoteMintCost` as the matching dry run. Omitting the SDK's `maxCost` or `maxProbability` options sends `u64::MAX`, which caps nothing, so read a quote first and set a cap. `tx.mintCost` has no such hole, because its budget is required.
+The TypeScript SDK wraps all 3 calls, resolves the market from an underlying and expiry, and converts raw strikes to ticks for you. `client.predict.tx.mint` builds `mint_exact_quantity`, `client.predict.tx.mintAmount` builds `mint_exact_amount`, and `client.predict.tx.mintCost` builds `mint_exact_cost`, with `client.predict.read.quoteMintCost` as the matching dry run. Omitting the SDK's `maxCost` or `maxProbability` options sends `u64::MAX`, which caps nothing, so read a quote first and set a cap. `tx.mintCost` has no such hole, because its budget is required. Version 2.7.0 deprecates all 3 builders, because protocol version 4 always aborts them, and `client.predict.read.executionMode()` reports which path a network is on.
 
 <details>
 <summary>Quote and mint with the SDK</summary>
@@ -391,7 +900,7 @@ The TypeScript SDK wraps all 3 calls, resolves the market from an underlying and
 
 ## The no-trade window {#no-trade-window}
 
-Live trading closes shortly before each expiry. `ProtocolConfig.no_trade_window_ms`, deployed at `2000` on both networks, defines a window at the end of a market's life in which every live flow aborts with `protocol_config::ETradeWindowClosed`:
+Live trading closes shortly before each expiry. `ProtocolConfig.no_trade_window_ms` defines a window at the end of a market's life. A chain read on 2026-10-13 found it at `10000` on both networks, above its compiled default of `2000`. On protocol version 3, every live flow inside the window aborts with `protocol_config::ETradeWindowClosed`:
 
 ```text
 blocked when now >= expiry, or when expiry - now <= no_trade_window_ms
@@ -418,6 +927,8 @@ It does not apply to these functions or to any read accessor:
 A position still open when the window closes is therefore neither stranded nor force-closed: it settles at expiry, and the holder redeems it through the settled path.
 
 Read the live value with `protocol_config::no_trade_window_ms(config): u64`. A window of `0` disables the gate, and an admin can move the value between `0` and `15000` ms at any time, including while a flush is in flight, because nothing in a flush reads it. A change emits `NoTradeWindowUpdated`. The window is why a client that quotes at one instant and submits a moment later can see a quote succeed and the mint fail near expiry; the examples on these pages skip any market with less than 30 seconds to run, which clears the deployed window with margin.
+
+Protocol version 4 applies the window to the order's price instant instead. Admission refuses a queued order whose τ would fall at or past `expiry - no_trade_window_ms`, with `EInvalidOrderTiming`, and the window is one term of the order-flow package's cutoff, so on Testnet new orders stop about 11 seconds before expiry. The version 4 quotes have no window gate, and no trade aborts with `ETradeWindowClosed` there. See [τ, cohorts, the deadline, and the cutoff](#order-timing).
 
 ## Redeem a position {#redeem-a-position}
 
@@ -462,11 +973,11 @@ public fun redeem_settled_permissionless(
 )
 ```
 
-`redeem_live` closes an unsettled position at the current range probability, in full or in part. A partial close removes the closed slice and returns a replacement order ID in the `Option<u256>`, and a full close returns `none`. `Option<u256>` has `drop`, so the transaction can ignore the return value; the replacement ID is also on the `LiveOrderRedeemed` event as `replacement_order_id`. `min_probability` floors the quoted per-contract probability and `min_proceeds` floors the net USDC credited after the trading fee, the builder fee, and the congestion surcharge, with inventory-impact rebate included. Pass `0` to disable either floor. The close charges the trading fee once for each finite boundary, the same way a mint does, and caps it at the gross close value. It applies no entry-probability band, so a position whose probability has left the band stays closable. A live redeem in the same `clock.timestamp_ms()` as the mint aborts with `EMintRedeemSameTimestamp`, which blocks an atomic mint, oracle update, and redeem inside one transaction. A live redeem inside the no-trade window aborts with `ETradeWindowClosed`.
+`redeem_live` closes an unsettled position at the current range probability, in full or in part. It runs on protocol version 3 only. From protocol version 4 it always aborts with `EDelayedExecutionRequired`, so a position held in the account then has no early exit and is paid at settlement, while a position from a queued fill is an Open record that [`enqueue_redeem_open`](#open-records) sells. A partial close removes the closed slice and returns a replacement order ID in the `Option<u256>`, and a full close returns `none`. `Option<u256>` has `drop`, so the transaction can ignore the return value; the replacement ID is also on the `LiveOrderRedeemed` event as `replacement_order_id`. `min_probability` floors the quoted per-contract probability and `min_proceeds` floors the net USDC credited after the trading fee, the builder fee, and the congestion surcharge, with inventory-impact rebate included. Pass `0` to disable either floor. The close charges the trading fee once for each finite boundary, the same way a mint does, and caps it at the gross close value. It applies no entry-probability band, so a position whose probability has left the band stays closable. A live redeem in the same `clock.timestamp_ms()` as the mint aborts with `EMintRedeemSameTimestamp`, which blocks an atomic mint, oracle update, and redeem inside one transaction. A live redeem inside the no-trade window aborts with `ETradeWindowClosed`.
 
 `redeem_settled` closes a settled position for its terminal payout. A settled close is always full, so the function takes no quantity, and it runs no live pricing, so it takes no pricer. Payout is the full quantity when the settlement price lies inside `(lower_tick, higher_tick]` and zero otherwise.
 
-`redeem_settled_permissionless` performs the same settled close without an account `Auth`. Instead of receiving authority from the caller, it mints Predict app authorization from the `AccountRegistry`, which is why it takes the registry as an argument and why anyone can run it on any holder's behalf. The proceeds always land in the position holder's account. An admin can turn the path off with `deauthorize_app<PredictApp>` on the account registry, and owners keep the `redeem_settled` path either way. Treat that switch as a pause rather than a revocation: it removes Predict's row from the registry allowlist and clears no stored state, so positions, balances, and the app-data slot survive untouched and a later `authorize_app<PredictApp>` brings the permissionless path straight back.
+`redeem_settled_permissionless` performs the same settled close without an account `Auth`. Instead of receiving authority from the caller, it mints Predict app authorization from the `AccountRegistry`, which is why it takes the registry as an argument. On protocol version 3 anyone can run it on any holder's behalf. Protocol version 4 limits it, despite its name, to senders an admin has added with `protocol_config::add_settled_redeem_keeper`, and any other sender aborts with `ENotSettledRedeemKeeper`. The allowlist starts empty, and `remove_settled_redeem_keeper` takes a keeper off it. The proceeds always land in the position holder's account. An admin can turn the path off with `deauthorize_app<PredictApp>` on the account registry, and owners keep the `redeem_settled` path either way. Treat that switch as a pause rather than a revocation: it removes Predict's row from the registry allowlist and clears no stored state, so positions, balances, and the app-data slot survive untouched and a later `authorize_app<PredictApp>` brings the permissionless path straight back.
 
 Both settled paths run the version gate and refuse to run inside a pool flush's snapshot transaction, and they abort with `EMarketNotSettled` before settlement. A flush past its snapshot transaction does not block them.
 
@@ -485,7 +996,7 @@ Both settled paths run the version gate and refuse to run inside a pool flush's 
 
 </details>
 
-The SDK exposes `client.predict.tx.redeem` for the live close and `client.predict.tx.claimSettled` for the settled one. The live-close builder pins `min_probability` and `min_proceeds` to `0`, so it surfaces no close-side floor; `redeem_settled` has no floor parameters at all, because a settled claim pays a fixed amount.
+The SDK exposes `client.predict.tx.redeem` for the live close and `client.predict.tx.claimSettled` for the settled one. Version 2.7.0 deprecates `tx.redeem` and `read.quoteRedeem` along with the immediate mints, and keeps `claimSettled` for positions held in the account. The live-close builder pins `min_probability` and `min_proceeds` to `0`, so it surfaces no close-side floor; `redeem_settled` has no floor parameters at all, because a settled claim pays a fixed amount.
 
 You have 2 routes to the floors. The `@mysten/deepbook-v3/sessions` subpath's `redeemLive` wrapper takes `minProbability` and `minProceeds` directly and defaults each to `0`, which is the shortest path for a session-signed close. See [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions). Otherwise build the `moveCall` against `redeem_live` yourself with the signature above.
 
@@ -619,11 +1130,17 @@ public fun settled_order_payout(market: &ExpiryMarket, order_id: u256): u64
 
 </details>
 
+Protocol version 4 adds 3 public reads for the order flow:
+
+- **`order_flow_state(market): (u64, u64, u64)`** returns the market's `waiting_cash_need`, its payout-tree node count, and its snapshotted minimum entry probability.
+- **`receipt_info(receipt)`** returns a queued order's market, stage, account, order ID, Pyth feed, cash need, subsidy bound, and volatility snapshot.
+- **`quote_close(market, pricer, receipt, close_quantity, builder_code_id, clock): RedeemQuote`** prices an early sell of a queued position. The order-flow package's `quote_redeem_open` wraps it, and the `RedeemQuote` getters carry a `redeem_` prefix, such as `redeem_proceeds`, so they do not clash with the `MintQuote` getters.
+
 The SDK's `client.predict.read.markets`, `read.market`, and `read.pricer` cover the same ground over simulated transactions, with raw values converted to decimals. See the [tutorial](/onchain-finance/deepbook/deepbook-predict/tutorial) for the read path end to end.
 
 ## Error codes {#error-codes}
 
-`expiry_market` declares 12 abort codes:
+`expiry_market` declares 12 abort codes on protocol version 3 and 23 on protocol version 4:
 
 | **Code** | **Constant** | **Cause** |
 |---|---|---|
@@ -638,7 +1155,18 @@ The SDK's `client.predict.read.markets`, `read.market`, and `read.pricer` cover 
 | `8` | `ERedeemProceedsBelowMin` | The net credit fell below the `min_proceeds` floor. |
 | `9` | `EMintCostCapRequired` | A caller ran `mint_exact_amount` with `max_cost` set to zero. `mint_exact_cost` never raises it: there the budget is the sizing input, and a zero budget aborts `EPremiumBelowMinimum` instead. |
 | `10` | `EMarketNotPendingValuation` | The pool flush tried to value a market that carries no snapshot stamp. Package-internal, and unreachable through the public flush sequence. |
-| `11` | `EMintCostAboveMaxPayout` | The quoted `all_in_cost` exceeds `quantity`, the position's maximum payout. Every quote and every mint raises it. On `mint_exact_cost` it means no admissible size cleared the bound, because that entrypoint first steps a breaching fill down. |
+| `11` | `EMintCostAboveMaxPayout` | The quoted `all_in_cost` exceeds `quantity`, the position's maximum payout. On protocol version 3 every quote and every mint raises it. On `mint_exact_cost` it means no admissible size cleared the bound, because that entrypoint first steps a breaching fill down. |
+| `12` | `ENotSettledRedeemKeeper` | Protocol version 4 only. A sender that is not an allowlisted keeper called `redeem_settled_permissionless`. |
+| `13` | `EDelayedExecutionRequired` | Protocol version 4 only. A retired immediate mint or `redeem_live` ran. It always aborts. |
+| `14` | `EOrderFailsLimits` | Protocol version 4 only. The placement dry run would refund the order, or a quote would be refused at the clock. |
+| `15` | `EInsufficientMarketCash` | Protocol version 4 only. A queued mint's cash need exceeds the market's spare cash. |
+| `16` | `EInvalidOrderTiming` | Protocol version 4 only. An admission outside Predict's timing bounds, a commit at or past the deadline, or a quote at or past expiry. |
+| `17` | `EInvalidOrderTerms` | Protocol version 4 only. The policy's SVI age exceeds Predict's 120-second ceiling. |
+| `18` | `EWrongMarket` | Protocol version 4 only. A queued order's receipt belongs to another market. |
+| `19` | `EWrongStage` | Protocol version 4 only. A receipt is at the wrong stage for the call, such as quoting a sell of a position that is not open. |
+| `20` | `ENotRecordOwner` | Protocol version 4 only. A sell admission named another account's position. |
+| `21` | `EEscrowMismatch` | Protocol version 4 only. A fill or a refund was presented with less escrow than the order's budget, order fee, and reserved subsidy. |
+| `22` | `EWrongPrice` | Protocol version 4 only. A committed price does not match the order's feed, channel, or τ. |
 
 Aborts from other modules reach these calls too. A mint can abort inside `strike_exposure_config` on entry-probability or premium policy, covered in the next section. A pricer load can abort inside `pricing` when an oracle object does not match the registry binding, when a contributing observation is stale or the same transaction wrote it, or with `ELivePricingExpired` at or after expiry. A gate can abort inside `protocol_config` with these codes:
 
@@ -646,9 +1174,58 @@ Aborts from other modules reach these calls too. A mint can abort inside `strike
 - `EPackageVersionDisabled` (`3`)
 - `EProtocolFrozen` (`5`)
 - `ESnapshotInProgress` (`6`), when a trade lands inside a pool flush's snapshot transaction
-- `ETradeWindowClosed` (`7`), inside the no-trade window
+- `ETradeWindowClosed` (`7`), inside the no-trade window on protocol version 3
+- `ECutoverNotReached` (`13`), on protocol version 4, when a queued order arrives before the watermark reached 4
+- `EOrderFlowNotAllowed` (`15`), on protocol version 4, when an order-flow call comes from a witness that is not allowlisted
+- `EEwmaRetired` (`14`), on protocol version 4, from the retired EWMA setters
+
+On protocol version 4, a queued order's placement can also abort inside `pricing` with `EPythForwardRequired` (`19`) while `use_pyth_spot_for_forward` is off, and the order-flow package raises the codes in [Order-flow package errors](#queue-errors).
 
 An account borrow can abort inside `account` with `EInvalidOwner` or `EBalanceTooLow`.
+
+### Order-flow package errors {#queue-errors}
+
+The queue's own checks run before Predict's gates, so when several apply, the order-flow package's error fires first. A settled market is not an error for `commit` or `resolve`: they return without change. Error numbers restart in every module, so resolve the module from the abort location before you read the number.
+
+#### `deepbook_predict_orders::queue` {#queue-module-errors}
+
+| **Code** | **Constant** | **Cause** |
+| --- | --- | --- |
+| `0` | `EWrongDesk` | The queue or the registry belongs to another desk. |
+| `1` | `EWrongMarket` | The queue belongs to another market. |
+| `2` | `EQueueStuck` | The [stuck gate](#queue-limits) refuses new orders. |
+| `3` | `EQueueFull` | The order's side is at capacity in this market. |
+| `4` | `EAccountOrderCap` | The account is at its cap on unfinished orders in this market. |
+| `5` | `EPastCutoff` | τ would fall at or past the market's cutoff. |
+| `6` | `EMintCostCapRequired` | A queued mint passed `max_cost` as zero or `u64::MAX`. |
+| `7` | `EFeeNotCovered` | The balance cannot pay the order fee. A mint needs more than the fee. |
+| `8` | `EBelowMinSell` | A sell, or the remainder it leaves, is below `min_sell_quantity`. |
+| `9` | `ERecordNotOpen` | The record to sell or quote is missing or not Open. |
+| `10` | `ENotRecordOwner` | The record belongs to another account. |
+| `11` | `EMarketNotSettled` | `cleanup` ran before settlement. |
+| `12` | `EMarketNotExpired` | `settle_step` ran before expiry. |
+
+#### `deepbook_predict_orders::desk` and `delayed_execution_config` {#desk-errors}
+
+| **Module** | **Code** | **Constant** | **Cause** |
+| --- | --- | --- | --- |
+| `desk` | `0` | `EPackageVersionDisabled` | The order-flow package version is below the desk's version floor. |
+| `desk` | `1` | `EVersionWatermarkNotAdvanced` | A watermark bump would not advance the floor. |
+| `desk` | `2` | `EProtocolFrozen` | A policy setter ran while Predict is frozen. |
+| `delayed_execution_config` | `0` to `12` | `EInvalidDelayMs`, `EInvalidStallTimeoutMs`, `EInvalidStuckThresholdMs`, `EInvalidGapWaitMs`, `EInvalidPythPriceBufferMs`, `EInvalidSviMaxAgeMs`, `EInvalidMintCapacity`, `EInvalidSellCapacity`, `EInvalidPerAccountCap`, `EInvalidMinSellQuantity`, `EInvalidOrderFee`, `EInvalidSettleRefundBatch`, `EInvalidSettlePayoutBatch` | One field's value is outside its bound in the [policy table](#delayed-execution-policy), numbered in the order listed. |
+| `delayed_execution_config` | `13` | `EUnsupportedPythChannel` | The channel is not a supported fixed-rate Lazer channel. |
+| `delayed_execution_config` | `14` | `EInvalidTiming` | The timing fields break `pyth_price_buffer_ms < stuck_threshold_ms <= gap_wait_ms < stall_timeout_ms`. |
+| `delayed_execution_config` | `15` | `EInvalidLimits` | The per-account cap exceeds the smaller capacity. |
+
+#### `deepbook_predict_math::lazer_price` {#lazer-price-errors}
+
+| **Code** | **Constant** | **Cause** |
+| --- | --- | --- |
+| `0` | `EPropertyNotRequested` | The update lacks the price, exponent, or update-time property. |
+| `1` | `EGenerationAfterEnvelope` | A feed claims an update time after the envelope that carries it. |
+| `2` | `EFeedMissing` | The order's feed is missing from the update. |
+
+These 3 abort `commit` when the caller passes an update the decoder cannot read. A cohort whose price is unusable for any other reason simply waits for a later commit or its deadline refund.
 
 ### Mint admission errors {#mint-admission-errors}
 
@@ -661,11 +1238,11 @@ The 2 ordinary failure modes of a first mint are not in the table above. Both li
 | `2` | `EInvalidFeeProbability` | A probability above `1.0` reached the Bernoulli fee curve. |
 | `3` | `EPremiumBelowMinimum` | The premium is below the `min_premium` floor of `1_000_000` base units, which is 1 USDC. |
 
-`EPremiumBelowMinimum` is the size floor, and it is the one an integrator meets first. Premium is `quantity * entry_probability`, and `max_entry_probability` is `0.99` on both deployments, so the smallest admissible quantity never falls below about `1.02` USDC of payout, and it rises as the strike moves away from the money. At an entry probability of `0.08`, for example, the smallest admissible quantity is `12.5` USDC of payout, rounded up to the lot size.
+`EPremiumBelowMinimum` is the size floor, and it is the one an integrator meets first. Premium is `quantity * entry_probability`, so the smallest admissible quantity is `1 / max_entry_probability` USDC of payout at best, and it rises as the strike moves away from the money. Each market snapshots its band at creation. A chain read on 2026-10-13 found the template band at `0.25` to `0.75` on Mainnet, and at `0.15` to `0.85` on Testnet for markets created from that day. With a `0.75` maximum, the smallest admissible quantity is about `1.34` USDC of payout. At an entry probability of `0.25`, the smallest admissible quantity is `4` USDC of payout, rounded up to the lot size.
 
-`EEntryProbabilityOutOfBounds` is the band. A strike far enough out of the money prices below `min_entry_probability`, which is `0.01` on both deployments, and the admission check rejects it before computing the premium.
+`EEntryProbabilityOutOfBounds` is the band. A strike far enough out of the money prices below `min_entry_probability`, and the admission check rejects it before computing the premium. The band is narrow on both networks, so a strike far from the money, including a window's reference strike once the price has moved away from it, can fall outside it. Read the market's band with the SDK's `read.feePolicy` rather than assuming one.
 
-A two-sided range meets the band at each finite boundary as well: the probability that settlement ends above the lower strike and the probability that it ends at or below the higher strike must each sit inside the band. A range with a 0.995 probability of settling above its lower strike and a 0.5 probability of settling above its higher strike has a range probability of 0.495, inside the band, yet the mint aborts with `EEntryProbabilityOutOfBounds`, because 0.995 exceeds the `0.99` maximum.
+A two-sided range meets the band at each finite boundary as well: the probability that settlement ends above the lower strike and the probability that it ends at or below the higher strike must each sit inside the band. On a market with a `0.25` to `0.75` band, a range with a 0.8 probability of settling above its lower strike and a 0.3 probability of settling above its higher strike has a range probability of 0.5, inside the band, yet the mint aborts with `EEntryProbabilityOutOfBounds`, because 0.8 exceeds the `0.75` maximum. On protocol version 4 the same failures refund a queued order with reason 2, or abort its placement with `EOrderFailsLimits`, rather than raising these codes.
 
 Because error numbers repeat across modules, the number alone identifies nothing. Read the module out of the abort location before you look the number up. Code `3` is `EPremiumBelowMinimum` in `strike_exposure_config`, `EMintProbabilityAboveMax` in `expiry_market`, `EReferenceTickAlreadySet` in `strike_exposure`, and `EInvalidQuantity` in `order`. See [Strikes and Ticks](/onchain-finance/deepbook/deepbook-predict/contract-information/market-keys#error-codes) for the `order` and `strike_exposure` tables.
 
@@ -675,7 +1252,7 @@ Order-domain events live in `deepbook_predict::order_events` and all 3 carry `co
 
 ### `OrderMinted` {#order-minted}
 
-Either mint function emits it once per successful mint:
+Each mint function emits it once per successful mint on protocol version 3. On protocol version 4, `resolve` in the order-flow package emits it for each queued mint fill, with `penalty_fee` 0:
 
 | **#** | **Field** | **Type** |
 |---|---|---|
@@ -707,7 +1284,7 @@ Either mint function emits it once per successful mint:
 
 ### `LiveOrderRedeemed` {#live-order-redeemed}
 
-`redeem_live` emits it once, whether the close is partial or full:
+`redeem_live` emits it once on protocol version 3, whether the close is partial or full. On protocol version 4, `resolve` emits it for each queued sell fill, with `penalty_fee` 0:
 
 | **#** | **Field** | **Type** |
 |---|---|---|
@@ -748,6 +1325,28 @@ Both `redeem_settled` and `redeem_settled_permissionless` emit it:
 | 7 | `onchain_timestamp_ms` | `u64` |
 
 The event carries the payout but not the settlement price. Read that from the `MarketSettled` event or from `settlement_price` on the market.
+
+### Queue events {#queue-events}
+
+Every queue event comes from `deepbook_predict_orders::queue_events`, so an indexer subscribes to both packages. `OrderMinted` and `LiveOrderRedeemed` keep their Predict type and layout, but a fill transaction calls the order-flow package, so a filter keyed on the called package must match on the event type instead.
+
+| **Event** | **Module** | **Emitted by** |
+| --- | --- | --- |
+| `OrderEnqueued` | `queue_events` | Each `enqueue_*`, with the request, timing, volatility snapshot, escrow terms, the source record of a sell, and the market's cash, required cash, and waiting cash need after the call |
+| `CohortCommitted` | `queue_events` | `commit`, once for each cohort, with the normalized spot, the tick, the generation time, the feed, the channel, and the sender |
+| `QueuedOrderFilled` | `queue_events` | `resolve`, beside Predict's `OrderMinted` or `LiveOrderRedeemed` |
+| `QueuedOrderRefunded` | `queue_events` | Every refund, with the reason, what was returned, and whether a position went back to Open |
+| `QueuedOrdersCleaned` | `queue_events` | `cleanup`, when it deleted at least one record |
+| `OpenRecordSettled` | `queue_events` | The payout walk or `pay_open`, once for each Open record paid, with `payout` 0 for a loser |
+| `OpenRecordPayoutSkipped` | `queue_events` | The payout walk or `pay_open`, for each Open record it cannot pay |
+| `RecordFundsParked` | `queue_events` | A refund or a fill's change that the receive address could not take |
+| `RecordFundsClaimed` | `queue_events` | `claim_parked`, when it sends a record's parked funds |
+| `MarketPayoutsCompleted` | `queue_events` | The `settle_step` call that finishes the payout walk, once for each queue |
+| `DelayedExecutionPolicyUpdated` | `queue_events` | Every policy setter, with the complete policy |
+| `OrderFlowUpdated` | Predict `config_events` | `set_order_flow`, with the witness type name and the new state |
+| `FlushOperatorUpdated` | Predict `config_events` | `add_flush_operator` and `remove_flush_operator` |
+
+`OrderEnqueued`, `QueuedOrderFilled`, and `QueuedOrderRefunded` carry the market's cash, required cash, and waiting cash need after the call, so a keeper can track spare cash from events alone. `CohortCommitted`, `QueuedOrderFilled`, and `QueuedOrderRefunded` carry the transaction sender, so monitoring sees fills by third parties. The 2 Predict events are new types in protocol version 4, so match them against the Predict package version that introduced them rather than Predict's original ID. [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids) explains why.
 
 <details>
 <summary>Order event source</summary>

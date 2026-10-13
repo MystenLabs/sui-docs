@@ -48,8 +48,8 @@ answer: >-
   it builds the transaction otherwise. `read.price` returns the chain's up and
   down probabilities for a single strike, and `read.pricer` reads the resolved
   pricer once and prices every strike locally.
-last_verified: 2026-09-23
-verified_against: '@mysten/deepbook-v3 2.6.1 (ts-sdks 56d51645); predict protocol version 3 and sessions 2 on both networks, publication records at deepbookv3 abb4cfd9'
+last_verified: 2026-10-13
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434'
 ---
 
 The markets and pricing surface of `@mysten/deepbook-v3/predict` finds live expiry markets, turns a position you describe in US dollars (USD) into the tick pair the contract takes, and prices strikes onchain or locally. [Strikes and Ticks](/onchain-finance/deepbook/deepbook-predict/contract-information/market-keys) explains the tick grid and the admission grid, and [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) explains the pricer that every price read loads.
@@ -64,7 +64,7 @@ Both market reads convert the contract's raw integers into decimals. Treat those
 
 Use `read.markets` to list the pool's active expiry markets with the state you need to render a board and build a mint. It returns a `Promise<ActiveMarket[]>`, and it takes no parameters. It reads the market IDs, then reads every market's state in a single batched simulation.
 
-The list is the pool's active set as `plp::active_expiry_markets` reports it, not a tradable set; [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#reading-vault-state) describes that accessor. Settlement is a separate permissionless call, so an expired market that nobody has settled is still in the list, and quoting against it aborts. Compare each entry's `expiryMs` with the clock and check `mintPaused` before you quote.
+The list is the pool's active set as `plp::active_expiry_markets` reports it, not a tradable set; [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#reading-vault-state) describes that accessor. Settlement is a separate permissionless call, so an expired market that nobody has settled is still in the list, and quoting against it aborts. Compare each entry's `expiryMs` with the clock and check `mintPaused` before you quote. On Testnet each market also needs its queue: `read.queue(market, owner)` returns the queue's state in one read, including the stuck gate, which an app can show as pricing delayed, the side capacities, the order fee, a timing preview, the largest mint the market's spare cash admits now, and the `refusal` a mint or a sell would get. After expiry, `read.market` and the pricing reads abort with `ELivePricingExpired`, while `read.settlement(market)` still returns the settlement price. `read.feePolicy(market)` returns the fee policy the market snapshotted at creation, including its entry band. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers the queued-order reads.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="842-842" />
 
