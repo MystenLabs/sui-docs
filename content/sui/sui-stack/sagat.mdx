@@ -56,7 +56,7 @@ Use the [Sagat web interface](https://sagat.mystenlabs.com/) for signing transac
 
 [Multisig](/develop/transactions/transaction-auth/multisig) is a type of authentication that requires multiple signatures from different parties before a transaction can be executed. Several addresses can be invited to a multisig group. On Sagat, invited parties can accept or reject multisig invitations after the multisig is created.
 
-Each multisig can have a different voting threshold. For example, in a multisig that contains 3 users, only 2 of the users might need to sign the proposed transaction for it to be approved. In other scenarios, all users might be required to sign the transaction, and if one rejects it, the proposed transaction is canceled. Each threshold can configure different weights per user, enabling endless combinations, such as 5 out of 6 with just 2 addresses.
+Each multisig can have a different voting threshold. For example, in a multisig that contains 3 users, only 2 of the users might need to sign the proposed transaction for it to be approved. In other scenarios, all users might be required to sign the transaction, and if one rejects it, the proposed transaction is canceled. Each member can be assigned a different approval weight, which is how much their signature counts toward the threshold. This enables endless combinations, such as 5 out of 6 with just 2 addresses.
 
 Learn how to use the [TypeScript SDK for multisig](https://sdk.mystenlabs.com/typescript/cryptography/multisig).
 
@@ -66,12 +66,12 @@ Sagat uses Mysten Labs infrastructure for its API layer and frontend layer to st
 
 The application's frontend is also hosted through Mysten Labs services, which you must rely on to be secure. Always validate a transaction's preview in a secondary location, such as through your wallet, not just from the web interface.
 
-### Mitigate risks by self-hosting Sagat
+### Can I self-host Sagat?
 
 To take control and use Sagat in a trustless manner, you can self-host it. To do so, first download the GitHub repository:
 
 ```
-$ git clone https://github.com/MystenLabs/sagat/tree/main
+$ git clone https://github.com/MystenLabs/sagat.git
 ```
 
 Then, build the SDK and spin up the frontend and the API using the command:
@@ -88,7 +88,7 @@ Building the SDK is optional, as it can accept a custom URL.
 
 This runs the bun server in dev mode, so all changes made are reflected as you are developing.
 
-## Using the Sagat web interface 
+## How to use the Sagat web interface 
 
 Use Sagat [web interface](https://sagat.mystenlabs.com/) to:
 
@@ -107,6 +107,15 @@ Use Sagat [web interface](https://sagat.mystenlabs.com/) to:
 - Execute transactions once the voting threshold has been reached.
 
 Each of these tasks can be executed [programmatically](#using-sagat-programmatically) as well.
+
+A typical end-to-end workflow in the web interface is:
+
+1. [Connect a wallet](#connecting-a-wallet) to register its keys with Sagat.
+2. [Create a multisig](#creating-and-managing-multisig) with at least 2 registered addresses and an approval threshold.
+3. Each invited member [accepts the invitation](#multisig-invitations) to join the multisig.
+4. [Create a proposal](#create-and-submit-proposals) for a transaction.
+5. Multisig members vote on the proposal.
+6. Execute the transaction once the voting threshold has been reached.
 
 ### Connecting a wallet 
 
@@ -190,7 +199,7 @@ From the Sagat dashboard, you can see several details and options regarding prop
 
 - An overview of the assets owned by the multisig. 
 
-Only members of the committee can query proposals from the API.
+Only multisig members can query proposals from the API.
 
 ![Sagat dashboard](./images/sagat-9.png "Screenshot showing Sagat dashboard.")
 
