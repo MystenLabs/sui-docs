@@ -85,7 +85,7 @@ Users of the network hold their own SUI, which they can delegate to validators o
 
 ![Sui tokenomics flow](./images/context_sui-tokenomics-flow_v1.png "Flowchart showing the tokenomics structure.")
 
-## Token supply
+## What is the total supply of SUI?
 
 There is a finite supply of SUI. The total supply of SUI tokens on Mainnet is capped at 10,000,000,000 SUI. This is the total number of SUI that can ever be minted, but the total supply is not available for transactions. Supply availability follows the designed unlocking schedules in place to enhance the tokenomics stability of the network and provide a long-term level of security. 
 
@@ -155,17 +155,17 @@ Unlike traditional economics, deflation is a feature of Sui rather than a bug. T
 
 All honest validators on Sui receive their staking rewards with full certainty. The rewards are based only on the amount of stake the validators hold, removing randomness from the equation. 
 
-### Staking 
+### How do I stake SUI?
 
 Stake SUI tokens by sending a transaction to the network that calls the <a href="/references/framework/sui_sui_system/staking_pool#sui_system_staking_pool_request_add_stake" data-noBrokenLinkCheck='true'>staking function</a> implemented as part of the <a href="/references/framework/sui_sui_system/staking_pool" data-noBrokenLinkCheck='true'>system Move package</a>. This transaction wraps the SUI tokens in a self-custodial stake [object](/develop/sui-architecture/object-model). This stake object contains information including the validator staking pool ID and the activation [epoch](/develop/sui-architecture/epochs) of the stake. With the introduction of [SIP-6](https://blog.sui.io/liquid-staking-coming-sui/), you can participate in liquid staking protocols using your staked objects.
 
 [Sui-compatible crypto wallets](https://slush.app/) typically have functionality to initiate staking and unstaking from your Sui address. See the respective documentation for these tools to begin staking your SUI.
 
-### Unstaking
+### How do I unstake SUI?
 
 Similar to staking, a user withdraws stake from a validator by sending a transaction that calls the <a href="/references/framework/sui_sui_system/staking_pool#sui_system_staking_pool_request_withdraw_stake" data-noBrokenLinkCheck='true'>unstaking function</a> in the <a href="/references/framework/sui_sui_system/staking_pool" data-noBrokenLinkCheck='true'>system Move package</a>. This transaction unwraps the stake object, and sends both the principal and the accumulated rewards to the user as SUI tokens. You accrue rewards only during epochs where the stake is active for the entire epoch. The rewards withdrawn from the validator's rewards pool are calculated based on the activation epoch and unstaking epoch of the stake.
 
-### Choosing a validator for staking
+### How do I choose a validator for staking?
 
 You must choose a specific validator you would like to stake your SUI in. The choice of validator can potentially impact the amount of staking rewards you receive. The factors determining this amount include, but are not limited to:
 
@@ -193,16 +193,18 @@ The staking pool is implemented in a system-level smart contract ([`staking_pool
 
 ### Validator pool exchange rate 
 
-The exchange rate for each validator pool is calculated at each epoch boundary as follows:
+At each epoch boundary, the exchange rate for each validator pool grows by the rate of return that third-party stakers earned during that epoch, which is their rewards divided by their stake. The exchange rate for each validator pool is calculated at each epoch boundary as follows:
 $$
 Exchange rate at E+1 = (1 + (third-party staker rewards at E / third-party stake at E)) × (exchange rate at E)
 $$
+
+For example, using hypothetical numbers: if the exchange rate at epoch `E` is 1.0, and third-party stakers earned 10 SUI in rewards on 1,000 SUI of third-party stake during `E`, then the exchange rate at `E+1` is (1 + 10 / 1,000) × 1.0 = 1.01.
 
 The distinction between third-party owned versus validator-owned rewards and stake is relevant in that validators earn commission on the staking pool's tokens but third-party stakers do not. This accounting enables Sui to keep track of the rewards accrued by both validators and third-party token holders using a single global exchange rate table.
 
 <ImportContent source="staking-pool-reqs" mode="snippet" />
 
-#### Understanding the voting power formula
+#### How does the voting power formula work?
 
 [SIP-39](https://github.com/sui-foundation/sips/pull/39) uses the following formula to determine if a validator can join the set:
 
@@ -226,7 +228,7 @@ This formula checks if the validator would have at least `V` voting power after 
 
 1. The validator can join if this value is greater than or equal to the threshold `V`.
 
-For example, with a network stake of 7.69B SUI and `V`=3, a validator with 2.31M SUI would have: 2,310,000 / (2,310,000 + 7,694,950,773) ≈ 0.0003 proportion, converting to voting power: 0.0003 × 10000 ≈ 3 units.
+For example, with a network stake of 7.69B SUI (an illustrative figure; the actual total network stake changes over time) and `V`=3, a validator with 2.31M SUI would have: 2,310,000 / (2,310,000 + 7,694,950,773) ≈ 0.0003 proportion, converting to voting power: 0.0003 × 10000 ≈ 3 units.
 
 Since 3 ≥ 3, they meet the threshold to join.
 
