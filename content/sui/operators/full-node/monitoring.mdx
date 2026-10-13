@@ -41,13 +41,15 @@ questions:
 answer: Monitor Sui node metrics to ensure the health and performance of your node.
 ---
 
+This page explains how to view the metrics a Sui full node exposes on port `9184`, which metrics show sync health, and how to scrape them with Prometheus, visualize them with Grafana, and set up alerts.
+
 :::info
 
 These instructions are for advanced users. If you just need a local development environment, you should instead follow the instructions in [Create a Local Sui Network](/getting-started/onboarding/local-network) to create a local full node, validators, and faucet.
 
 :::
 
-The examples below scrape `localhost:9184/metrics`, but the default full node template binds metrics to `0.0.0.0:9184`. Restrict `metrics-address` with a firewall or bind it to a private interface in production.
+The examples below scrape `localhost:9184/metrics`, so run them on the node host itself or through an SSH tunnel to it. The default full node template binds metrics to `0.0.0.0:9184`. Restrict `metrics-address` with a firewall or bind it to a private interface in production.
 
 You can view the metrics in the metrics UI, or use a tool like `curl` to get the metrics in a format that is easy to parse.
 
@@ -55,9 +57,9 @@ You can view the metrics in the metrics UI, or use a tool like `curl` to get the
 $ curl -s http://localhost:9184/metrics | grep -E 'sui_validator|sui_fullnode'
 ```
 
-## Key metrics
+## What metrics does a Sui node expose?
 
-The following metrics are the most important for monitoring node health:
+The following metrics are the most important for monitoring node health. The three checkpoint metrics track progress in stages: the node learns about a checkpoint from the network (known), fully syncs its contents and effects (synced), and executes it (executed).
 
 | Metric | Type | What it tells you |
 |--------|------|-------------------|
@@ -76,7 +78,7 @@ The following metrics are the most important for monitoring node health:
 $ curl -s http://localhost:9184/metrics | grep -E 'highest_known_checkpoint|highest_synced_checkpoint|last_executed_checkpoint'
 ```
 
-## Production monitoring
+## How do I monitor a Sui node in production?
 
 For production monitoring, use [Prometheus](https://prometheus.io/) to scrape metrics and [Grafana](https://grafana.com/) to visualize them.
 
@@ -90,9 +92,9 @@ scrape_configs:
     scrape_interval: 15s
 ```
 
-### Suggested alerts
+### How do I set up alerts for my Sui node?
 
-Set up alerts for the following conditions:
+Set up alerts for the following conditions. The conditions are written as PromQL expressions for use in Prometheus alerting rules:
 
 - **Sync lag:** `highest_known_checkpoint - highest_synced_checkpoint > 100` sustained for 5 minutes indicates the node is falling behind.
 - **Node down:** `up{job="sui-fullnode"} == 0` sustained for 2 minutes indicates the node is unreachable.
