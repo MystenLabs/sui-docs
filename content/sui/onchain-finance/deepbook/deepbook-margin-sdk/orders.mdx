@@ -65,7 +65,7 @@ Use `placeLimitOrder` to place a limit order through a margin manager. The call 
 - `params`: `PlaceMarginLimitOrderParams` object containing:
   - `poolKey`: String that identifies the DeepBook pool
   - `marginManagerKey`: String that identifies the margin manager
-  - `clientOrderId`: String for the client-side order ID
+  - `clientOrderId`: String for the client-side order ID. This is not the protocol `orderId` that `modifyOrder` and the cancel functions take.
   - `price`: Number representing the order price
   - `quantity`: Number representing the order quantity
   - `isBid`: Boolean indicating if this is a buy order
@@ -202,7 +202,7 @@ Use `updateCurrentPrice` to update the current price for a pool using the Pyth o
 
 The following examples demonstrate common margin order operations.
 
-### Place a limit order
+### How do I place a limit order?
 
 ```tsx
 // Params for limit order
@@ -237,7 +237,7 @@ placeLimitOrder = (tx: Transaction) => {
 };
 ```
 
-### Place a market order
+### How do I place a market order?
 
 ```tsx
 // Example: Place a market sell order for 5 SUI
@@ -257,7 +257,7 @@ placeMarketOrder = (tx: Transaction) => {
 };
 ```
 
-### Place a reduce-only order
+### How do I place a reduce-only order?
 
 ```tsx
 // Example: Place a reduce-only limit order to close a position
@@ -278,7 +278,7 @@ placeReduceOnly = (tx: Transaction) => {
 };
 ```
 
-### Modify and cancel orders
+### How do I modify and cancel orders?
 
 ```tsx
 // Example: Modify order quantity
@@ -310,7 +310,7 @@ cancelAll = (tx: Transaction) => {
 };
 ```
 
-### Stake and participate in governance
+### How do I stake and participate in governance?
 
 ```tsx
 // Example: Stake DEEP tokens
