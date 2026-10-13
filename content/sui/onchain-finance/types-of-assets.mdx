@@ -47,6 +47,31 @@ answer: >-
 
 On Sui, there are a variety of fungible, non-fungible, and other types of asset standards, each with their own defined usage patterns and capabilities. Choosing the correct standard for your use case is important to enable the correct set of features in your application.
 
+:::tip
+
+The Coin and Currency standards are both used to create fungible tokens. However, they use different creation methods and store metadata in a different type of object.
+
+Coin creates tokens using `coin::create_currency` while Currency uses `sui::coin_registry`.
+
+Coin uses `CoinMetadata` while Currency uses `Currency`.
+
+Fungible tokens created on Sui using the Coin or Currency standard are referred to as **coins**.
+
+For fungible tokens created on Sui using the [Closed-Loop Token standard](/onchain-finance/closed-loop-token), the documentation uses the term **tokens**. In practice, the terms for both these objects are often interchangeable.
+
+:::
+
+## Choose a standard
+
+The following table summarizes the fungible asset standards described on this page. Each section below has more detail and links to the full documentation.
+
+| Standard | Module | Ownership and transfers | Metadata | Use it when |
+| --- | --- | --- | --- | --- |
+| Coin | `sui::coin` | `key` and `store` abilities; supports wrapping and public transfers | `CoinMetadata<T>` | You maintain an existing coin created with `sui::coin`, or your coin does not require advanced supply tracking or regulatory features |
+| Currency | `sui::coin_registry` | Wrappable and freely transferable; can be stored in any application | `Currency<T>` object in Coin Registry | You are creating a new coin, or you need advanced supply management, regulatory features such as deny lists, or registry integration |
+| Permissioned Asset Standard (PAS) | — | Assets are held in Account objects (one per address) and move between Accounts only through requests approved and resolved in the same programmable transaction block (PTB) | — | You need account-based transfer controls and compliance checks. PAS is currently Testnet only, not Mainnet |
+| Closed-Loop Token | `sui::token` | `key` ability only; can only be owned by an account; custom policies for transfers, spends, and conversions | — | Not recommended for new designs; use PAS in place of CLT |
+
 ## Fungible tokens: Coin standard
 
 The Coin standard defines fungible tokens that have `key` and `store` abilities. Coin supports wrapping and public transfers. It uses the [`sui::coin`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/coin.md) module. Coin refers to a **single object wrapper for a fungible asset**.
@@ -89,20 +114,6 @@ You can create coins with the Currency standard using `coin_registry::new_curren
 
 - **One-Time Witness creation** (`coin_registry::new_currency_with_otw`): Uses a One-Time Witness for uniqueness proof. Requires a two-step publish and finalize process.
 
-:::tip
-
-The Coin and Currency standards are both used to create fungible tokens. However, they use different creation methods and store metadata in a different type of object.
-
-Coin creates tokens using `coin::create_currency` while Currency uses `sui::coin_registry`.
-
-Coin uses `CoinMetadata` while Currency uses `Currency`.
-
-Fungible tokens created on Sui using the Coin or Currency standard are referred to as **coins**.
-
-For fungible tokens created on Sui using the [Closed-Loop Token standard](/onchain-finance/closed-loop-token), the documentation uses the term **tokens**. In practice, the terms for both these objects are often interchangeable.
-
-:::
-
 ### Coin Registry
 
 The Coin Registry system provides a centralized approach to currency management through the `sui::coin_registry` module. The registry is a shared object located at address `0xc` that stores metadata, supply information, and regulatory status for all registered coin types.
@@ -125,6 +136,8 @@ Use the Currency standard if you are:
 
 The Permissioned Asset Standard (PAS) enables asset ownership through Account objects. Account objects can hold assets and enforce transfer controls and compliance checks. There is one Account per address, and an Account can hold any asset type. Assets can only move between Accounts through hot potato requests that must be approved and resolved in the same programmable transaction block (PTB).
 
+PAS is currently available on Testnet only, not Mainnet. Treat it as a design and prototyping target rather than a launch path.
+
 PAS uses Sui [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances). PAS balances are managed by PAS on behalf of the wallet address. They are held in a derived Account object, however, transfers always target the Account address, not the wallet address.
 
 PAS assets are stored in Sui objects and can be queried using the same data access methods as any other address-owned data.
@@ -135,7 +148,7 @@ PAS assets are stored in Sui objects and can be queried using the same data acce
 
 :::caution
 
-The Permissioned Asset Standard (PAS) provides a new and improved alternative to the Closed-Loop Token (CLT) standard. Use PAS in place of CLT.
+The Permissioned Asset Standard (PAS) provides a new and improved alternative to the Closed-Loop Token (CLT) standard. Use PAS in place of CLT. PAS is currently available on Testnet only, not Mainnet.
 
 :::
 
