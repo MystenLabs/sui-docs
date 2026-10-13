@@ -118,7 +118,7 @@ Use `executeConditionalOrders` to execute conditional orders that have been trig
 
 **Parameters**
 
-- `managerAddress`: String representing the address of the margin manager whose orders to execute. Unlike the other functions, this one takes the manager address rather than `marginManagerKey`, the string that identifies the margin manager. Unlike the other functions, this one takes the manager address rather than `marginManagerKey`, the string that identifies the margin manager.
+- `managerAddress`: String representing the address of the margin manager whose orders to execute. Unlike the other functions, this one takes the manager address rather than `marginManagerKey`, the string that identifies the margin manager.
 - `poolKey`: String that identifies the DeepBook pool.
 - `maxOrdersToExecute`: Number representing the maximum number of orders to execute in this call.
 
@@ -179,7 +179,7 @@ Use `newPendingMarketOrder` to create a pending market order for use in conditio
 
 ### `conditionalOrderIds`
 
-Query all conditional order IDs for a margin manager.
+Query all conditional order IDs for a margin manager. Like the other TPSL functions, `conditionalOrderIds` lives on `client.deepbook.marginTPSL`.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginTPSL.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="conditionalOrderIds" signatureOnly />
 

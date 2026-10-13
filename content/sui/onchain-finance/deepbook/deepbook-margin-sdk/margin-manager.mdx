@@ -88,7 +88,7 @@ Use `newMarginManager` to create and share a new margin manager in one transacti
 
 **Parameters**
 
-- `poolKey`: String that identifies the DeepBook pool.
+- `poolKey`: String that identifies the DeepBook pool, such as `SUI_DBUSDC`. The SDK comes with default pools, and you can provide a `PoolMap` during construction to override this behavior.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginManager.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="newMarginManager" signatureOnly />
 

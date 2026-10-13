@@ -85,7 +85,7 @@ Use `borrowBaseAsset` to borrow a base asset from the pool identified by the `po
 
 **Parameters**
 
-- `poolKey`: String that identifies the pool from which to borrow.
+- `poolKey`: String that identifies the pool from which to borrow. The SDK comes with default pools; you can provide a `PoolMap` during construction to override this behavior.
 - `borrowAmount`: Number that represents the amount to borrow from the pool.
 
 ```tsx
@@ -98,7 +98,7 @@ Use `returnBaseAsset` to return the base asset to the pool identified by the `po
 
 **Parameters**
 
-- `poolKey`: String that identifies the pool from which to borrow.
+- `poolKey`: String that identifies the pool to which to return the base asset.
 - `borrowAmount`: Number that represents the amount to borrow from the pool.
 - `baseCoinInput`: Coin object representing the base asset to be returned.
 - `flashLoan`: Flash loan object representing the loan to be settled.
