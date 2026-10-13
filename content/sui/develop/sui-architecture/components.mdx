@@ -51,19 +51,19 @@ answer: >-
 
 Sui is a layer 1 blockchain. Layer 1 networks consist of the following primary components:
 
-1. [**Nodes**](/operators) that run the network's binaries and participate in network activity such as consensus. Nodes provide compute and [storage](/develop/sui-architecture/sui-storage) resources to the network.
+- [**Nodes**](/operators) that run the network's binaries and participate in network activity such as consensus. Nodes provide compute and [storage](/develop/sui-architecture/sui-storage) resources to the network.
 
-1. The [**consensus mechanism**](/develop/sui-architecture/consensus) used to validate transactions.
+- The [**consensus mechanism**](/develop/sui-architecture/consensus) used to validate transactions.
 
-1. [**Transactions**](/develop/transactions/txn-overview) themselves, which on Sui reflect onchain operations such as creating objects or sending assets.
+- [**Transactions**](/develop/transactions/txn-overview) themselves, which on Sui reflect onchain operations such as creating objects or sending assets.
 
-1. [**Tokens**](/develop/sui-architecture/tokenomics-overview) used to pay for resources and transactions on the network.
+- [**Tokens**](/develop/sui-architecture/tokenomics-overview) used to pay for resources and transactions on the network.
 
 On Sui specifically, other core components include:
 
-1. [**Objects**](/develop/sui-architecture/object-model), the most basic unit of storage on Sui that are addressable onchain by unique IDs.
+- [**Objects**](/develop/sui-architecture/object-model), the most basic unit of storage on Sui that are addressable onchain by unique IDs.
 
-1. [**Move**](/develop/write-move/sui-move-concepts), the programming language used to create smart contracts on Sui.
+- [**Move**](/develop/write-move/sui-move-concepts), the programming language used to create smart contracts on Sui.
 
 ## Networks
 
@@ -85,13 +85,13 @@ On Sui, validator nodes run the consensus mechanism that orders and commits all 
 
 There are 2 types of nodes on Sui:
 
-1. **Full node:** Responsible for validating blockchain activity such as transactions, checkpoints, and [epoch](/develop/sui-architecture/epochs) changes. Each full node stores the blockchain's state and history to serve queries.
+- **Full node:** Responsible for verifying committed blockchain activity, such as transactions, checkpoints, and [epoch](/develop/sui-architecture/epochs) changes (when the validator set can change), independently and locally without taking part in consensus. Each full node stores the blockchain's state and history to serve queries.
 
-2. **Validator node:** Responsible for executing more tasks than full nodes, such as staking, gas price references, and tallying rules.
+- **Validator node:** Responsible for executing more tasks than full nodes, such as staking, gas price references, and tallying rules.
 
 Learn more about [nodes on Sui](/operators).
 
-## Delegated proof-of-stake consensus
+## How does Sui reach consensus?
 
 Sui uses a delegated proof-of-stake (DPoS) consensus mechanism to validate transactions. Validators must stake SUI tokens on the network, either their own or delegated by other token holders, to participate in consensus. This approach aligns validator incentives with network security and efficiency without the high energy costs of proof-of-work systems.
 
@@ -105,9 +105,9 @@ To learn more about consensus on Sui, see:
 
 Transactions on Sui consist of several commands that execute on inputs. These inputs define the result of the transaction. All updates to the Sui network happen through transactions. There are only 2 types of transactions on Sui:
 
-1. **Programmable transaction blocks:** Define all user transactions on Sui, as they can be submitted by anyone. They are used for activities such as sending tokens, creating objects, and interacting with smart contracts.
+- **Programmable transaction blocks:** Define all user transactions on Sui, as they can be submitted by anyone. They are used for activities such as sending tokens, creating objects, and interacting with smart contracts.
 
-1. **System transactions:** Only submittable by validator nodes. These transactions are for network functions such as changing epochs or starting checkpoints.
+- **System transactions:** Only submittable by validator nodes. These transactions are for network functions such as changing epochs or starting checkpoints.
 
 Learn more about both types of [transactions](/develop/transactions/txn-overview), or learn more about [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks).
 
@@ -129,7 +129,7 @@ To learn more about the tokenomics of Sui, see the following topics:
 
 ## Objects
 
-The basic unit of storage in Sui is the object. Blocks on the chain are actually objects that define assets rather than basic key-value stores that define addresses. Sui's storage is centered around objects that are addressable onchain by unique IDs. A smart contract is an object (called a Sui Move package), and these smart contracts manipulate objects on the Sui network.
+The basic unit of storage in Sui is the object. Sui's storage is centered around objects that are addressable onchain by unique IDs. Smart contracts are published as Sui Move packages, which are stored onchain as objects, and these smart contracts manipulate objects on the Sui network.
 
 Every object has an owner field that dictates how you can use it in transactions. Objects can have different ownership states that affect their usage. Objects can be owned by an address or party, or they can be immutable, shared, or wrapped.
 
