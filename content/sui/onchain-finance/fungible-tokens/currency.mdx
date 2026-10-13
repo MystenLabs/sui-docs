@@ -58,6 +58,8 @@ answer: >-
   type of object.
 ---
 
+The Currency Standard is a technical standard used by Move smart contracts for creating coins on Sui. The `sui::coin_registry` module provides the logic that defines the standard, unifies metadata, enhances supply tracking, and improves regulatory features.
+
 :::tip
 
 The Coin and Currency standards are both used to create fungible tokens. However, they use different creation methods and store metadata in a different type of object.
@@ -72,8 +74,6 @@ For fungible tokens created on Sui using the [Closed-Loop Token standard](/oncha
 
 :::
 
-The Currency Standard is a technical standard used by Move smart contracts for creating coins on Sui. The `sui::coin_registry` module provides the logic that defines the standard, unifies metadata, enhances supply tracking, and improves regulatory features.
-
 The standardization of coin creation on Sui means that wallets, exchanges, and other smart contracts can manage coins created on Sui the same as they manage SUI, without any additional processing logic.
 
 See [Sui Tokenomics](/develop/sui-architecture/tokenomics-overview) to learn more about the SUI native currency and its use on the network.
@@ -85,7 +85,7 @@ Coins on Sui can offer specialized abilities while following the Currency Standa
 The `Currency<T>` type represents open-loop fungible tokens (see `Token<T>` for closed-loop tokens). Currencies are denominated by their type parameter, `T`, which is also associated with metadata (like name, symbol, decimal precision, and so on) that applies to all instances of `Currency<T>`. The `sui::coin_registry` module exposes an interface over `Currency<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Currency<T>` is interchangeable with any other unit of `T`, much like how traditional fiat currencies operate.
 
 
-## Coin creation
+## How do I create a coin?
 
 For a step-by-step guide, see [Create Fungible Tokens: Currency Standard](/onchain-finance/fungible-tokens/create-a-fungible-token).
 
@@ -121,7 +121,7 @@ The registry supports three different supply management models:
 
 - **Fixed supply:** The total supply is permanently locked and cannot be changed.
 - **Burn-only supply:** New coins cannot be minted, but existing coins can be burned.
-- **Uncontrolled supply:** `TreasuryCap` holder controls minting and burning.
+- **Unknown (uncontrolled) supply:** `TreasuryCap` holder controls minting and burning.
 
 ### Regulatory states
 
@@ -179,6 +179,8 @@ If you publish a package that uses an OTW to create a coin in the package `init`
 For OTW created currencies, you **must** call `finalize_registration` to promote the currency to the registry.
 :::
 
+Run the following command in a separate transaction after the package is published.
+
 {/* Add a code sample for how to call the function */}
 
 ```sh
@@ -203,16 +205,11 @@ The `TreasuryCap` object is transferable, so a third party can take over the man
 
 The Currency Standard supports creating regulated coins. Use the `make_regulated` function during the initialization phase before calling `finalize`. The function adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the Coin Registry. The function returns a `DenyCapV2` that allows the bearer to maintain the list of addresses on the deny list.
 
-<details>
-<summary>
-Regulated coin example
-</summary>
 <ImportContent source="examples/move/coin/sources/regcoin_new.move" mode="code" />
-</details>
 
 ### `DenyList` object
 
-A system-created `DenyList` shared object holds the list of addresses that cannot use a particular regulated coin. If you have access to the `DenyCapV2`, then you can use the `coin::deny_list_v2_add` and `coin::deny_list_v2_remove` functions to add and remove addresses.
+A system-created `DenyList` shared object, separate from the `CoinRegistry`, holds the list of addresses that cannot use a particular regulated coin. The `Currency<T>` object in the `CoinRegistry` tracks whether the coin is regulated, while the `DenyList` holds the denied addresses. If you have access to the `DenyCapV2`, then you can use the `coin::deny_list_v2_add` and `coin::deny_list_v2_remove` functions to add and remove addresses.
 
 ### Global pause switch
 
@@ -236,14 +233,14 @@ The fields of the metadata objects include the following:
 
 | Name          | Description  |
 | ------------- | ---------------------|
-| `registry`    | The `CoinRegistry` system object ID (`0x3`). |
+| `registry`    | The `CoinRegistry` system object ID (`0xc`). |
 | `decimals`    | The number of decimals the coin uses. If you set this field to `3`, then a coin of value `1000` displays as `1.000`.|
 | `name`        | Name of the coin. |
 | `symbol`      | Symbol for the coin. This might be the same as `name`, but is typically fewer than 5 all capital letters. For example, `SUI` is the `symbol` for the native coin on Sui but its `name` is also `SUI`. |
 | `description` | A short description to describe the coin. |
 | `icon_url`    | The URL for the coin's icon, used for display in wallets, explorers, and other apps. |
 
-## Minting and burning coins
+## How do I mint and burn coins?
 
 The Coin Registry supports advanced supply management models:
 
@@ -270,7 +267,7 @@ For coins with an unknown supply status, use the `coin::burn` function to destro
 
 The signature shows that only the `TreasuryCap` and coin object you want to burn are necessary inputs, returning the amount by which the supply was decreased (value of the coin). The function does not allow you to burn more coins than are available in the supply.
 
-## Adding and removing addresses to and from the deny list
+## How do I add and remove addresses on the deny list?
 
 The deny list is only applicable to regulated coins. As mentioned previously, when you create a regulated coin you receive a `DenyCapV2` that authorizes the bearer to add and remove addresses from the system-created `DenyList` object. Any address on the list for your coin cannot use the coin as an input to transactions starting immediately upon being added. At the epoch that follows address addition to the deny list, the addresses additionally cannot receive the coin type. In other words, an address that gets added to the deny list for a coin type is immediately unable to send the coin. At the start of the following epoch, the address is still unable to send the coin but is also unable to receive it. From that point, the address cannot interact with the coin until expressly removed from the deny list by the `DenyCapV2` bearer.
 
@@ -344,7 +341,7 @@ You can query information directly from the `Currency<T>` object.
 
     <ImportContent source="crates/sui-framework/packages/sui-framework/sources/registries/coin_registry.move" mode="code" fun="deny_cap_id" noTitle signatureOnly noComments />
 
-## Update currency metadata
+## How do I update currency metadata?
 
 Metadata updates require the `MetadataCap<T>` object, which is only available to the bearer of the `TreasuryCap` for a coin. The bearer of the `TreasuryCap` can claim the `MetadataCap` using the `claim_metadata_cap` function only once. `Currency` tracks the claimed status of the capability through its `metadata_cap_id` field.
 
