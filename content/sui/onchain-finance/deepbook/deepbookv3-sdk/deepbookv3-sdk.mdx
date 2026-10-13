@@ -53,7 +53,7 @@ The DeepBookV3 TypeScript SDK abstracts away the transaction calls, allowing for
 - [SDK repository](https://github.com/MystenLabs/ts-sdks/tree/main/packages/deepbook-v3)
 - [NPM version](https://www.npmjs.com/package/@mysten/deepbook-v3)
 
-## Install
+## How do I install the DeepBookV3 SDK? {#install}
 
 To use the SDK in your projects, install the `@mysten/deepbook` package.
 
@@ -64,7 +64,7 @@ npm install @mysten/deepbook-v3
 The package root covers DeepBook spot and margin, and it imports none of the 3 subpaths the same package ships:
 
 - `@mysten/deepbook-v3/predict`: DeepBook Predict, covering markets and quotes, positions, PLP liquidity, and client-side pricing. See [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk).
-- `@mysten/deepbook-v3/account`: The shared onchain account primitive that Predict and the DeepBook core account wrapper build on. See [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#account-subpath).
+- `@mysten/deepbook-v3/account`: The shared onchain account primitive that Predict and the DeepBook core account wrapper build on. See [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 - `@mysten/deepbook-v3/sessions`: Time-limited trading sessions that let an ephemeral key trade for an account until a fixed expiry. See [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions).
 
 Each subpath exports the deployed IDs for its own surface through `getConfig`, `getAccountConfig`, and `getSessionsConfig`, for both Testnet and Mainnet, so you never transcribe an ID by hand.
@@ -84,7 +84,7 @@ https://github.com/MystenLabs/ts-sdks/blob/main/packages/deepbook-v3/src/utils/c
 
 </details>
 
-## DeepBookClient
+## How do I set up DeepBookClient? {#deepbookclient}
 
 To work with DeepBookV3, use the client extension to add DeepBook functionality to a Sui client. The [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript) provides the `SuiGrpcClient` and key functionality necessary to process transactions. The following example imports those libraries, as well.
 
@@ -282,6 +282,8 @@ class DeepBookMarketMaker {
 }
 ```
 
+`createBalanceManagerAndReinitialize` signs and executes a transaction that creates and shares a balance manager. It then searches the transaction effects' `changedObjects` for the object that was created and whose type includes `BalanceManager`, uses that object's ID as the balance manager address, and recreates the client with it.
+
 ### Coin
 
 The SDK comes with four default coins on Testnet and five default coins on Mainnet.
@@ -305,7 +307,7 @@ You can also initialize the SDK with custom coins to interact with pools that ar
 
 ### Pool
 
-Similar to coins, the SDK comes with default pools. You can provide a `PoolMap` during construction to override this behavior.
+Similar to coins, the SDK comes with default pools, which are defined in `utils/constants.ts` (see [Constants](#constants)). You can provide a `PoolMap` during construction to override this behavior.
 
 ```tsx
 import { deepbook, type DeepBookClient } from '@mysten/deepbook-v3';
@@ -375,7 +377,7 @@ export class DeepBookMarketMaker {
 
 ### Example setup
 
-The following example uses the default pools and coins provided.
+The following example uses the default pools and coins provided. It imports the `DeepBookMarketMaker` class from the [Pool](#pool) example, which defines the `signAndExecute` helper used at the end.
 
 ```tsx
 import { Transaction } from '@mysten/sui/transactions';
@@ -413,6 +415,8 @@ import { DeepBookMarketMaker } from './deepbookMarketMaker.js';
 	console.dir(res, { depth: null });
 })();
 ```
+
+Read-only calls, such as `checkManagerBalance` and `getLevel2Range`, are awaited and return data directly. Transaction-building functions, such as `depositIntoManager` and `withdrawAllFromManager`, return a function that you call with a `Transaction` (`fn(...)(tx)`) to add the call to that transaction; the calls run when you sign and execute the transaction. When you need a function's result as input to later calls in the same transaction, pass it to `tx.add(...)`, which returns the result, as the referral examples do with `mintTradeCap` and `claimPoolReferralRewards`.
 
 ## Referral functions
 
