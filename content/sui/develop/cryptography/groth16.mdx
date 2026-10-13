@@ -61,7 +61,7 @@ The randomly generated proving and verifying keys used in the following example 
 
 The following example demonstrates how to create a Groth16 proof from a statement written in Circom and then verify it using the Sui Move API. The API supports up to 8 public inputs.
 
-### Create circuit
+### How do I create the circuit?
 
 This example creates a proof demonstrating that you know a factorization `a * b = c` of a publicly known number `c`, without revealing `a` and `b`.
 
@@ -85,9 +85,11 @@ $ circom main.circom --r1cs --wasm
 
 This outputs the constraints in R1CS format and the circuit in Wasm format.
 
-### Generate proof
+### How do I generate a Groth16 proof with Circom?
 
 To generate a proof verifiable in Sui, you need to generate a witness. This example uses Arkworks' [ark-circom](https://github.com/gakonst/ark-circom) Rust library. The code constructs a witness for the circuit and generates a proof for it for a given input. Finally, it verifies that the proof is correct.
+
+Before running the code, update the paths passed to `CircomConfig::new` to point to the `.wasm` and `.r1cs` files produced by the compile step, and replace the values passed to `push_input` with your own inputs.
 
 ```rust
 use ark_bn254::Bn254;
@@ -154,13 +156,15 @@ Public inputs: 0100000001000000000000000000000000000000000000000000000000000000
 ```
 All these outputs are needed to verify the proof.
 
-### Verification in Sui
+### How do I verify a zk-SNARK proof in Move?
 
-The API in Sui for verifying a proof expects a special processed verification key, where only a subset of the values are used. Ideally, computation for this prepared verification key happens only once per circuit. You can perform this processing using the `sui::groth16::prepare_verifying_key` method of the Sui Move API with a serialization of the `params.vk` value used previously.
+The API in Sui for verifying a proof expects a special processed verification key, where only a subset of the values are used. Ideally, computation for this prepared verification key happens only once per circuit. You can perform this processing using the `sui::groth16::prepare_verifying_key` method of the Sui Move API with a serialization of the `pk.vk` value used previously.
 
 The output of the `prepare_verifying_key` function is a vector with four byte arrays, which corresponds to the `vk_gamma_abc_g1_bytes`, `alpha_g1_beta_g2_bytes`, `gamma_g2_neg_pc_bytes`, `delta_g2_neg_pc_bytes`.
 
 To verify a proof, you also need two more inputs, `public_inputs_bytes` and `proof_points_bytes`, which are printed by the program above.
+
+In the following example, the `Verifying key` output is passed to `prepare_verifying_key`, the `Proof` output to `proof_points_from_bytes`, and the `Public inputs` output to `public_proof_inputs_from_bytes`, each as a hex byte literal (`x"..."`).
 
 The following example smart contract uses the output from the program above. It first prepares a verification key and verifies the corresponding proof. This example uses the BN254 elliptic curve construction, which is given as the first parameter to the `prepare_verifying_key` and `verify_groth16_proof` functions. You can use the `bls12381` function instead for BLS12-381 construction.
 
@@ -174,3 +178,5 @@ public fun groth16_bn254_test() {
     assert!(groth16::verify_groth16_proof(&groth16::bn254(), &pvk, &public_inputs, &proof_points));
 }
 ```
+
+`verify_groth16_proof` returns a boolean. The example wraps the call in `assert!`, so the function aborts if the proof does not verify.
