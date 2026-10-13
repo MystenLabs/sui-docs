@@ -54,17 +54,32 @@ Run a complete DeepBook spot order lifecycle on Sui Testnet with real transactio
 
 It uses the `DEEP_SUI` pool, which you can fund by finishing the [Fees and Funding](/onchain-finance/deepbook/deepbookv3/fees-and-funding) flow (Testnet SUI plus DEEP). The samples live in the `examples/deepbook-spot` package, type-checked with `tsc --noEmit` against `@mysten/deepbook-v3` and `@mysten/sui`, and reference pools and coins by SDK key rather than hardcoding onchain IDs.
 
+The steps, in order:
+
+1. [Set up the client](#set-up-the-client).
+2. [Set up a `BalanceManager`](#set-up-a-balancemanager), or reuse one you already have.
+3. [Deposit assets](#deposit-assets).
+4. [Place a limit order](#place-a-limit-order).
+5. [Read status and fills](#read-status-and-fills).
+6. [Cancel the order](#cancel-the-order).
+7. [Fill your own order](#fill-your-own-order).
+8. [Withdraw](#withdraw).
+
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
 - [x] A current CLI: run `suiup update sui`, then `sui --version` to confirm it (a stale CLI causes version-skew errors).
-- [x] Testnet SUI and DEEP on your address, from [Fees and Funding](/onchain-finance/deepbook/deepbookv3/fees-and-funding#obtain-testnet-deep-usdc-and-sui).
-- [x] The SDK installed: `npm install @mysten/deepbook-v3 @mysten/sui`.
+- [x] Testnet SUI and DEEP on your address, from [Fees and Funding](/onchain-finance/deepbook/deepbookv3/fees-and-funding#obtain-testnet-deep-usdc-and-sui). Placing an order needs at least the `DEEP_SUI` minimum order size of 10 DEEP, plus SUI for gas.
+- [x] The SDK installed:
+
+```sh
+npm install @mysten/deepbook-v3 @mysten/sui
+```
 </TabItem>
 </Tabs>
 
 ## Set up the client
 
-The client references pools and coins by SDK key. Read-only calls work without a manager; all trading operations require the manager to be associated with the correct DeepBook pool.
+The client references pools and coins by SDK key (such as `DEEP_SUI` and `DEEP`) instead of hardcoded onchain object IDs, and refers to your manager by a name you assign, such as `MANAGER_1`. Read-only calls work without a manager; all trading operations require the manager to be associated with the correct DeepBook pool.
 
 <ImportContent source="examples/deepbook-spot/src/client.ts" mode="code" tag="client" />
 
@@ -88,7 +103,7 @@ Deposit the asset you plan to trade. This workflow sells DEEP, so deposit DEEP.
 
 <ImportContent source="examples/deepbook-spot/src/deposit.ts" mode="code" tag="deposit" />
 
-Size the amount to your wallet balance. `depositIntoManager` sources coins with `coinWithBalance`, which fails at build time if you request more than you hold:
+Size the amount to your wallet balance. `depositIntoManager` sources coins with `coinWithBalance`, which fails when the SDK builds the transaction (not when TypeScript compiles) if you request more than you hold:
 
 <ImportContent source="examples/deepbook-spot/src/deposit.ts" mode="code" tag="sized-deposit" />
 
@@ -96,13 +111,13 @@ Size the amount to your wallet balance. `depositIntoManager` sources coins with 
 
 :::info
 
-`DEEP_SUI` is a whitelisted pool, so it charges no trading fee and deducts no DEEP. The `payWithDeep` flag has no effect here. On a fee-paying pool, the pool deducts DEEP from your manager on each fill, sized by its floating DEEP price, so keep DEEP in the manager. See [How the DEEP fee is sized](/onchain-finance/deepbook/deepbookv3/fees-and-funding#how-the-deep-fee-is-sized) and [Pay fees in DEEP or the input token](/onchain-finance/deepbook/deepbookv3/fees-and-funding#pay-fees-in-deep-or-the-input-token).
+`DEEP_SUI` is currently a whitelisted pool, so it charges no trading fee and deducts no DEEP. The `payWithDeep` flag has no effect here. On a fee-paying pool, the pool deducts DEEP from your manager on each fill, sized by its floating DEEP price, so keep DEEP in the manager. See [How the DEEP fee is sized](/onchain-finance/deepbook/deepbookv3/fees-and-funding#how-the-deep-fee-is-sized) and [Pay fees in DEEP or the input token](/onchain-finance/deepbook/deepbookv3/fees-and-funding#pay-fees-in-deep-or-the-input-token).
 
 :::
 
 ## Place a limit order
 
-Place a resting maker ask. `POST_ONLY` guarantees the order rests instead of taking: if it would cross the book, the pool does not place it, so you never pay a taker fee by accident. Price and quantity must respect the pool's tick size and lot size (`DEEP_SUI`: tick `0.00001`, lot `1`, minimum size `10` DEEP). The `clientOrderId` is your own tag for the order: the SDK types it as a string, but the contract encodes it as `u64`, so pass a numeric string such as a timestamp, not a label like `order-1`.
+Place a resting maker ask. `POST_ONLY` guarantees the order rests instead of taking: if it would cross the book, the pool does not place it, so you never pay a taker fee by accident. Price and quantity must respect the pool's tick size and lot size (`DEEP_SUI`: tick `0.00001`, lot `1`, minimum size `10` DEEP; these can change, so read the current values with `poolBookParams` as in [Troubleshooting](#troubleshooting)). The `clientOrderId` is your own tag for the order: the SDK types it as a string, but the contract encodes it as `u64`, so pass a numeric string such as a timestamp, not a label like `order-1`.
 
 <ImportContent source="examples/deepbook-spot/src/place-order.ts" mode="code" tag="place-maker" />
 
@@ -126,13 +141,15 @@ Cancel the resting order by its ID. Cancelling returns the order's locked funds 
 
 ## Fill your own order
 
-To watch a fill settle, place a fresh maker ask, then place a taker bid that crosses it. Because both orders belong to the same manager, this is a self-trade.
+To watch a fill settle, place a fresh maker ask, then place a taker bid that crosses it. Because this workflow trades from a single manager, both orders belong to it, so this is a self-trade.
 
 :::caution
 
 The SDK defaults `selfMatchingOption` to `SELF_MATCHING_ALLOWED`, so a taker order fills your own resting maker orders with no warning. To refuse trading against yourself, pass `CANCEL_TAKER` (abort the taker) or `CANCEL_MAKER` (cancel the resting maker). This step sets `SELF_MATCHING_ALLOWED` on purpose to fill the maker order you just placed.
 
 :::
+
+Place the crossing taker bid:
 
 <ImportContent source="examples/deepbook-spot/src/place-order.ts" mode="code" tag="place-taker" />
 
