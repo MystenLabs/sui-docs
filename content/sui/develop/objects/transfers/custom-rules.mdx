@@ -18,6 +18,8 @@ keywords:
   - unlocked objects
   - transfer policy
   - object abilities
+  - sui::transfer::transfer
+  - sui::transfer::public_transfer
 goal:
   description: >-
     Reader can define custom transfer rules that must be satisfied before Sui
@@ -50,19 +52,19 @@ answer: >-
 
 Every Sui [object](/develop/sui-architecture/object-model) must have the `key` ability. The `store` ability, on the other hand, is an optional ability you can add to Sui objects. Objects with the `store` ability are transferable by anyone using the [`transfer::public_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_transfer) function and can be [wrapped](/develop/objects/object-ownership/wrapped) in other objects.
 
-For custom transfer rules, if the Sui object `Object` does not have the `store` ability, you cannot call the [`sui::transfer::public_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_transfer) function to transfer it. The Move module that defines `Object` is the only entity that can transfer objects of that type using the [`sui::transfer::transfer`](/references/framework/sui_sui/transfer#sui_transfer_transfer) function. Consequently, the module that defines the object `Object` can define a custom transfer function for `Object` that can take any number of arguments and enforce any restrictions desired for performing a transfer operation, for example, a fee must be paid to transfer the object.
+For custom transfer rules, if the Sui object `Object` does not have the `store` ability, you cannot call the [`sui::transfer::public_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_transfer) function to transfer it, because that function is only available for objects with `store`. The Move module that defines `Object` is the only entity that can transfer objects of that type using the [`sui::transfer::transfer`](/references/framework/sui_sui/transfer#sui_transfer_transfer) function. Consequently, the module that defines the object `Object` can define a custom transfer function for `Object` that can take any number of arguments and enforce any restrictions desired for performing a transfer operation, for example, a fee must be paid to transfer the object.
 
-## `store` ability
+## Why must a type omit the `store` ability?
 
 Custom transfer rules for objects enable you to define the transfer conditions that must be met for a valid transfer operation. You should be intentional about adding the `store` ability to an object because you are providing unrestricted access to that object without having to go through the module that defines it. 
 
 :::caution 
 
-After you enable public transfers on an object, there is no way of re-enabling custom transfer rules or any type of restrictions regarding the transfer of the object.
+After you enable public transfers on an object, there is no way of re-enabling custom transfer rules or any type of restrictions regarding the transfer of the object. If you need to enforce any transfer conditions, omit the `store` ability and define custom transfer functions in the module that defines the object instead.
 
 :::
 
-## Example
+## How do I restrict when my object can be transferred?
 
 This example creates an object type `Object` that is transferable only if the `unlocked` flag inside of it is set to `true`:
 
@@ -98,6 +100,7 @@ public fun transfer_unlocked(object: Object, to: address) {
 You can define multiple different transfer rules for the same object. Each of these rules might have different restrictions that execution of the transaction can dynamically enforce. If you wanted to allow only locked objects to be transferred to a specific address you could add the following function to the previous module:
 
 ```move
+// Add to module examples::custom_transfer
 const EObjectNotLocked: u64 = 1;
 const HOME_ADDRESS = @0xCAFE;
 
