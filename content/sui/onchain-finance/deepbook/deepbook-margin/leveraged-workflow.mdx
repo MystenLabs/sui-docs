@@ -67,7 +67,7 @@ Leverage multiplies losses as well as gains, and interest accrues on your borrow
 
 :::
 
-This walkthrough uses the `SUI_DBUSDC` pool, borrowing the stable quote asset (DBUSDC) against a volatile base collateral (SUI) to open a leveraged long on SUI. Health monitoring here is entirely oracle-priced, so the pair choice matters: on Testnet the SUI and USDC price feeds are canonical Pyth feeds, whereas the Testnet DEEP feed is a substitute (an HFT feed) rather than a dedicated DEEP oracle. Do not build oracle-priced risk math on the substitute feed.
+This walkthrough uses the `SUI_DBUSDC` pool, borrowing the stable quote asset (DBUSDC) against a volatile base collateral (SUI) to open a leveraged long on SUI. In `SUI_DBUSDC`, SUI is the base asset and DBUSDC is the quote asset, and each asset has its own `MarginPool`, so your SUI deposit is base collateral and your borrow draws from the DBUSDC margin pool. Health monitoring here is entirely oracle-priced, so the pair choice matters: on Testnet the SUI and USDC price feeds are canonical Pyth feeds, whereas the Testnet DEEP feed is a substitute (an HFT feed) rather than a dedicated DEEP oracle. Do not build oracle-priced risk math on the substitute feed.
 
 The samples live in the `examples/deepbook-margin` package, type-checked with `tsc --noEmit` against `@mysten/deepbook-v3` and `@mysten/sui`, and reference pools, coins, and margin pools by SDK key rather than hardcoding onchain IDs.
 
@@ -94,11 +94,19 @@ A `MarginManager` borrows from one margin pool at a time, base or quote, which k
 
 The client references pools, coins, and margin pools by SDK key. On Testnet it auto-loads the margin package IDs and Pyth config. Read-only calls work without a manager; borrowing and trading need one that is associated with the correct DeepBook pool.
 
+Install the SDK packages the samples are type-checked against:
+
+```bash
+npm install @mysten/deepbook-v3 @mysten/sui
+```
+
 <ImportContent source="examples/deepbook-margin/src/client.ts" mode="code" tag="client" />
 
 ## Create a `MarginManager`
 
 Create one `MarginManager` for the pool and reuse it across runs. A single `margin_manager::new` call creates the manager, shares it, and registers it in the `MarginRegistry`, so there is no separate registration step. Creating a new manager each run leaves orphaned shared objects that fragment your collateral, so discover or persist the ID and create only when you have none.
+
+The following discovers an existing manager so you can reuse its ID:
 
 <ImportContent source="examples/deepbook-margin/src/margin-manager.ts" mode="code" tag="find-manager" />
 
@@ -108,9 +116,9 @@ If that returns nothing, create one, then read the created shared object ID from
 
 **Observe:** the effects contain a created shared object whose type ends in `MarginManager`, and a `MarginManagerCreatedEvent` naming the manager, its wrapped balance manager, and the DeepBook pool. Save the ID and pass it to the client as a named manager.
 
-## Read the pool's risk parameters
+## How do I read the pool's risk parameters?
 
-Every threshold that governs your position is stored per pool in the `MarginRegistry` and set by governance, not fixed in code. Read them onchain rather than assuming defaults. See [Risk ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio) for what each one means.
+Every threshold that governs your position is stored per pool in the `MarginRegistry` and set by governance, not fixed in code. Read them onchain rather than assuming defaults. Your risk ratio compares the oracle-priced value of what the manager holds against its debt: it falls as collateral loses value or debt grows, and reads at its maximum when there is no debt. See [Risk ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio) for what each one means.
 
 <ImportContent source="examples/deepbook-margin/src/risk-params.ts" mode="code" tag="risk-params" />
 
@@ -158,7 +166,7 @@ With borrowed DBUSDC in the manager, place a bid on `SUI_DBUSDC` to buy SUI. Mar
 
 **Observe:** the order rests or fills against the book, and your position in SUI is now larger than your collateral alone could fund. The borrow funds that surplus, which is the leverage.
 
-## Monitor your risk ratio
+## How do I monitor my risk ratio?
 
 Read your live risk ratio and see how close it is to liquidation. `getMarginManagerState` values your collateral and debt through the pool's Pyth oracles and returns the risk ratio in one call, along with the prices it used.
 
