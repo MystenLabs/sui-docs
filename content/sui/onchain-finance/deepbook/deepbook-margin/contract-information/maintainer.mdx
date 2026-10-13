@@ -39,6 +39,8 @@ answer: >-
 
 The maintainer module provides functions for managing margin pools, configuring interest rates, and controlling which DeepBook pools can access margin lending. Only maintainers with the appropriate capabilities can call these functions.
 
+Each margin pool holds a single asset type and lends it only to the DeepBook pools that a maintainer enables for loans. Margin managers associated with those enabled DeepBook pools can then borrow from the margin pool.
+
 ## API
 
 Following are the different maintainer functions that the `MarginPool` exposes.
@@ -106,6 +108,8 @@ Withdraw accumulated maintainer and protocol fees from the margin pool.
 
 ## Events
 
+The margin registry emits the following events when maintainer or pause capabilities change, or when a DeepBook pool is registered or updated in the registry. Listen for them to track these changes.
+
 <details>
 <summary>`MaintainerCapUpdated`</summary>
 
@@ -152,7 +156,7 @@ The system emits this event when you register a DeepBook pool in the margin regi
 </details>
 
 <details>
-<summary>`DeepbookPoolUpdatedRegistry`</summary>
+<summary>`DeepbookPoolUpdated`</summary>
 
 The system emits this event when you update a DeepBook pool's enabled status in the registry.
 
