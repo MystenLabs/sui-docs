@@ -63,6 +63,8 @@ answer: >-
   type of object.
 ---
 
+This page explains how the Coin standard (`sui::coin`) lets you create fungible tokens on Sui: creating a coin with `coin::create_currency`, using the `TreasuryCap` to mint and burn coins, creating regulated coins with a deny list, and reading and updating coin metadata.
+
 :::tip
 
 The Coin and Currency standards are both used to create fungible tokens. However, they use different creation methods and store metadata in a different type of object. See [Choosing a Fungible Token Standard](/onchain-finance/fungible-tokens) for a side-by-side comparison.
@@ -85,7 +87,7 @@ See [Sui Tokenomics](/develop/sui-architecture/tokenomics-overview) to learn mor
 
 ## Fungible tokens
 
-The `Coin<T>` type represents open-loop fungible tokens (see `Token<T>` for closed-loop tokens). Coins are denominated by their type parameter, `T`, which is also associated with metadata (like name, symbol, decimal precision, and so on) that applies to all instances of `Coin<T>`. The `sui::coin` module exposes an interface over `Coin<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Coin<T>` is interchangeable with any other unit of `T`, much like how traditional fiat currencies operate.
+The `Coin<T>` type represents open-loop fungible tokens (see [`Token<T>`](/onchain-finance/closed-loop-token) for closed-loop tokens). Coins are denominated by their type parameter, `T`, which is also associated with metadata (like name, symbol, decimal precision, and so on) that applies to all instances of `Coin<T>`. The `sui::coin` module exposes an interface over `Coin<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Coin<T>` is interchangeable with any other unit of `T`, much like how traditional fiat currencies operate.
 
 ## Coin creation
 
@@ -123,9 +125,11 @@ The global pause functionality does not affect the deny list for the coin. After
 
 ## Coin metadata
 
-Each coin you create includes metadata that describes it. Typically, smart contracts freeze this object upon creation using the `transfer::public_freeze_object` function because the metadata for coins should almost never change. Regulated coins freeze the metadata they create automatically.
+Each coin you create includes metadata that describes it. Typically, smart contracts freeze this object upon creation using the `transfer::public_freeze_object` function because the metadata for coins should almost never change. Regulated coins freeze the metadata they create automatically. If you might need to update the name, symbol, description, or icon URL later, do not freeze the `CoinMetadata` object; see [Update coin metadata](#update-coin-metadata).
 
 Regular coins using the Coin standard include a `CoinMetadata` object. As mentioned previously, regulated coins build on top of the same procedure that creates regular coins, so they receive the same metadata object in addition to a `RegulatedCoinMetadata` object that includes deny list information.
+
+The metadata object is separate from the `Coin<T>` objects themselves: a single `CoinMetadata<T>` object describes every `Coin<T>` of that type and is created once when you create the coin, while individual `Coin<T>` objects are minted and burned over time.
 
 ### Metadata fields
 
@@ -147,7 +151,7 @@ The fields of the metadata objects include the following:
 | Name                   | Description  |
 | ---------------------- | ---------------------------------------------------------- |
 | `id`                   | The ID of the metadata object for the regulated token. |
-| `coin_metadata_object` | The ID of the underlying metadata object (`CoinMetadata`) for the regulated token.|
+| `coin_metadata_object` | The ID of the underlying `CoinMetadata` object for the same coin type as the regulated token.|
 | `deny_cap_object`      | The ID of the token's `DenyCapV2` object, which is necessary to maintain the deny list entries that controls who can and cannot use the token. |
 
 ## Minting and burning coins
@@ -172,7 +176,14 @@ The signature shows that only the `TreasuryCap` and coin object you want to burn
 
 ## Adding and removing addresses to and from the deny list
 
-The deny list is only applicable to regulated coins. As mentioned previously, when you create a regulated coin you receive a `DenyCapV2` that authorizes the bearer to add and remove addresses from the system-created `DenyList` object. Any address on the list for your coin cannot use the coin as an input to transactions starting immediately upon being added. At the epoch that follows address addition to the deny list, the addresses additionally cannot receive the coin type. In other words, an address that gets added to the deny list for a coin type is immediately unable to send the coin. At the start of the following epoch, the address is still unable to send the coin but is also unable to receive it. From that point, the address cannot interact with the coin until expressly removed from the deny list by the `DenyCapV2` bearer.
+The deny list is only applicable to regulated coins. As mentioned previously, when you create a regulated coin you receive a `DenyCapV2` that authorizes the bearer to add and remove addresses from the system-created `DenyList` object. The process works as follows:
+
+1. Create a regulated coin using `coin::create_regulated_currency_v2` to receive the `DenyCapV2`.
+1. Use `coin::deny_list_v2_add` to add an address to the deny list for your coin. Starting immediately upon being added, the address cannot use the coin as an input to transactions, meaning it is unable to send the coin.
+1. At the start of the following epoch, the address is still unable to send the coin but is also unable to receive it.
+1. From that point, the address cannot interact with the coin until the `DenyCapV2` bearer expressly removes it from the deny list using `coin::deny_list_v2_remove`.
+
+Because epochs last approximately 24 hours, an address you add to the deny list can still receive the coin for up to about a day, until the next epoch begins.
 
 <ImportContent source="coin-standards" mode="snippet" />
 
@@ -222,6 +233,34 @@ public entry fun <FUNCTION-NAME><T>(
 | `update_symbol`      | `symbol: ascii::String`       |
 | `update_description` | `description: string::String` |
 | `update_icon_url`    | `url: ascii::String`          |
+
+The resulting signatures are:
+
+```move
+public entry fun update_name<T>(
+  _treasury: &coin::TreasuryCap<T>,
+  metadata: &mut coin::CoinMetadata<T>,
+  name: string::String
+)
+
+public entry fun update_symbol<T>(
+  _treasury: &coin::TreasuryCap<T>,
+  metadata: &mut coin::CoinMetadata<T>,
+  symbol: ascii::String
+)
+
+public entry fun update_description<T>(
+  _treasury: &coin::TreasuryCap<T>,
+  metadata: &mut coin::CoinMetadata<T>,
+  description: string::String
+)
+
+public entry fun update_icon_url<T>(
+  _treasury: &coin::TreasuryCap<T>,
+  metadata: &mut coin::CoinMetadata<T>,
+  url: ascii::String
+)
+```
 
 :::info
 
