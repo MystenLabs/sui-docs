@@ -47,14 +47,24 @@ All aliases for a given address have the ability to **unilaterally control or ta
 
 :::
 
-## Key rotation without asset migration
+## How do I enable alias configuration?
 
-Before you can add, remove, or replace aliases for an address, you must first enable alias configuration with `sui::address_alias::enable @0xa`. The enable transaction creates the `AddressAliases` object ID used in later commands.
+An *address alias* is another address authorized to sign transactions for your address. *Alias configuration* is the prerequisite for having aliases: before you can add, remove, or replace aliases for an address, you must first enable alias configuration with `sui::address_alias::enable @0xa`:
 
-Traditional key rotation on Sui requires transferring all objects and balances from the old address to the new one. With aliases, assets stay in place:
+```sh
+$ sui client ptb \
+    --move-call sui::address_alias::enable @0xa \
+    --gas-budget 50000000
+```
+
+The enable transaction creates the `AddressAliases` object. Save its object ID: the `add` and `remove` commands on this page take it as their first argument (`<ADDRESS_ALIASES_OBJECT_ID>`), so you reuse the same ID every time you change the aliases for that address.
+
+## How do I rotate keys without migrating assets?
+
+Traditional key rotation on Sui requires transferring all objects and balances from the old address to the new one. With aliases, assets stay at the original address, and the new address is authorized to act on them as an alias:
 
 1. Generate a new keypair (new address).
-2. If alias configuration is not already enabled for the old address, enable it and save the created `AddressAliases` object ID.
+2. If alias configuration is not already enabled for the old address, enable it (see [How do I enable alias configuration?](#how-do-i-enable-alias-configuration)) and save the created `AddressAliases` object ID.
 3. Add the new address as an alias of the old address:
 
    ```sh
@@ -68,20 +78,21 @@ Traditional key rotation on Sui requires transferring all objects and balances f
 No asset migration needed. All objects and balances stay at the original address.
 
 If you remove the old address from its own alias set, the old key can no longer sign for that address. Make sure the replacement key is backed up and working before removing the original address.
-## Agent authorization
 
-Instead of transferring objects to a trusted agent or operational hot key, add that address as an alias. The alias signs transactions as your address, accessing your objects and balances directly. Revoke access by removing the alias:
+## How do I authorize an agent with an alias?
+
+Instead of transferring objects to a trusted agent or operational hot key, add that address as an alias. The alias signs transactions with its own key and is authorized to act as your address, accessing your objects and balances directly. Revoke access by removing the alias:
 
 ```sh
 sui client ptb \
-    --move-call sui::address_alias::remove @<ALIASES_OBJECT_ID> @<AGENT_ADDRESS> \
+    --move-call sui::address_alias::remove @<ADDRESS_ALIASES_OBJECT_ID> @<AGENT_ADDRESS> \
     --gas-budget 50000000
 ```
 
 
-## Multisig-to-alias delegation
+## When should a multisig delegate to a single-key alias?
 
-A multisig address can add a single-key alias for operational speed. The alias has full sender authority: it can do anything the multisig address can do, including spending assets and changing aliases. Use this pattern only when you trust the alias holder completely and accept that, while the alias is present, the address's effective security is reduced to that single key.
+A multisig address can add a single-key alias for operational speed. The alias has full sender authority: it can do anything the multisig address can do, including spending assets and changing aliases. Use this pattern only when you trust the alias holder completely and accept that, while the alias is present, the address's effective security is reduced to that single key. To revoke the alias, remove it with `sui::address_alias::remove` as shown in [How do I authorize an agent with an alias?](#how-do-i-authorize-an-agent-with-an-alias).
 
 :::danger Aliases have full authority
 
@@ -89,6 +100,6 @@ An alias address has the same authority as the original address. It can transfer
 
 :::
 
-## Managing aliases
+## How do I manage aliases?
 
 The `AddressAliasState` singleton object lives at address `0xa`. Use `sui client ptb` to call entry functions in the `sui::address_alias` module. See [Address Aliases](/develop/transactions/transaction-auth/address-aliases) for the complete CLI reference, including `enable`, `add`, `remove`, and `replace_all` commands.
