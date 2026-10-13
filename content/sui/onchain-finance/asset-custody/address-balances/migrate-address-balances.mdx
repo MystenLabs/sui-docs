@@ -58,7 +58,7 @@ This rollout initially has very limited impact:
 
 ### Impact for wallets, exchanges, and custody providers
 
-Anyone operating a wallet (custodial, non-custodial, or exchange wallets) might be impacted by this change. Users can now send funds to your address through `send_funds()` instead of transferring a coin object. If a wallet receives funds this way, but does not have proper support for address balances, the user cannot see or access the funds. The user might then believe the funds have been lost. The funds cannot actually be lost, but this can cause confusion for affected users.
+Anyone operating a wallet (custodial, non-custodial, or exchange wallets) might be impacted by this change. Users can now send funds to your address through `send_funds()`, which credits your address balance, instead of transferring a coin object with `TransferObjects`. If a wallet receives funds this way, but does not have proper support for address balances, the user cannot see or access the funds. The user might then believe the funds have been lost. The funds cannot actually be lost, but this can cause confusion for affected users.
 
 Initially, this should not happen often because most of the ecosystem continues to transfer coin objects. However, because there is no way to prevent funds from arriving at any given wallet through an address balance transfer, wallet implementors should be prepared.
 
@@ -66,6 +66,14 @@ User funds can also become split across both coins and address balances. Balance
 
 - Use `coinWithBalance` from the TypeScript SDK (v2+), which automatically draws from both sources.
 - Implement manual withdrawal logic as described in [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
+
+## What should I check in my integration?
+
+- Handle funds that arrive through `send_funds()` in the address balance, not only funds that arrive as coin objects.
+- Read the combined balance, or the separate `coinBalance` and `addressBalance` fields, from gRPC or GraphQL balance queries. See [Changes to balance queries](#changes-to-balance-queries).
+- When sending funds that include the address balance portion, use `coinWithBalance` from the TypeScript SDK (v2+) or manual withdrawal logic.
+- If you compute balance changes from checkpoint data, process accumulator events or use `derive_balance_changes`. See [Changes to balance computation from checkpoint data](#changes-to-balance-computation-from-checkpoint-data).
+- Replace legacy JSON-RPC balance calls with the gRPC or GraphQL equivalents.
 
 ## Changes to balance queries
 
@@ -110,13 +118,13 @@ The `GetBalance` and `ListBalances` methods from `StateService` now return separ
 
 ### GraphQL
 
-The `balance` and `balances` fields on address types now include `addressBalance`, `coinBalance`, and `totalBalance` fields. See [GraphQL Reference - `IAddressable.balance`](/references/sui-api/sui-graphql/beta/reference/types/interfaces/iaddressable) for the full schema.
+The `balance` and `balances` fields on address types now include `addressBalance`, `coinBalance`, and `totalBalance` fields. See the `IAddressable.balance` entry in the GraphQL reference for the full schema.
 
 ## Changes to balance computation from checkpoint data
 
 Use the balance changes that gRPC or GraphQL provide rather than computing them yourself.
 
-If you compute balance changes from checkpoint data, you must now process accumulator events from `TransactionEffects` in addition to coin object diffs. Accumulator events record address balance withdrawals and deposits, so coin object diffs alone miss funds that move through address balances.
+If you compute balance changes from checkpoint data, you must now process accumulator events from `TransactionEffects` in addition to coin object diffs. Accumulator events are the records of address balance withdrawals and deposits, so coin object diffs alone miss funds that move through address balances.
 
 The Sui framework provides a helper for this process:
 
@@ -170,3 +178,13 @@ When a legacy client supplies a compatibility coin reservation as gas payment, t
 ## Converting existing coins to address balances
 
 Migration is optional. The SDK automatically selects coins or address balances as needed. To consolidate existing coin objects into an address balance, see [Converting Existing Coins to Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances#converting-existing-coins-to-address-balances) in the usage guide.
+
+## Troubleshooting
+
+### Why are funds shown in both coin objects and the address balance?
+
+User funds can be split across coin objects and the address balance of the same address. Balance queries through gRPC or GraphQL return the combined total, and the separate `coinBalance` and `addressBalance` fields show each portion. See [Changes to balance queries](#changes-to-balance-queries).
+
+### Why can a user not see funds that were sent to their address?
+
+If the sender used `send_funds()` instead of transferring a coin object, the funds are in the address balance. A wallet without address balance support cannot show or access them, but the funds are not lost. Add address balance support as described in [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
