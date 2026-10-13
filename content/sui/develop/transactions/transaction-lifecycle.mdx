@@ -94,7 +94,7 @@ If all the validity checks pass, the validator includes the transaction in its n
 
 In Sui consensus, each validator broadcasts its proposed blocks to peer validators. When a peer receives a block, it does not yet trust the block or its transactions. Each peer runs the same validity checks (including the ones listed above) to detect and handle misbehavior such as attempts to double-spend. Only after a block and its transactions pass these checks do the receiving validators include accept votes for those transactions in their own next blocks.
 
-If valid, Sui consensus eventually includes the user transaction in its deterministic output.
+If valid, Sui consensus eventually includes the user transaction in its deterministic output: the same ordering of committed transactions that every honest validator derives.
 
 ## Transaction effects and finality
 
@@ -124,15 +124,15 @@ Validators can deterministically split a large consensus commit into multiple ch
 
 After the checkpoint is produced, the transaction has reached the end of its life cycle and is part of Sui's permanent record. Indexers consume checkpoints as their input. Examples include the indexing logic shipped with Sui full nodes, as well as custom indexers and indexing frameworks built by the broader ecosystem.
 
-## Finality timing
+## How long does a Sui transaction take to finalize?
 
-End-to-end finality typically takes 400–700 ms, measured from when the user submits the transaction to when the full node returns a finality confirmation. The exact latency depends on the locations of the user and the full node. After finality, the user knows the transaction is irreversible and that the network processes it within the epoch.
+End-to-end finality typically takes 400–700 ms, measured from when the user submits the transaction to when the full node returns a finality confirmation. The exact latency depends on the locations of the user and the full node. During an [epoch change](#epoch-change), the network also delays user transactions for a few hundred milliseconds until the new epoch begins. After finality, the user knows the transaction is irreversible and that the network processes it within the epoch.
 
 ## Epoch change
 
 Approximately every 24 hours, the Sui [Testnet](/develop/sui-architecture/networks) and [Mainnet](/develop/sui-architecture/networks) networks enter [epoch](/develop/sui-architecture/epochs) change. During an epoch change, the network calculates and distributes [staking rewards](/develop/sui-architecture/tokenomics-overview), applies pending validator metadata changes, and performs other network maintenance. The network temporarily delays user transactions for a few hundred milliseconds until the new epoch begins. Sui full nodes and validators automatically retry user transactions on epoch change, so this short delay is transparent to most users.
 
-## Transaction idempotence and finality verification
+## How do I resend or verify a pending transaction?
 
 It is best practice to store signed transactions locally before sending them to a full node, and to only remove them after receiving confirmation of finality or invalidity from a full node. When the app restarts, it can resend all pending transactions to full nodes. This is safe because Sui transactions are idempotent: Sui executes a given transaction at most once. Resending an executed transaction returns either its original effects or an indication that the transaction has become invalid.
 
