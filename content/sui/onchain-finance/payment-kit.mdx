@@ -94,7 +94,7 @@ Optional persistent storage that tracks payment history and prevents duplicate p
 
 ## Core concepts
 
-### Payment modes
+### What payment modes does Payment Kit support?
 
 The Payment Kit supports two payment processing modes:
 
@@ -109,16 +109,20 @@ The Payment Kit supports two payment processing modes:
 
 - Duplicate prevention is not enforced
 
-### Duplicate prevention
+### How does Payment Kit prevent duplicate payments?
 
 Duplicate prevention is enforced when processing payments through a `PaymentRegistry`. The system uses a composite `PaymentKey` derived from:
 
 - **Nonce**: Unique identifier for each payment `(UUIDv4)`.
 - **Amount**: Payment value in coin units.
-- **Coin type**: The specific coin type.
+- **Coin type**: The specific coin type, carried as the phantom type parameter `T` of `PaymentKey<T>` rather than as a field.
 - **Receiver address**: Destination address for the payment.
 
 This composite key ensures that the same payment cannot be processed twice, even if individual components (like amount or receiver) are reused across different payments.
+
+### How do I retry a payment safely?
+
+Derive a stable nonce for each logical payment (for example, one per purchase) and reuse that same nonce on every retry. The registry aborts with `EDuplicatePayment` when it sees a repeated composite key (nonce, amount, coin type, receiver), so a retry that reuses the nonce cannot be credited twice. Generating a fresh nonce on retry creates a new composite key, which turns the retry into a second payment. Use a `UUIDv4` nonce, which fits within the 36-character limit.
 
 ### Payment receipts
 
@@ -166,7 +170,7 @@ A `PaymentRecord` cannot be deleted before its expiration epoch, ensuring a mini
 
 ### Creating a registry
 
-To create a new payment registry, you need to provide a `name`, which is an ASCII-based string used to derive an address for the registry. In addition to a `name`, you must also provide the package `Namespace` object. `Namespace` provides a higher-order organizational structure for managing multiple payment registries.
+To create a new payment registry, you need to provide a `name`, which is an ASCII-based string used to derive an address for the registry. In addition to a `name`, you must also provide the package `Namespace` object. `Namespace` provides a higher-order organizational structure for managing multiple payment registries. Use the `Namespace` object for your network listed in [Namespace objects](#namespace-objects); its structure is shown in [`Namespace`](#namespace).
 
 ```move
 module payment_kit::payment_kit;
@@ -317,7 +321,7 @@ Ephemeral payments:
 
 - Do not check for duplicates
 - Do not store payment records onchain
-- Transfer funds immediately to the receiver
+- Transfer funds immediately to the receiver, which is a required `address` (unlike `process_registry_payment`, where `receiver` is an `Option<address>`)
 - Generate receipts for the transaction
 - Emit payment events for offchain tracking
 - Have lower gas costs than registry payments
@@ -333,7 +337,7 @@ The Payment Kit defines a standard URI format for encoding payment requests. Tra
 
 ### URI format
 
-Payment Kit Transaction URIs use the following format:
+Payment Kit Transaction URIs use the following format (shown wrapped for readability; a real URI is a single line with no spaces):
 
 ```
 sui:pay?receiver=<receiverAddress>
@@ -385,42 +389,25 @@ The object ID or ASCII-represented `name` of the `PaymentRegistry` to use for pr
 **Basic SUI payment:**
 
 ```
-sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
-    &amount=1000000000
-    &coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI
-    &nonce=550e8400-e29b-41d4-a716-446655440000
+sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef&amount=1000000000&coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI&nonce=550e8400-e29b-41d4-a716-446655440000
 ```
 
 **Payment with display metadata:**
 
 ```
-sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
-    &amount=1000000000
-    &coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI
-    &nonce=550e8400-e29b-41d4-a716-446655440000
-    &label=Coffee%20Shop
-    &iconUrl=https://example.com/icon.png
-    &message=Espresso%20and%20croissant
+sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef&amount=1000000000&coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI&nonce=550e8400-e29b-41d4-a716-446655440000&label=Coffee%20Shop&iconUrl=https://example.com/icon.png&message=Espresso%20and%20croissant
 ```
 
 **Registry-based payment (registry object ID):**
 
 ```
-sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
-    &amount=1000000000
-    &coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI
-    &nonce=550e8400-e29b-41d4-a716-446655440000
-    &registry=0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef&amount=1000000000&coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI&nonce=550e8400-e29b-41d4-a716-446655440000&registry=0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
 ```
 
 **Registry-based payment (registry ASCII name):**
 
 ```
-sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
-    &amount=1000000000
-    &coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI
-    &nonce=550e8400-e29b-41d4-a716-446655440000
-    &registry=default-payment-registry
+sui:pay?receiver=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef&amount=1000000000&coinType=0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI&nonce=550e8400-e29b-41d4-a716-446655440000&registry=default-payment-registry
 ```
 
 ### URI encoding
@@ -443,7 +430,7 @@ When implementing transaction URI support:
 
 :::tip
 
-Integration checklist: ensure nonce uniqueness for every payment, handle backend payment processing idempotently (so retries and webhook replays do not double-process), and verify the receiver, amount, coin type, and package IDs against your own expected values rather than trusting client-supplied or URI-supplied data. Do not rely on client-only state to determine whether a payment succeeded. Confirm against onchain receipts and events. For broader guidance, see [Security Best Practices](/develop/security/best-practices).
+Integration checklist: ensure nonce uniqueness for every payment, handle backend payment processing idempotently (so retries and webhook replays, where your backend receives the same payment notification more than once, do not double-process; see [How do I retry a payment safely?](#how-do-i-retry-a-payment-safely)), and verify the receiver, amount, coin type, and package IDs against your own expected values rather than trusting client-supplied or URI-supplied data. Do not rely on client-only state to determine whether a payment succeeded. Confirm against onchain receipts and events. For broader guidance, see [Security Best Practices](/develop/security/best-practices).
 
 :::
 
@@ -511,7 +498,7 @@ public struct PaymentReceipt has key, store {
 
 ### `PaymentKey`
 
-Unique key for identifying payment records:
+Unique key for identifying payment records. The coin type component of the composite key is the phantom type parameter `T`, so it does not appear as a field:
 
 ```move
 public struct PaymentKey<phantom T> has copy, drop, store {
@@ -550,12 +537,14 @@ Use these events to:
 - Generate reports and analytics
 - Integrate with accounting systems
 
+Because each `PaymentReceipt` and payment event carries the payment nonce, use the nonce as the join key to reconcile onchain payments against your internal records (including the idempotency record for each payment), and alert when the two drift apart.
+
 ## Error codes
 
 The Payment Kit defines the following error conditions:
 
-- **Duplicate payment detection**: Payment with the same composite key already processed.
-- **Payment amount mismatch**: Coin value doesn't match expected payment amount.
+- **Duplicate payment detection** (`EDuplicatePayment`): Payment with the same composite key already processed.
+- **Payment amount mismatch** (`EPaymentAmountMismatch`): Coin value doesn't match expected payment amount.
 - **Payment record not found**: Attempted to access non-existent payment record.
 - **Payment record not expired**: Attempted to delete a record before expiration.
 - **Unauthorized admin**: Operation requires `RegistryAdminCap`.
