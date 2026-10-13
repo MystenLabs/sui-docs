@@ -64,6 +64,8 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+This guide answers what replaces the deprecated Sui JSON-RPC API. The 2 replacements are [gRPC](/develop/accessing-data/grpc) for real-time full node access, archival service access and transaction execution, and [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc) for rich, structured queries over live and historical blockchain data. Jump to [choosing between them](#choose-your-replacement), the [method mapping](#method-mapping), [migration gotchas](#migration-gotchas), or [examples for high-traffic paths](#examples-for-high-traffic-paths).
+
 <ImportContent source="json-rpc-deprecation" mode="snippet" />
 
 JSON-RPC is deprecated. Sui is decommissioning it on the following timeline. The Mainnet shutoff has already taken effect, so the remaining milestones remove the infrastructure behind it:
@@ -75,9 +77,7 @@ JSON-RPC is deprecated. Sui is decommissioning it on the following timeline. The
 | Implicit fallback from JSON-RPC to archival service disconnected | End of September 2026 |
 | Full decommission of JSON-RPC from full nodes, including code removal | Mid-October 2026 |
 
-The 2 replacements are [gRPC](/develop/accessing-data/grpc) for real-time full node access, archival service access and transaction execution, and [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc) for rich, structured queries over live and historical blockchain data.
-
-## Choose your replacement
+## Should I use gRPC or GraphQL RPC? {#choose-your-replacement}
 
 You can use one API or both. Most exchanges and indexers end up using both: gRPC for the live data path and transaction submission, GraphQL for ad hoc queries, support tools, and joined reads.
 
@@ -111,7 +111,7 @@ Use **GraphQL RPC** for:
 
 If you only need to read live state from a single full node, gRPC is usually enough. If you need cross-resource filtering, deep pagination, or want one request to return data assembled from several sources, GraphQL is usually a better fit. For deeper detail on when each API applies, see [What is gRPC](/develop/accessing-data/grpc/what-is-grpc) and [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc).
 
-## Method mapping
+## Which gRPC or GraphQL call replaces each JSON-RPC method? {#method-mapping}
 
 The following table maps common JSON-RPC method families to their gRPC service and GraphQL equivalents. Method names on the gRPC side use the protobuf service in the [Sui Full Node gRPC reference](/references/fullnode-protocol). GraphQL equivalents reference the GraphQL field or field path on the schema. Use this table to plan the migration, then consult the linked references for the exact request and response shapes.
 
@@ -153,7 +153,7 @@ The 3 interfaces differ in how they reach pruned history:
 
 - **Full node gRPC** serves the complete RPC surface (transaction execution, point lookups, checkpoint subscriptions), but only within the full node's retention window.
 
-- **The Archival Service** is a separate gRPC service that serves unpruned point lookups for checkpoints, transactions, and objects. It is scoped to those point lookups, so it does not serve the rest of the full node RPC surface, such as transaction execution or live state queries. Reuse the same `LedgerService` methods, but point the client at an Archival Service endpoint such as `archive.mainnet.sui.io:443` or your provider's archival URL. See [Archival Store](/develop/accessing-data/archival-store).
+- **The Archival Service** is a separate gRPC service that serves unpruned point lookups for checkpoints, transactions, and objects. It is scoped to those point lookups, so it does not serve the rest of the full node RPC surface, such as transaction execution or live state queries. Reuse the same `LedgerService` methods, but point the client at an Archival Service endpoint such as `archive.mainnet.sui.io:443` or your provider's archival URL. A "not found" response from the full node for data older than its retention window is the signal to retry the same lookup against the Archival Service. See [Archival Store](/develop/accessing-data/archival-store).
 
 - **GraphQL** is a unified interface that serves both recent data and, when the operator configures archival access, unpruned point lookups, with no client-side fallback.
 
@@ -161,9 +161,16 @@ The 3 interfaces differ in how they reach pruned history:
 
 JSON-RPC accepts a positional array of arguments. gRPC uses typed protobuf messages, and GraphQL uses named, typed arguments and selection sets. When you port a call, do not translate positional indices directly. Read the schema and pass each value by name, including the response shape selector. For gRPC, use a `FieldMask` to fetch only the fields you need rather than the entire response. See [field masks](/develop/accessing-data/grpc/using-grpc#field-masks) for the rules.
 
-### WebSocket subscriptions are replaced by gRPC streaming
+### What replaces JSON-RPC WebSocket subscriptions? {#websocket-subscriptions-are-replaced-by-grpc-streaming}
 
-JSON-RPC offered WebSocket subscriptions for events and transactions, which have been deprecated since mid-2024. Sui does not carry those forward. Use `SubscriptionService` over gRPC server streaming instead: `SubscribeEvents` with an `EventFilter` replaces `sui_subscribeEvent`, `SubscribeTransactions` with a `TransactionFilter` replaces `sui_subscribeTransaction`, and `SubscribeCheckpoints` delivers entire checkpoints. All 3 support server-side filtering. Subscriptions begin at the current tip and do not support resumption. To avoid gaps, open the subscription and immediately drain live frames into durable, bounded storage while a separate worker backfills with the corresponding `LedgerService` list API (`ListEvents`, `ListTransactions`, or `ListCheckpoints`). Do not leave the subscription unread during backfill. Process the durable live spool after backfill reaches the subscription boundary, and restart from the last durably processed cursor if the spool fills or the stream ends. See [Subscriptions for streaming data](/develop/accessing-data/grpc/what-is-grpc#subscriptions-for-streaming-data).
+JSON-RPC offered WebSocket subscriptions for events and transactions, which have been deprecated since mid-2024. Sui does not carry those forward. Use `SubscriptionService` over gRPC server streaming instead: `SubscribeEvents` with an `EventFilter` replaces `sui_subscribeEvent`, `SubscribeTransactions` with a `TransactionFilter` replaces `sui_subscribeTransaction`, and `SubscribeCheckpoints` delivers entire checkpoints. All 3 support server-side filtering. Subscriptions begin at the current tip and do not support resumption. To avoid gaps:
+
+1. Open the subscription and immediately drain live frames into durable, bounded storage. Do not leave the subscription unread during backfill.
+2. In a separate worker, backfill with the corresponding `LedgerService` list API (`ListEvents`, `ListTransactions`, or `ListCheckpoints`).
+3. Process the durable live spool after backfill reaches the subscription boundary.
+4. Restart from the last durably processed cursor if the spool fills or the stream ends.
+
+See [Subscriptions for streaming data](/develop/accessing-data/grpc/what-is-grpc#subscriptions-for-streaming-data).
 
 ### Public load balancer URLs are not production endpoints
 
@@ -183,16 +190,27 @@ GraphQL and gRPC expose richer typing for objects and coins than JSON-RPC. A few
 
 ### Pagination uses typed cursors
 
-JSON-RPC cursors are opaque strings. GraphQL passes cursors through the `after` (or `before`) field on a connection, with the page size in `first` (or `last`). gRPC paging uses fields on the typed request and response messages. Do not try to reuse a JSON-RPC `nextCursor` value in a GraphQL or gRPC request. Fetch a fresh cursor from the new API and persist it as the resume point.
+JSON-RPC cursors are opaque strings. GraphQL passes cursors through the `after` (or `before`) field on a connection, with the page size in `first` (or `last`). gRPC paging uses fields on the typed request and response messages. Handle cursors as follows:
+
+1. Do not try to reuse a JSON-RPC `nextCursor` value in a GraphQL or gRPC request.
+2. Fetch a fresh cursor from the new API.
+3. Persist it as the resume point.
 
 ### Negative filters (MatchNone) work differently
 
 JSON-RPC object queries supported `MatchAll`, `MatchAny`, and `MatchNone` filter combinators to include or exclude results by type.
 
-- **gRPC** transaction and event filters support negation through the `negated` field on each literal. Set `negated: true` on a literal to exclude matching items. For example, to match all transactions except those from a specific sender, use `{ negated: true, predicate: { oneofKind: 'sender', sender: { address: '0x...' } } }`. Negated literals combine with other literals in the same term using AND logic.
+- **gRPC** transaction and event filters support negation through the `negated` field on each literal. Set `negated: true` on a literal to exclude matching items. For example, the following literal matches all transactions except those from a specific sender:
+
+  ```
+  { negated: true, predicate: { oneofKind: 'sender', sender: { address: '0x...' } } }
+  ```
+
+  Negated literals combine with other literals in the same term using AND logic.
+
 - **GraphQL** uses flat filter fields (`type`, `sender`, `emittingModule`) without boolean combinators or negation. Use multiple queries or client-side filtering for exclusion patterns.
 
-### Retention windows
+### Why does my migrated query return no historical data? {#retention-windows}
 
 A full node retains a configurable window of recent data and prunes older history. Your application sees this as "not found" responses. For long-running queries, replays, or audits, plan to fall back to the [Archival Service](/develop/accessing-data/archival-store) for data outside the full node's retention.
 
@@ -213,6 +231,8 @@ Not all tools in the Sui ecosystem require manual migration:
 Each pattern below links to the canonical worked example and includes an inline snippet you can expand. The canonical docs remain the source of truth for the full request and response shapes.
 
 ### Transaction lookup
+
+The following tabs show a single transaction lookup in JSON-RPC and its GraphQL and gRPC replacements.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
@@ -239,6 +259,8 @@ Each pattern below links to the canonical worked example and includes an inline 
 
 ### Balances
 
+The following tabs show how to read an address's balances in JSON-RPC and its GraphQL and gRPC replacements.
+
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
 
@@ -263,6 +285,8 @@ Each pattern below links to the canonical worked example and includes an inline 
 </Tabs>
 
 ### Coins
+
+The following tabs show how to list the coins an address owns in JSON-RPC and its GraphQL and gRPC replacements.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
@@ -293,6 +317,8 @@ Each pattern below links to the canonical worked example and includes an inline 
 
 - **gRPC:** Use `LedgerService.ListEvents` with an `EventFilter` for paginated historical queries. For live updates, use `SubscriptionService.SubscribeEvents` with the same filter types. Events also arrive as part of transaction data in `LedgerService.GetTransaction` responses. See [Querying events with gRPC](/develop/accessing-data/using-events#querying-events-with-grpc).
 
+The following tabs show a filtered event query in JSON-RPC and GraphQL.
+
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
 
@@ -307,6 +333,8 @@ Each pattern below links to the canonical worked example and includes an inline 
 </Tabs>
 
 #### Events from a known transaction
+
+The following tabs show how to read the events from a transaction you already know in JSON-RPC, GraphQL, and the gRPC TypeScript SDK.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
@@ -327,6 +355,8 @@ Each pattern below links to the canonical worked example and includes an inline 
 </Tabs>
 
 ### Checkpoints
+
+The following tabs show how to look up a single checkpoint in JSON-RPC and its GraphQL and gRPC replacements.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
@@ -354,6 +384,8 @@ Each pattern below links to the canonical worked example and includes an inline 
 For real-time checkpoint streaming, use gRPC `SubscriptionService.SubscribeCheckpoints`. See [Subscriptions for streaming data](/develop/accessing-data/grpc/what-is-grpc#subscriptions-for-streaming-data) and the [gRPC migration cookbook](/develop/accessing-data/grpc/grpc-migration-cookbook#stream-checkpoints).
 
 ### Submit a transaction
+
+The following tabs show how to execute a transaction in JSON-RPC and its GraphQL and gRPC replacements.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
