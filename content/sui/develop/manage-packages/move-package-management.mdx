@@ -36,7 +36,7 @@ answer: Learn how to use the Move package manager system.
 ---
 
 <AgentPrompt
-  prompt={"Inspect this Move package's Move.toml, Move.lock, and dependencies. Fix dependency declarations, prefer MVR where appropriate, and verify sui move build works. Remember: Move.toml for edition 2024 must NOT have a [dependencies] section for Sui/MoveStdlib — the Sui framework is resolved automatically. Do NOT use Sui = { git = ... } or sui = { version = ... }. A correct Move.toml has only [package] with name and edition = '2024'."}
+  prompt={"Inspect this Move package's Move.toml, Move.lock, and dependencies, then: 1. Fix dependency declarations, preferring the Move registry (MVR) where appropriate. 2. Verify sui move build works. Remember: Move.toml for edition 2024 must NOT list Sui or MoveStdlib in a [dependencies] section — the Sui framework is resolved automatically. Do NOT use Sui = { git = ... } or sui = { version = ... }. A correct Move.toml with no other dependencies has only [package] with name and edition = '2024'; other packages still go in [dependencies]."}
 />
 
 A Move package is a collection of Move modules that you publish together as a single object on the Sui blockchain. Packages can depend on other packages and can be upgraded over time while maintaining their onchain identity. The Move package manager helps you manage dependencies and publish packages to the network.
@@ -49,20 +49,22 @@ Version 1.63 introduced major changes to the Move package system. This document 
 
 :::warning Active environment not found
 
-If the CLI displays `Your active environment is not present in Move.toml`, the most likely cause is that you are on a local or ephemeral network (Localnet, Devnet). These networks should not be added to the `[environments]` section. Instead, use `sui client test-publish` to publish on ephemeral networks.
+If the CLI displays `Your active environment is not present in Move.toml`, the most likely cause is that you are on a local or ephemeral network (Localnet, Devnet). To resolve it:
 
-If you do need to add a persistent environment (for example, a custom Devnet deployment), add an `[environments]` section with the chain ID:
+1. If you are on a local or ephemeral network, do not add it to the `[environments]` section. Instead, use `sui client test-publish` to publish on ephemeral networks.
+1. If you do need to add a persistent environment (for example, a custom Devnet deployment), use `sui client chain-identifier` to find the chain ID for your network. The command displays both Base58 and Hex formats (the Hex short form looks like `aba3e445`). You can use either one in the `[environments]` section.
+1. Add an `[environments]` section with the chain ID:
 
-```toml
-[environments]
-devnet = "aba3e445"
-```
+   ```toml
+   [environments]
+   devnet = "aba3e445"
+   ```
 
-Use `sui client chain-identifier` to find the chain ID for your network. The command displays both Base58 and Hex formats. You can use either one in the `[environments]` section. Note that `mainnet` and `testnet` are implicitly available and do not need to be listed.
+Note that `mainnet` and `testnet` are implicitly available and do not need to be listed.
 
 :::
 
-## Package-related files
+## Which files make up a Move package?
 
 Configure your package by providing a manifest file (`Move.toml`) in the root of the package directory. This file contains metadata about the package and its list of dependencies.
 
@@ -86,7 +88,7 @@ For audited or production builds, pin dependencies to exact revisions (a full 40
 
 :::
 
-### Adding dependencies
+### How to add a dependency
 
 To add a dependency, add a line to the `[dependencies]` section of your manifest. For example, to depend on the `mvr` package `@potatoes/ascii`, write:
 
@@ -149,13 +151,15 @@ Git dependencies can be used to depend on packages stored in git repositories. A
 usdc = { git = "https://github.com/circlefin/stablecoin-sui.git", subdir = "packages/usdc", rev = "master" }
 ```
 
+This example uses the `master` branch for brevity. For audited or production builds, set `rev` to a full 40-character commit hash instead, as described in the dependency security note earlier on this page.
+
 Manifest files are written in TOML, which also allows you to expand inline tables. The preceding example is equivalent to:
 
 ```toml
 [dependencies.usdc]
-git = "https://github.com/circlefin/stablecoin-sui.git"
-subdir = "packages/usdc"
-rev = "master"
+git = "https://github.com/circlefin/stablecoin-sui.git"  # repository URL
+subdir = "packages/usdc"  # subdirectory inside the repository that contains the package
+rev = "master"  # revision: branch, tag, or 40 character commit hash
 ```
 
 :::caution
@@ -296,7 +300,7 @@ testnet_beta = "4c78adac"
 
 This causes the package system to maintain separate published addresses for each environment in `Published.toml`, and allows you to specify different dependencies for the different package versions.
 
-### Environment-specific dependencies
+### How to configure environment-specific dependencies
 
 You can replace dependencies in different environments using the `[dep-replacements.<env>]` section of the manifest. For example, if you want to use different branches of the `codec` library for Mainnet and Testnet, you could write:
 
@@ -345,7 +349,7 @@ The system always fetches after pinning, so you do not need to connect to a netw
 
 ### Updating dependencies
 
-Run `sui move update-deps` to repin all of your dependencies. This redownloads the latest compatible versions without changing your manifest file.
+Run `sui move update-deps` to repin all of your dependencies. This redownloads the latest compatible versions without changing your manifest file. The exact versions that each dependency is pinned to are recorded in `Move.lock`.
 
 ### Publishing and upgrading
 
