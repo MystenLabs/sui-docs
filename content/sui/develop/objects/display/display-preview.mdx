@@ -62,7 +62,22 @@ Display templates typically include the following properties:
 | `project_url` | Project homepage | `https://example.com` |
 | `creator` | Creator name or address | `Example Studio` |
 
-For the full reference on creating and managing displays programmatically, see [Using Object Display](/develop/objects/display/using-display).
+### Field references and static values
+
+Each `{field_name}` reference in a template is replaced with the value of that field on the object being displayed. For example, for a hypothetical object whose `collection_name` field is `Example` and whose `number` field is `42`, the `name` template `{collection_name} #{number}` renders as `Example #42`, and the `description` template renders as `A collectible from the Example series`.
+
+Template values in the table above fall into two groups:
+
+- **Dynamic values** contain one or more field references, so the rendered output differs from object to object. In the table, `name`, `description`, `image_url`, and `link` are dynamic. A dynamic value can combine fixed text with field references, as in `https://example.com/images/{image_id}.png`.
+- **Static values** contain no field references, so every object shows the same text. In the table, `project_url` (`https://example.com`) and `creator` (`Example Studio`) are static.
+
+### Apply your template
+
+To use a template you tried in the preview tool on your own objects, create a display for your object type programmatically. For the full reference on creating and managing displays programmatically, see [Using Object Display](/develop/objects/display/using-display).
+
+### Try the preview tool
+
+The interactive preview tool is embedded below. Follow the steps in [How to use the preview tool](#how-to-use-the-preview-tool) to edit template values and see the rendered output.
 
 <div className="full-width-iframe">
   <iframe src="/display-preview/index.html" />
