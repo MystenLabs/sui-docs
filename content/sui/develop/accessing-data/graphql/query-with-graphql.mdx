@@ -13,6 +13,10 @@ keywords:
   - query dynamic field
   - execute transaction
   - graphql examples
+  - query objects
+  - query checkpoints
+  - transaction simulation
+  - sui graphql ide
 goal:
   description: >-
     Reader understands practical guide to making queries of the Sui RPC using
@@ -177,7 +181,7 @@ When using the [GraphQL online integrated development environment (IDE)](https:/
 When making a request to the GraphQL service using a tool such as `curl`, pass the query and variables as two fields of a single JSON object:
 
 ```sh
-$ curl -X POST https://sui-testnet.mystenlabs.com/graphql \
+$ curl -X POST https://graphql.testnet.sui.io/graphql \
     --header 'Content-Type: application/json' \
     --data '{
       "query": "query ($epochID: Int) { epoch(id: $epochID) { referenceGasPrice } }",
@@ -270,7 +274,7 @@ query {
 }
 ```
 
-If there are too many transactions to return in a single response, the service applies a [limit](#limits) on the maximum page size for variable size responses (like the `transactionBlock` query) and you must fetch further results through [pagination](https://graphql.org/learn/pagination/).
+If there are too many transactions to return in a single response, the service applies a [limit](#limits) on the maximum page size for variable size responses (like the `transactions` query) and you must fetch further results through [pagination](https://graphql.org/learn/pagination/).
 
 ### Connections
 
@@ -284,7 +288,7 @@ Fields that return a paginated response accept the following optional parameters
 They also return a type that conforms to the [GraphQL Cursor Connections Specification](https://relay.dev/graphql/connections.htm), meaning its name ends in `Connection`, and it contains at minimum the following fields:
 
 - `pageInfo` of type `PageInfo`, which indicates whether there are more pages before or after the page returned.
-- `nodes`: The content of the paginated response as a list of the type being paginated (`TransactionBlock` in the previous example).
+- `nodes`: The content of the paginated response as a list of the type being paginated (`Transaction` in the previous example).
 - `edges`: Similar to `nodes` but associating each node with its [cursor](#cursors).
 
 ### Cursors
@@ -299,7 +303,7 @@ Cursors for queries that paginate live objects also guarantee **consistent** pag
 
 By default, RPCs offer roughly 1 hour of [retention](#retention) for consistent pagination.
 
-### Page limits
+### What are the page limits?
 
 After results are bounded using cursors, a page size limit is applied using the `first` and `last` parameters. The service requires these parameters to be less than or equal to the max page size [limit](#limits), and if you provide neither, it selects a default. In addition to setting a limit, `first` and `last` control where excess elements are discarded from. For example, if there are 10 potential results (R0, R1, through R9) after cursor bounds have been applied, then:
 
@@ -313,6 +317,8 @@ It is an error to apply both a `first` and a `last` limit.
 :::
 
 ## Scope
+
+Most queries run in the default scope, which views the latest checkpoint. You only need the details in this section when you query historical data, read dynamic fields as they existed at an earlier version, or read results attached to an executed or simulated transaction.
 
 GraphQL requests are evaluated in a **scope** that controls the checkpoint being viewed. The GraphQL service responds to queries as if this is the last checkpoint to have been executed. By default, this is set to the latest checkpoint that the service has all data for. To avoid returning partial responses, the service does not allow queries to specify a later checkpoint than this, but it can be set to an earlier checkpoint to perform historical queries.
 
@@ -334,7 +340,7 @@ The scope a query is evaluated in impacts which fields are available. In particu
 - Queries that paginate through history are not available under executed transaction scopes. Before indexing occurs, the system cannot determine where in the history the transaction falls.
 - If you only need data returned by transaction execution or simulation effects, prefer selecting it in the same GraphQL request instead of submitting the transaction and then waiting for a separately indexed follow-up query.
 
-### Setting checkpoint scope
+### How do I set checkpoint scope?
 
 You can run queries against a historical checkpoint using `Checkpoint.query`. For [consistent](#consistency) live object set queries (such as fetching an address' owned objects or balances, or an object's dynamic fields), you can continue to paginate using a cursor obtained from a previous query at that checkpoint.
 
@@ -418,7 +424,7 @@ In the following query, `$id` is the address of a dynamic field fetched as it ex
 
 ```graphql
 query NestedDynamicFields($id: SuiAddress!, $r: UInt53!) {
-  object(address: $id, rootVersion: $v) {
+  object(address: $id, rootVersion: $r) {
     asMoveObject {
       asDynamicField {
         value {
@@ -494,7 +500,7 @@ In addition to rate limits, queries are also validated against a number of rules
 
 ### Rich queries
 
-Rich queries require a dedicated request to a backing store. There is a limit on the number of rich queries you can perform in a single GraphQL request, which can also be queries from the `serviceConfig`:
+A rich query is a query that requires a dedicated request to a backing store, such as paginating owned objects, paginating history, or paginating through versions (the full list follows). There is a limit on the number of rich queries you can perform in a single GraphQL request, which can also be queries from the `serviceConfig`:
 
 ```graphql
 {
@@ -516,7 +522,7 @@ Different queries are subject to their own retention policies. In the vanilla, g
 
 ### Data source retention
 
-GraphQL queries rely on different data sources with different retention ranges. When the GraphQL operator configures Archival Service, supported point lookups can route to Archival. Full node gRPC does not do this implicitly; gRPC clients must query an Archival Service endpoint directly for high-retention data.
+GraphQL queries rely on different data sources with different retention ranges. Each data source backs a different set of queries, so how far back you can query depends on which fields your query selects. When the GraphQL operator configures Archival Service, supported point lookups can route to Archival. Full node gRPC does not do this implicitly; gRPC clients must query an Archival Service endpoint directly for high-retention data.
 
 | Data source          | Examples                                                  | Typical retention          |
 | -------------------- | --------------------------------------------------------- | -------------------------- |
@@ -530,7 +536,7 @@ Retention is dependent on the pruning policies of datasource pipelines configure
 
 :::
 
-### Querying available range
+### How do I query the available range?
 
 Query the available checkpoint range using `serviceConfig.availableRange`:
 
@@ -571,7 +577,7 @@ When multiple filters are passed to the available range query, the strictest ret
 # Check available range for a checkpoint transactions queries filtered by affected object
 {
 	serviceConfig {
-		availableRange(type: "Checkpoint", field: "Transactions", filters: ["affectedObject"]) {
+		availableRange(type: "Checkpoint", field: "transactions", filters: ["affectedObject"]) {
 			first {
 				sequenceNumber
 			}
@@ -611,7 +617,7 @@ Use `serviceConfig.availableRange` to check retention for each field separately.
 
 :::
 
-### Handling "Outside available range" errors
+### How do I handle "Outside available range" errors?
 
 If you encounter an error indicating data is outside the available range, it means your query is requesting data that has been pruned. To resolve this:
 
@@ -621,7 +627,7 @@ If you encounter an error indicating data is outside the available range, it mea
 
 ## Example queries
 
-The following queries show some common tasks you can perform with GraphQL.
+The following queries show some common tasks you can perform with GraphQL. Addresses, object IDs, and digests in these queries are example values; replace them with values from the network you are querying.
 
 ### Find the reference gas price for latest epoch
 
@@ -1077,6 +1083,16 @@ query ($tx: JSON!) {
 }
 ```
 
+#### Variables
+
+To simulate a BCS-encoded transaction, pass it in the `bcs` form:
+
+```json
+{
+  "tx": { "bcs": { "value": "<base64>" } }
+}
+```
+
 Like execution-attached queries, fields selected under simulation are evaluated in a scope immediately after the simulated transaction, without waiting for indexing.
 
 ## Migrating to GraphQL from JSON-RPC
@@ -1180,7 +1196,7 @@ Return all `Coin<0x2::sui::SUI>` objects that an address owns.
 <TabItem value="json-rpc" label="JSON-RPC">
 
 ```json
-query {
+{
   "jsonrpc": "2.0",
   "id": 1,
   "method": "suix_getCoins",
