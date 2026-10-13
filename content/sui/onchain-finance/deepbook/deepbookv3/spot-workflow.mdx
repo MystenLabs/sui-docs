@@ -149,7 +149,7 @@ The SDK defaults `selfMatchingOption` to `SELF_MATCHING_ALLOWED`, so a taker ord
 
 :::
 
-Place the crossing taker bid:
+Place the crossing taker bid. It trades from the same manager with `selfMatchingOption` set to `SELF_MATCHING_ALLOWED`, so it fills the maker ask you just placed:
 
 <ImportContent source="examples/deepbook-spot/src/place-order.ts" mode="code" tag="place-taker" />
 
@@ -178,6 +178,6 @@ For environment and funding failures (faucet rate limits, stale RPC URL, CLI ver
 - **Order below minimum or off-tick:** an order smaller than the pool's minimum size, or priced off its tick size, is rejected. Read the pool's `minSize`, `lotSize`, and `tickSize` with `poolBookParams` and round to them.
 - **`POST_ONLY` returns nothing:** a `POST_ONLY` order that would cross the book is not placed, and returns no order rather than aborting. Price it away from the opposite side of the book.
 - **A taker order filled your own resting order:** the SDK allows self-matching by default. Set `selfMatchingOption` to `CANCEL_TAKER` or `CANCEL_MAKER` if that is not what you want.
-- **`Insufficient balance of <coin> ... Required X, Available Y`:** the friendly build-time error from `coinWithBalance` when a deposit or swap requests more of a coin than the wallet holds. Size the amount to your balance. Contrast it with `InsufficientCoinBalance`, the raw simulation error you get when the amounts plus the gas budget together exceed your balance.
+- **`Insufficient balance of <coin> ... Required X, Available Y`:** the friendly error `coinWithBalance` raises when the SDK builds the transaction (not when TypeScript compiles) and a deposit or swap requests more of a coin than the wallet holds. Size the amount to your balance. Contrast it with `InsufficientCoinBalance`, the raw simulation error you get when the amounts plus the gas budget together exceed your balance.
 - **Every run mints a new manager:** you are not reusing an existing `BalanceManager`. Discover or persist the ID and create only when absent, as in [Set up a BalanceManager](#set-up-a-balancemanager).
 - **`Cannot convert <value> to a BigInt`:** `clientOrderId` is encoded as `u64`. The SDK types it as a string, but a non-numeric value fails to encode. Use a numeric string, such as a timestamp.
