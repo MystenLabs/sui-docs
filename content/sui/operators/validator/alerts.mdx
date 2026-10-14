@@ -42,9 +42,9 @@ answer: >-
 When running a Sui Validator or full node, it is recommended to monitor the health of the nodes and set up alerts on problems.
 Besides alerting on crashes and other common issues, you might also want to configure alerting based on the following example rules.
 
-The following sections cover the alert queries, but the details are meant to be customized to suit your infrastructure.
+The following sections cover the alert queries, but the details, such as the threshold in each query and the recommended trigger duration, are meant to be customized to suit your infrastructure.
 
-## High-priority health alerts
+## Which alerts need immediate attention?
 
 These alerts should receive the most immediate attention from you or your team.
 
@@ -112,7 +112,7 @@ is_safe_mode > 0.5
 Usually this issue is outside the control of validator or full node operators.
 Please notify Sui community on Discord when this is observed.
 
-## Non-urgent and warning alerts
+## Which alerts can wait for normal maintenance?
 
 All alerts are important, but the following alerts and warnings can be addressed within the normal node maintenance workflow.
 
