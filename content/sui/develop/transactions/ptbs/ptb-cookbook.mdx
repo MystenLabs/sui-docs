@@ -51,7 +51,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This page provides copy-paste TypeScript recipes for common PTB patterns. Each recipe is a complete, self-contained example.
+This page shows how to send to multiple recipients, sponsor a transaction, borrow and return a kiosk item, combine sponsorship with a kiosk purchase, select coins from mixed sources, and chain Move call results in a single PTB, with a copy-paste TypeScript recipe for each. Each recipe is a complete, self-contained example.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -64,7 +64,7 @@ This page provides copy-paste TypeScript recipes for common PTB patterns. Each r
 
 For PTB fundamentals, see [Building Transactions](/develop/transactions/ptbs/building-ptb). To send one from your own app, see [Sending PTBs with the TypeScript SDK](/develop/transactions/ptbs/ts-sdk-ptb-template).
 
-## Multi-recipient transfer
+## How do I send to multiple recipients in one PTB?
 
 Split a coin and transfer portions to multiple recipients in a single atomic transaction. This is more efficient and cheaper than sending individual transactions.
 
@@ -77,7 +77,11 @@ Split a coin and transfer portions to multiple recipients in a single atomic tra
 
 ## Sponsored transaction
 
-A sponsor pays gas on behalf of a user. The user builds the transaction logic, the sponsor provides gas, and both sign before submission.
+A sponsor pays gas on behalf of a user:
+
+1. The user builds the transaction logic with `onlyTransactionKind: true`, which strips gas info so the sponsor can provide it.
+2. The sponsor sets `setGasOwner` to their own address and provides their gas coins.
+3. Both the user and the sponsor sign before submission.
 
 <ImportContent source="examples/ptb-cookbook/src/sponsored.ts" mode="code" tag="sponsored" />
 
@@ -94,7 +98,7 @@ The sponsor can also pay gas from their SUI address balance instead of providing
 
 <ImportContent source="examples/ptb-cookbook/src/sponsored.ts" mode="code" tag="sponsored-address-balance-gas" />
 
-## Kiosk borrow, mutate, and return
+## How do I do a kiosk borrow and return in one transaction?
 
 Borrow an item from a kiosk, perform an operation on it, and return it in one PTB. The `borrow_val` / `return_val` pattern uses a hot-potato `Borrow` object that enforces the return within the same transaction.
 
@@ -107,9 +111,11 @@ Borrow an item from a kiosk, perform an operation on it, and return it in one PT
 
 For more kiosk operations, see [Sui Kiosk](/onchain-finance/kiosk/kiosk-example).
 
-## Sponsored kiosk purchase
+## How do I combine sponsored transactions with kiosk operations?
 
 Combine sponsorship with a kiosk purchase: the buyer selects and pays for the item, while a sponsor covers the gas fee.
+
+This recipe builds on two patterns from this page: the [sponsored transaction](#sponsored-transaction) flow, where the sponsor provides gas and both parties sign, and [withdrawing from an address balance](#withdraw-and-use-in-move-calls), which funds the buyer's payment.
 
 <ImportContent source="examples/ptb-cookbook/src/sponsored-kiosk.ts" mode="code" tag="sponsored-kiosk" />
 
@@ -118,9 +124,14 @@ Combine sponsorship with a kiosk purchase: the buyer selects and pays for the it
 - Transfer policy resolution happens within the same PTB, ensuring atomicity.
 - The sponsor only covers gas. The purchase price comes from the buyer's address balance.
 
-## Coin selection from mixed sources
+## How do I select coins from address balances in a PTB?
 
 Sui supports both coin objects and address balances. You can explicitly choose which source to use in a PTB.
+
+To choose a source:
+- Use `tx.balance()` when you want to deposit into a recipient's address balance and let the SDK select the funding source automatically.
+- Use `tx.splitCoins` with a specific coin object when you need precise control over which coin is spent.
+- Use `tx.withdrawal()` with `coin::redeem_funds` when you need a `Coin<T>` to pass to Move functions.
 
 ### Send to a recipient's address balance
 
@@ -142,7 +153,7 @@ Use `tx.withdrawal()` to create a withdrawal input, then redeem it through `coin
 
 For more on address balances, see [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
 
-## Batch Move calls with result chaining
+## How do I chain Move call results in a PTB?
 
 Each PTB command returns a reference to its result, which you can pass as input to subsequent commands. This lets you compose complex multi-step operations in a single atomic transaction.
 
