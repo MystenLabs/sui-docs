@@ -67,7 +67,7 @@ When you publish or upgrade your package on multiple Sui networks (Mainnet, Test
 
 Automated address management works for one package published to one or more Sui networks. If a package is republished to a network, tracked addresses for that network are overwritten.
 
-## Adopting automated address management
+## How do I adopt automated address management? {#adopting-automated-address-management}
 
 Previously, a `published-at` entry in `Move.toml` was **mandatory**. It is no longer required if the data is tracked in `Move.lock`. For an existing package, you can migrate to automated tracking as follows:
 
@@ -93,6 +93,8 @@ sui move manage-package --environment "$(sui client active-env)" \
 
    - `VERSION-NUMBER`: `1` if you never upgraded. Otherwise, set to the upgrade count. Look up the package at `LATEST-ADDRESS` to confirm the version number.
 
+   - `--environment` and `--network-id` are filled in by shell substitution from `sui client active-env` and `sui client chain-identifier`. `sui client chain-identifier` returns the chain ID of the active network, which `Move.lock` stores as `chain-id` (for example, `4c78adac` in the testnet entry under [Internal reference](#internal-reference)). If your shell does not support `$(...)`, run the two commands separately and paste their output in place of the substitutions.
+
 3. Delete the `published-at` line in your `Move.toml`.
 
 4. Set your package's address to `0x0` in the `[addresses]` section:
@@ -108,15 +110,15 @@ name = "Kiosk"
 kiosk = "0x0"
 ```
 
-Your package is now tracked. Repeat the steps to track addresses for additional environments.
+Your package is now tracked. To confirm, check that `Move.lock` contains an `[env.<YOUR-CHAIN-ENVIRONMENT>]` entry with the values you supplied; see [Internal reference](#internal-reference) for the expected format. Repeat the steps to track addresses for additional environments.
 
-## Package upgrade guidance
+## How do I upgrade a tracked package? {#package-upgrade-guidance}
 
 When [upgrading](/develop/publish-upgrade-packages/upgrade#upgrade-requirements), you need the `UpgradeCap` ID of your package. Automated address management does not track `UpgradeCap`.
 
 You must also set the `[addresses]` value for your package to `0x0` in `Move.toml`, and restore it with the `ORIGINAL-ADDRESS` after upgrading.
 
-## Troubleshooting
+## How do I fix conflicting addresses? {#troubleshooting}
 
 Conflicting addresses can occur if package data becomes inconsistent. For example, a package might still have a `published-at` value in `Move.toml` while also being tracked in `Move.lock`. The mismatch causes an error when publishing or upgrading.
 
