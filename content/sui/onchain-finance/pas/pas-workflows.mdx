@@ -41,7 +41,7 @@ answer: >-
   using Accounts, Requests, and Policies.
 ---
 
-The Permissioned Asset Standard (PAS) is a permissioned asset framework on Sui. Assets of different types live under **Accounts** (one per address, independent of types) and can only move between Accounts through hot potato requests that must be approved and resolved in the same programmable transaction block (PTB).
+The Permissioned Asset Standard (PAS) is a permissioned asset framework on Sui. Assets of different types live under **Accounts** (one per address, independent of types) and can only move between Accounts through hot potato requests that must be approved and resolved in the same programmable transaction block (PTB). A hot potato request cannot be left unresolved: if the transaction ends without resolution, it aborts.
 
 Every action follows the same pattern:
 
@@ -50,7 +50,7 @@ flowchart LR
     A["Create Request"] --> B["Approve"] --> C["Resolve"]
 ```
 
-## Create Accounts
+## How do I create an Account?
 
 Account creation is permissionless. There is one Account per address, and an Account can hold any asset type:
 
@@ -59,9 +59,9 @@ account::create_and_share(&mut namespace, @0xAlice);
 account::create_and_share(&mut namespace, @0xBob);
 ```
 
-## Transfer a balance
+## How do I transfer a balance?
 
-You can transfer a balance of permissioned assets from one Account to another. This requires the owner `Auth` proof.
+You can transfer a balance of permissioned assets from one Account to another. This requires the owner `Auth` proof, which you create with `account::new_auth(ctx)`.
 
 The request contains the following fields:
 
@@ -100,7 +100,7 @@ send_funds::resolve_balance(request, &policy);
 
 See the [KYC example `kyc_registry`](https://github.com/MystenLabs/pas/blob/main/packages/examples/kyc/sources/kyc_registry.move) for a registry-gated transfer implementation.
 
-## Clawback a balance
+## How do I claw back a balance?
 
 You can forcibly withdraw tokens from an Account. No `Auth` is required because this is an admin action. The policy must have `clawback_allowed: true`.
 
@@ -134,7 +134,7 @@ to_account.deposit_balance(balance);
 
 See the [KYC example `treasury::burn`](https://github.com/MystenLabs/pas/blob/main/packages/examples/kyc/sources/treasury.move) for a clawback-to-burn implementation.
 
-## Unlock a balance
+## How do I unlock a balance?
 
 You can remove tokens from the closed-loop system entirely.
 
@@ -168,7 +168,7 @@ let balance: Balance<MY_COIN> = unlock_funds::resolve(request, &policy);
 
 See the [Loyalty example `treasury::redeem`](https://github.com/MystenLabs/pas/blob/main/packages/examples/loyalty/sources/treasury.move) for a registry-gated unlock (redemption) implementation.
 
-### Unmanaged assets (no policy)
+### What happens to an asset with no policy?
 
 For example, if SUI is accidentally sent to an Account:
 
@@ -196,7 +196,9 @@ balance.send_funds(namespace.account_address(owner));
 
 ## Resolve actions in Move (inside your contract)
 
-Your contract calls approve and resolve within its own function. The balance never leaves your control:
+Your contract calls approve and resolve within its own function. The balance never leaves your control.
+
+In this example the request's `T` is `Balance<MY_COIN>`, so the policy parameter is typed `&Policy<Balance<MY_COIN>>`. This is the same `Policy<T>` that the earlier examples pass as `&policy`.
 
 ```move
 public fun burn(
