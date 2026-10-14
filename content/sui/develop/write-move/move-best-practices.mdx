@@ -40,7 +40,7 @@ This guide outlines recommended conventions and best practices for writing Move 
 
 While these conventions are recommendations rather than strict rules, they represent patterns that have proven effective across many Sui projects. They help create consistency across the ecosystem and make code easier to understand and maintain.
 
-## Organization principles
+## How should I structure a Move package?
 
 ### Package
 
@@ -59,10 +59,10 @@ sources/
     my_module.move
     another_module.move
     ...
-tests/
+tests/              # optional, not uploaded onchain
     my_module_tests.move
     ...
-examples/
+examples/           # optional, not uploaded onchain
     using_my_module.move
 Move.lock
 Move.toml
@@ -136,7 +136,7 @@ use sui::{
 use my_dep::battle::{Battle, Score};
 ```
 
-## Naming conventions
+## What are the Move naming conventions on Sui?
 
 Adhering to naming conventions in your code helps readability and ultimately makes your codebase easier to maintain. The following sections outline the key naming conventions to follow when writing Move code.
 
@@ -161,7 +161,7 @@ const E_INVALID_NAME: u64 = 0;
 
 Always declare struct abilities in this order: `key`, `copy`, `drop`, `store`.
 
-Do not use 'potato' in the name of structs. The lack of abilities define it as a potato pattern.
+Do not use 'potato' in the name of structs. The lack of abilities already defines it as a potato pattern, so the name doesn't need to repeat it.
 
 Structs support positional fields that can be used for basic wrappers, dynamic field keys, or as tuples.
 
@@ -224,6 +224,8 @@ public struct Receipt<Data> has store { ... }
 ## Code Structure
 
 The following section covers common patterns and best practices specific to Move development on Sui, including object ownership models and function design principles.
+
+In the examples on this page, a function body of `abort(0)` with the comment `// Implementation omitted.` is a placeholder for an implementation that is not shown. It is not part of the recommended pattern.
 
 ### Shared objects
 
@@ -316,7 +318,15 @@ To maintain composability, use capability objects instead of arrays of addresses
 
 :::tip
 
-For privileged functions, take an explicit capability parameter rather than relying on sender-only authorization. Only use `tx_context::sender()` as the authorization check where the signer is genuinely the only valid actor. When a capability grants rights over a specific object, validate the capability/object relationship (for example, match an ID stored in the capability). Design in a revocation or rotation path from the start, and emit events for privileged actions so they are auditable. See [Access control](/develop/security/best-practices#access-control) for the full guidance.
+For privileged functions:
+
+- Take an explicit capability parameter rather than relying on sender-only authorization.
+- Only use `tx_context::sender()` as the authorization check where the signer is genuinely the only valid actor.
+- When a capability grants rights over a specific object, validate the capability/object relationship (for example, match an ID stored in the capability).
+- Design in a revocation or rotation path from the start.
+- Emit events for privileged actions so they are auditable.
+
+See [Access control](/develop/security/best-practices#access-control) for the full guidance.
 
 :::
 
@@ -402,7 +412,7 @@ public fun new_shared(deposit: Coin<SUI>, ctx: &mut TxContext) {
 
 ### Admin capability
 
-In admin-gated functions, the capability should be placed as the second parameter. This keeps the capability visible in method signatures and maintains method associativity.
+In admin-gated functions, the capability should be placed as the second parameter. This keeps the capability visible in method signatures and maintains method associativity: with the object being modified as the first parameter, callers use method syntax on that object (`account.set(&cap, ...)`) rather than on the capability (`cap.update(&mut account, ...)`).
 
 ```move
 module conventions::social_network;
