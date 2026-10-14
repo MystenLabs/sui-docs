@@ -52,7 +52,7 @@ The DeepBook Margin TypeScript SDK abstracts away the transaction calls, allowin
 - [SDK repository](https://github.com/MystenLabs/ts-sdks/tree/main/packages/deepbook-v3)
 - [NPM version](https://www.npmjs.com/package/@mysten/deepbook-v3)
 
-## Install
+## How do I install the DeepBook Margin SDK? {#install}
 
 To use the SDK in your projects, install the `@mysten/deepbook-v3` package, which includes the margin trading functionality.
 
@@ -75,7 +75,7 @@ https://github.com/MystenLabs/ts-sdks/blob/main/packages/deepbook-v3/src/utils/c
 
 </details>
 
-## DeepBookClient
+## How do I set up DeepBookClient for margin trading? {#deepbookclient}
 
 To work with DeepBook Margin, use the client extension to add DeepBook functionality to a Sui client. The [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript) provides the `SuiGrpcClient` and key functionality necessary to process transactions. The following example imports those libraries, as well.
 
@@ -123,6 +123,8 @@ class DeepBookMarginTrader {
 	}
 }
 ```
+
+The `$extend()` call adds the `deepbook` extension to the Sui client, which exposes the DeepBook functions under `client.deepbook`. To see the class instantiated and its methods called, see [Example setup](#example-setup).
 
 ## Keys: Coin, Pool, and MarginManager {#keys}
 
@@ -193,6 +195,8 @@ class DeepBookMarginTrader {
 	}
 }
 ```
+
+In this example, `getMarginManagers()` reads `MARGIN_MANAGER_ADDRESS` and `POOL_KEY` from environment variables loaded with `dotenv` (the pool key defaults to `SUI_DBUSDC`), and returns them under the `MARGIN_MANAGER_1` key that you pass to `deepbook()` as `marginManagers`.
 
 Example creating a margin manager:
 
@@ -304,7 +308,7 @@ You can also initialize the SDK with custom coins to interact with margin pools 
 
 ### Pool
 
-Similar to coins, the SDK comes with default pools. You can provide a `PoolMap` during construction to override this behavior.
+Similar to coins, the SDK comes with default pools. You can provide a `PoolMap` during construction to override this behavior. The default pool keys used in the examples on this page, such as `SUI_DBUSDC`, come from the SDK's default data in `utils/constants.ts`.
 
 ```tsx
 import { deepbook, type DeepBookClient } from '@mysten/deepbook-v3';
@@ -374,7 +378,7 @@ export class DeepBookMarginTrader {
 
 ### Example setup
 
-The following example uses the default pools and coins provided, and demonstrates margin trading operations.
+The following example uses the default pools and coins provided, and demonstrates margin trading operations. It imports the `DeepBookMarginTrader` class from the previous section. Each SDK call returns a function that takes the transaction: you can call it directly with `tx`, or pass it to `tx.add()`, as the example does with `mintSupplierCap()` to capture its result in `supplierCap`. These calls only build the transaction; nothing executes until you call `signAndExecute()` at the end.
 
 ```tsx
 import { Transaction } from '@mysten/sui/transactions';
