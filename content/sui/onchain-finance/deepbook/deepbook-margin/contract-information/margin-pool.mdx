@@ -35,7 +35,7 @@ answer: Learn about margin pools and how they enable liquidity for leveraged tra
 
 The `MarginPool` is a shared object that manages liquidity for a specific asset, enabling lenders to supply assets and margin traders to borrow them. Each margin pool tracks supply and borrow positions, accrues interest over time, and enforces risk parameters to maintain system health.
 
-Margin pools use a shares-based accounting system where suppliers receive shares representing their proportion of the total supply. Interest accrues continuously, increasing the value of these shares over time. Borrowers can only borrow from pools that have enabled their specific DeepBook trading pool. The pool's current interest and risk settings, such as `interest_rate`, `max_utilization_rate`, `protocol_spread`, and `min_borrow`, are readable through the pool's read endpoints, and the pool emits `InterestParamsUpdated` when those interest rate parameters change. The pool's current `interest_rate` is available through the read endpoints, and the system emits an `InterestParamsUpdated` event when you update interest rate parameters.
+Margin pools use a shares-based accounting system where suppliers receive shares representing their proportion of the total supply. Interest accrues continuously, increasing the value of these shares over time. Borrowers can only borrow from pools that have enabled their specific DeepBook trading pool. The pool's current interest and risk settings, such as `interest_rate`, `max_utilization_rate`, `protocol_spread`, and `min_borrow`, are readable through the pool's read endpoints, and the pool emits `InterestParamsUpdated` when those interest rate parameters change.
 
 ## What is a margin pool?
 
@@ -58,18 +58,18 @@ The protocol captures a portion of the interest income as fees, set by the pool'
 
 ## How do borrowers access a margin pool?
 
-A margin pool must explicitly allow a DeepBook trading pool before traders can borrow from it. The pool records them in its `allowed_deepbook_pools` field, and `deepbook_pool_allowed` checks one. This design lets pool administrators control which markets can access the liquidity, limiting exposure to specific trading pairs.
+A margin pool must explicitly allow a DeepBook trading pool (the DeepBook market for a specific trading pair) before traders can borrow from it. The pool records them in its `allowed_deepbook_pools` field, and `deepbook_pool_allowed` checks one. This design lets pool administrators control which markets can access the liquidity, limiting exposure to specific trading pairs.
 
 ## Common workflow
 
 The typical workflow for a lender interacting with a margin pool:
 
-1. Mint a `SupplierCap` using `mint_supplier_cap`. One cap works across multiple pools.
+1. Mint a `SupplierCap` using `mint_supplier_cap`. The cap is a capability object: you pass it to `supply` and `withdraw`, and the pool tracks your position against it. One cap works across multiple pools.
 2. Call `supply` with your `SupplierCap` and the assets you want to deposit. The pool records your shares. The `referral` parameter is an `Option<ID>`: pass `some(id)` to credit a referral with its pro rata share of the 50% referral split, or `none` if you have no referral.
 3. Monitor the pool's interest rate and utilization rate using the read endpoints.
 4. Call `withdraw` when you want to reclaim your assets plus accrued interest. The `amount` parameter is an `Option<u64>` denominated in tokens, not shares. Pass `some(amount)` to take a specific amount, or `none` to withdraw everything the cap holds.
 
-Two things can cap a withdrawal below what your shares are worth. The pool's withdrawal rate limiter aborts with `ERateLimitExceeded` when recent withdrawals have drained the bucket, so check `get_available_withdrawal` before you submit. The pool's vault also has to hold the assets: if borrowers have drawn them down, the call aborts with `ENotEnoughAssetInPool` until utilization falls.
+Two things can cap a withdrawal below what your shares are worth. The pool's withdrawal rate limiter aborts with `ERateLimitExceeded` when recent withdrawals have used up the amount the limiter currently allows, so check `get_available_withdrawal` before you submit. The pool's vault also has to hold the assets: if borrowers have drawn them down, the call aborts with `ENotEnoughAssetInPool` until utilization falls.
 
 ## API
 
@@ -122,6 +122,8 @@ Withdraw supplied assets from the margin pool. You can specify an exact amount o
 
 <details>
 <summary>Read endpoints</summary>
+
+These functions return the pool's current state: its ID, whether a given DeepBook pool is allowed, supply and borrow totals and shares, the last update timestamp, the supply cap, protocol fees, the risk and interest parameters, and the supply shares and amount held by a given `SupplierCap`.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
