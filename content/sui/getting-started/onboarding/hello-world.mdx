@@ -72,6 +72,8 @@ answer: >-
 
 You'll build a "Hello, World!" program to learn the fundamentals of programming on Sui. You create programs on Sui by writing and deploying smart contracts to the network.
 
+This guide walks you through cloning the example, then shows you how to [build](#build-the-move-package), [publish](#publish-the-move-package), and [call](#interact-with-the-move-package) the package. If you already know the concepts below, skip ahead to those sections.
+
 The most basic unit of storage on Sui is an [object](/develop/sui-architecture/object-model). Other blockchains typically structure storage using key-value stores. Sui centers storage around objects with unique ID addresses onchain. Every Sui smart contract is an object that manipulates other objects.
 
 Objects can be immutable or mutable:
@@ -148,6 +150,8 @@ In this project, there are two important files that define the package's logic, 
 
 </details>
 
+The `Move.toml` uses `edition = '2024'` and does not need a `[dependencies]` section for Sui, because the Sui framework is resolved automatically.
+
 ### View the smart contract code 
 
 Open the `greeting.move` file in your IDE of choice. You can see the following Move code:
@@ -164,7 +168,7 @@ Open the `greeting.move` file in your IDE of choice. You can see the following M
     The `Greeting` struct is a Sui object (it has the `key` ability and a `UID` field). It contains a `text` field that stores a string. A struct with `key` is a resource type, meaning it cannot be copied and must be explicitly moved or destroyed.
   </Step>
   <Step lines="17-24" title="Constructor: `new`">
-    The `new` function creates a `Greeting` object initialized with the text "Hello world." and shares it as a public object through `transfer::share_object`. Shared objects are accessible to anyone on the network, so any address can read or mutate them in a transaction.
+    The `new` function creates a `Greeting` object initialized with the text "Hello world!" and shares it as a public object through `transfer::share_object`. Shared objects are accessible to anyone on the network, so any address can read or mutate them in a transaction.
   </Step>
   <Step lines="26-29" title="Mutator: `update_text`">
     The `update_text` function takes a mutable reference (`&mut Greeting`) rather than the object itself. This satisfies Move's resource safety because the object is not copied or consumed, only mutated through a reference. Anyone with access to the shared `Greeting` can call this function to change its text.
@@ -181,7 +185,7 @@ A unique aspect of programming applications on Sui is the resource safety that t
 
 In the "Hello, World!" example, the struct `Greeting` is a resource type. 
 
-To satisfy the requirement that all resources must be moved or destroyed by the end of a transaction, `new_greeting` is assigned to `Greeting`, which the call to `transfer::share_object(new_greeting)` then moves into global storage.
+To satisfy the requirement that all resources must be moved or destroyed by the end of a transaction, the `new` function creates a `Greeting` object, which the call to `transfer::share_object` then moves into global storage.
 
 To mutate `Greeting`, the function `update_text` takes the input `(&mut Greeting)` rather than the resource itself. This function satisfies resource safety because the function does not copy the resource and mutates it through a reference.
 
@@ -404,6 +408,8 @@ For this guide, the most important section is **Published Objects**, which inclu
 │  └──     
 ```
 
+Do not confuse the `PackageID` with the ID of the object of type `0x2::package::UpgradeCap` listed under **Created Objects** in the output. That object is owned by your address, while the package itself is immutable. Use the `PackageID` value from **Published Objects**.
+
 Both the package ID and module are required to interact with the package from the command line. Take note of both values for future use in the [Connecting a Frontend](/getting-started/onboarding/app-frontends) guide.
 
 ## Interact with the Move package
@@ -414,7 +420,7 @@ Interact with the newly published package by first making a call to the `new` fu
 $ sui client call --package <PACKAGE_ID> --module greeting --function new  
 ```
 
-Replace `<PACKAGE_ID>` with the package ID the output of the `sui client publish` command returned. You must include the `--package`, `--module`, and `--function` flags. 
+Replace `<PACKAGE_ID>` with the package ID the output of the `sui client publish` command returned. You must include the `--package`, `--module`, and `--function` flags. You do not pass any object arguments because `new` only takes the transaction context (`&mut TxContext`), which Sui provides automatically.
 
 The output of this call includes a newly created object:
 
