@@ -55,7 +55,7 @@ This guide covers how to publish the [asset tokenization](/onchain-finance/token
 </TabItem>
 </Tabs>
  
-## Get the framework
+## How do I get the framework? {#get-the-framework}
 
 Asset tokenization ships as a template you fork rather than a package you install, because the `template` package is rewritten per asset through WASM bytecode manipulation. Start from the reference repository:
 
@@ -75,15 +75,15 @@ $ cd setup && npm install
 
 <ImportContent source="initialize-sui-client-cli" mode="snippet" />
 
-## Publishing
+## How do I publish the packages? {#publishing}
  
 You can publish the contracts manually using the Sui CLI, or use the provided bash script to automatically deploy and populate most of the `.env` fields.
  
 The [`setup/.env.template`](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/.env.template) file defines all required variables. For more details, see the setup folder's [README](https://github.com/MystenLabs/asset-tokenization/tree/main/setup).
 
-### Publishing packages
+### In what order do I publish the packages? {#publishing-packages}
  
-Publish both packages in order: `asset_tokenization` first, then `template`.
+Publish both packages in order: `asset_tokenization` first, then `template`. The `template` package depends on `asset_tokenization`: its build includes `asset_tokenization` as a dependency, and publishing it requires the `asset_tokenization` package ID.
  
 <ImportContent source="info-gas-budget" mode="snippet" />
  
@@ -137,7 +137,7 @@ For more details, see the setup folder's [README](https://github.com/MystenLabs/
 ## WebAssembly (WASM) and the template package {#webassembly-wasm-and-template-package}
  
 :::tip
-You can find a public-facing reference to the WASM library in the [move-binary-format-wasm](https://www.npmjs.com/package/@mysten/move-bytecode-template) Sui repo subfolder.
+You can find a public-facing reference to the WASM library in the [`@mysten/move-bytecode-template`](https://www.npmjs.com/package/@mysten/move-bytecode-template) npm package.
 :::
  
 The WASM feature enables Move bytecode serialization and deserialization in a browser environment, allowing you to edit existing contracts without a local build environment. For asset tokenization, this lets you create and publish new asset types directly from the browser.
@@ -148,7 +148,7 @@ The WASM feature enables Move bytecode serialization and deserialization in a br
 If you modify the template package, you must repeat this process. Some alterations, like changing a constant name, do not affect the produced bytecode.
 :::
  
-The WASM library manipulates the compiled bytecode of the `template` module. To retrieve it, navigate inside the `template` folder and run:
+The WASM library manipulates the compiled bytecode of the `template` module. To retrieve it as a single hexadecimal string, navigate inside the `template` folder and run:
  
 ```sh
 $ xxd -c 0 -p build/template/bytecode_modules/template.mv | head -n 1
@@ -185,7 +185,7 @@ a6563740f7075626c69635f7472616e736665720673656e64657204736f6d6506737472696e
  
 </details>
  
-Copy the output and paste it into the return statement of the `getBytecode` method in [bytecode-template.ts](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/bytecode-template.ts).
+Copy the output and paste it into the return statement of the `getBytecode` method in [`setup/src/utils/bytecode-template.ts`](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/bytecode-template.ts).
  
 Because the template package contains 2 modules, you also need to retrieve the bytecode for the `genesis` module. This bytecode is not edited but is required to deploy the template module. Navigate to the `template` folder and run:
  
@@ -193,11 +193,11 @@ Because the template package contains 2 modules, you also need to retrieve the b
 $ xxd -c 0 -p build/template/bytecode_modules/genesis.mv | head -n 1
 ```
  
-Copy the output and paste it into the bytecode constant in [genesis_bytecode.ts](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/genesis_bytecode.ts).
+Copy the output and paste it into the bytecode constant in [`setup/src/utils/genesis_bytecode.ts`](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/genesis_bytecode.ts).
  
 With this setup, the library can deserialize the bytecode, apply your edits, and serialize it again for publishing.
  
-### Template module constants
+### Which template module constants can I change? {#template-module-constants}
  
 The `template` module defines a set of constants that the WASM library can modify:
  
@@ -269,6 +269,6 @@ const tx = new Transaction();
  
 The `modules` array contains 2 elements: the edited template module and the genesis module. The `packageId` is the address the `asset_tokenization` package was deployed to.
  
-## TypeScript commands
+## How do I interact with my tokenized asset? {#typescript-commands}
  
 After publishing, use the TypeScript setup scripts to interact with your tokenized asset. For a full reference of available commands, see the [Asset Tokenization TypeScript CLI Reference](/references/ts-asset-tokenization).
