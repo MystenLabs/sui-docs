@@ -53,6 +53,8 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+This guide explains how to integrate SuiNS name resolution, reverse lookup, subnames, and the Enoki subname API into an app.
+
 By the end of this page, you can:
 
 - Resolve a SuiNS name to an address onchain in Move and offchain through the Sui RPC.
@@ -74,7 +76,7 @@ By the end of this page, you can:
 
 This guide uses [Sui Messenger](https://github.com/MystenLabs/messaging-sdk-example) as a concrete example throughout. Sui Messenger is a demo encrypted messaging app built on Sui that assigns every user a SuiNS subname under the `sui-stack.sui` parent domain. These subnames serve as human-readable identities in the app's channel system, replacing raw wallet addresses with names like `alice.sui-stack.sui`. The [Onchain Websites with Walrus Sites](/sui-stack/walrus/sui-stack-walrus-sites) guide uses SuiNS to attach a readable URL to a deployed Walrus Site.
 
-## Introduction to SuiNS
+## What is SuiNS?
 
 Sui Name Service (SuiNS) is a decentralized naming service on the Sui blockchain. You use SuiNS to replace complex wallet addresses with human-readable names ending in `.sui`, and to resolve names to addresses at runtime, both onchain in Move and offchain through RPCs. For the full developer reference including the SuiNS SDK, active package constants, and transaction patterns, see the [SuiNS developer documentation](https://docs.suins.io/developer).
 
@@ -87,6 +89,8 @@ SuiNS has 3 main use cases in app development:
 Sui Messenger uses the third pattern. The app registers a subname for each user under `sui-stack.sui`, giving every participant a unique identity that the channel UI displays in place of their wallet address.
 
 ### Resolution architecture
+
+The diagram shows the 3 integration paths covered on this page. Use onchain resolution in Move for name-based transfers inside a transaction (see [Onchain resolution](#onchain-resolution)). Use offchain resolution through the TypeScript SDK or GraphQL to look up names and display them in your UI (see [Offchain resolution](#offchain-resolution)). Use the Enoki subname API when your app provisions subnames for its users (see [Enoki subname API vs the SuiNS SDK](#enoki-subname-api-vs-the-suins-sdk)).
 
 ```mermaid
 flowchart LR
@@ -168,7 +172,7 @@ Do not use SuiNS NFT ownership as a resolution method. A SuiNS NFT acts as a cap
 
 ## Onchain resolution
 
-Use the SuiNS core package to resolve names from within a Move module. Add the dependency to your `Move.toml`:
+Use the SuiNS core package to resolve names from within a Move module. Add the dependency to your `Move.toml`, choosing the tab that matches the network you deploy your package to:
 
 <Tabs groupId="network">
 <TabItem value="mainnet" label="Mainnet">
@@ -257,7 +261,7 @@ The legacy `resolveNameServiceNames` method returned every name assigned to an a
 
 :::
 
-For [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc), pass a name to the [`address`](/references/sui-api/sui-graphql/beta/reference/operations/queries/address) query for lookup, and read [`defaultNameRecord`](/references/sui-api/sui-graphql/beta/reference/types/objects/address) on the `Address` type for reverse lookup. To fetch a full name record, including expiration and metadata, use the [`nameRecord`](/references/sui-api/sui-graphql/beta/reference/operations/queries/name-record) query.
+For [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc), pass a name to the `address` query for lookup, and read `defaultNameRecord` on the `Address` type for reverse lookup. To fetch a full name record, including expiration and metadata, use the `nameRecord` query.
 
 ### Lookup with the SuiNS SDK extension
 
@@ -345,7 +349,7 @@ For queries beyond a single name or address lookup (for example, all subnames un
 
 ## Subnames
 
-Subnames are nested names under a parent name. For example, `alice.myapp.sui` is a subname under `myapp.sui`. Creating subnames has no cost. The maximum nesting depth is 8 levels (10 levels including the second-level domain (SLD) and top-level domain (TLD)).
+Subnames are nested names under a parent name. For example, `alice.myapp.sui` is a subname under `myapp.sui`. Creating subnames has no cost. The maximum nesting depth is 8 subname levels below the second-level domain (SLD), or 10 levels in total when you count the SLD and the top-level domain (TLD).
 
 Parent rules control whether children can be created and whether subnames can extend their expiration to match the parent.
 
@@ -354,7 +358,7 @@ Parent rules control whether children can be created and whether subnames can ex
 SuiNS has 2 subname types:
 
 - **Node subnames:** Have an associated NFT (`SubDomainRegistration`). The NFT holder can update the target address, create child subnames (if the parent permits), and transfer ownership. Node subnames have their own expiration, which the parent can allow extending.
-- **Leaf subnames:** Have no associated NFT. The parent's NFT holder controls the leaf's configuration. Leaf subnames do not expire independently; their lifetime matches the parent. The parent holder can revoke a leaf subname at any time.
+- **Leaf subnames:** Have no associated NFT. The parent's NFT holder controls the leaf's configuration, because a SuiNS NFT acts as a capability object (see [NFT mutability and ownership](#nft-mutability-and-ownership)). Leaf subnames do not expire independently; their lifetime matches the parent. The parent holder can revoke a leaf subname at any time.
 
 The following table summarizes the key differences:
 
@@ -368,7 +372,7 @@ The following table summarizes the key differences:
 | Transfer ownership | Yes, through NFT | No |
 | Revoke | No (except post-expiration) | Yes, parent holder can revoke |
 
-### Choosing a subname type
+### Which subname type should I use?
 
 Choose the subname type based on how you want to manage ownership and lifecycle:
 
@@ -379,7 +383,7 @@ Choose the subname type based on how you want to manage ownership and lifecycle:
 
 You can create subnames through 3 methods:
 
-##### Step 1:
+##### Step 1: Choose a creation method
 
 Choose your creation method based on your use case:
 
@@ -387,7 +391,7 @@ Choose your creation method based on your use case:
 - **Enoki subname API:** Create subnames programmatically through a REST API. Best for apps that assign subnames to users automatically. See the [Enoki subname documentation](https://docs.enoki.mystenlabs.com/subnames) for API details.
 - **Onchain through Move:** Create subnames directly in your smart contract using the SuiNS subnames package. Use this when your subname creation logic is part of an onchain workflow.
 
-##### Step 2:
+##### Step 2: Configure the subname
 
 Configure the subname with the following parameters:
 
@@ -395,7 +399,7 @@ Configure the subname with the following parameters:
 - **Target address:** The address the subname points to. Required for leaf subnames. Optional for node subnames (can be set later by the NFT holder).
 - **Expiration (node subnames only):** The timestamp when the node subname expires. Must not exceed the parent domain's expiration.
 
-##### Step 3:
+##### Step 3: Set up resolution
 
 Set up resolution so the subname can be looked up. The subname is resolvable immediately after creation through onchain `lookup` and offchain `resolveNameServiceAddress`. If the target address owner wants the subname as their default name, they must sign a separate set-default transaction. Both node and leaf subnames support reverse lookup registration.
 
