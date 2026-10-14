@@ -46,6 +46,8 @@ answer: >-
 
 <ImportContent source="suiplay" mode="snippet" />
 
+This page explains how to support on-device to off-device and off-device to on-device migration flows in SuiPlay0X1 games, including Playtron wallet linking, read-only asset access, and full asset transfer.
+
 The SuiPlay0X1 is one part of a larger ecosystem of Sui gaming. Users might play your game for the first time on the device, and later decide to continue playing your game on PC. Or, they might have already played your game before on PC with their own mnemonic wallet and want to continue playing on the device.
 
 As a result, it's important to consider the different possible migration flows for your game both for new users and existing ones.
@@ -56,9 +58,9 @@ If a user starts playing your game on-device first, and you have added support u
 
 **Automatic transition**
 
-- Integrate Sui dApp Kit in your off-device version.
-- Enable Playtron wallet as connection option.
-- Users can seamlessly continue with same wallet across platforms.
+1. Integrate Sui dApp Kit in your off-device version.
+2. Enable Playtron wallet as connection option.
+3. Users can seamlessly continue with same wallet across platforms.
 
 :::info
 
@@ -152,6 +154,7 @@ Start with the `listAllOwnedObjects` and `getLinkedAddresses` helpers from [SuiL
 Then check the player's Playtron wallet and each linked address for the asset your game gates on:
 
 ```ts
+// Replace 0xPACKAGE_ID with your own package ID
 const MEMBERSHIP_TYPE = '0xPACKAGE_ID::membership::Membership';
 
 async function hasMembership(playtronAddress: string) {
@@ -180,10 +183,10 @@ If your game requires the user to sign or approve transactions to act on assets 
 
 For self-custody and game-specific zkLogin wallets, users must transfer assets from original self-custody wallets to Playtron wallets. For custodial wallets, there is no need as your game backend can track the user's assets across devices (such as through a user ID or Steam/EGS login).
 
-Transfer enables full transaction capabilities on-device. The companion web app provides user-friendly transfer flows  
+Transfer enables full transaction capabilities on-device. The companion web app ([https://wallet.playtron.one](https://wallet.playtron.one)) provides user-friendly transfer flows.
 
 :::tip
 
-If you are using a game-specific zkLogin wallet, to use the companion web app requires Enoki Connect support.
+If you are using a game-specific zkLogin wallet, using the companion web app requires [Enoki Connect](https://docs.enoki.mystenlabs.com/enoki-connect) support. See [Read-only asset access](#read-only-asset-access) for how a properly configured Enoki Connect links a game-specific zkLogin wallet with the Playtron wallet.
 
 :::
