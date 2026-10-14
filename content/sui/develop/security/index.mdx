@@ -27,11 +27,21 @@ answer: >-
 
 Review security best practices for building on Sui to help protect your smart contracts and applications.
 
+## How do I secure privileged code that touches shared objects?
+
 :::caution
 
-Shared objects are not an authorization boundary. Anyone can submit a transaction that references a shared object, so any privileged code path that touches a shared object must enforce authorization with Move-level checks. For example, require a capability argument, validate `tx_context::sender()`, or check object ownership. Never assume that access to a shared object is restricted. See [Access control](/develop/security/best-practices#access-control).
+Shared objects are not an authorization boundary. Anyone can submit a transaction that references a shared object, so any privileged code path that touches a shared object must enforce authorization with Move-level checks. For example:
+
+- Require a capability argument (an object that grants authority to whoever holds it, such as the `UpgradeCap` described below).
+- Validate `tx_context::sender()`.
+- Check object ownership.
+
+Never assume that access to a shared object is restricted. See [Access control](/develop/security/best-practices#access-control).
 
 :::
+
+## How do I protect a package's `UpgradeCap`?
 
 :::note
 
