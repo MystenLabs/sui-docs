@@ -52,7 +52,11 @@ answer: >-
   orders.
 ---
 
+## How do I place a limit or market order on DeepBook?
+
 Users can create limit or market orders, modify orders, and cancel orders. The `BalanceManager` must have the necessary funds to process orders. DeepBookV3 has four order options and three self matching options. If you set the `pay_with_deep` flag to `true`, trading fees are paid with the DEEP token. If you set the `pay_with_deep` flag to `false`, trading fees are paid with the input token.
+
+## How do I cancel or modify an order?
 
 Users can modify their existing order, reducing the size, lowering the expiration time, or both. Users cannot modify their order to increase their size or increase their expiration time. To do that, they must cancel the original order and place a new order.
 
@@ -159,7 +163,7 @@ You must combine a `BalanceManager` call of generating a `TradeProof` before pla
 <details>
 <summary>Place market order</summary>
 
-Place a market order. Quantity is in base asset terms. Calls `place_limit_order` with a price of `MAX_PRICE` for bids and `MIN_PRICE` for asks. DeepBookV3 cancels the order for any quantity not filled.
+Place a market order. Quantity is in base asset terms. Calls `place_limit_order` with the price set to `MAX_PRICE` for bids and to `MIN_PRICE` for asks. DeepBookV3 cancels the order for any quantity not filled.
 
 <ImportContent
 	source="packages/deepbook/sources/pool.move"
@@ -211,7 +215,7 @@ Similar to modify, `cancel_order` does not return anything. DeepBookV3 emits `Or
 <details>
 <summary>Cancel multiple orders</summary>
 
-Cancel multiple orders within a vector. The orders must be owned by the `balance_manager`. The orders are removed from the book and the `balance_manager` open orders. If any order fails to cancel, the system cancels none of them (atomic operation).
+Cancel multiple orders within a vector. The orders must be owned by the `balance_manager`. The orders are removed from the book and the `balance_manager` open orders. If any order fails to cancel (for example, because it is not owned by the `balance_manager`), the system cancels none of them (atomic operation).
 
 <ImportContent
 	source="packages/deepbook/sources/pool.move"
@@ -243,7 +247,7 @@ Cancel all open orders placed by the balance manager in the pool. This is a conv
 <details>
 <summary>Withdraw settled amounts</summary>
 
-Withdraw settled amounts to the `balance_manager`. All orders automatically withdraw settled amounts. This can be called explicitly to withdraw all settled funds from the pool.
+Withdraw settled amounts to the `balance_manager`. All orders automatically withdraw settled amounts. This can be called explicitly to withdraw all settled funds from the pool. For a version that does not require a `TradeProof` and that anyone can call, see Withdraw settled amounts permissionless.
 
 <ImportContent
 	source="packages/deepbook/sources/pool.move"
@@ -273,6 +277,8 @@ Withdraw settled amounts to the `balance_manager` without requiring a `TradeProo
 </details>
 
 ## Events
+
+DeepBookV3 emits the following events when orders are placed, filled, modified, or canceled.
 
 <details>
 <summary>`OrderFilled`</summary>
