@@ -54,7 +54,7 @@ Because you are the sole custodian, have a recovery and key rotation plan before
 
 :::
 
-## Ledger
+## Does Sui work with a Ledger device?
 
 [Ledger](https://www.ledger.com/) is a hardware wallet that stores private keys on a dedicated secure element chip physically isolated from your computer or phone. Transactions are signed on the device itself, so the private key never leaves the hardware.
 
@@ -66,7 +66,7 @@ On Sui, Ledger supports the following:
 
 To use Ledger with Sui, install the Sui app on your Ledger device through [Ledger Wallet](https://shop.ledger.com/pages/ledger-wallet). Connect your Ledger device to a wallet such as Ledger Wallet or a compatible Sui wallet such as [Slush](/onchain-finance/asset-custody/wallets/slush).
 
-## App integration
+## How do I add wallet connection to my app?
 
 The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) is the official SDK for building Sui apps. Any wallet that implements the Wallet Standard, including Ledger, is detected automatically and appears in the connection UI without any wallet-specific configuration.
 
@@ -74,6 +74,14 @@ Sui dApp Kit 2.0 consists of two packages:
 
 - `@mysten/dapp-kit-core`: Framework-agnostic core that works with vanilla JavaScript, React, Vue, or any other framework.
 - `@mysten/dapp-kit-react`: React bindings built on top of the core package, including hooks and pre-built components.
+
+To integrate dApp Kit, follow these steps in order:
+
+1. Install the package for your framework.
+2. Set up a dApp Kit instance with `createDAppKit`.
+3. Wrap your app with `DAppKitProvider`.
+4. Read wallet state and list available wallets with hooks.
+5. Sign and execute transactions through `useDAppKit`.
 
 ### Install
 
@@ -167,7 +175,7 @@ Use hooks to access information about the connected wallet and account:
   noComments
 />
 
-### List available wallets
+### How do I list the wallets a user has installed?
 
 <ImportContent
   source="/packages/dapp-kit/packages/dapp-kit-react/src/hooks/useWallets.ts"
@@ -178,7 +186,7 @@ Use hooks to access information about the connected wallet and account:
   noComments
 />
 
-### Sign and execute a transaction
+### How do I sign and execute a transaction?
 
 <ImportContent
   source="/packages/dapp-kit/packages/dapp-kit-react/src/hooks/useDAppKit.ts"
@@ -203,5 +211,7 @@ export const dAppKit = createDAppKit({
   walletInitializers: [],
 });
 ```
+
+`GRPC_URLS` is not defined in this snippet. Before using it, define your own object that maps each network name in `networks` to the gRPC URL for that network.
 
 Wallet ordering and filtering can also be controlled through the [`ConnectModal` component](https://sdk.mystenlabs.com/dapp-kit/web-components/connect-modal).
