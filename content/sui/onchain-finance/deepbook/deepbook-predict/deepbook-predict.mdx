@@ -62,9 +62,11 @@ Predict runs on Sui Mainnet as `deepbook-predict-mainnet` and on Sui Testnet as 
 
 These pages describe the 2 current deployments, which went live on 2026-09-12. A chain read on 2026-10-13 found Testnet trading, with a new market every window, and Mainnet's `trading_paused` flag set since 2026-09-30, so a trade aborts on Mainnet for now. Read `read.markets()`, `read.pool()`, the `ProtocolConfig` object, and `read.executionMode()` on the network you target rather than assuming its state, and treat the package IDs and object IDs on these pages as pinned to those 2 deployments.
 
+The quickstart below runs on Testnet. A freshly created market also rejects a mint until `plp::rebalance_expiry_cash` funds it from the pool, as step 5 explains.
+
 :::
 
-## Quickstart: place a position
+## Quickstart: how to place a position
 
 The following 7 steps install the DeepBook TypeScript SDK, prepare a funded Predict account, and plan and queue a position on a live market. They run on Testnet, where the quote coin is a mintable test coin and every trade is a queued order. The samples live in the `examples/deepbook-predict` package, which type-checks with `npm run build` (`tsc --noEmit`) against `@mysten/deepbook-v3` version 2.7.0 or later and `@mysten/sui` version 2.30.0 or later. They pass compile checks but do not run against Testnet during the documentation build, so work through [Verify on Testnet](#verify-on-testnet) before you rely on them.
 
@@ -87,15 +89,15 @@ You need 2 assets on Testnet, from 2 separate sources. Neither one substitutes f
 
 On Mainnet the quote asset is Circle's native USDC, and there is no faucet. Read the exact type for either network from `getConfig(network).quoteCoinType` rather than from a symbol: the 2 coins share the `usdc::USDC` module path but live in different packages.
 
-#### How much SUI to hold
+#### How much SUI do I need?
 
 Keep at least 1 SUI on the address as a working reserve. That covers many Predict transactions with headroom, because a single faucet request supplies well above the cost of one transaction. The quickstart transactions cost more than a plain transfer: creating and sharing an account writes new objects, so it pays storage on top of computation. Sui refunds part of the storage cost as a rebate when you delete objects, so a session costs less in total than the sum of its gas budgets.
 
 Treat 1 SUI as a starting reserve, not a budget. Before you rely on a fixed gas budget in your own code, measure the real cost of each transaction with a dry run, then set the budget with margin for variable costs such as shared object contention. See [Gas Fees](/develop/transaction-payment/gas-in-sui) for the fee formula and budget rules.
 
-#### Request more SUI
+#### How do I request more SUI?
 
-Check your balance with `sui client gas` before you request. Faucets rate-limit per address and per IP, so request only when the balance actually runs low. If the browser faucet rate-limits you, use the Discord or cURL routes under [alternative methods for getting SUI tokens](/getting-started/onboarding/get-coins#alternative-faucets). When you finish testing, return unused Testnet SUI to the faucet pool.
+Check your balance with `sui client gas` before you request. Faucets rate-limit per address and per IP, so request only when the balance actually runs low. If the browser faucet rate-limits you, use the Discord or cURL routes under [alternative methods for getting SUI tokens](/getting-started/onboarding/get-coins). When you finish testing, return unused Testnet SUI to the faucet pool.
 
 ### 3. Set the configuration block
 
