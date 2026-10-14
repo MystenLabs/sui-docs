@@ -33,22 +33,26 @@ questions:
   - How do I integrate my currency with PAS?
   - How do I define approval logic for a permissioned asset?
   - What is an approval witness?
-answer: 'To integrate with the Permissioned Assets Standard (PAS), you must:.'
+answer: 'To integrate with the Permissioned Assets Standard (PAS), define an approval witness, create a policy with `policy::new_for_currency` that sets the required approval per action, write an approval function that validates a `Request` and calls `request.approve()`, and set template commands so clients can build PTBs automatically.'
 ---
+
+This page explains how to integrate a currency with the Permissioned Assets Standard (PAS): defining approval witnesses, creating a policy, writing approval logic, and registering template commands for clients.
 
 To integrate with the Permissioned Assets Standard (PAS), you must:
 
-1. Define your approval witness using `public struct MyApproval() has drop;`.
+1. Define your approval witness using `public struct MyApproval() has drop;`. See [What is an approval witness?](#what-is-an-approval-witness).
 
-2. Create a policy with `policy::new_for_currency` and set the required approval per action.
+2. Create a policy with `policy::new_for_currency` and set the required approval per action. See [How do I set up a policy for a currency?](#how-do-i-set-up-a-policy-for-a-currency).
 
-3. Build your approval logic using a function that takes `&mut Request<...>`, validates, and calls `request.approve(MyApproval())`.
+3. Build your approval logic using a function that takes `&mut Request<...>`, validates, and calls `request.approve(MyApproval())`. See [How do I define approval logic?](#how-do-i-define-approval-logic).
 
-4. Set template commands so clients can build programmable transaction blocks (PTBs) automatically.
+4. Set template commands so clients can build programmable transaction blocks (PTBs) automatically. See [How do I set template commands?](#how-do-i-set-template-commands).
+
+These pieces fit together as follows: the policy names which approval witness each action requires, your approval function checks a `Request` and stamps it with that witness, and the template tells clients which approval function to call. Clients then build a PTB that creates the request, runs your approval, and resolves it (see [How clients use templates](#how-clients-use-templates)).
 
 You can use PAS through the [TypeScript package](https://www.npmjs.com/package/@mysten/pas) or learn more in the [GitHub repo](https://github.com/MystenLabs/pas).
 
-## Define an approval witness
+## What is an approval witness?
 
 An approval witness is a zero-sized struct with `drop` that acts as a type-level stamp. Each witness represents a distinct approval your contract can grant:
 
@@ -62,7 +66,9 @@ public struct MyClawbackApproval() has drop;
 
 You can define one witness type per action to serve as its approval. Each witness is registered independently in the policy and can optionally have its own template command.
 
-## Set up a policy for a currency
+The policy names the witness required for each action, and your approval function passes that witness to `request.approve()` once its checks pass, so the witness type is what links an action to your approval logic.
+
+## How do I set up a policy for a currency?
 
 A `Policy<Balance<C>>` defines which approval is required for each action type. You need a `TreasuryCap<C>` to prove ownership of the currency.
 
@@ -86,11 +92,13 @@ policy.share();
 
 Supported actions are `"send_funds"`, `"unlock_funds"`, and `"clawback_funds"`.
 
-## Define approval logic
+## How do I define approval logic?
 
 Your approval function takes a mutable reference to a `Request`, runs your validation, and stamps it with the witness.
 
-Transfers require an external check, for example a KYC registry:
+The function takes the inputs your checks need, such as a registry object, followed by `&mut Request<...>` for the action, for example `Request<SendFunds<Balance<MY_COIN>>>` for transfers. It returns nothing: it either calls `request.approve()` with your witness or aborts.
+
+Transfers require an external check, for example a KYC registry. In the following examples, `MY_COIN` stands for your currency type and `KYCRegistry` for the registry object from the KYC example; substitute your own types:
 
 ```move
 public fun approve_transfer(
@@ -104,7 +112,7 @@ public fun approve_transfer(
 
 See the [KYC example `kyc_registry`](https://github.com/MystenLabs/pas/blob/main/packages/examples/kyc/sources/kyc_registry.move) for a complete implementation.
 
-## Set template commands
+## How do I set template commands?
 
 Templates store pre-built Move call command structures onchain for client-side automation. They allow SDKs to construct the correct Move calls for approval resolution without hardcoding package IDs or function signatures.
 
