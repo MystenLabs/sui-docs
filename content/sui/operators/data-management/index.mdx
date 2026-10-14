@@ -38,7 +38,7 @@ A full node keeps only as much history as its pruning settings allow. Full histo
 ## What data management options are available for Sui nodes?
 
 - **Pruning:** A full node deletes old object versions and old checkpoints, including their transactions, effects, and events, from its local database after a retention window you configure.
-- **Archival stores:** Archival indexers write the full chain history to long-term storage, independently of any full node's pruning. `sui-checkpoint-blob-indexer` writes checkpoint blobs to an object store (S3 or GCS), and `sui-kvstore-alt` writes checkpoints, transactions, effects, events, and objects to Bigtable, which the [Archival Service](/develop/accessing-data/archival-store) serves over gRPC. Mysten Labs runs public instances of both; see [Available Data Stores](/operators/data-management/available-data-stores).
+- **Archival stores:** Archival indexers write the full chain history to long-term storage, independently of any full node's pruning. There are two archival indexers: `sui-checkpoint-blob-indexer` writes checkpoint blobs to an object store (S3 or GCS), and `sui-kvstore-alt` writes checkpoints, transactions, effects, events, and objects to Bigtable, which the [Archival Service](/develop/accessing-data/archival-store) serves over gRPC. Mysten Labs runs public instances of both; see [Available Data Stores](/operators/data-management/available-data-stores).
 - **Indexing:** An indexer reads checkpoints from a full node or a checkpoint store and writes the data your application needs into a database you can query. The [general-purpose indexer](/operators/data-management/indexer-stack-setup) backs GraphQL RPC, and you can build a [custom indexer](/develop/accessing-data/custom-indexer/custom-indexers) for your own schema.
 
 ## How do I manage disk usage on a Sui full node?
@@ -55,9 +55,18 @@ Pruning does not depend on any archive. The node does not wait for data to be ar
 
 Where to go for each need:
 
-- **Historical reads:** Query the [Archival Service](/develop/accessing-data/archival-store) or an indexer.
+- **Historical reads:** Query the [Archival Service](/develop/accessing-data/archival-store), which serves the Bigtable data that `sui-kvstore-alt` writes, or an indexer.
 - **Catching up after falling behind:** A full node can fetch missing checkpoints from a checkpoint store when its peers have already pruned them. See [Archives](/operators/data-management/archives).
 - **Starting a new node:** Restore from a [snapshot](/operators/snapshots).
+
+## Guides in this section
+
+Guides in this section include:
+
+- [Managing Data](/operators/data-management/managing-data): configure pruning and retention on your node.
+- [Available Data Stores](/operators/data-management/available-data-stores): the public archival stores run by Mysten Labs.
+- [Archives](/operators/data-management/archives): fetching missing checkpoints from a checkpoint store.
+- [General-purpose indexer setup](/operators/data-management/indexer-stack-setup): run the indexer that backs GraphQL RPC.
 
 import DocCardList from '@theme/DocCardList';
 
