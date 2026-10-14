@@ -80,6 +80,14 @@ Sui supports a range of payment models, from direct transfers to structured chec
 | Onchain audit trail | Transfer events only | Receipt objects and events |
 | Move code to write | None | None |
 
+## Which payment model should I use?
+
+- If you only need to move value, such as wallet sends, peer-to-peer payments, or treasury moves, use a [basic transfer](#basic-transfer). Send to an address balance unless the recipient or an integrating contract expects a distinct `Coin<T>` object.
+- If you need receipts or duplicate prevention, use [Payment Kit](#payment-kit):
+  - Use registry payments when compliance, accounting, or retry safety requires payment history.
+  - Use ephemeral payments when an external system already tracks payments and duplicates are not a concern.
+- Then pick a [gas strategy](#gas-strategies). Each model works with any gas strategy.
+
 ## Basic transfer
 
 A basic transfer moves value directly, with no receipt object and no onchain payment record. Read the outcome from transaction effects and events. There are two ways to deliver funds.
@@ -132,7 +140,7 @@ public fun process_registry_payment<T>(
 ): PaymentReceipt
 ```
 
-The function verifies that the coin value matches `payment_amount`, checks the composite key for a duplicate, records the payment, transfers funds to `receiver` or the registry, returns a `PaymentReceipt`, and emits an event. It aborts with `EDuplicatePayment` when the same key was already processed, and with `EPaymentAmountMismatch` when the coin value differs from the expected amount.
+The function verifies that the coin value matches `payment_amount`, checks the composite key (the `PaymentKey` described below) for a duplicate, records the payment, transfers funds to `receiver` or the registry, returns a `PaymentReceipt`, and emits an event. It aborts with `EDuplicatePayment` when the same key was already processed, and with `EPaymentAmountMismatch` when the coin value differs from the expected amount.
 
 Duplicate prevention relies on a `PaymentKey` derived from the nonce, amount, coin type, and receiver address. Generate the nonce as a UUIDv4 of at most 36 characters, and reuse the same nonce when you retry a payment so the retry cannot double-charge.
 
@@ -176,13 +184,13 @@ The sender pays in SUI. This option takes the least work to implement, but your 
 
 ### Gasless stablecoin transfer
 
-For allowlisted stablecoins sent through `balance::send_funds`, the network waives gas fees entirely, so the sender needs no SUI. Protocol configuration governs the allowlist, which currently includes USDC, USDsui, USDY, FDUSD, AUSD, USDB, and Ethena USDe. A transaction qualifies only when all of the following hold:
+For allowlisted stablecoins sent through `balance::send_funds`, the network waives gas fees entirely, so the sender needs no SUI. Protocol configuration governs the allowlist, which currently includes USDC, USDsui, USDY, FDUSD, AUSD, USDB, and Ethena USDe. Because the allowlist can change, check [Gasless Stablecoin Transfers](/develop/transaction-payment/gasless-stablecoin-transfers) for the current list. A transaction qualifies only when all of the following hold:
 
 - The transaction consists of allowlisted `balance` or `coin` operations, primarily `0x2::balance::send_funds<T>`, on an allowlisted stablecoin type.
 - `gasPayment` is empty and `gasPrice` is 0.
 - The transaction writes no objects, and it consumes or converts all input coins to address balances.
 
-Build the transfer with `SuiGrpcClient`, which detects eligibility during simulation and sets the gas price and budget to 0 for you:
+Build the transfer with `SuiGrpcClient`, which detects eligibility during simulation and sets the gas price and budget to 0 for you. Replace `senderAddress`, `recipient`, and `keypair` with your own values:
 
 ```tsx title='gasless-transfer.ts'
 import { SuiGrpcClient } from '@mysten/sui/grpc';
