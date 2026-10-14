@@ -97,7 +97,7 @@ public fun new(_: &AdminCap, ctx: &mut TxContext): User {
 }
 ```
 
-## Mutating objects
+## How do I mutate objects on Sui?
 
 In Rust, data structures are stored in separate account structures that programs read from and write to. Programs are stateless and declare which accounts they'll access upfront. Mutating data involves signing a transaction with the appropriate account references, and the program verifies signer permissions through explicit checks.
 
@@ -117,12 +117,12 @@ Builders on Sui leverage PTBs to provide experiences that would otherwise be int
 
 See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/building-ptb) for the full guide on constructing PTBs with the TypeScript SDK, including `moveCall`, chaining results, and gas management.
 
-## More comparison
+## How else does Sui compare to Solana?
 
 | Topic | Solana | Sui |
 |-------|--------|-----|
 | Digital signature algorithm | `Ed25519` | `Ed25519`, `secp256k1`, `secp256r1` |
-| Consensus mechanism | Tower BFT (PoS variant) with Proof of History (PoH) | DPoS |
+| Consensus mechanism | Tower BFT (PoS variant) with Proof of History (PoH) | DAG-based BFT consensus (Mysticeti), with validators selected by DPoS |
 | VM and its languages | Solana VM, Rust, C, C++ | MoveVM, Move Lang |
 | Chain data structure | Blocks with PoH ordering | DAG |
 | Common standards (coin, token, NFT, and so on) | SPL Token, MPL Core, Token22 | Coin Standard, Closed-Loop Token |
@@ -132,7 +132,7 @@ See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/buildi
 | Governance | Offchain governance through SIMD (Solana Improvement Documents) | Onchain governance |
 | Bridges | Supported | Supported |
 | Network security (stake required for control) | 66% of total stake (BFT requirement) | 66% of total stake |
-| Smart contract auditing | Requires comprehensive auditing due to account model complexity, PDA patterns, and CPI vulnerabilities | Less auditing required, language does some of the lifting (object model) |
+| Smart contract auditing | Requires comprehensive auditing due to account model complexity, PDA patterns, and CPI vulnerabilities | Auditing still required. The language and object model do some of the lifting, which can reduce the auditing burden |
 | Private transactions | Public by design | Public by design |
 | TVL (as of late 2025) | ~10 billion | ~2.6 billion |
 | Implementation languages for clients | Rust, TypeScript (web3.js, @solana/kit), Python, Go | Rust, TypeScript, Python |
@@ -149,3 +149,11 @@ See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/buildi
 | Composability | Cross-Program Invocations (CPIs) allow programs to call other programs within a transaction. Limited to 4 levels deep. Atomic within transaction boundaries. | Call any number of functions within a single transaction using PTBs. Compose by taking output of one call and passing into another. Ensures atomic execution with up to 1,024 commands per PTB. |
 | Token royalties | Not enforced directly. Enforced through protocols like MPL Core or extensions like Token22. | Enforced by the chain through Kiosk and transfer policies. |
 | Block time and finality | ~400ms block time, ~12-13 seconds for economic finality (before Alpenglow upgrade). | Sub-second finality for independent transactions, ~390ms with Mysticeti for shared objects. |
+
+## What should I read next?
+
+1. Learn the Move concepts Sui uses: [Move](/develop/write-move/sui-move-concepts).
+2. Learn the types of object ownership: [Object Ownership](/develop/objects/object-ownership).
+3. Learn capability-based access control: [The Move Book](https://move-book.com/programmability/capability/).
+4. Learn how PTBs work: [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks), then [Building Programmable Transaction Blocks](/develop/transactions/ptbs/building-ptb).
+5. Before you upgrade a package, review the [upgrade requirements](/develop/publish-upgrade-packages/upgrade#upgrade-requirements).
