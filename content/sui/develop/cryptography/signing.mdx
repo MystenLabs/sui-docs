@@ -69,15 +69,17 @@ This guide uses the [`fastcrypto`](https://github.com/MystenLabs/fastcrypto) CLI
 
 :::
 
-## Setup `fastcrypto` CLI binary
+## How do I set up the `fastcrypto` CLI binary?
 
 ```sh
-git@github.com:MystenLabs/fastcrypto.git
+git clone git@github.com:MystenLabs/fastcrypto.git
 cd fastcrypto/
 cargo build --bin sigs-cli
 ```
 
-## Sign with CLI and submit to onchain Move method
+## How do I sign with the CLI and verify the signature onchain?
+
+Each scheme below follows the same two steps: generate a key and sign a message with `sigs-cli`, then pass the results to the matching Move method. In the Move snippets, replace `$MSG`, `$PK`, and `$SIG` with the hex values from Step 1; the `x"..."` literal represents those inputs as bytes in hex format. The verify methods return a `bool`, and the ecrecover methods return the recovered public key; in both cases the `assert!` aborts with error code `0` if the signature does not check out.
 
 ### Ed25519 signature (64 bytes)
 
