@@ -37,19 +37,19 @@ The supply referral system allows users to earn a portion of the protocol fees g
 
 ## How it works
 
-1. **Create a referral**: Mint a `SupplyReferral` object for a specific margin pool
-2. **Referral ID**: Suppliers include your referral ID when supplying liquidity
+1. **Create a referral**: Mint a `SupplyReferral` object for a specific margin pool with `mint_supply_referral`
+2. **Referral ID**: Suppliers include your referral ID when supplying liquidity with `supply`. The referral ID is optional; suppliers can supply without one, in which case all protocol fees from that position go to the protocol
 3. **Earn fees**: As referred suppliers earn interest, a portion of protocol fees accrues to your referral
-4. **Claim fees**: Withdraw accumulated referral fees at any time
+4. **Claim fees**: Withdraw accumulated referral fees at any time with `withdraw_referral_fees`
 
 The referral system uses a shares-based tracking mechanism. When a supplier deposits with your referral:
 - Your referral's shares increase proportionally to the supplier's position
-- As interest accrues and protocol fees are collected, your claimable fees grow
+- As interest accrues and protocol fees are collected, your claimable fees (accumulated referral fees you have not yet withdrawn) grow
 - When a supplier withdraws, your referral's shares decrease accordingly
 
 ## API
 
-Following are the functions for managing supply referrals.
+Following are the functions for managing supply referrals. Each section describes what the function does, followed by its source from the `deepbookv3` repository.
 
 <details>
 <summary>Mint a `SupplyReferral`</summary>
@@ -113,6 +113,8 @@ Query the current shares and unclaimed fees for a referral.
 
 ## Events
 
+Following are the events emitted by the supply referral functions. Each section describes when the event is emitted, followed by the event struct from the `deepbookv3` repository.
+
 <details>
 <summary>`SupplyReferralMinted`</summary>
 
@@ -145,9 +147,16 @@ The system emits this event when the referral owner claims referral fees.
 
 ## Fee distribution
 
-The referral spread parameter (typically 20%) determines what portion of protocol fees goes to referrers. For example:
+The referral spread parameter determines what portion of protocol fees goes to referrers. The referral spread is configured per margin pool rather than network-wide, so it can differ between pools; 20% is a typical value.
+
+```text
+referrer_fees  = protocol_fees × referral_spread
+protocol_share = protocol_fees × (1 − referral_spread)
+```
+
+For example:
 
 - **Without referral**: 100% of protocol fees go to the protocol
 - **With referral**: 80% to protocol, 20% to referrer (at 20% referral spread)
 
-The referral spread is configured per margin pool and can be viewed in the [Contract Information](/onchain-finance/deepbook/deepbook-margin/contract-information).
+You can view the referral spread for each margin pool in the [Contract Information](/onchain-finance/deepbook/deepbook-margin/contract-information).
