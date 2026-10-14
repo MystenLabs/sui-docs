@@ -74,6 +74,8 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+To migrate from JSON-RPC to gRPC, replace each JSON-RPC call with the corresponding gRPC service method: `LedgerService` for transaction and checkpoint lookups, `StateService` for balances and owned objects, `SubscriptionService` for streaming, and `TransactionExecutionService` for submission. For filtered historical event queries, you can also use [GraphQL `Query.events`](/develop/accessing-data/using-events#querying-events-with-graphql).
+
 Each recipe pairs a JSON-RPC call with its gRPC replacement and explains the key differences. For the full method mapping and decision criteria, see the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration). For gRPC concepts and setup, see [What is gRPC?](/develop/accessing-data/grpc/what-is-grpc) and [Querying Data with gRPC](/develop/accessing-data/grpc/using-grpc).
 
 :::info
@@ -103,6 +105,15 @@ const client = new SuiGrpcClient({
 ```
 
 For `grpcurl` and Buf CLI examples, replace `<FULL_NODE_URL>` with your provider's gRPC endpoint. See [Querying Data with gRPC](/develop/accessing-data/grpc/using-grpc) for setup details and language-specific client instructions for Go and Python.
+
+## Key concepts
+
+The recipes on this page rely on the following terms:
+
+- **Field masks:** JSON-RPC selects response fields with per-field booleans such as `showContent` and `showEffects`. gRPC instead takes a `read_mask` that lists the field paths to return (`readMask` in the TypeScript proto client). The TypeScript SDK's `include` parameter expresses the same selection, so `include: { effects: true, events: true }` corresponds to `"read_mask": { "paths": ["effects", "events"] }` in `grpcurl`. See [field masks](/develop/accessing-data/grpc/using-grpc#field-masks).
+- **Cursor:** An opaque binary token that marks a position in a stream. Pass it as `options.after` to resume ascending pagination, or `options.before` for descending.
+- **Watermark:** A progress marker in each `List*` response frame. It carries a resume `cursor` and a `checkpoint` field that tells you how much of the checkpoint range the server scanned.
+- **`QueryEnd`:** Included on the final frame of a `List*` stream with the reason the stream ended. See [List and paginate transactions](#list-and-paginate-transactions).
 
 ## Get a single object
 
@@ -271,6 +282,7 @@ The gRPC call differs from the JSON-RPC call in the following ways:
 
 - JSON-RPC uses the `showEffects` and `showEvents` booleans. gRPC uses `read_mask` paths or the SDK's `include` parameter.
 - Digests are `Base58`-encoded strings in both APIs.
+- The SDK's `getTransaction` returns a discriminated union. Check `result.$kind === 'Transaction'` before reading `result.Transaction`, as the example shows.
 
 ## Batch-fetch transactions
 
@@ -896,7 +908,7 @@ For `suix_getDynamicFieldObject`, derive the dynamic field's object ID locally f
 
 ## Execute a transaction
 
-Replace `sui_executeTransactionBlock` with `TransactionExecutionService.ExecuteTransaction`.
+Replace `sui_executeTransactionBlock` with `TransactionExecutionService.ExecuteTransaction`. In the JSON-RPC example, `BASE64_TX_BYTES` stands for the built transaction bytes, Base64-encoded; the TypeScript SDK tab shows how to build them with `tx.build({ client })`.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
@@ -1201,6 +1213,8 @@ The server's per-subscriber buffer holds 256 frames and evicts a slow consumer w
 ### Reconnect a checkpoint stream
 
 If the gRPC stream disconnects, reconnect and drain the new stream into durable storage while a separate worker backfills the gap. Do not await backfill in the subscription loop, because doing so stops the client from reading live frames.
+
+The example relies on application-provided helpers that you implement: `loadLastProcessedCheckpoint`, `liveSpool` (a durable, bounded spool with `append`, `peek`, and `drain`), `backfillCheckpoints`, and `processAndPersistCheckpoint`. Guidance for implementing `backfillCheckpoints` and handling spool capacity follows the example.
 
 ```ts
 let lastProcessed = await loadLastProcessedCheckpoint();
