@@ -47,7 +47,7 @@ questions:
 answer: Quick reference on best practices for Sui Network developers.
 ---
 
-Quick reference on best practices for Sui Network developers.
+This page is a quick reference on best practices for Sui Network developers: what to check when writing, testing, and upgrading Move packages, how to build apps, how to sign transactions, and how to use zkLogin safely.
 
 ## Move
 
@@ -87,9 +87,9 @@ Best practices for writing Move smart contracts on Sui.
 
 ## Apps
 
-- For optimal performance and data consistency, submit writes and reads to the same full node. In the TS SDK, use the wallet's [`signTransactionBlock`](https://sdk.mystenlabs.com/dapp-kit) API, then submit the transaction through a call to [`execute_transactionBlock`](/references/sui-api/sui-graphql/beta/reference/operations/mutations/execute-transaction) on your app's full node instead of using the wallet's `signAndExecuteTransactionBlock` API. This ensures read-after-write consistency. Reads from your app's full node reflect writes from the transaction right away instead of waiting for a checkpoint.
+- For optimal performance and data consistency, submit writes and reads to the same full node. In the TS SDK, use the wallet's [`signTransactionBlock`](https://sdk.mystenlabs.com/dapp-kit) API, then submit the transaction through a call to `execute_transactionBlock` on your app's full node instead of using the wallet's `signAndExecuteTransactionBlock` API. This ensures read-after-write consistency. Reads from your app's full node reflect writes from the transaction right away instead of waiting for a checkpoint.
 - Implement a local cache for frequently read data rather than over-fetching from the full node.
-- Whenever possible, use programmable transaction blocks to compose existing onchain functionality rather than publishing new smart contract code. Programmable transaction blocks allow large-scale batching and heterogeneous composition, driving already-low gas fees down even further.
+- Whenever possible, use [programmable transaction blocks](/develop/transactions/ptbs/building-ptb) (PTBs) to compose existing onchain functionality rather than publishing new smart contract code. Programmable transaction blocks allow large-scale batching and heterogeneous composition, driving already-low gas fees down even further.
 - Leave gas budget, gas price, and coin selection to the wallet. This gives wallets more flexibility, and the wallet is responsible for dry running a transaction to ensure it does not fail.
 
 ## Signing
