@@ -53,13 +53,15 @@ risk_ratio = total_assets / total_debts
 
 Where assets and debts are valued in a common denomination using oracle prices. A higher risk ratio indicates a safer position with more collateral relative to debt.
 
+The examples below also show the equivalent LTV (loan-to-value): your debt as a percentage of your assets, which is the inverse of the risk ratio.
+
 - **Risk ratio = 2.0**: You have 2 units of assets for every 1 unit of debt (50% LTV)
 - **Risk ratio = 1.25**: You have 1.25 units of assets for every 1 unit of debt (80% LTV)
 - **Risk ratio = 1.0**: Your assets exactly equal your debts (100% LTV, insolvent)
 
 ## Risk ratio thresholds
 
-Each trading pair has four risk ratio thresholds that control different operations:
+Each trading pair has four risk ratio thresholds that control different operations. Values described as "typically" below are common settings, not fixed system values; the actual thresholds are set for each trading pair.
 
 ### Min Withdraw Risk Ratio
 
@@ -94,11 +96,31 @@ The target risk ratio that liquidation aims to restore the position to.
 - This ensures the position is safe after liquidation, not just barely above the liquidation threshold
 - Typically equals the Min Borrow Risk Ratio
 
+### Summary of threshold checks
+
+The thresholds above translate into the following rules:
+
+```
+withdraw allowed      IF (new_total_assets / new_total_debts) >= min_withdraw_risk_ratio
+borrow allowed        IF (new_total_assets / new_total_debts) >= min_borrow_risk_ratio
+liquidation eligible  IF risk_ratio <= liquidation_risk_ratio
+```
+
+Here `new_total_assets` and `new_total_debts` are the position's values after the withdrawal or borrow is applied.
+
 ## How leverage is determined
 
 The maximum leverage for a trading pair is determined by the Min Borrow Risk Ratio:
 
 $$\text{Max Leverage} \approx \frac{1}{1 - \frac{1}{\text{Min Borrow Risk Ratio}}}$$
+
+In code form:
+
+```
+max_leverage = 1 / (1 - 1 / min_borrow_risk_ratio)
+```
+
+In plain terms, leverage is your total assets divided by your own equity (assets minus debt). At the Min Borrow Risk Ratio, debt makes up `1 / min_borrow_risk_ratio` of your assets, so the lower the ratio, the smaller your equity share and the higher your leverage.
 
 | Min Borrow Risk Ratio | Approximate Max Leverage |
 |-----------------------|--------------------------|
