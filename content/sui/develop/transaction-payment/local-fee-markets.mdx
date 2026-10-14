@@ -45,13 +45,15 @@ Object-based local fee markets limit the rate of transactions writing to a singl
 
 The Sui network's object-based architecture allows processing many different user transactions in parallel. However, if multiple transactions are all writing to the same shared object, they must execute in sequential order. There is a limit to how many transactions the network can process that touch one specific object. If you see transactions fail with the error `ExecutionCancelledDueToSharedObjectCongestion`, you are observing object-based local fee markets at work. 
 
+## How does Sui limit the write rate to a single shared object?
+
 Sui's local fee market algorithm runs every time a new batch of sequenced transactions is received from consensus. When it runs, it:
 
 1. Sorts all transactions in order of gas price, from highest to lowest.
 
-1. Estimates each transaction's execution cost using the [`ExecutionTimeEstimate`](https://github.com/MystenLabs/sui/blob/main/crates/sui-core/src/authority/execution_time_estimator.rs) heuristic.
+1. Estimates each transaction's execution cost using the [`ExecutionTimeEstimate`](https://github.com/MystenLabs/sui/blob/main/crates/sui-core/src/authority/execution_time_estimator.rs) heuristic. See [Cost estimation of transactions](#cost-estimation-of-transactions) for how this estimate is produced.
 
-1. Uses the [`SharedObjectCongestionTracker`](https://github.com/MystenLabs/sui/blob/main/crates/sui-core/src/authority/shared_object_congestion_tracker.rs) to keep a running tally of how much per-object congestion budget is used. If all shared objects used by the transaction have enough budget left, the transaction is scheduled. In that case, it consumes the budget for the shared objects that it uses. Immutable shared objects do not consume any budget because multiple immutable uses of a shared object can execute in parallel. If the transaction cannot be scheduled, it is deferred until the next commit.
+1. Uses the [`SharedObjectCongestionTracker`](https://github.com/MystenLabs/sui/blob/main/crates/sui-core/src/authority/shared_object_congestion_tracker.rs) to keep a running tally of how much per-object congestion budget is used, based on those execution cost estimates. If all shared objects used by the transaction have enough budget left, the transaction is scheduled. In that case, it consumes the budget for the shared objects that it uses. Shared objects that a transaction uses immutably (read-only) do not consume any budget because multiple immutable uses of a shared object can execute in parallel. If the transaction cannot be scheduled, it is deferred until the next commit.
 
 ### Priority ordering of transactions
 
@@ -65,11 +67,15 @@ Sui limits the per-commit execution capacity of each shared object. If transacti
 
 Transaction execution time is estimated separately for each top-level Move function called from a PTB. Measurements of actual execution time are shared between the validators, and the cost estimate used for scheduling is the stake-weighted median of these measurements of past invocations. For most functions, which are never called with congested inputs, a low default estimate is used.
 
-### Transaction deferral
+### Why is my transaction on a busy shared object being deferred?
 
 If the network is unable to schedule a transaction because it is trying to use a congested shared object with no space left, the transaction is deferred. This means that validators hold onto the transaction and attempt to schedule it with the next commit, each time prioritizing all waiting transactions by gas price.
 
-If a transaction is deferred for several commits without successfully being scheduled, it is cancelled and returns an `ExecutionCancelledDueToSharedObjectCongestion` error. You need to try it again with a higher gas price or at a time when the shared objects it depends on are not as congested.
+If a transaction is deferred for several commits without successfully being scheduled, it is cancelled and returns an `ExecutionCancelledDueToSharedObjectCongestion` error. To recover, do one of the following:
+
+1. Try it again with a higher gas price. See [Priority ordering of transactions](#priority-ordering-of-transactions).
+
+1. Try it again at a time when the shared objects it depends on are not as congested.
 
 ### Determining total per-object capacity
 
@@ -77,7 +83,7 @@ At the protocol level, Sui is configured with a per-commit target utilization an
 
 There is no way to increase the total execution capacity of a particular shared object. The network sets that limit to ensure that validators, full nodes, and indexers can all execute checkpoints in a reasonable amount of time.
 
-## Best practices
+## Best practices: how do I design around per-object capacity?
 
 - For priority access to a congested shared object, set a higher gas price.
 
