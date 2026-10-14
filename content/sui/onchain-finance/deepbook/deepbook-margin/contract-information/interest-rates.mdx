@@ -63,6 +63,8 @@ else:
     borrowRate = baseRate + optimalUtilization × baseSlope + (utilization - optimalUtilization) × excessSlope
 ```
 
+The pool exposes this borrow rate as `interest_rate`. The rate suppliers earn is a separate value, `true_interest_rate`, covered in [What suppliers earn](#supply-rate).
+
 Where:
 
 - **Utilization:** The ratio of total borrowed assets to total supplied assets.
@@ -71,7 +73,7 @@ Where:
 - **Optimal utilization:** The target utilization rate (typically 80%), also called the kink.
 - **Excess slope:** The steep rate of increase above optimal utilization.
 
-The contract holds all four values in an `InterestConfig` inside the pool's `ProtocolConfig`, as fixed-point numbers with 9 decimal places, so a base slope of 15% becomes `150_000_000`. The pool operator changes them with `update_interest_params`, and the contract rejects any configuration where the optimal utilization exceeds the max utilization rate.
+The contract holds all four values in an `InterestConfig` inside the pool's `ProtocolConfig`, as fixed-point numbers with 9 decimal places: the decimal value is scaled by 1_000_000_000, so a base slope of 15% (0.15) becomes `150_000_000`. Values you read onchain are in this scaled form, so divide by 1_000_000_000 before using them as rates. The pool operator changes them with `update_interest_params`, and the contract rejects any configuration where the optimal utilization exceeds the max utilization rate.
 
 ## Current parameters {#current-parameters}
 
@@ -118,7 +120,7 @@ The borrow rate is not what suppliers receive. Borrowers pay interest on the bor
 supplyRate = borrowRate × utilization × (1 - protocolSpread)
 ```
 
-The pool exposes this directly as `true_interest_rate`, alongside the borrow rate as `interest_rate`. At 50% utilization in the USDC pool with a 10% protocol spread:
+The result is the net APR per unit of supplied liquidity, after the protocol spread, so it needs no further adjustment. The pool exposes this directly as `true_interest_rate`, alongside the borrow rate as `interest_rate`. At 50% utilization in the USDC pool with a 10% protocol spread:
 
 ```text
 supplyRate = 7.5% × 50% × (1 - 10%) = 3.375% APR
@@ -128,13 +130,13 @@ Two suppliers in pools with identical borrow rates earn different amounts when u
 
 ## How interest accrues {#accrual}
 
-The pool does not apply interest continuously. It recomputes interest whenever its state changes, which means on every supply, borrow, repay, and withdraw against that pool, by anyone. Each update charges simple interest over the elapsed interval:
+The pool does not apply interest continuously. It recomputes interest whenever its state changes, which means on every supply, borrow, repay, and withdraw against that pool, by anyone. If no one interacts with the pool, nothing is applied in the meantime; the next update charges interest for the whole interval since the previous one. Each update charges simple interest over the elapsed interval:
 
 ```text
 interest = totalBorrow × borrowRate × (elapsedMs / YEAR_MS)
 ```
 
-`YEAR_MS` is 365 days in milliseconds. The pool then adds the full interest to `totalBorrow`, and adds the interest minus the protocol spread to `totalSupply`.
+`YEAR_MS` is a fixed 365 days in milliseconds (`31,536,000,000`). The pool then adds the full interest to `totalBorrow`, and adds the interest minus the protocol spread to `totalSupply`.
 
 Because each update grows `totalBorrow`, the next update charges interest on the larger balance. Interest therefore compounds, but at the frequency of pool activity rather than on a fixed schedule. A busy pool compounds more often than a quiet one, so the realized annual yield runs slightly above the quoted APR.
 
