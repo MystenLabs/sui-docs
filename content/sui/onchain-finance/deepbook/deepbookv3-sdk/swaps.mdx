@@ -50,7 +50,9 @@ DeepBookV3 provides a swap-like interface commonly seen in automatic market make
 
 ## Swap functions
 
-The SDK provides the following functions to perform swaps between the base and quote asset.
+The SDK provides the following functions to perform swaps between the base and quote asset. In the `SUI_DBUSDC` pool used in the examples on this page, SUI is the base asset and DBUSDC is the quote asset.
+
+Each function returns a function that takes a `Transaction` object. Pass your transaction to the returned function, as the examples do with `this.deepBook.swapExactBaseForQuote({ ... })(tx)`.
 
 ### swapExactBaseForQuote
 
@@ -58,7 +60,7 @@ Use `swapExactBaseForQuote` to swap exact base amount for quote amount. The call
 
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap.
+- `params`: `SwapParams` object that represents the parameters for the swap. The fields of `SwapParams` are listed under `swapExactQuantity`, which takes the same object plus `isBaseToCoin`.
 
 ```tsx
 swapExactBaseForQuote({ params: SwapParams });
@@ -70,7 +72,7 @@ Use `swapExactQuoteForBase` to swap exact quote amount for base amount. The call
 
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap.
+- `params`: `SwapParams` object that represents the parameters for the swap. The fields of `SwapParams` are listed under `swapExactQuantity`, which takes the same object plus `isBaseToCoin`.
 
 ```tsx
 swapExactQuoteForBase({ params: SwapParams });
@@ -85,8 +87,8 @@ Use `swapExactQuantity` to swap an exact quantity in either direction (base to q
 - `params`: `SwapParams & { isBaseToCoin: boolean }` object containing:
   - `poolKey`: String that identifies the pool.
   - `amount`: Number representing the amount to swap.
-  - `deepAmount`: Number representing the DEEP amount for fees.
-  - `minOut`: Number representing minimum output amount.
+  - `deepAmount`: Number representing the DEEP amount for fees. Excess DEEP is returned.
+  - `minOut`: Number representing minimum output amount. The transaction fails if the swap returns less than this amount.
   - `isBaseToCoin`: Boolean indicating swap direction (true = base to quote).
   - `baseCoin`: Optional `TransactionArgument` for base coin input.
   - `quoteCoin`: Optional `TransactionArgument` for quote coin input.
@@ -104,7 +106,7 @@ Use `swapExactQuantityWithManager` to swap an exact quantity using a balance man
   - `poolKey`: String that identifies the pool.
   - `balanceManagerKey`: String that identifies the balance manager.
   - `amount`: Number representing the amount to swap.
-  - `minOut`: Number representing minimum output amount.
+  - `minOut`: Number representing minimum output amount. The transaction fails if the swap returns less than this amount.
   - `isBaseToCoin`: Boolean indicating swap direction (true = base to quote).
   - `tradeCap`: Optional `TransactionArgument` for trade capability.
   - `depositCap`: Optional `TransactionArgument` for deposit capability.
@@ -114,9 +116,11 @@ Use `swapExactQuantityWithManager` to swap an exact quantity using a balance man
 
 <ImportContent source="packages/deepbook-v3/src/transactions/deepbook.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="swapExactQuantityWithManager" signatureOnly/>
 
-### Examples
+### How do I swap tokens with the DeepBook SDK?
 
 The following examples demonstrate custom swap functions that you can place into the `DeepBookMarketMaker` class. Base coin, quote coin, and deep coin are automatically determined by the coin available in the user address unless you explicitly pass one in as an argument. You can transfer the coin outputs to their address or execute other operations using the outputs.
+
+Calling `swapExactBaseForQuote` or `swapExactQuoteForBase` with a transaction produces three coin outputs, `baseOut`, `quoteOut`, and `deepOut`, which the examples transfer back to the active address.
 
 ```tsx
 swapExactBaseForQuote = (tx: Transaction) => {
