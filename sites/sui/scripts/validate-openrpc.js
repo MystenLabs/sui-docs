@@ -4,14 +4,25 @@
 const fs = require("fs");
 const path = require("path");
 
-// Resolved against the code checkout rather than process.cwd(), so this no
-// longer depends on being run from docs/site. See scripts/lib/roots.cjs.
-const { SOURCE_ROOT } = require("./lib/roots.cjs");
+// The specs the site serves: scripts/getopenrpcspecs.js downloads one per
+// network from that network's release branch into src/open-spec/<network>/,
+// and docusaurus.config.js serves that directory at /open-spec/. These are
+// what the JSON-RPC reference renders and what the API catalog links, so
+// they are what is validated.
+//
+// This used to read one file out of the fetched MystenLabs/sui checkout at
+// `main`, crates/sui-indexer-alt-jsonrpc/openrpc.json. That crate was removed
+// from main on 23 September 2026 (the last JSON-RPC server); the build kept
+// passing only while Vercel's build cache held an older checkout, and failed
+// the first time the cache was cold. The release branches still carry a spec,
+// at that path on testnet and devnet and at crates/sui-open-rpc/spec/ on
+// mainnet, which the downloader already knows.
+const SPEC_DIR = path.resolve(__dirname, "../src/open-spec");
 
 const SPECS = [
-  { network: "mainnet", relPath: "crates/sui-indexer-alt-jsonrpc/openrpc.json", strictJson: true },
-  { network: "testnet", relPath: "crates/sui-indexer-alt-jsonrpc/openrpc.json", strictJson: true },
-  { network: "devnet", relPath: "crates/sui-indexer-alt-jsonrpc/openrpc.json", strictJson: true },
+  { network: "mainnet", relPath: "mainnet/openrpc.json", strictJson: true },
+  { network: "testnet", relPath: "testnet/openrpc.json", strictJson: true },
+  { network: "devnet", relPath: "devnet/openrpc.json", strictJson: true },
 ];
 
 // Treat these as "expected non-JSON stubs".
@@ -82,20 +93,22 @@ function validateOpenRpcShape(doc, absPath) {
 }
 
 function main() {
-  const repoRoot = SOURCE_ROOT;
-
   let validCount = 0;
   const warnings = [];
 
   for (const spec of SPECS) {
-    const abs = path.join(repoRoot, spec.relPath);
+    const abs = path.join(SPEC_DIR, spec.relPath);
 
     let raw;
     try {
       raw = fs.readFileSync(abs, "utf8");
     } catch (e) {
       if (spec.strictJson) {
-        fail(`Missing required file for ${spec.network}:\n  - ${abs}\n\n${e.message}`);
+        fail(
+          `Missing required file for ${spec.network}:\n  - ${abs}\n\n${e.message}\n\n` +
+            `scripts/getopenrpcspecs.js downloads it from the ${spec.network} branch of MystenLabs/sui ` +
+            `before the build (scripts/build-and-check.sh); run it, or check that branch still carries a spec.`,
+        );
       } else {
         warnings.push(`⚠️ Missing ${spec.network} spec (allowed): ${abs}`);
         continue;
