@@ -88,7 +88,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { generateNonce, generateRandomness } from '@mysten/sui/zklogin';
 import { SuiGrpcClient } from '@mysten/sui/grpc';
 
-const FULLNODE_URL = 'https://fullnode.testnet.sui.io:443';
+const FULLNODE_URL = '<YOUR_RPC_URL>';
 const suiClient = new SuiGrpcClient({ baseUrl: FULLNODE_URL, network: 'testnet' });
 const { systemState } = await suiClient.core.getCurrentSystemState();
 const { epoch } = systemState;
@@ -99,11 +99,15 @@ const randomness = generateRandomness();
 const nonce = generateNonce(ephemeralKeyPair.getPublicKey(), maxEpoch, randomness);
 ```
 
-The `maxEpoch` controls how long this ephemeral key can authorize transactions. The address itself does not expire; only the session does. When the epoch passes `maxEpoch`, generate a new key pair and zero-knowledge proof. See [Does my address expire?](/sui-stack/zklogin-integration/zklogin#address-and-session-lifetime) for details.
+`randomness` is a random value from `generateRandomness()`, and `nonce` is derived from the ephemeral public key, `maxEpoch`, and `randomness`. You pass the `nonce` to the OAuth provider in Step 2.
+
+The `maxEpoch` controls how long this ephemeral key can authorize transactions. The address itself does not expire; only the session does. When the epoch passes `maxEpoch`, generate a new key pair and zero-knowledge proof. See [Does my address expire?](/sui-stack/zklogin-integration/zklogin) for details.
 
 ## Step 2: Direct the user to the OAuth login
 
 Construct the OAuth URL with your configured client ID, redirect URL, and the nonce from the previous step.
+
+Google, Facebook, Twitch, Apple, and Microsoft return the JWT directly, with no token exchange. Kakao and Slack use the authorization `code` flow instead (`response_type=code`): they return an authorization code that you must exchange for a JWT at the provider's token endpoint.
 
 <Tabs groupId="oauth-providers">
 
@@ -268,7 +272,7 @@ Choose a salt management strategy:
 | User-provided | Ask the user to enter and remember the salt. | Basic but poor UX; users forget salts. |
 | Browser/device storage | Store in `localStorage` or mobile secure storage. | Easy but lost on device/browser change. Email the salt to the user as a backup. |
 | Database mapping | Map user identifier (`sub`) to a salt in your backend database. | Reliable; requires a backend service. Salt is unique per user. |
-| Derived from master seed | Use `HKDF(ikm = seed, salt = iss \|\| aud, info = sub)` to derive salts deterministically from a master seed. | No per-user storage needed, but the master seed cannot be rotated and the client ID (`aud`) cannot change without deriving a different address. |
+| Derived from master seed | Use `HKDF(ikm = seed, salt = iss \|\| aud, info = sub)` to derive salts deterministically from a master seed (`\|\|` denotes concatenation). | No per-user storage needed, but the master seed cannot be rotated and the client ID (`aud`) cannot change without deriving a different address. |
 
 The Mysten Labs [Enoki](https://docs.enoki.mystenlabs.com/) platform provides a managed salt service (using derived salts). Contact Mysten Labs for access. Only JWTs authenticated with allowlisted client IDs are accepted.
 
@@ -394,7 +398,7 @@ The response contains the proof components:
 }
 ```
 
-#### Handling CORS errors
+#### How do I handle CORS errors?
 
 To avoid CORS errors in frontend apps, proxy the prover call through your backend:
 
@@ -409,6 +413,8 @@ export type PartialZkLoginSignature = Omit<
 >;
 const partialZkLoginSignature = proofResponse as PartialZkLoginSignature;
 ```
+
+The prover response does not include `addressSeed`, which is why `PartialZkLoginSignature` omits it. You compute `addressSeed` with `genAddressSeed` in Step 7.
 
 ### Option B: Self-hosted proving service
 
@@ -561,7 +567,7 @@ await client.executeTransaction({ transaction: bytes, signatures: [signature] })
 
 See [ZkLoginSigner](/onchain-finance/asset-custody/wallets/zk-login-wallets#zkloginsigner) for the full API reference.
 
-## Caching the ephemeral key and zero-knowledge proof
+## How do I cache the ephemeral key and zero-knowledge proof?
 
 Each zero-knowledge proof is tied to an ephemeral key pair. You can reuse the proof to sign any number of transactions until the current epoch crosses `maxEpoch`.
 
@@ -571,7 +577,7 @@ Cache the ephemeral key pair and zero-knowledge proof for the duration of the se
 - **Never persist them** in an insecure location on any platform.
 - If both the ephemeral private key and zero-knowledge proof are compromised, an attacker can sign transactions on the user's behalf.
 
-## Efficiency considerations
+## How much prover capacity do I need?
 
 zkLogin proofs take longer to generate than traditional signatures. The Mysten Labs prover typically returns a proof in about three seconds on a machine with 16 vCPUs and 64 GB RAM.
 
