@@ -99,9 +99,9 @@ Every stage shares 3 properties:
 
 - **Owner:** Creation fixes the owner. `new` records `ctx.sender()` as `owner`, and no function changes it. To move an account to a different address, create a new one under that address.
 - **Ownership:** The wrapper is shared, not owned. `AccountWrapper` has the `key` ability only, and creation hands it back for `account::share`. Any transaction can name it as an input, so authorization comes from the `Auth` value a function demands.
-- **Derived IDs:** Both IDs derive from the registry. The wrapper address and the account identity are derived objects claimed from it, so they are deterministic and computable before the account exists.
+- **Derived IDs:** Both IDs derive from the registry. The wrapper address and the account identity are derived objects claimed from it, so they are deterministic and computable before the account exists. The wrapper ID is what every Predict call takes as its `wrapper` argument, and the account ID is the canonical identity that parents app data and appears as `account_id` in events. [Derive the IDs before you create](#derive-the-ids) covers both.
 
-## Create an account {#create-a-manager}
+## How do I create an account? {#create-a-manager}
 
 The registry has 3 constructors, and all 3 are permissionless:
 
@@ -121,7 +121,7 @@ public fun new_self_owned(
 ): AccountWrapper
 ```
 
-`new` and `new_with_referrer` set the owner to the transaction sender. `new_self_owned` sets it to an object's address, so a package can own an account. `new_with_referrer` permanently records the referring account's canonical ID and receive address, which is what makes later mints pay a referral share to that account. [Referrals](/onchain-finance/deepbook/deepbook-predict/design#referrals) covers what the referrer earns and how it arrives, and [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#create-with-referrer) builds the call from TypeScript.
+`new` and `new_with_referrer` set the owner to the transaction sender. `new_self_owned` sets it to an object's address, so a package can own an account. `new_with_referrer` permanently records the referring account's canonical ID and receive address, which is what makes later mints pay a referral share to that account. [Referrals](/onchain-finance/deepbook/deepbook-predict/design) covers what the referrer earns and how it arrives, and [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) builds the call from TypeScript.
 
 Each constructor returns the `AccountWrapper` by value. You cannot drop a `key`-only value, so the same transaction must consume it, and the only sensible consumer is:
 
@@ -131,7 +131,7 @@ public fun share(self: AccountWrapper)
 
 Call `account::share` on the returned wrapper in the same programmable transaction block. Forgetting it makes the transaction fail with an unused value error.
 
-Creating an account twice for the same owner aborts with `EAccountAlreadyExists`. Check first with `derived_exists` or `derived_wrapper_exists`, or catch the abort.
+Creating an account twice for the same owner aborts with `EAccountAlreadyExists`. Check first with `derived_exists` or `derived_wrapper_exists`, or catch the abort. If you catch it, the account already exists: compute its wrapper ID with `derived_wrapper_address` and use that account rather than creating another.
 
 <details>
 <summary>Creation source</summary>
@@ -234,7 +234,7 @@ public struct Auth {
 }
 ```
 
-`Auth` declares no abilities at all. You cannot copy, drop, or store it, so the transaction that creates one must consume it, and one `Auth` authorizes exactly one call. Build one per gated call in the block.
+`Auth` declares no abilities at all, which is what makes it a hot potato. You cannot copy, drop, or store it, so the transaction that creates one must consume it, and one `Auth` authorizes exactly one call. Build one per gated call in the block.
 
 Owner authority comes from 2 constructors, and app authority from 1 package-issued path:
 
@@ -272,7 +272,7 @@ Owner authority comes from 2 constructors, and app authority from 1 package-issu
 
 ## Balances and custody {#quote-balances}
 
-Funds reach an account in 2 ways. Some arrive as stored balance directly: a deposit, and a redemption payout, which Predict credits to the account inside the redeeming transaction. The rest arrive at the wrapper address through Sui's fund accumulator, which is how builder fees, referral shares, and filled liquidity requests arrive, and a settling call has to fold them into stored balance before the account can spend them.
+Funds reach an account in 2 ways. Some arrive as stored balance directly: a deposit, and a redemption payout, which Predict credits to the account inside the redeeming transaction. The rest arrive at the wrapper address through Sui's fund accumulator, which is how builder fees, referral shares, and filled liquidity requests arrive, and a settling call has to fold them into stored balance before the account can spend them. The functions on this page that read or settle those accumulator funds take the accumulator's root as a `root: &AccumulatorRoot` argument.
 
 `settle` does that folding and is permissionless:
 
@@ -326,7 +326,7 @@ Predict's own trading functions settle USDC through the wrapper before they pric
 
 This has 2 consequences. You can always retrieve funds that are not committed to a live position. Risk tooling must not treat a Predict pause as a custody halt.
 
-### Deposit and withdraw {#deposit-and-withdraw}
+### How do I deposit and withdraw? {#deposit-and-withdraw}
 
 `deposit_funds` consumes a whole `Coin<T>`, so split the exact amount off a larger coin first. `withdraw_funds` takes an amount and returns a `Coin<T>` that the transaction must consume, by transferring it or by sending it to an address balance.
 
@@ -361,7 +361,7 @@ Because it includes unsettled funds, it does not go stale between a payout and t
 
 </details>
 
-## Predict's account slot {#predict-data}
+## Where does Predict store positions? {#predict-data}
 
 Predict does not store positions in its own objects. It attaches a `PredictData` value to the account under `DataKey<PredictApp>`, where `PredictApp` is a witness type only the `predict_account` module can construct. That namespacing means no other package can write Predict's slot, and Predict cannot write anyone else's. Predict creates the slot lazily on first use.
 
@@ -374,7 +374,7 @@ Predict does not store positions in its own objects. It attaches a `PredictData`
 | `Position` | `root_id` | `u256` | Original mint's order ID, carried forward across partial-close replacements. |
 | `Position` | `opened_at_ms` | `u64` | Onchain time at which the position opened, also carried forward. |
 
-From protocol version 4, which Testnet runs, a queued fill never enters this table. The filled position stays in the market's `MarketQueue` as an Open record owned by the account, so `has_position` and `read.positions` do not see it, and the account follows it by its queue record ID instead. Positions minted into the table before the cutover stay there, and `redeem_settled` still pays them. [Open records and early sells](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#open-records) covers the queue side.
+From protocol version 4, which Testnet runs, a queued fill never enters this table. The filled position stays in the market's `MarketQueue` as an Open record owned by the account, so `has_position` and `read.positions` do not see it, and the account follows it by its queue record ID instead. Positions minted into the table before the cutover stay there, and `redeem_settled` still pays them. [Open records and early sells](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) covers the queue side.
 
 An order ID alone does not identify a position. It carries the quantity and the tick range but not the market, so only the `(expiry_market_id, order_id)` pair binds a position to its market. Never infer market facts from an order ID.
 
@@ -394,7 +394,7 @@ An order ID alone does not identify a position. It carries the quantity and the 
 
 </details>
 
-### Read a position {#read-a-position-quantity}
+### How do I read a position? {#read-a-position-quantity}
 
 The `predict_account` module has 2 reads that work against a borrowed `&Account`, so a simulated transaction resolves them without gas:
 
@@ -405,9 +405,9 @@ public fun builder_code_id(account: &Account): Option<ID>
 
 Both return the empty answer rather than aborting when the account has no Predict slot yet, so `false` and `none` do not distinguish an unused account from a closed position.
 
-`has_position` answers one exact question and needs the market ID and order ID up front, so it cannot enumerate a portfolio. To list what an account holds, read the dynamic fields of the `positions` table, where each field key is a `PositionKey` in Binary Canonical Serialization (BCS). The SDK's `client.predict.read.positions(owner)` does this on either network and returns `{ marketId, orderId }` pairs, and `client.predict.read.hasPosition(owner, marketId, orderId)` wraps the single read. The public offchain read services answer the same question over HTTP for the earlier `predict-8-21` deployment only, and their account and position paths key on the canonical account ID rather than the wrapper ID; see [Wrapper ID and account ID](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#wrapper-and-account-ids).
+`has_position` answers one exact question and needs the market ID and order ID up front, so it cannot enumerate a portfolio. To list what an account holds, read the dynamic fields of the `positions` table, where each field key is a `PositionKey` in Binary Canonical Serialization (BCS), with the `expiry_market_id` and `order_id` fields shown in the table above. The SDK's `client.predict.read.positions(owner)` does this on either network and returns `{ marketId, orderId }` pairs, and `client.predict.read.hasPosition(owner, marketId, orderId)` wraps the single read. The public offchain read services answer the same question over HTTP for the earlier `predict-8-21` deployment only, and their account and position paths key on the canonical account ID rather than the wrapper ID; see [Wrapper ID and account ID](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 
-To value a position, pass its order ID to the market: `expiry_market::live_order_value` with a market-bound pricer while the market is live, or `expiry_market::settled_order_payout` once it has settled. See [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#read-accessors) for both.
+To value a position, pass its order ID to the market: `expiry_market::live_order_value` with a market-bound pricer while the market is live, or `expiry_market::settled_order_payout` once it has settled. See [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) for both.
 
 ### Builder codes {#builder-codes}
 
@@ -424,7 +424,7 @@ public fun set_builder_code(
 public fun unset_builder_code(wrapper: &mut AccountWrapper, auth: Auth, ctx: &mut TxContext)
 ```
 
-Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::builder_code_events`, with `builder_code_id` set on one and absent on the other. Attribution is sticky: it applies to trades made after the call, not retroactively. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) covers what the fee is and how the code's owner collects it. The SDK exposes `client.predict.tx.setBuilderCode(owner, builderCodeId)` and `client.predict.tx.unsetBuilderCode(owner)`.
+Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::builder_code_events`, with `builder_code_id` set on one and absent on the other. Attribution is sticky: it applies to trades made after the call, not retroactively. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design) covers what the fee is and how the code's owner collects it. The SDK exposes `client.predict.tx.setBuilderCode(owner, builderCodeId)` and `client.predict.tx.unsetBuilderCode(owner)`.
 
 <details>
 <summary>Predict account function source</summary>
@@ -485,11 +485,11 @@ public fun set_builder_code(wrapper: &mut AccountWrapper, auth: Auth, code: &Bui
 public fun unset_builder_code(wrapper: &mut AccountWrapper, auth: Auth, ctx: &mut TxContext)
 ```
 
-`deposit` and `withdraw` take a `&mut Account`, which only `load_account_mut` produces, so reaching them still costs an `Auth`. `authorize_app` and `deauthorize_app` need the `AccountAdminCap`, and `generate_auth_as_app` needs a `Permit<App>`, so none of the 3 is an integrator call.
+The `account.move` block lists custody functions at 2 layers. `deposit_funds` and `withdraw_funds` are the outer layer: they take the `AccountWrapper` and an `Auth` directly and settle before they act. `deposit` and `withdraw` are the inner layer: they take a `&mut Account`, which only `load_account_mut` produces, so reaching them still costs an `Auth`. `authorize_app` and `deauthorize_app` need the `AccountAdminCap`, and `generate_auth_as_app` needs a `Permit<App>`, so none of the 3 is an integrator call.
 
 ## The account SDK subpath {#account-sdk}
 
-`@mysten/deepbook-v3` publishes the account primitive on its own subpath, `@mysten/deepbook-v3/account`, with `getAccountConfig(network)` for the deployed IDs and an `AccountContract` class whose builders compose into a programmable transaction block of your own. [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#account-subpath) documents every `AccountContract` method, the split between wrapper and account IDs, and the generated bindings.
+`@mysten/deepbook-v3` publishes the account primitive on its own subpath, `@mysten/deepbook-v3/account`, with `getAccountConfig(network)` for the deployed IDs and an `AccountContract` class whose builders compose into a programmable transaction block of your own. [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) documents every `AccountContract` method, the split between wrapper and account IDs, and the generated bindings.
 
 ## End-to-end workflow {#end-to-end-workflow}
 
@@ -509,7 +509,7 @@ The example below is the second of those. It reads a quote, derives a `maxCost` 
 
 </details>
 
-Composing create, fund, and trade into a single block of your own is generated-bindings work rather than facade work. Build it from the [`AccountContract` methods](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#account-contract) and the `loadLivePricer` function that the `/predict` subpath exports, adding commands to a single `Transaction` in this order:
+Composing create, fund, and trade into a single block of your own is generated-bindings work rather than facade work. Build it from the [`AccountContract` methods](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) and the `loadLivePricer` function that the `/predict` subpath exports, adding commands to a single `Transaction` in this order:
 
 1. `account_registry::new`
 1. `account::generate_auth`
@@ -558,7 +558,7 @@ The 3 differ only in what caused the move:
 - `Withdrawn`: Stored balance left as a coin through `withdraw`, reached from `withdraw_funds`.
 - `FundsSettled`: Accumulator funds at the wrapper address folded into stored balance. `settle` emits it only when the settled amount is greater than zero, so a no-op `settle` is silent.
 
-A redemption payout credits stored balance inside the redeeming transaction, so it surfaces as `Deposited`. Builder fees, referral shares, and filled liquidity requests travel through the accumulator instead and surface as `FundsSettled` on the next settling call. Index all 3 events to reconstruct a full account ledger, and read the order events described in [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#events) for the trades themselves.
+A redemption payout credits stored balance inside the redeeming transaction, so it surfaces as `Deposited`. Builder fees, referral shares, and filled liquidity requests travel through the accumulator instead and surface as `FundsSettled` on the next settling call. Index all 3 events to reconstruct a full account ledger, and read the order events described in [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) for the trades themselves.
 
 The module declares 2 further events, `AppAuthorized` and `AppDeauthorized`, which each carry a single `app` string and record changes to the registry allowlist that governs app authority.
 
