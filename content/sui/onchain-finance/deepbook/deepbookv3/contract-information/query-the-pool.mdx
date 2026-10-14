@@ -58,9 +58,18 @@ The `Pool` shared object represents a market, such as a SUI/USDC market. That `P
 
 To perform trades, you pass a `BalanceManager` and `TradeProof` into the relevant `Pool`. Unlike `Pool`s, `BalanceManager` shared objects can contain any type of token, such that the same `BalanceManager` can access multiple `Pool`s to interact with many different trade pairings. See [BalanceManager](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager) to learn more.
 
+## Which query should I use?
+
+- **How do I check whether a pool is whitelisted?** Use `whitelisted`.
+- **How do I get the current market price?** Use `mid_price` to get the mid price of the pool. For prices and quantities across the level2 order book, use `get_level2_range` or `get_level2_ticks_from_mid`.
+- **How do I estimate the output quantity for a swap?** Use `get_quote_quantity_out` or `get_base_quantity_out` to pay fees in DEEP, `get_quote_quantity_out_input_fee` or `get_base_quantity_out_input_fee` to pay fees in the input token, or `get_quantity_out` to get base, quote, and DEEP quantities together. To find the input needed for a given output, use `get_base_quantity_in` or `get_quote_quantity_in`.
+- **How much DEEP does an order require?** Use `get_order_deep_required`.
+- **How do I list the open orders for a `BalanceManager`?** Use `account_open_orders` for order IDs, or `get_account_order_details` for the `Order` structs.
+- **How do I check whether an order can be placed?** Use `can_place_limit_order` or `can_place_market_order`.
+
 ## API
 
-DeepBookV3 exposes a set of endpoints that can be used to query any pool.
+DeepBookV3 exposes a set of endpoints that can be used to query any pool. Each entry below describes what the function returns, followed by the function's source from `packages/deepbook/sources/pool.move` in the MystenLabs `deepbookv3` repository.
 
 <details>
 <summary>Check whitelist status</summary>
@@ -145,6 +154,8 @@ Returns the `order_id` for all open orders for the `balance_manager` in the pool
 
 <details>
 <summary>Retrieve prices and quantities for an order book</summary>
+
+Use `get_level2_range` when you want all orders within a specific price range, and `get_level2_ticks_from_mid` when you want a fixed number of ticks starting from the best bid and best ask.
 
 Returns vectors holding the prices (`price_vec`) and quantities (`quantity_vec`) for the level2 order book. The `price_low` and `price_high` are inclusive, all orders within the range are returned. `is_bid` is `true` for bids and `false` for asks.
 
