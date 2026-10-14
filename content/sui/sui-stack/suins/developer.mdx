@@ -29,9 +29,11 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+This guide explains how to integrate Sui Name Service (SuiNS) into your application using offchain or onchain resolution, lists the active SuiNS package and object IDs on Mainnet and Testnet, and describes how subnames work.
+
 Sui Name Service (SuiNS) is a decentralized naming service on the Sui blockchain that enables users to replace complex wallet addresses with human-readable names. You can integrate SuiNS into your application using either onchain or offchain resolution.
 
-## Active constants
+## What are the active SuiNS constants? {#active-constants}
 
 The following list shows the current active objects for interacting with SuiNS.
 
@@ -110,13 +112,15 @@ Lookups work with different types of addresses:
 
 - **Default address:** The SuiNS name that the owner of a particular address has selected to represent that address. For example, if you own `0x2` you can make `example.sui` its default address. The owner must sign and execute a set default transaction to establish this connection. The default address resets anytime the target address changes. Reverse lookup resolution retrieves this name.
 
+Use the target address when you start from a name and need an address, for example to send assets to a name. Use the default address when you start from an address and want to display a name, for example on a leaderboard.
+
 ### SuiNS NFT ownership
 
 Do not use ownership of a SuiNS NFT as a resolution method. An NFT is used as the key (capability) to change the target address, but should not be used to identify any name with an address.
 
 SuiNS NFT ownership allows any address to be set as the target address. So, the `example.sui` address used in the previous section can point to any address, not just `0x2`. Consequently, when you want to display default addresses, you should trust the default address over target address because it is guaranteed onchain.
 
-### Offchain resolution
+### How do I resolve a name offchain? {#offchain-resolution}
 
 For offchain resolution, pass the name to the [`address`](/references/sui-api/sui-graphql/beta/reference/operations/queries/address) GraphQL query. To fetch the full name record instead of just the target address, use the [`nameRecord`](/references/sui-api/sui-graphql/beta/reference/operations/queries/name-record) query.
 
@@ -128,7 +132,7 @@ For reverse lookup, read the [`defaultNameRecord` field](/references/sui-api/sui
 
 :::
 
-### Onchain resolution
+### How do I resolve a name onchain? {#onchain-resolution}
 
 Use the SuiNS core package for onchain resolution. Add the following dependency in your `Move.toml` file depending on which network you are targeting:
 
@@ -188,6 +192,8 @@ module demo::demo {
 }
 ```
 
+If the name does not exist, has expired, or has no target address set, `send_to_name` aborts with `ENameNotFound`, `ENameExpired`, or `ENameNotPointingToAddress`, respectively.
+
 :::caution
 
 You should integrate SuiNS onchain using the core package only. The utility packages are likely to be replaced, rendering your logic non-functional unless you update your code with each change.
@@ -212,11 +218,11 @@ For a deeper understanding of how the indexer works and how to integrate it into
 
 Subnames are nested names under a parent name. Unlike regular names, creating subnames has no cost.
 
-The maximum nesting depth is 8 levels. The total depth, including the second-level domain (SLD) and top-level domain (TLD), means the maximum total depth is 10 levels.
+The maximum nesting depth is 8 levels. The total depth, including the second-level domain (SLD) and top-level domain (TLD), means the maximum total depth is 10 levels. For example, `a.b.c.d.e.f.g.h.example.sui` has 8 subname levels under the SLD `example` and the TLD `sui`.
 
 Parent rules control whether you can create nested names or not and can also allow a subname to extend the expiration to match the parent's expiration. You can alter the parent rules at any time, but revoking or burning follows the same rules.
 
-### Subname types {#subname-types}
+### What is the difference between node and leaf subnames? {#subname-types}
 
 Subnames can be one of 2 types:
 
@@ -231,7 +237,7 @@ The following table provides more details on the differences between the types o
 | Has NFT | ✅ Yes, <ul style={{listStyle: 'disc', paddingLeft: 1 + 'rem'}}><li>`SuinsRegistration` for SLD*</li><li>`SubDomainRegistration` for nested names</li></ul> | ❌ No, parent's NFT acts as the capability |
 | Can create children (node or leaf) | ✅ Yes, provided the name is an SLD or the parent allows it | ❌ No |
 | Expiration | ✅ Yes, SuiNS determines expiration for SLDs, otherwise the parent determines | ❌ No, the parent's expiration determines the leaf expiration |
-| Extend expiration | ✅ Yes, you can extend expiration if parent rules allow it (or you can pay for it for SLD) | ✅ Yes, leaf names do not expire |
+| Extend expiration | ✅ Yes, you can extend expiration if parent rules allow it (or you can pay for it for SLD) | ✅ Yes, leaf names have no independent expiration; the parent's expiration determines the leaf expiration |
 | Target address | ✅ Yes, NFT holder can update the target address; address can be empty | ✅ Yes, active parent's NFT holder can update the target address; address cannot be empty |
 | Reverse registry | ✅ Yes | ✅ Yes |
 | Revoke | ❌ No, you cannot remove a node name (except when expired) | ✅ Yes, active parent holder can remove a leaf name |
