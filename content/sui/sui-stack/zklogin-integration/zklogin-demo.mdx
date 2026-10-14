@@ -70,7 +70,7 @@ See [Security Best Practices](/develop/security/best-practices).
 
 :::
 
-## When to use this pattern
+## When should I use this pattern?
 
 Use this pattern when you need to:
 
@@ -78,7 +78,7 @@ Use this pattern when you need to:
 
 - Derive a deterministic Sui address from a JWT token and a salt so users always get the same address.
 
-- Generate and manage ephemeral key pairs that sign transactions on behalf of the authenticated user.
+- Generate and manage ephemeral key pairs that sign transactions authorized by the authenticated user's OAuth identity.
 
 - Fetch a zero-knowledge proof from a prover service and attach it to a transaction as a zkLogin signature.
 
@@ -92,7 +92,7 @@ This example teaches:
 
 - **OAuth popup flow:** The application opens an OAuth provider in a popup window, extracts the `id_token` from the URL hash, and sends it to the parent window through `postMessage`. This keeps the main application state intact during authentication.
 
-- **ZK proof generation:** The prover service takes the JWT, extended ephemeral public key, max epoch, randomness, and salt, and returns a zero-knowledge proof. This proof lets the network verify the transaction was authorized by the OAuth identity holder without seeing the JWT.
+- **ZK proof generation:** The prover service takes the JWT, extended ephemeral public key (the public key encoded together with its key type), max epoch, randomness, and salt, and returns a zero-knowledge proof. This proof lets the network verify the transaction was authorized by the OAuth identity holder without seeing the JWT.
 
 - **Address derivation:** `jwtToAddress(jwt, salt, false)` deterministically maps an OAuth identity to a Sui address. The third argument (`legacyAddress`) is required; pass `false` for new integrations. Consumer apps usually combine it with sponsored transactions so a new user never has to fund an address before their first action.
 
@@ -136,7 +136,7 @@ sequenceDiagram
   Frontend-->>User: Display confirmation
 ```
 
-The following steps walk through the flow:
+The following steps walk through the flow. Each number matches the Step label in the diagram:
 
 1. The user clicks **Generate Key Pair**. The frontend fetches the current epoch from the Sui network, creates an Ed25519 ephemeral key pair, generates randomness, and computes a nonce. The key pair is valid for the configured number of epochs past the current one.
 
@@ -169,9 +169,16 @@ For more details, see the [zkLogin documentation](/sui-stack/zklogin-integration
 </TabItem>
 </Tabs>
 
-## Reference app
+## How do I add zkLogin to my own app?
 
 A complete React implementation lives in [`sui-move-bootcamp/K2`](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/K2). Clone it to see the hooks below wired together, or read on for the pieces you need to port into your own app.
+
+To port the integration, work in this order:
+
+1. Complete the prerequisites above.
+2. Set the environment variables in the table below.
+3. Port the hooks in [Key code highlights](#key-code-highlights) in flow order: `useEphemeral`, `useOauthPopup`, `useZkProof`, `useWallet`, then `suiWriteClient` with `useLiveTransaction`.
+4. Run the four steps described in [Architecture](#architecture), and use [Troubleshooting](#troubleshooting) if a step fails.
 
 The app reads its configuration from environment variables, and the same values are what your integration needs:
 
@@ -236,9 +243,9 @@ The `fetchZkProof` utility calls the Mysten Labs prover endpoint.
 
 The function POSTs the proof payload to `https://prover-dev.mystenlabs.com/v1`. The error handling distinguishes network failures (which might indicate CORS issues) from prover errors. For production applications, consider proxying prover requests through a backend to avoid CORS restrictions.
 
-## Common modifications
+## How can I extend this example?
 
-- **Add session persistence:** Store the ephemeral key pair, JWT, and ZK proof in `localStorage` so users do not need to re-authenticate on page reload. Check `maxEpoch` against the current epoch to determine if the session is still valid.
+- **Add session persistence:** Store the ephemeral key pair, JWT, and ZK proof in `localStorage` so users do not need to re-authenticate on page reload. Check `maxEpoch` against the current epoch to determine if the session is still valid: before reusing a stored session, fetch the current epoch from the Sui network, and if it exceeds `maxEpoch`, discard the stored session and restart the flow from Step 1, because the ephemeral key can no longer authorize transactions.
 
 - **Support multiple OAuth providers:** The `getOauthUrl` utility already handles Google and Apple. Add cases for Facebook, Twitch, or other OpenID Connect providers by constructing the appropriate authorization URL with the nonce.
 
