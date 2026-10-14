@@ -69,7 +69,7 @@ The following table summarizes the fungible asset standards described on this pa
 | --- | --- | --- | --- | --- |
 | Coin | `sui::coin` | `key` and `store` abilities; supports wrapping and public transfers | `CoinMetadata<T>` | You maintain an existing coin created with `sui::coin`, or your coin does not require advanced supply tracking or regulatory features |
 | Currency | `sui::coin_registry` | Wrappable and freely transferable; can be stored in any application | `Currency<T>` object in Coin Registry | You are creating a new coin, or you need advanced supply management, regulatory features such as deny lists, or registry integration |
-| Permissioned Asset Standard (PAS) | — | Assets are held in Account objects (one per address) and move between Accounts only through requests approved and resolved in the same programmable transaction block (PTB) | — | You need account-based transfer controls and compliance checks. PAS is currently Testnet only, not Mainnet |
+| Permissioned Asset Standard (PAS) | — | Assets are held in Account objects (one per address) and move between Accounts only through requests approved and resolved in the same programmable transaction block (PTB) | — | You need account-based transfer controls and compliance checks |
 | Closed-Loop Token | `sui::token` | `key` ability only; can only be owned by an account; custom policies for transfers, spends, and conversions | — | Not recommended for new designs; use PAS in place of CLT |
 
 ## Fungible tokens: Coin standard
@@ -136,8 +136,6 @@ Use the Currency standard if you are:
 
 The Permissioned Asset Standard (PAS) enables asset ownership through Account objects. Account objects can hold assets and enforce transfer controls and compliance checks. There is one Account per address, and an Account can hold any asset type. Assets can only move between Accounts through hot potato requests that must be approved and resolved in the same programmable transaction block (PTB).
 
-PAS is currently available on Testnet only, not Mainnet. Treat it as a design and prototyping target rather than a launch path.
-
 PAS uses Sui [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances). PAS balances are managed by PAS on behalf of the wallet address. They are held in a derived Account object, however, transfers always target the Account address, not the wallet address.
 
 PAS assets are stored in Sui objects and can be queried using the same data access methods as any other address-owned data.
@@ -148,7 +146,7 @@ PAS assets are stored in Sui objects and can be queried using the same data acce
 
 :::caution
 
-The Permissioned Asset Standard (PAS) provides a new and improved alternative to the Closed-Loop Token (CLT) standard. Use PAS in place of CLT. PAS is currently available on Testnet only, not Mainnet.
+The Permissioned Asset Standard (PAS) provides a new and improved alternative to the Closed-Loop Token (CLT) standard. Use PAS in place of CLT.
 
 :::
 
