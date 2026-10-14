@@ -1,8 +1,9 @@
 ---
 title: Building Transactions
 description: >-
-  Using the Sui TypeScript SDK, you can create programmable transaction blocks
-  to perform multiple commands in a single transaction.
+  Using the Sui TypeScript SDK and the Sui CLI, you can create programmable
+  transaction blocks to perform multiple commands in a single transaction,
+  including gas configuration and offline building.
 keywords:
   - ptbs
   - programmable transaction blocks
@@ -53,7 +54,9 @@ answer: >-
   to perform multiple commands in a single transaction.
 ---
 
-This guide explores creating a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) on Sui using the [TypeScript SDK](https://sdk.mystenlabs.com/typescript/install) and the Sui CLI.
+This guide explores creating a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) on Sui using the [TypeScript SDK](https://sdk.mystenlabs.com/typescript/install) and the Sui CLI. The page closes with a [Rust SDK example](#rust-sdk-example).
+
+## How do I build a PTB with the TypeScript SDK?
 
 This example constructs a PTB to send SUI tokens. First, import the `Transaction` class, and construct it:
 
@@ -120,6 +123,8 @@ $ sui client ptb \
     --gas-budget 5000000
 ```
 
+In this example, `eloquent-amber` is an address alias configured in the Sui client. Replace it with an alias from your own configuration.
+
 Use `--preview` to inspect the PTB commands without executing them, `--dry-run` to simulate execution, and `--summary` for concise output after execution. For more examples, see [Sui Client PTB CLI](/references/cli/ptb).
 
 ## Constructing inputs
@@ -139,7 +144,7 @@ Define inputs in two ways:
 
 Learn more about [inputs](/develop/transactions/ptbs/inputs-and-results).
 
-## Passing transaction results as arguments
+## How do I pass the result of one command into the next? {#passing-transaction-results-as-arguments}
 
 You can use the result of a transaction command as an argument in subsequent transaction commands. Each transaction command method on the transaction builder returns a reference to the transaction result.
 
@@ -149,6 +154,8 @@ const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(100)]);
 // Transfer the resulting coin object:
 tx.transferObjects([coin], tx.pure.address(address));
 ```
+
+This example uses `splitCoins` to show how one command's result feeds the next. To source tokens for a payment, `tx.coin()` and `tx.balance()` are the recommended approach; see [the gas coin section](#use-the-gas-coin).
 
 When a transaction command returns multiple results, you can access the result at a specific index either using destructuring or array indexes.
 
@@ -162,7 +169,7 @@ const mintMany = tx.moveCall({ target: '0x2::nft::mint_many' });
 tx.transferObjects([mintMany[0], mintMany[1]], tx.pure.address(address));
 ```
 
-## Use the gas coin
+## How do I use the gas coin in a PTB? {#use-the-gas-coin}
 
 For most transactions, reach for [`tx.coin()` and `tx.balance()`](https://sdk.mystenlabs.com/sui/transactions/coins-and-balances) rather than the gas coin. They are the recommended way to source tokens, and they draw from coin objects and address balances without you needing to select either.
 
@@ -211,7 +218,7 @@ const bytes = getTransactionBytesFromSomewhere();
 const tx = Transaction.from(bytes);
 ```
 
-## Building offline
+## How do I build a transaction offline? {#building-offline}
 
 To build a PTB offline, with no client available, define all input values and gas configuration yourself. For pure values, provide a `Uint8Array`, which the transaction uses directly. For objects, construct the reference explicitly.
 
@@ -226,7 +233,15 @@ tx.objectRef({ objectId, version, digest });
 tx.sharedObjectRef({ objectId, initialSharedVersion, mutable });
 ```
 
-Every offline build must also set the sender, gas price, gas budget, gas payment, and ValidDuring expiration. When the transaction uses no owned objects for gas or inputs, such as when `setGasPayment([])` draws gas from an address balance, set a `ValidDuring` expiration as well. When the transaction uses no owned objects for gas or inputs, such as when `setGasPayment([])` draws gas from an address balance, set a `ValidDuring` expiration as well.
+Every offline build must also set:
+
+1. The sender
+2. The gas price
+3. The gas budget
+4. The gas payment
+5. The ValidDuring expiration
+
+When the transaction uses no owned objects for gas or inputs, such as when `setGasPayment([])` draws gas from an address balance, set a `ValidDuring` expiration as well.
 
 You can then omit the `client` argument when calling `build` on the transaction. If any required data is missing, `build` throws an error.
 
@@ -321,7 +336,7 @@ Learn more about [sponsored transactions](/develop/transaction-payment/sponsor-t
 
 ## Rust SDK example
 
-You can also build PTBs using the Sui Rust SDK. The following example demonstrates creating a `ProgrammableTransactionBuilder`, adding pure value and shared object inputs, and calling a Move function with type arguments:
+The preceding sections use the TypeScript SDK and the CLI. You can also build PTBs using the Sui Rust SDK. The following example demonstrates creating a `ProgrammableTransactionBuilder`, adding pure value and shared object inputs, and calling a Move function with type arguments:
 
 ```rust
 use move_core_types::{identifier::Identifier, language_storage::TypeTag};
