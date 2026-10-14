@@ -28,6 +28,8 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+To use Move Registry (MVR) names in programmable transaction blocks (PTBs), register the `namedPackagesPlugin` from `@mysten/sui` either globally or per transaction. For build-time resolution, consider the `@mysten/mvr-static` plugin instead.
+
 The Move Registry (MVR, pronounced mover) Sui TypeScript SDK plugin offers builders a seamless experience when constructing programmable transaction blocks (PTBs) using MVR names.
 
 The plugin resolves MVR names to their respective addresses before constructing the PTB, caching the results during each runtime.
@@ -57,6 +59,8 @@ The plugin is functional starting from `@mysten/sui` v1.25.0.
 
 The MVR plugin is exported directly from the `@mysten/sui` package. To enable the plugin, register it either globally or per PTB in your app.
 
+This section covers runtime resolution with `namedPackagesPlugin`. For build-time resolution, see [Recommended usage](#recommended-usage).
+
 ### Endpoints
 
 Mysten Labs provides public good endpoints compatible with the MVR plugin.
@@ -69,6 +73,8 @@ Testnet: https://testnet.mvr.mystenlabs.com
 ### Register the plugin
 
 Depending on the architecture of your app, you can register the plugin either globally or per PTB.
+
+`namedPackagesPlugin` takes an options object with the `url` of an MVR endpoint and optional `overrides` (see [Define overrides](#define-overrides)). It returns a plugin that you pass to `Transaction.registerGlobalSerializationPlugin` or `transaction.addSerializationPlugin`.
 
 ```typescript
 /** Register the MVR plugin globally */
