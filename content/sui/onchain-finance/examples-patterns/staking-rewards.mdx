@@ -145,7 +145,7 @@ The package leaves `[dependencies]` empty in `Move.toml`, so the framework versi
 
 Every entry point is a `public fun` that returns its objects instead of transferring them internally. That makes the module composable in programmable transaction blocks, but it also means a plain `sui client call` fails with `UnusedValueWithoutDrop`. Use `sui client ptb` and transfer the results explicitly.
 
-### Create a pool
+### How to create a pool
 
 Create a new staking pool and receive the `AdminCap`. Replace `PKG` with your package ID, and `STAKE_TYPE` and `REWARD_TYPE` with the full type identifiers for your stake and reward tokens.
 
@@ -156,7 +156,7 @@ $ sui client ptb \
   --transfer-objects '[cap]' @YOUR_ADDRESS
 ```
 
-### Fund the reward schedule
+### How to fund the reward schedule
 
 Fund the pool with reward tokens and start the emission window. `DURATION_MS` is the emission window length in milliseconds.
 
@@ -166,7 +166,7 @@ $ sui client ptb \
     @ADMIN_CAP_ID @POOL_ID @REWARD_COIN_ID DURATION_MS @0x6
 ```
 
-### Stake tokens
+### How to stake tokens
 
 Deposit tokens and receive a `StakeReceipt`.
 
@@ -178,7 +178,7 @@ $ sui client ptb \
   --transfer-objects '[receipt]' @YOUR_ADDRESS
 ```
 
-### Claim rewards
+### How to claim rewards
 
 Withdraw earned rewards while keeping your position open.
 
@@ -190,7 +190,7 @@ $ sui client ptb \
   --transfer-objects '[reward]' @YOUR_ADDRESS
 ```
 
-### Unstake
+### How to unstake
 
 Fully exit the position. The function consumes the receipt and returns principal plus accrued rewards.
 
