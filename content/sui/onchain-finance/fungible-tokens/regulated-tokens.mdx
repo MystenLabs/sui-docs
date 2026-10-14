@@ -72,7 +72,7 @@ The `DenyList` object is a system object at address `0x403`. You cannot create i
 
 To learn about available features, see [Currency Standard](/onchain-finance/fungible-tokens/currency) and the `coin_registry` module in the Sui framework.
 
-## Create regulated currency
+## How do I create a regulated currency?
 
 To use regulatory features, you will need to [create a currency](/onchain-finance/fungible-tokens/create-a-fungible-token). During currency initialization, use the `make_regulated()` function on the `CurrencyInitializer<T>` before calling `finalize()`. This adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the registry system:
 
@@ -88,6 +88,13 @@ After calling `finalize()`, the registry automatically tracks regulatory status 
 ## Example
 
 <ImportContent source="prerequisites" mode="snippet" />
+
+The example follows these steps:
+
+1. Publish the `regulated_coin.move` contract. The `TreasuryCap` and `DenyCapV2` transfer to the publishing address.
+2. Record the constant values described in the table that follows. Most of them are part of the response that Sui provides on publish.
+3. Use the TypeScript client to mint coins.
+4. Use the TypeScript client to add addresses to or remove addresses from the deny list.
 
 The example uses a single file to create the smart contract for the project (`regulated_coin.move`). The contract defines the regulated coin when you publish it to the network. The treasury capability (`TreasuryCap`) and deny capability (`DenyCapV2`) transfer to the address that publishes the contract. `TreasuryCap` permits the bearer to mint or burn coins (`REGULATED_COIN` in this example), and the `DenyCapV2` bearer can add and remove addresses from the list of unauthorized users.
 
@@ -121,6 +128,8 @@ The `ADMIN_SECRET_KEY` in this example is for test and development only. Never s
 :::
 
 The TypeScript client handles the call to the `coin` package `mint` function. The `coin` package also includes a `mint_and_transfer` function you could use to perform the same task, but the composability of minting the coin in one command and transferring with another is preferable. Using 2 explicit commands allows you to implement future logic between minting and transfer. The structure of programmable transaction blocks means you still make and pay for a single transaction on the network.
+
+The following snippet from the TypeScript client mints the coin in one command and transfers it in another:
 
 <ImportContent source="examples/regulated-coin/ts-client/src/main.ts" mode="code" tag="mint" />
 
@@ -173,12 +182,14 @@ For all `Coin` functions available, see the Sui framework [`coin` module documen
 
 </details>
 
-### Managing the deny list
+### How do I manage the deny list?
 
 The frontend code provides functions to manage the addresses assigned to the deny list for your coin. These call the `deny_list_v2_add` and `deny_list_v2_remove` functions in the `coin` module.
 
 If you add an address to the deny list, you might notice that you can still send tokens to that address. The address can still receive coins until the end of the epoch in which you called the function. If you try to send the regulated coin from the blocked address, the attempt results in an error. After the next epoch starts, the address can no longer receive the coins either. If you remove the address, it can receive coins immediately but must wait until the epoch after removal before the address can include the coins as transaction inputs.
 
 To use these functions, pass the address you want to add or remove. The frontend function then calls the relevant Move module in the framework, adding the `DenyList` object (`0x403`) and your `DenyCapV2` object ID. You receive the `DenyCapV2` ID at the time of publishing the smart contract. In this example, you add that value to the `.env` file that the frontend function reads from.
+
+The following snippet from the TypeScript client adds an address to or removes an address from the deny list:
 
 <ImportContent source="examples/regulated-coin/ts-client/src/main.ts" mode="code" tag="deny" />
