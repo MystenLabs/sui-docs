@@ -47,7 +47,7 @@ At a high level, the DeepBook Margin design revolves around four main shared obj
 - `MarginPool`: A shared object that manages liquidity for a specific asset, handling supply and borrow operations with interest accrual. See the [MarginPool shared object](#margin-pool) section to learn more.
 - `MarginManager`: A shared object that wraps a `BalanceManager` and provides capabilities for leveraged trading, including borrowing, repaying, and risk management. See the [MarginManager shared object](#margin-manager) section to learn more.
 - `MarginRegistry`: A central registry that manages all margin pools and margin managers, enforces system-wide configurations, and tracks enabled pools. See the [MarginRegistry](#margin-registry) section to learn more.
-- `BalanceManager`: Inherited from DeepBookV3, used to source funds for trading. See [BalanceManager](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager) to learn more.
+- `BalanceManager`: Inherited from DeepBookV3, used to source funds for trading. Each `MarginManager` wraps a `BalanceManager` to source funds for margin trading. See [BalanceManager](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager) to learn more.
 
 ## `MarginPool` shared object {#margin-pool}
 
@@ -67,7 +67,7 @@ The `State` component tracks the total supply and borrow amounts, along with the
 
 Interest accrues continuously based on the utilization rate (ratio of borrowed to supplied assets). The state updates on every supply, borrow, repay, and withdraw operation, ensuring interest is always current.
 
-The interest rate is calculated dynamically based on the pool's utilization rate, following a piecewise linear model defined in the `InterestConfig`. Higher utilization leads to higher interest rates, incentivizing more supply and less borrowing.
+The interest rate is calculated dynamically based on the pool's utilization rate, following a piecewise linear model defined in the `InterestConfig` (see [How does interest accrue?](#interest-accrual)). Higher utilization leads to higher interest rates, incentivizing more supply and less borrowing.
 
 ### Protocol config
 
@@ -93,7 +93,7 @@ The protocol spread is then distributed as follows:
 
 For example, if 100 USDC in interest is paid, 10 USDC goes to protocol fees (at 10% spread) and 90 USDC goes to suppliers. The 10 USDC is then split: 5 USDC to referrals, 2.5 USDC to protocol, and 2.5 USDC to the maintainer.
 
-The protocol tracks shares owned by each referral and calculates their proportional fees based on the liquidity they've referred.
+The protocol tracks shares owned by each referral and calculates their proportional fees based on the liquidity they've referred. Referral associations are recorded by the [`PositionManager`](#position-manager).
 
 ### Position manager
 
@@ -119,12 +119,16 @@ Risk is measured using a **risk ratio** calculated as:
 
 $$\text{Risk Ratio} = \frac{\text{Total Assets}}{\text{Total Debt}}$$
 
+A higher ratio means more assets relative to debt. The thresholds below are compared against this value.
+
 Different risk ratio thresholds determine allowable actions:
 
 - **Withdraw threshold** (for example, 2.0): Minimum ratio to withdraw collateral.
 - **Borrow threshold** (for example, 1.25): Minimum ratio to take out new loans.
 - **Target liquidation ratio** (for example, 1.25): Target ratio after partial liquidation.
 - **Liquidation threshold** (for example, 1.15): Below this, the position can be liquidated.
+
+These thresholds are risk parameters set per pool and stored in the [`MarginRegistry`](#margin-registry), so the values above are examples rather than fixed constants.
 
 ### Liquidation process
 
@@ -135,7 +139,7 @@ When a `MarginManager` risk ratio falls below the liquidation threshold, anyone 
 3. The margin pool might also receive a reward (for example, 3%).
 4. If assets are insufficient, the pool records bad debt.
 
-Liquidations can be partial or full, depending on the position's health and the liquidator's input.
+Liquidations can be partial or full, depending on the position's health and the liquidator's input. For the step-by-step sequence, see [How does a liquidation work?](#liquidation-flow).
 
 ## `MarginRegistry` {#margin-registry}
 
@@ -148,7 +152,7 @@ The `MarginRegistry` serves as the central coordination point for the margin sys
 
 The registry enforces that only one margin pool can exist per asset type and ensures margin managers can only trade on enabled DeepBook pools.
 
-## Liquidation flow
+## How does a liquidation work? {#liquidation-flow}
 
 The following describes a typical liquidation scenario:
 
@@ -160,13 +164,13 @@ The following describes a typical liquidation scenario:
 6. **Pool update:** The margin pool processes the repayment and any potential bad debt.
 7. **Position update:** The manager's borrowed shares are reduced or cleared.
 
-## Interest accrual
+## How does interest accrue? {#interest-accrual}
 
 Interest accrues continuously in DeepBook Margin based on the utilization rate:
 
 $$\text{Utilization Rate} = \frac{\text{Total Borrowed}}{\text{Total Supplied}}$$
 
-The interest rate follows a kinked model:
+The interest rate follows a kinked (piecewise linear) model, where the kink is the utilization rate at which the slope of the rate curve changes:
 
 - Below the kink (for example, 80% utilization): Linear growth at a moderate rate.
 - Above the kink: Steep linear growth to discourage over-borrowing.
