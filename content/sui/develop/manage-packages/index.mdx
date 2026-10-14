@@ -46,7 +46,7 @@ An upgradeable package's `UpgradeCap` controls all of its future behavior, so tr
 
 :::
 
-Move packages on Sui are immutable objects. Once published, a package's bytecode never changes. Upgrading a package publishes a new object at a new address and links it to the original through the upgrade chain. This means every version of your package coexists onchain, and any package can call any version.
+Once published, a package's bytecode never changes. Upgrading a package publishes a new object at a new address and links it to the original through the upgrade chain. This means every version of your package coexists onchain, and any package can call any version, but a caller uses only the version whose address its dependency declaration explicitly references; it does not automatically resolve to other versions.
 
 Managing packages correctly requires you to:
 
@@ -64,9 +64,11 @@ You have several options for handling the `UpgradeCap`:
 - **Keep it in a wallet.** The simplest option. One key pair controls upgrades.
 - **Transfer it to a multisig address.** Requires multiple signers to approve upgrades.
 - **Wrap it in a custom upgrade policy.** Lets you enforce onchain rules such as time locks or governance votes before an upgrade proceeds.
-- **Destroy it.** Makes the package permanently immutable. No further upgrades are possible.
+- **Destroy it.** Makes the package permanently immutable. No further upgrades are possible, and this is irreversible: a destroyed `UpgradeCap` cannot be recovered.
 
 Choosing an upgrade policy is a one-time decision with long-term consequences. Consider your security model before publishing.
+
+The pages in this section cover publishing, upgrading, and dependency management.
 
 import DocCardList from '@theme/DocCardList';
 
