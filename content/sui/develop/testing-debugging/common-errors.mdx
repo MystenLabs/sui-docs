@@ -50,7 +50,9 @@ answer: >-
 
 This page provides troubleshooting solutions to common errors.
 
-## Address errors 
+If you are working with the TypeScript SDK or RPC, see [Error classification](#error-classification) to tell transport errors, which you retry with backoff, from execution errors, which you fix in your code or parameters.
+
+## How do I fix address errors?
 
 Errors in this section relate to Sui addresses.
 
@@ -85,7 +87,7 @@ The address you provided does not conform to a valid Sui address format. Sui add
 
 ##### Solution 
 
-Verify the address you provide starts with `0x`, is 64 hex digits long, and does not contain invalid characters.
+Verify the address you provide starts with `0x`, is followed by 64 hex digits (32 bytes, not counting the `0x` prefix), and does not contain invalid characters.
 
 **Resources**
 
@@ -93,7 +95,7 @@ Verify the address you provide starts with `0x`, is 64 hex digits long, and does
 
 ---
 
-## Move package errors 
+## How do I fix Move package errors?
 
 Errors in this section relate to Move packages.
 
@@ -106,8 +108,6 @@ This error occurs when your code receives a relative URL (`/path/to/file`) but e
 Specify the full URL path, including `http://` or `https://`. 
 
 **Resources**
-
-- [`sui::url`](/references/framework/sui_sui/url)
 
 - [`sui::url` source code](https://github.com/MystenLabs/sui/blob/c5f8b33b8090d75b1922f1497916b4010d9140d7/crates/sui-framework/sources/url.move).
 
@@ -125,7 +125,9 @@ The system cannot find one or more of the dependencies you list in your Move pac
 
 ##### Solution
 
-Check your `Move.toml` and verify each dependency you list has the correct path, and each path contains a valid `Move.toml` file. Ensure there are no typos and that you have initialized all dependencies.
+1. Check your `Move.toml` and verify each dependency you list has the correct path, with no typos.
+2. Verify each dependency path contains a valid `Move.toml` file.
+3. Ensure that you have initialized all dependencies.
 
 **Resources**
 
@@ -139,7 +141,9 @@ You have defined two or more modules with the same name or address in your proje
 
 ##### Solution 
 
-Verify that your source files do not use the same module name or address twice. Check your package's dependencies to see if there is a duplicate name defined. Check if you have a conflicting address assignment in the `Move.toml` file. 
+1. Verify that your source files do not use the same module name or address twice.
+2. Check your package's dependencies to see if there is a duplicate name defined.
+3. Check if you have a conflicting address assignment in the `Move.toml` file. 
 
 **Resources**
 
@@ -234,7 +238,7 @@ Ensure the resource's value is zero. For coins or tokens, split or burn the valu
 ---
 
 
-## System errors
+## How do I fix system errors?
 
 Errors in this section relate to the system.
 
@@ -266,7 +270,7 @@ This error means that Move cannot access the file or directory due to insufficie
 
 Ensure your user account has the necessary read, write, or execute permissions for the target file or directory.
 
-On Unix and macOS systems, you can edit permissions with the `chmod` command:
+On Unix and macOS systems, you can edit permissions with the `chmod` command, replacing `/path/to/project/files` with the path to the file or directory Move cannot access:
 ```
 $ chmod -R u+rw /path/to/project/files
 ```
@@ -281,7 +285,7 @@ This gives you read and write permissions to all files and subdirectories at the
 
 #### `sui move build` command hangs 
 
-This behavior often occurs when you run commands on Windows 11 machines. 
+This behavior can occur when you run commands on Windows 11 machines. 
 
 ##### Solution 
 
@@ -306,7 +310,7 @@ Retry the request or increase the timeout duration if you control the client.
 
 ---
 
-## Transaction errors 
+## How do I fix transaction errors?
 
 Errors in this section relate to transactions.
 
@@ -472,7 +476,7 @@ The sender address either has insufficient SUI balance or the gas coin already s
 
 ---
 
-## SDK and RPC errors
+## How do I fix SDK and RPC errors?
 
 Errors in this section relate to the TypeScript SDK, RPC responses, and transaction construction.
 
