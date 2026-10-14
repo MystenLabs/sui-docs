@@ -122,9 +122,9 @@ The following steps walk through the flow:
 
 1. The player drags a card from a tableau column to a foundation pile. The frontend validates the move locally (color, rank, suit) using `useSolitaireGameMoves`.
 
-2. The frontend updates the board optimistically (moves the card visually) and builds a `from_column_to_pile` PTB.
+2. The frontend updates the board optimistically (moves the card visually) and builds a `from_column_to_pile` programmable transaction block (PTB).
 
-3. The PTB goes through the sponsored transaction flow: `/api/sponsor` → wallet sign → `/api/execute`.
+3. The PTB goes through the sponsored transaction flow: `/api/sponsor` → wallet sign → `/api/execute`. If the sponsorship request fails, see [Enoki sponsorship fails](#enoki-sponsorship-fails).
 
 4. The Move function validates the placement rules onchain. If the source column had hidden (face-down) cards, it consumes `&Random` to reveal the next card and emits a `CardRevealed` event.
 
@@ -142,9 +142,9 @@ The entire game lives in a single `Game` object owned by the player. The `Game` 
 
 - `columns: vector<Column>`: 7 tableau columns, each with a count of face-down `hidden_cards` and a vector of face-up `cards`.
 
-- `available_cards: vector<u64>`: The pool of undealt cards used during random reveals.
+- `available_cards: vector<u64>`: The pool of undealt cards used during random reveals. Because the deck and columns store only a count of hidden cards rather than their IDs, a hidden card's identity comes from this pool at the moment it is revealed.
 
-Cards are represented as integers 0 through 51. The suit and rank derive from the card ID: `rank = id % 13` (0=Ace through 12=King), `suit = id / 13` (0=Clubs, 1=Spades, 2=Hearts, 3=Diamonds). Cards 0 through 25 are black (Clubs, Spades), 26 through 51 are red (Hearts, Diamonds).
+Cards are represented as integers 0 through 51. The suit and rank derive from the card ID: `rank = id % 13` (0=Ace through 12=King), `suit = id / 13` (0=Clubs, 1=Spades, 2=Hearts, 3=Diamonds). For example, card 27 is the Two of Hearts: `27 % 13 = 1` (Two) and `27 / 13 = 2` (Hearts, using integer division). Cards 0 through 25 are black (Clubs, Spades), 26 through 51 are red (Hearts, Diamonds).
 
 ## Prerequisites
 
@@ -187,7 +187,7 @@ Cards are represented as integers 0 through 51. The suit and rank derive from th
 </TabItem>
 </Tabs>
 
-## Setup
+## How to set up the example
 
 Follow these steps to set up the example locally.
 
@@ -206,7 +206,7 @@ $ sui move build
 $ sui client publish --gas-budget 200000000
 ```
 
-Record the package ID from the publish output.
+Record the package ID from the publish output. It is the `PackageID` value under `Published Objects`. The following is example output; your package ID will be different. You need this value in Step 3.
 
 ```
 │ Published Objects:                                                                               │
@@ -238,9 +238,11 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
 ADMIN_SECRET_KEY=AN_ADMIN_SECRET
 ```
 
+Replace `PACKAGE_ID` with the `PackageID` value you recorded from the publish output in Step 2.
+
 Set `ADMIN_SECRET_KEY` as a secret value only the admin should have access to. Use a random string generator to create this value.
 
-## Run the example
+## How to run the example
 
 Start the frontend:
 
