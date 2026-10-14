@@ -28,6 +28,8 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+This page shows how to create a `PackageInfo` object for your Move package in the Move Registry (MVR), add source code information to it, configure reverse resolution by setting a `default` metadata entry, and transfer the object to a safe address.
+
 :::caution
 
 The TypeScript examples assume that you use the [MVR plugin](./tooling/typescript-sdk) for the Sui TypeScript SDK. The Sui CLI examples do not use the MVR plugin.
@@ -38,7 +40,12 @@ The TypeScript examples assume that you use the [MVR plugin](./tooling/typescrip
 
 You should create a `PackageInfo` object for your package when you first deploy it, once for each network. You can then treat the object as the source of truth for metadata of your package.
 
-The following example works for both Mainnet and Testnet.
+The following example works for both Mainnet and Testnet. It performs these steps in a single transaction:
+
+1. Create the `PackageInfo` object with `package_info::new`, passing in your `UpgradeCap`.
+2. Create a display object with `display::default` and set it on the `PackageInfo` object with `package_info::set_display`.
+3. Set the `default` metadata to your MVR name with `package_info::set_metadata`, which enables [reverse resolution](#how-reverse-resolution-works) for that network.
+4. Transfer the `PackageInfo` object to a safe address with `package_info::transfer`.
 
 <Tabs groupId='language'>
   <TabItem label="TypeScript" value='typescript'>
@@ -111,7 +118,7 @@ sui client ptb \
   </TabItem>
 </Tabs>
 
-## Reverse resolution
+## How reverse resolution works
 
 Reverse resolution allows you to look up the human-readable name (like @suins/core or suins.sui/core) associated with a given package ID, regardless of which version of the package you have. This is useful for identifying and verifying packages onchain, especially when working with tools or interfaces that reference package IDs directly.
 
@@ -149,7 +156,7 @@ Output:
 
 You can add source code information on your `PackageInfo` object using the following setup.
 
-To update the source for a version, first call `@mvr/metadata::package_info::unset_git_versioning` to remove the existing information.
+If a version already has source code information and you want to replace it, first call `@mvr/metadata::package_info::unset_git_versioning` to remove the existing information (see [Remove or update source code information](#remove-or-update-source-code-information)). You do not need to do this when adding information for a version for the first time.
 
 <Tabs groupId='language'>
   <TabItem label="TypeScript" value='typescript'>
@@ -234,7 +241,7 @@ You can transfer the `PackageInfo` object to another address (or object) by the 
   </TabItem>
   <TabItem label="Sui CLI" value='cli'>
   ```bash
-  sui client ptb --transfer-objects "[@<packageInfo>]" @<Your safe address>
+  sui client ptb --move-call @mvr/metadata::package_info::transfer @<packageInfo> @<Your safe address>
   ```
   </TabItem>
 </Tabs>
