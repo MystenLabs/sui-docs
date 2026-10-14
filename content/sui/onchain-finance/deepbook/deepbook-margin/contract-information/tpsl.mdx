@@ -40,10 +40,10 @@ The Take Profit Stop Loss (TPSL) module enables conditional orders that automati
 
 ## How TPSL works
 
-1. **Create a condition:** Define whether the order should trigger when the price goes above or below a specified trigger price.
-2. **Create a pending order:** Specify the order details (limit or market order) that the system places when the condition is met.
-3. **Add conditional order:** Combine the condition and pending order, and add them to your margin manager.
-4. **Execution:** Anyone can call the permissionless `execute_conditional_orders` function to execute orders whose conditions are met. This is typically handled by keepers or bots monitoring the market.
+1. **Create a condition:** Define whether the order should trigger when the price goes above or below a specified trigger price, using `new_condition`.
+2. **Create a pending order:** Specify the order details (limit or market order) that the system places when the condition is met, using `new_pending_limit_order` or `new_pending_market_order`.
+3. **Add conditional order:** Combine the condition and pending order, and add them to your margin manager using `add_conditional_order`.
+4. **Execution:** Anyone can call the permissionless `execute_conditional_orders` function to execute orders whose conditions are met. This is typically handled by keepers or bots: automated programs that monitor the market and submit execution transactions. If a conditional order fails to execute due to insufficient funds, the system emits a `ConditionalOrderInsufficientFunds` event.
 
 Conditional orders are stored in sorted vectors for efficient execution:
 - `trigger_below`: Orders that trigger when the price falls below the trigger price (sorted from high to low)
@@ -169,6 +169,8 @@ Execute conditional orders whose conditions are met. This is a permissionless fu
 
 <details>
 <summary>Read endpoints</summary>
+
+Use these read-only functions to query the conditional orders stored on a margin manager and the fields of their conditions and pending orders.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/tpsl.move"
