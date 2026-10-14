@@ -105,7 +105,7 @@ The `path` field corresponds to the resource's URL path (for example, `/index.ht
 Because the site object is a standard Sui object, it has a single owner: the wallet that deployed the site. Only that wallet can update or destroy the site. Ownership can be transferred to a different wallet. You can also assign a SuiNS name to the object to give your site a human-readable domain.
 
 :::info
-Blobs are stored for a fixed number of [epochs](/develop/sui-architecture/epochs). On Mainnet, each epoch lasts 14 days. On Testnet, each epoch lasts 1 day. The maximum storage duration is 53 epochs.
+Blobs are stored for a fixed number of [epochs](/develop/sui-architecture/epochs). On Mainnet, each epoch lasts 14 days. On Testnet, each epoch lasts 1 day. The maximum storage duration is 53 epochs. The `--epochs` value you pass to `deploy` sets how long your site stays available, so multiply it by the epoch length of your target network when you plan a deployment.
 :::
 
 ### The site-builder CLI
@@ -116,7 +116,7 @@ The `site-builder` is a Rust CLI tool that creates and manages Walrus Sites. It 
 
 A portal resolves and serves a Walrus Site to a visitor's browser. When a visitor navigates to a Walrus Site URL, the portal:
 
-1. Resolves the subdomain to a Sui object ID, either through a SuiNS name lookup or by decoding the Base36-encoded object ID from the subdomain.
+1. Resolves the subdomain to a Sui object ID, either through a SuiNS name lookup or by decoding the Base36-encoded object ID from the subdomain. The Base36 subdomain is the site object ID in another format; `site-builder convert` converts a site object ID to it.
 2. Reads the site object's dynamic fields from Sui to get the resource map.
 3. Fetches each resource from Walrus using the `blob_id` from that map.
 4. Returns the resource to the browser with the appropriate headers.
@@ -170,14 +170,21 @@ The stable branch of Walrus Sites targets Mainnet. Before deploying to productio
 
 ### Configuration
 
-`site-builder` requires a `sites-config.yaml` configuration file. Download it for your target network:
+`site-builder` requires a `sites-config.yaml` configuration file. Download it for your target network, replacing `$NETWORK` with `testnet` or `mainnet`:
 
 ```bash
 $ curl https://raw.githubusercontent.com/MystenLabs/walrus-sites/refs/heads/$NETWORK/sites-config.yaml \
     -o ~/.config/walrus/sites-config.yaml
 ```
 
-Replace `$NETWORK` with `testnet` or `mainnet`. By default, `site-builder` looks for `sites-config.yaml` in the following locations, in order: the current working directory, `$XDG_CONFIG_HOME/walrus/`, `~/.config/walrus/`, and `~/.walrus/`.
+For example, to download the Testnet configuration:
+
+```bash
+$ curl https://raw.githubusercontent.com/MystenLabs/walrus-sites/refs/heads/testnet/sites-config.yaml \
+    -o ~/.config/walrus/sites-config.yaml
+```
+
+By default, `site-builder` looks for `sites-config.yaml` in the following locations, in order: the current working directory, `$XDG_CONFIG_HOME/walrus/`, `~/.config/walrus/`, and `~/.walrus/`.
 
 To use a file in a different location, pass the `--config` flag to any command:
 
@@ -223,7 +230,7 @@ Walrus Sites support almost any traditional static Web2 site built for modern br
 
 For the full list with technical detail, see [Known Restrictions](https://docs.wal.app/docs/sites/known-restrictions).
 
-## Deploying a site
+## How do I deploy a Walrus Site?
 
 To deploy a site, your build output directory must include an `index.html` at the root. The Walrus Snake example has the following structure:
 
@@ -303,7 +310,7 @@ The fields are:
 
 For full field reference, validation rules, and additional examples, see [Site Configuration](https://docs.wal.app/docs/sites/configuration/site-configuration) and [Specifying HTTP Headers](https://docs.wal.app/docs/sites/configuration/specifying-http-headers) in the Walrus documentation.
 
-## Updating a site
+## How do I update a Walrus Site?
 
 When you update a site, the `deploy` command deletes all resources and re-uploads them together as a single quilt, even resources that have not changed. To update the Walrus Snake example, edit `examples/snake/index.html` and run `deploy` again:
 
@@ -311,7 +318,7 @@ When you update a site, the `deploy` command deletes all resources and re-upload
 $ site-builder --context=testnet deploy --epochs 1 examples/snake
 ```
 
-`deploy` reads the site object ID from `ws-resources.json` and updates the existing site. To update a different site than the one recorded in `ws-resources.json`, pass the object ID explicitly:
+`deploy` reads the site object ID from `ws-resources.json` and updates the existing site, so omit `--object-id` when `ws-resources.json` already records the site you want to update. To update a different site than the one recorded in `ws-resources.json`, pass the object ID explicitly:
 
 ```bash
 $ site-builder --context=testnet deploy \
@@ -325,7 +332,7 @@ The wallet you use must own the Walrus Site object to update it.
 Rebuild your site before running `deploy` again if you use a web framework. The `deploy` command uploads whatever is in the directory you point it at. Deploying without rebuilding uploads stale output.
 :::
 
-## Domain names
+## How do I point a SuiNS name at a Walrus Site?
 
 Without a SuiNS name, your site is only accessible through a Base36-encoded subdomain derived from the site object ID, for example `58gr4pinoayuijgdixud23441t55jd94ugep68fsm72b8mwmq2.wal.app`. Base36 subdomains are not supported on the `wal.app` portal, so a SuiNS name is required to browse your Mainnet site there. Base36 subdomains still work on local servers and alternative portals. To give your site a human-readable URL like `my-project.wal.app`, you must assign a SuiNS name to the site object.
 
