@@ -48,11 +48,11 @@ The Permissioned Asset Standard (PAS) solves this by proxying asset ownership th
 
 You can use PAS through the [TypeScript package](https://www.npmjs.com/package/@mysten/pas) or learn more in the [GitHub repo](https://github.com/MystenLabs/pas).
 
-## How it works
+## How does the Permissioned Asset Standard work?
 
 For each wallet address (or object ID), PAS creates a one-to-one derived Account. An Account is a shared object that holds assets on behalf of that address. The owner can prove ownership through an `Auth` proof, but cannot freely transfer the assets. This creates a proxy of ownership where the assets follow the constraints of PAS modules, and sequentially, the rules that an issuer defines across one or more packages through approval witnesses.
 
-Every time funds move, they go through hot potato requests that must collect a predefined set of approval stamps (witness structs) before they can resolve within the transaction. Hot potato requests have no `drop` or `store` ability, so the transaction aborts if the request is not resolved.
+Every time funds move, they go through hot potato requests that must collect a predefined set of approval stamps (witness structs: types defined in an issuer's package that act as type-level proofs of approval) before they can resolve within the transaction. Hot potato requests have no `drop` or `store` ability, so the transaction aborts if the request is not resolved.
 
 The following diagrams compare asset ownership with and without PAS:
 
@@ -72,7 +72,7 @@ There is no way to transfer a managed `Balance<C>` out of the system without goi
 
 For currencies, this is enforced at the Move type level:
 
-- `Balance<C>` is stored inside Accounts using `balance::send_funds` and `balance::redeem_funds` (derived object storage).
+- `Balance<C>` is stored as object balance on the Account UID (not as a field on the `Account` struct), using `balance::send_funds` and `balance::redeem_funds`. See [Balance tracking](#balance-tracking).
 
 - The only way to move funds is through request hot potatoes that must be resolved in the same transaction.
 
@@ -91,7 +91,7 @@ Namespace (shared, singleton)
 └── Templates             ← derived from (namespace_id, TemplateKey)
 ```
 
-All objects use derived addresses (`sui::derived_object`), making them deterministic and queryable without onchain lookups.
+All objects use derived addresses (`sui::derived_object`): each object's address is computed from a parent ID and a key, as shown in the preceding diagram. This makes them deterministic and queryable without onchain lookups.
 
 ### Namespace
 
@@ -134,7 +134,7 @@ The capability to manage a policy. Derived one-to-one from the policy UID and `P
 
 - Remove action approvals (makes requests for that action unresolvable)
 
-## The request pattern
+## How do requests move assets?
 
 Every state-changing operation in PAS follows the request hot potato pattern:
 
@@ -145,7 +145,7 @@ flowchart LR
 
 1. **Create:** An Account method wraps data `T` into a `Request<Action<T>>`. The request starts with an empty approval set.
 
-2. **Approve:** Your package calls `request.approve(MyWitness())` to stamp the request with a type-level proof. You can collect multiple approvals from different packages.
+2. **Approve:** Your package calls `request.approve(MyWitness())` to stamp the request with a type-level proof. The pattern allows collecting multiple approvals from different packages, but in the current version each action supports only a single approval witness (see [Approval matching](#approval-matching)).
 
 3. **Resolve:** A resolution function verifies that the collected approvals exactly match the required approvals in the policy, destroys the request object, and either executes an action or unwraps data.
 
@@ -210,7 +210,7 @@ flowchart LR
 
 Deposits are permissionless (anyone can deposit into any Account). Withdrawals are internal (`public(package)`). Only PAS modules can withdraw, and only through requests.
 
-## Wallet ownership compared to object ownership
+## How do wallet-owned and object-owned Accounts differ?
 
 Accounts can be owned by wallet addresses or objects.
 
@@ -224,7 +224,7 @@ let auth = account::new_auth(ctx);
 let auth = account::new_auth_as_object(&mut my_object_uid);
 ```
 
-## Derived object addresses
+## How do I compute derived object addresses?
 
 All PAS objects (Accounts, policies) use deterministic derived addresses. You can compute them offchain:
 
