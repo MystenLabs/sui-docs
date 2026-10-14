@@ -136,13 +136,13 @@ sequenceDiagram
 
 The following steps walk through the flow:
 
-1. The user clicks **Unlock Image** on a locked post, triggering the `usePayForContent` hook.
+1. The user clicks **Unlock Image** on a locked post, triggering the `usePayForContent` hook (`frontend/src/hooks/usePayForContent.ts`).
 
 2. The frontend builds a `grant_access` transaction and sends it to the sponsor backend, which pays for gas and returns the co-signed transaction.
 
 3. The wallet signs and submits the transaction. The Move package creates a `ViewerToken` owned by the user.
 
-4. The frontend detects the new token, builds a `seal_approve_access` transaction, and sends it to the Seal key servers.
+4. The frontend detects the new token in the `usePostDecryption` hook (`frontend/src/hooks/usePostDecryption.ts`), builds a `seal_approve_access` transaction, and sends it to the Seal key servers.
 
 5. Seal dry-runs the transaction against the Move contract. Because the user now holds a valid `ViewerToken`, the contract confirms access.
 
@@ -161,7 +161,7 @@ This combination means Walrus handles storage and availability, Seal handles key
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
 
-- [x] An existing [React](https://react.dev/) frontend and a backend you can run scripts from.
+- [x] Familiarity with [React](https://react.dev/). The example app includes its own frontend and backend sponsor service.
 
 - [x] [Install the Sui CLI](/getting-started/onboarding/sui-install) and [fund an address with Testnet SUI](/getting-started/onboarding/get-coins).
 
@@ -193,6 +193,8 @@ PACKAGE_ID=YOUR_PACKAGE_ID
 
 Export a private key with `sui keytool export --key-identity YOUR_WALLET_ADDRESS` and copy the `exportedPrivateKey` value, which starts with `suiprivkey1`.
 
+The frontend configures the Enoki API key and Google Client ID in `main.tsx`. Create the Enoki API key in your [Enoki](https://portal.enoki.mystenlabs.com/) project.
+
 ## How the pieces fit together
 
 3 decisions carry over to any app that combines these primitives:
@@ -202,6 +204,8 @@ Export a private key with `sui keytool export --key-identity YOUR_WALLET_ADDRESS
 - **Sponsor gas if users authenticate with zkLogin.** A user who signed in with Google has no SUI. The backend co-signs transactions so the wallet never needs a funded balance. See [Sponsored Transactions](/develop/transaction-payment/sponsor-txn).
 
 ## Key code highlights
+
+The snippets in this section render from the [`onlyfins-example-app`](https://github.com/MystenLabs/onlyfins-example-app) repository. The Move module is `frontend/move/posts/sources/posts.move`, and the hooks are `frontend/src/hooks/usePayForContent.ts` and `frontend/src/hooks/usePostDecryption.ts`. If the snippets do not render, open those files in the repository.
 
 <CodeWalkthrough source="frontend/move/posts/sources/posts.move" org="MystenLabs" repo="onlyfins-example-app" language="move">
   <Step lines="27-43" title="`create_post` with optional encryption">
@@ -268,7 +272,7 @@ The following sections address common issues with this example.
 
 **Cause:** Seal session keys have a 30-minute TTL. The key expired between signing and attempting decryption.
 
-**Fix:** Click the button in the modal to sign a new session key. The app signs automatically and resumes decryption.
+**Fix:** Click the button in the modal to sign a new session key. The app signs automatically and resumes decryption. Expiry is expected behavior: as the caution at the top of this page notes, enforce session-key expiry rather than extending sessions to avoid this prompt.
 
 ### Encrypted image fails to load
 
