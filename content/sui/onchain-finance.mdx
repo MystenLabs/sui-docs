@@ -36,7 +36,7 @@ answer: >-
 
 Sui supports a broad set of onchain finance primitives. You can create and manage fungible tokens, build trading infrastructure with DeepBook, enforce asset policies through Kiosk, and define tokenomics for your protocol. These tools work together to support applications ranging from decentralized exchanges to regulated payment systems.
 
-Sui's object model gives financial primitives concrete ownership semantics. Every Coin, order, or policy is a Sui object with a defined owner. Ownership is enforced at the consensus layer, so transfers and trades settle with the same finality as any other Sui transaction.
+Sui's object model gives financial primitives concrete ownership semantics. Every Coin, order, or policy is a Sui object with a defined owner. Ownership is recorded on the object itself, so transfers and trades settle with the same finality as any other Sui transaction.
 
 Programmable transaction blocks (PTBs) let you compose multiple financial operations into a single atomic transaction. For example, you can split a Coin, place an order on DeepBook, and transfer the result to a recipient all in one transaction, with no intermediate state that could be exploited.
 
