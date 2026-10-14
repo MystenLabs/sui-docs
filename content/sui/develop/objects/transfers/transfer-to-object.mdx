@@ -59,6 +59,8 @@ When you transfer an object to another object, you're establishing a form of par
 
 These restrictions for accessing sent child objects are enforced dynamically by providing mutable access to the parent object's `UID` during the execution of the transaction. Because of this, you can transfer objects to and receive them from [address-owned](/develop/objects/object-ownership/address-owned) objects, [dynamic field](/develop/objects/dynamic-fields) objects, [wrapped](/develop/objects/object-ownership/wrapped) objects, and [shared](/develop/objects/object-ownership/shared) objects.
 
+Mutable access to the `UID` means a mutable reference (`&mut UID`) to it, and you can't get one unless the module that defines the object's type exposes it. That is how the parent's module controls who can receive its child objects. See [Receive objects](#receive-objects) for details.
+
 :::info
 
 The transfer to object mechanism is not supported for [party objects](/develop/objects/object-ownership/party) whose owning address corresponds to an object ID.
@@ -95,7 +97,7 @@ transfer::public_transfer(b, @0xADD);
 transfer::public_transfer(c, @0x0B);
 ```
 
-## Querying objects owned by an object
+## How do I query objects owned by an object? {#querying-objects-owned-by-an-object}
 
 Because there is no difference in the result of the object transfer, the same owned-object query works whether the 32-byte ID is an address or an object ID. Where the legacy `suix_getOwnedObjects` JSON-RPC method inferred which one you meant, the GraphQL `ObjectFilter` lets you state it with `ownerKind`.
 
@@ -131,11 +133,11 @@ query {
 
 Sui Foundation disabled JSON-RPC on Mainnet full nodes. If your application still calls `suix_getOwnedObjects`, see the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration).
 
-## Receive objects
+## How do I receive objects sent to an object? {#receive-objects}
 
-An object must receive another object before it can use it. To receive the object, use a `Receiving(o: ObjectRef)` argument type in a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). This argument takes an object reference containing the object's `ObjectID`, `Version`, and `Digest`, similar to address-owned object arguments. However, `Receiving` PTB arguments are not passed as an owned value or mutable reference within the transaction.
+An object must receive another object before it can use it. To receive the object, use a `Receiving(o: ObjectRef)` argument type in a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). This argument takes an object reference containing the object's `ObjectID`, `Version`, and `Digest`, similar to address-owned object arguments. However, `Receiving` PTB arguments are not passed as an owned value or mutable reference within the transaction. Instead, each one becomes a `Receiving<T>` value, also called a receiving ticket, that represents the ability to receive the referenced object.
 
-The [`transfer`](/references/framework/sui_sui/transfer) module in the Sui framework defines the core receiving interface in Move:
+The `transfer` module in the Sui framework defines the core receiving interface in Move:
 
 ```move
 module sui::transfer;
@@ -179,12 +181,12 @@ Because `sui::transfer::Receiving` has only the `drop` ability, the existence of
 
 Generally, if you want to allow receiving objects from [shared](/develop/objects/object-ownership/shared) objects that are defined in the module, add dynamic authorization checks. Otherwise, anyone could receive sent objects. In this example, a shared object (`SharedObject`) holds a counter that anyone can increment, but only the address `0xB0B` can receive objects from the shared object.
 
-Because the `receive_object` function is generic over the object being received, it can only receive objects that are both `key` and `store`. `receive_object` must also use the [`transfer::public_receive`](/references/framework/sui_sui/transfer#sui_transfer_public_receive) function to receive the object and not [`transfer::receive`](/references/framework/sui_sui/transfer#sui_transfer_receive) because you can only use `receive` on objects defined in the current module.
+Because the `receive_object` function is generic over the object being received, it can only receive objects that are both `key` and `store`. `receive_object` must also use the `transfer::public_receive` function to receive the object and not `transfer::receive` because you can only use `receive` on objects defined in the current module.
 
 ```move
 module examples::shared_object_auth;
 
-use transfer::Receiving;
+use sui::transfer::Receiving;
 
 const EAccessDenied: u64 = 0;
 const AuthorizedReceiverAddr: address = @0xB0B;
@@ -230,9 +232,9 @@ module examples::account;
 
 use sui::dynamic_field as df;
 use sui::coin::{Self, Coin};
-use transfer::Receiving;
+use sui::transfer::Receiving;
 
-const EBalanceDONE: u64 = 1;
+const EBalanceNotFound: u64 = 1;
 
 /// Account object that `Coin`s can be sent to. Balances of different types
 /// are held as dynamic fields indexed by the `Coin` type's `type_name`.
@@ -270,7 +272,7 @@ public fun withdraw<T>(account: &mut Account, amount: u64, ctx: &mut TxContext):
     let account_balance_type = AccountBalance<T>{};
     let account_uid = &mut account.id;
     // Make sure what we are withdrawing exists
-    assert!(df::exists_(account_uid, account_balance_type), EBalanceDONE);
+    assert!(df::exists_(account_uid, account_balance_type), EBalanceNotFound);
     let balance: &mut Coin<T> = df::borrow_mut(account_uid, account_balance_type);
     balance.split(amount, ctx)
 }
@@ -286,9 +288,9 @@ public fun transfer_account(account: Account, to: address, _ctx: &mut TxContext)
 
 ### Custom receiving rules
 
-Just like with [custom transfer policies](/develop/objects/transfers/custom-rules), Sui allows for the definition of custom receivership rules for `key`-only objects. In particular, you can use the `transfer::receive` function only on objects defined in the same module as the call to [`transfer::receive`](/references/framework/sui_sui/transfer#sui_transfer_receive), just like you can use the [`transfer::transfer`](/references/framework/sui_sui/transfer#sui_transfer_transfer) function only on objects defined in the module where it's being used.
+Just like with [custom transfer policies](/develop/objects/transfers/custom-rules), Sui allows for the definition of custom receivership rules for `key`-only objects. In particular, you can use the `transfer::receive` function only on objects defined in the same module as the call to `transfer::receive`, just like you can use the `transfer::transfer` function only on objects defined in the module where it's being used.
 
-Similarly for objects that also have the `store` ability, anyone can use the [`transfer::public_receive`](/references/framework/sui_sui/transfer#sui_transfer_public_receive) function to receive them, just like [`transfer::public_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_transfer) can transfer any objects that have the `store` ability on them.
+Similarly for objects that also have the `store` ability, anyone can use the `transfer::public_receive` function to receive them, just like `transfer::public_transfer` can transfer any objects that have the `store` ability on them.
 
 This coupled with the fact that the parent object can always define custom rules around receivership means that you must consider the following matrix of permissions around receiving objects and the abilities of the object being sent based on the child object's abilities:
 
@@ -297,11 +299,19 @@ This coupled with the fact that the parent object can always define custom rules
 | `key`           | Yes                        | Yes                       |
 | `key` + `store` | Yes                        | No                        |
 
-You can use and couple these restrictions to create powerful expressions. For example, you can implement [soul-bound objects](#soul-bound-example) using both custom transfer and receivership rules.
+Read the table as decision rules:
+
+- If the child object has `key` only, both the parent's module and the child's module can restrict receiving, because only the child's defining module can call `transfer::receive` on it.
+
+- If the child object has `key` and `store`, only the parent's module can restrict receiving, because anyone can call `transfer::public_receive` on it.
+
+You can use and couple these restrictions to create powerful expressions. For example, you can implement [soul-bound objects](#soul-bound-example) using both custom transfer and receivership rules, that is, restricting `transfer::transfer` and `transfer::receive` to the module that defines a `key`-only object.
 
 ## TypeScript and Rust SDKs
 
 Interact with `Receiving` transaction inputs as you would with other object arguments in the Sui TypeScript SDK. For example, if in the [Simple Account](#simple-account) example you want to send a transaction that receives a coin object with ID `0xc0ffee` that was sent to your account at `0xcafe`, you can do the following using either the [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript) or [Sui Rust SDK](https://github.com/MystenLabs/sui-rust-sdk):
+
+These snippets assume you have already set up an SDK client (`client`) and that `examplePackageId` (TypeScript) or `example_package_id` (Rust) holds the ID of the package where you published the `examples::account` module.
 
 <Tabs groupId="code-language">
 
@@ -356,7 +366,7 @@ You can implement a basic version of this with the following module where the `g
 ```move
 module examples::soul_bound;
 
-use transfer::{Self, Receiving};
+use sui::transfer::{Self, Receiving};
 
 /// Tried to return the wrong object.
 const EWrongObject: u64 = 0;
