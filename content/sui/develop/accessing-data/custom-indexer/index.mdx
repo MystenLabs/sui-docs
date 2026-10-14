@@ -1,9 +1,6 @@
 ---
 title: Custom Indexing Framework
-description: >-
-  The `sui-indexer-alt-framework` is a powerful Rust framework for building
-  high-performance, custom blockchain indexers on Sui. It provides customizable,
-  production-ready components for data ingestion, processing, and storage.
+description: Overview of the custom indexing framework's core interfaces — `process()`, `commit()`, and `prune()` — with links to subtopics like pipeline architecture.
 keywords:
   - indexer
   - framework
@@ -11,6 +8,11 @@ keywords:
   - dex
   - events
   - framework architecture
+  - process
+  - commit
+  - prune
+  - pipeline architecture
+  - custom indexer
 pagination_prev: null
 goal:
   description: >-
@@ -34,13 +36,17 @@ answer: >-
   to define your data processing logic. Some common APIs include:.
 ---
 
-The custom indexing framework exposes specific interfaces that you implement to define your data processing logic. Some common APIs include:
+## What interfaces does the framework provide?
+
+The custom indexing framework (`sui-indexer-alt-framework`) exposes specific interfaces that you implement to define your data processing logic. Some common APIs include:
 
 - `process()`: Transform raw checkpoint data (transactions, events, object changes) into your desired database rows. This is where you extract meaningful information, filter relevant data, and format it for storage.
 
 - `commit()`: Store your processed data to the database with proper transaction handling. The framework calls this with batches of processed data for efficient bulk operations.
 
 - `prune()`: Clean up old data based on your retention policies (optional). Useful for managing database size by removing outdated records while preserving recent data.
+
+## Which pipeline type should you use?
 
 Sequential and concurrent pipeline types and their trade-offs are detailed in [Pipeline Architecture](/develop/accessing-data/custom-indexer/pipeline-architecture).
 
