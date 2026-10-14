@@ -72,7 +72,7 @@ $ cd sui/examples/rust/basic-sui-indexer
 
 That project contains the `Cargo.toml`, Diesel migrations, and every source file this guide imports code from. Its README covers database creation and migration setup. The [framework source](https://github.com/MystenLabs/sui/tree/main/crates/sui-indexer-alt-framework) lives in the same repo.
 
-## Add the framework dependency
+## How do I add the framework dependency?
 
 Add the following to your `Cargo.toml`:
 
@@ -101,7 +101,7 @@ This example uses the `TEXT` data type for `tx_digest`, but a production indexer
 
 `TEXT` keeps the digest readable and directly usable with external tools. Digests are `Base58` encoded, and because PostgreSQL cannot natively display `BYTEA` data in that format, storing it as `TEXT` lets you copy a digest from a query and paste it into an explorer like [SuiScan](https://suiscan.xyz/testnet/home).
 
-`BYTEA` stores the raw byte representation, which is more compact and significantly faster to compare than a string. Refer to [Binary data performance in PostgreSQL](https://www.cybertec-postgresql.com/en/binary-data-performance-in-postgresql/) on the CYBERTEC website for more information.
+`BYTEA` stores the raw byte representation, which is more compact and generally faster to compare than a string. Refer to [Binary data performance in PostgreSQL](https://www.cybertec-postgresql.com/en/binary-data-performance-in-postgresql/) on the CYBERTEC website for more information.
 
 :::
 
@@ -220,16 +220,16 @@ The key components:
 
 The example reads `DATABASE_URL` from the environment and passes it to `with_database_url`. The builder takes the URL as an argument, so your service can source it however it already handles configuration.
 
-## Choose a checkpoint source
+## Which checkpoint source should I use?
 
-Sui serves checkpoint data from several sources, and production indexers use different ones for backfill and steady state. See [Checkpoint Data Sources](/develop/accessing-data/custom-indexer/indexer-data-integration#checkpoint-data-sources) for the full comparison.
+Sui serves checkpoint data from several sources, and production indexers use different ones for backfill and steady state. See [Checkpoint Data Sources](/develop/accessing-data/custom-indexer/indexer-data-integration) for the full comparison.
 
 - **GCS buckets (production backfill and recovery):** `gs://mysten-testnet-checkpoints-use4` for Testnet or `gs://mysten-mainnet-checkpoints-use4` for Mainnet. These buckets have full checkpoint retention and are Requester Pays enabled, so configure GCS credentials and a billing project before using them.
 - **Fullnode gRPC (production steady state):** Use a production-grade endpoint from an [RPC provider](/develop/accessing-data/rpc-providers) for polling and streaming after the historical backfill reaches the network tip.
 - **Public-good fullnode gRPC (testing only):** `https://fullnode.testnet.sui.io:443`, `https://fullnode.mainnet.sui.io:443`, and `https://fullnode.devnet.sui.io:443`. Do not use these endpoints for production ingestion.
 - **Public HTTPS checkpoint stores (testing only, most recent 30 days):** `https://checkpoints.testnet.sui.io` for Testnet or `https://checkpoints.mainnet.sui.io` for Mainnet. Do not use these public-good endpoints for production ingestion.
 
-Before reading from a Requester Pays GCS bucket, configure credentials and a billing project, then pass the billing project in the `x-goog-user-project` header:
+Before reading from a Requester Pays GCS bucket, configure credentials and a billing project, then pass the billing project in the `x-goog-user-project` header. Replace `/path/to/gcp-credentials.json` and `your-billing-project` with your own credentials file and billing project:
 
 ```sh
 $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/gcp-credentials.json
@@ -246,7 +246,7 @@ $ cargo run -- \
 
 After the indexer reaches the network tip, stop it and restart it against fullnode gRPC. Existing pipelines resume from their committed watermarks, so no data is lost across the switch.
 
-**Phase 2, fullnode gRPC polling and streaming for steady state:**
+**Phase 2, fullnode gRPC polling and streaming for steady state.** Replace `https://your-rpc-provider.example:443` with the endpoint from your RPC provider:
 
 ```sh
 $ export FULLNODE_GRPC_URL=https://your-rpc-provider.example:443
@@ -256,7 +256,7 @@ $ cargo run -- \
     --streaming-url "$FULLNODE_GRPC_URL"
 ```
 
-For testing only, you can point at the public HTTPS checkpoint store instead:
+For testing only, you can point at the public HTTPS checkpoint store instead. Replace `RECENT_CHECKPOINT` with a checkpoint sequence number from within the most recent 30 days:
 
 ```sh
 $ cargo run -- \
@@ -272,7 +272,7 @@ Allow incoming network requests if your operating system prompts for them when t
 
 :::
 
-## Verify the pipeline
+## How do I verify the pipeline?
 
 Connect to your database and confirm rows are landing:
 
