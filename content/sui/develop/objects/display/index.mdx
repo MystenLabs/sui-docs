@@ -39,7 +39,7 @@ answer: >-
 
 Object Display is a template engine that controls how Sui objects appear in wallets, explorers, and other offchain applications. You define a set of key-value pairs where both keys and values are format strings. The keys represent display properties (for example, `name`, `description`, `image_url`, `link`), and the values are templates that reference fields on your object using `{field_name}` syntax.
 
-When a client (wallet, explorer, marketplace) renders your object, it reads the Display definition from the chain and substitutes the template variables with the object's actual field values. This enables onchain management of offchain representation without modifying the object's struct definition.
+When a client (wallet, explorer, marketplace) renders your object, it reads the Display definition from the chain and substitutes the template variables with the object's actual field values. For example, if an object has a field `level: 5`, the template `Level: {level}` renders as `Level: 5`. This enables onchain management of offchain representation without modifying the object's struct definition.
 
 ### Common use cases
 
@@ -58,6 +58,8 @@ Object Display V2 is the current Object Display standard. Use the `sui::display_
 Object Display V1 is legacy. Existing V1 displays were migrated to V2 in a system snapshot migration. If you need to manage a migrated display, claim its `DisplayCap<T>` when you are ready (see [Migrating to V2](/develop/objects/display/using-display#migrating-to-v2)).
 
 :::
+
+To work with Display from Move code, continue to [Using Display](/develop/objects/display/using-display) and the other pages in this section.
 
 import DocCardList from '@theme/DocCardList';
 
