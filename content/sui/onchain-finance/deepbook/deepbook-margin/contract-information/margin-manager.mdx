@@ -42,9 +42,11 @@ answer: >-
   DeepBook.
 ---
 
+## What is a margin manager?
+
 The `MarginManager` is a shared object that wraps a `BalanceManager` and provides the necessary capabilities to deposit, withdraw, trade, and manage leveraged positions. It enables users to borrow assets from margin pools to amplify their trading positions while managing risk through collateralization.
 
-Each `MarginManager` is associated with a specific DeepBook pool and can borrow from margin pools that allow trading on that pool. The margin manager tracks borrowed positions and enforces risk ratio limits to maintain system solvency.
+Each `MarginManager` is associated with a specific DeepBook pool and can borrow from margin pools that allow trading on that pool. The margin manager tracks borrowed positions and enforces risk ratio limits to maintain system solvency. The risk ratio represents the ratio of assets to debt, and higher ratios indicate healthier positions. See **Calculate risk ratio** in the API section.
 
 ## API
 
@@ -69,7 +71,7 @@ The `new()` function creates and shares a `MarginManager` in one transaction. It
 <details>
 <summary>Create a `MarginManager` with initializer</summary>
 
-The `new_with_initializer()` function creates a `MarginManager` and returns it along with an initializer hot potato. The initializer ensures the margin manager is properly shared after creation using the `share()` function.
+The `new_with_initializer()` function creates a `MarginManager` and returns it along with an initializer hot potato, a value that cannot be stored or dropped, so the transaction must consume it. The initializer ensures the margin manager is properly shared after creation using the `share()` function.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_manager.move"
@@ -189,6 +191,8 @@ Returns the risk ratio of the margin manager, which represents the ratio of asse
 
 <details>
 <summary>Read endpoints</summary>
+
+Use these functions to read the state of a `MarginManager`: its `BalanceManager`, assets, debts, owner, associated DeepBook pool, margin pool ID, borrowed shares, and whether it has base debt.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_manager.move"
