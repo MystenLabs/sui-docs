@@ -171,7 +171,7 @@ These 4 mistakes account for most payment integration bugs:
 
 - **Integer math only:** SUI has 9 decimals (1 SUI = 1,000,000,000 MIST). Never use floating-point arithmetic on token amounts. Always work in the smallest unit, MIST for SUI, and convert for display only.
 - **Per-coin-type decimals:** Not all tokens use 9 decimals. USDC on Sui has 6 decimals. Always check `CoinMetadata.decimals` for the specific coin type before you convert between human-readable and onchain amounts.
-- **Coin selection and merging:** A user might hold several `Coin` objects of the same type. If the payment requires more than any single coin holds, merge them first with `tx.mergeCoins()` in your transaction, or use `tx.splitCoins()` to extract the exact amount you need. Sending to an [address balance](#send-to-an-address-balance) avoids this, because deposits merge automatically.
+- **Coin selection and merging:** A user might hold several `Coin` objects of the same type. If the payment requires more than any single coin holds, merge them first with `tx.mergeCoins()` in your transaction, or use `tx.splitCoins()` to extract the exact amount you need.
 - **Gas coin reservation:** If you pay gas in SUI and also transfer SUI in the same transaction, the transaction implicitly uses the gas coin for gas. Split the transfer amount from the gas coin rather than selecting a separate SUI coin object, which avoids `insufficient gas` errors.
 
 ## Gas strategies
