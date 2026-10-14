@@ -39,7 +39,7 @@ The sections below cover the integration points, not the full API. For complete 
 
 :::
 
-## Configure your project for ES modules
+## How do I configure my project for ES modules?
 
 The Sui TypeScript SDK ships as an ES module, so your project's TypeScript configuration has to resolve ES modules. In a Node.js backend, that means `module` and `moduleResolution` settings such as `NodeNext`:
 
@@ -61,7 +61,7 @@ Frontend build tools such as Vite and Next.js handle this for you. If you do not
 $ npm create @mysten/dapp
 ```
 
-## Send a transaction from a backend script
+## How do I send a transaction from a backend script?
 
 A backend script signs with a key pair that you control. Load the secret key from an environment variable, never from a hardcoded string.
 
@@ -104,7 +104,7 @@ The `tx.coin` method sources the requested amount from your address balance when
 
 Always check the `$kind` field on the result. A transaction can be submitted and still fail onchain, so treat a `FailedTransaction` result as an error rather than assuming success.
 
-## Send a transaction from a frontend wallet
+## How do I send a transaction from a frontend wallet?
 
 A frontend app does not hold the user's key. The user's wallet signs the transaction through Sui dApp Kit, so your code only builds the transaction and hands it to the wallet.
 
