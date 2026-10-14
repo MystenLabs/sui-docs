@@ -25,7 +25,7 @@ keywords:
   - withdraw amount
   - withdraw settled amount
 goal:
-  description: Developer can use the DeepBookV3 SDK to leverage orders against pools
+  description: Developer can use the DeepBookV3 SDK to place, cancel, modify, and withdraw settled amounts for spot orders against DeepBook pools
   requires:
     - has_frontmatter:
         - title
@@ -66,13 +66,17 @@ Extending to leveraged trading? See [Integrating DeepBook Margin](/onchain-finan
 
 The DeepBookV3 SDK provides the following functions for leveraging orders against pools.
 
+Each call returns a function that takes a Sui `Transaction` object; add it to your transaction with `tx.add()`, as the [examples](#examples) show. Functions identify a pool by its pool key, such as `DEEP_DBUSDC` or `SUI_DBUSDC` (check `constants.ts` for more), and a balance manager by the key you initialized during client creation, such as `MANAGER_1`. Replace these example values with your own.
+
 ### placeLimitOrder
 
 Use `placeLimitOrder` to place limit orders. The call returns a function that takes a `Transaction` object.
 
+The `clientOrderId` you set is your own identifier for the order. It is different from the protocol `orderId` generated during order placement, which `cancelOrder`, `cancelOrders`, and `modifyOrder` use.
+
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap.
+- `params`: `SwapParams` object that represents the parameters for the swap. The limit order example below shows the `PlaceLimitOrderParams` interface with its fields.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/deepbook.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="placeLimitOrder" signatureOnly/>
 
@@ -82,7 +86,7 @@ Use `placeMarketOrder` to place market orders. The call returns a function that 
 
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap.
+- `params`: `SwapParams` object that represents the parameters for the swap. The market order example below shows the `PlaceMarketOrderParams` interface with its fields.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/deepbook.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="placeMarketOrder" signatureOnly/>
 
@@ -164,7 +168,9 @@ Use `withdrawSettledAmountsPermissionless` to withdraw settled amounts permissio
 
 The following examples demonstrate some custom functions for DeepBookV3 orders.
 
-### Limit orders
+The usage snippets are methods of an example `DeepBookMarketMaker` class that calls the SDK through `this.deepBook`. They are fragments to adapt inside your own class, not standalone code you can import.
+
+### How to place a limit order
 
 See the [Order API](/onchain-finance/deepbook/deepbookv3/contract-information/orders) for the different order types and self matching options.
 
@@ -209,7 +215,7 @@ customPlaceLimitOrder = (tx: Transaction) => {
 };
 ```
 
-### Place market order
+### How to place a market order
 
 Example of placing a market order.
 
@@ -226,7 +232,7 @@ interface PlaceMarketOrderParams {
 }
 
 // Example usage in DeepBookMarketMaker class
-// Place a market sell of 10 SUI in the SUI_DBUSDC pool
+// Place a market buy of 10 SUI in the SUI_DBUSDC pool
 customPlaceMarketOrder = (tx: Transaction) => {
 	const poolKey = 'SUI_DBUSDC'; // Pool key, check constants.ts for more
 	const managerKey = 'MANAGER_1'; // Balance manager key, initialized during client creation by user
@@ -243,7 +249,7 @@ customPlaceMarketOrder = (tx: Transaction) => {
 };
 ```
 
-### Cancel an order
+### How to cancel an order
 
 Example of canceling a single order in a pool for a balance manager.
 
@@ -267,7 +273,7 @@ cancelOrder = (tx: Transaction) => {
 };
 ```
 
-### Cancel all orders
+### How to cancel all orders
 
 Example of canceling all orders in a pool for a balance manager.
 
