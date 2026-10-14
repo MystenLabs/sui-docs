@@ -63,7 +63,7 @@ Installation instructions
 
 </summary>
 
-To set up and run a bridge node, you need to  You can install them using one of the following options: 
+To set up and run a bridge node, you need to install `sui` and `sui-bridge-cli`. You can install them using one of the following options: 
 
 Install from tip of `main`:
 
@@ -74,7 +74,7 @@ $ cargo install --locked --git "https://github.com/MystenLabs/sui.git" sui sui-b
 Install with a commit sha:
 
 ```sh
-$ cargo install --locked --git "https://github.com/MystenLabs/sui.git" --rev {SHA} sui sui-bridge-cli
+$ cargo install --locked --git "https://github.com/MystenLabs/sui.git" --rev <SHA> sui sui-bridge-cli
 ```
 
 </details>
@@ -82,7 +82,7 @@ $ cargo install --locked --git "https://github.com/MystenLabs/sui.git" --rev {SH
 </Tabs>
 
 
-## Committee registration
+## How to register with the bridge committee {#committee-registration}
 
 To join the network you must first register with the bridge validator committee.
 
@@ -143,7 +143,7 @@ Both key and URL are changeable **before the committee is finalized**. If you wa
 To double check you registered the correct metadata on chain, run
 
 ```sh
-$ sui-bridge-cli view-bridge-registration --sui-rpc-url {SUI-FULLNODE-URL}
+$ sui-bridge-cli view-bridge-registration --sui-rpc-url <SUI-FULLNODE-URL>
 ```
 
 ## Update metadata (after committee is finalized)
@@ -160,6 +160,8 @@ Authority key rotation is not supported yet.
 ## Bridge node
 
 You have several options when configuring your bridge node for performance and metrics monitoring. Follow the instructions in this section to configure your node for best results in your environment.
+
+A bridge node can optionally also run `BridgeClient`, which orchestrates bridge transfer requests by submitting transactions on the Sui network. `BridgeClient` is not required to run a bridge node; see [BridgeClient](#bridgeclient) to enable it.
 
 ### Bridge node hardware requirements
 
@@ -208,15 +210,17 @@ backend bridgevalidator
     server bridgevalidator 0.0.0.0:9191
 ```
 
+The `gt 50` limit in this example, measured over `http_req_rate(1s)`, is the same recommended rate limit of 50 requests/second per unique IP stated earlier.
+
 If choosing to use an open source load balancing option, make sure to set up metrics collection and alerting on the service.
 
-### Bridge node config
+### How to configure the bridge node {#bridge-node-config}
 
 Use `sui-bridge-cli` command to create a template. If you want to run `BridgeClient` (see the following section), pass `--run-client` as a parameter.
 
 ```sh
-$ sui-bridge-cli create-bridge-node-config-template {PATH}
-$ sui-bridge-cli create-bridge-node-config-template --run-client {PATH}
+$ sui-bridge-cli create-bridge-node-config-template <PATH>
+$ sui-bridge-cli create-bridge-node-config-template --run-client <PATH>
 ```
 
 The generated configuration includes the following parameters:
@@ -234,7 +238,7 @@ The generated configuration includes the following parameters:
 | `eth:eth-bridge-proxy-address` | The proxy address for Bridge Solidity contracts on Ethereum. |
 | `eth:eth-bridge-chain-id` | `10` for Ethereum Mainnet, `11` for Sepolia Testnet. |
 | `eth:eth-contracts-start-block-fallback` | The starting block BridgeNodes queries for from Ethereum FullNode. This number should be the block where Solidity contracts are deployed or slightly before. |
-| `metrics:push-url` | The URL of the remote Sui metrics pipeline (for example, `https://metrics-proxy.[testnet_OR_mainnet].sui.io:8443/publish/metrics`). See the [metrics push section](#metrics-push) for more details. |
+| `metrics:push-url` | The URL of the remote Sui metrics pipeline: `https://metrics-proxy.testnet.sui.io:8443/publish/metrics` for Testnet or `https://metrics-proxy.mainnet.sui.io:8443/publish/metrics` for Mainnet. See the [metrics push section](#metrics-push) for more details. |
 
 With `run-client: true`, you can find these additional fields in the generated config:
 
@@ -259,7 +263,7 @@ sui:
 To create a `BridgeClient` key pair, run
 
 ```sh
-$ sui-bridge-cli create-bridge-client-key <PATH_TO_BRIDGE_CLIENT_KEY>
+$ sui-bridge-cli create-bridge-client-key <PATH-TO-BRIDGE-CLIENT-KEY>
 ```
 This prints the newly created Sui Address. Then fund this address with some SUI for operations.
 
@@ -270,11 +274,11 @@ Build or install bridge node in one of the following ways:
 
 - Use `cargo install`.
     ```sh
-    $ cargo install --locked --git "https://github.com/MystenLabs/sui.git" --branch {BRANCH-NAME} sui-bridge
+    $ cargo install --locked --git "https://github.com/MystenLabs/sui.git" --branch <BRANCH-NAME> sui-bridge
     ```
     Or
     ```sh
-    $ cargo install --locked --git "https://github.com/MystenLabs/sui.git" --rev {SHA-NAME} sui-bridge
+    $ cargo install --locked --git "https://github.com/MystenLabs/sui.git" --rev <SHA-NAME> sui-bridge
     ```
 - Compile from source code
     ```sh
@@ -284,27 +288,27 @@ Build or install bridge node in one of the following ways:
     $ cd sui
     ```
     ```sh
-    $ git fetch origin {BRANCH-NAME|SHA}
+    $ git fetch origin <BRANCH-NAME-OR-SHA>
     ```
     ```sh
-    $ git checkout {BRANCH-NAME|SHA}
+    $ git checkout <BRANCH-NAME-OR-SHA>
     ```
     ```sh
     $ cargo build --release --bin sui-bridge
     ```
 - Use `curl`/`wget` pre-built binaries (for Linux/AMD64 only).
     ```sh
-    $ curl https://sui-releases.s3.us-east-1.amazonaws.com/{SHA}/sui-bridge -o sui-bridge
+    $ curl https://sui-releases.s3.us-east-1.amazonaws.com/<SHA>/sui-bridge -o sui-bridge
     ```
-- Use pre-built Docker image. Pull from Docker Hub: `mysten/sui-tools:{SHA}`
+- Use pre-built Docker image. Pull from Docker Hub: `mysten/sui-tools:<SHA>`
 
 
-### Run bridge node
+### How to run the bridge node {#run-bridge-node}
 
 Running bridge node is similar to running a Sui node using systemd or Ansible. The command to start the bridge node is:
 
 ```sh
-$ RUST_LOG=info,sui_bridge=debug sui-bridge --config-path {BRIDGE-NODE-CONFIG-PATH}
+$ RUST_LOG=info,sui_bridge=debug sui-bridge --config-path <BRIDGE-NODE-CONFIG-PATH>
 ```
 
 ### Ingress
@@ -314,10 +318,10 @@ Bridge node listens for TCP connections over port `9191` (or the preferred port 
 Test ingress with `curl` on a remote machine and expect a `200` response:
 
 ```sh
-$ curl -v {YOUR_BRIDGE_URL}
+$ curl -v <YOUR-BRIDGE-URL>
 ```
 
-### Bridge node monitoring
+### How to monitor the bridge node {#bridge-node-monitoring}
 
 Use `uptime` to check if the node is running.
 
@@ -359,7 +363,8 @@ To enable metrics push, set the following parameters in `BridgeNodeConfig`:
 
 ```yaml
 metrics:
-    push-url: https://metrics-proxy.[testnet|mainnet].sui.io:8443/publish/metrics
+    # Mainnet; for Testnet use https://metrics-proxy.testnet.sui.io:8443/publish/metrics
+    push-url: https://metrics-proxy.mainnet.sui.io:8443/publish/metrics
 ```
 
 The proxy authenticates pushed metrics by using the metrics key pair. It is similar to `sui-node` pushing metrics with `NetworkKey`. Unlike `NetworkKey`, the bridge node metrics key is not recorded on chain and can be ephemeral. The metrics key is loaded from the `metrics-key-pair` field in `BridgeNodeConfig` if provided, otherwise a new key pair is generated on the fly. The proxy queries node public keys periodically by hitting the metrics public API key of each node.
@@ -373,7 +378,7 @@ unable to push metrics: error sending request for url (xyz); new client will be 
 This is okay to ignore as long as it does not persist. Otherwise, try:
 
 ```sh
-$ curl -i  {your-bridge-node-url-on-chain}/metrics_pub_key
+$ curl -i  <YOUR-BRIDGE-NODE-URL-ON-CHAIN>/metrics_pub_key
 ```
 
 and make sure the public key is correctly returned.
