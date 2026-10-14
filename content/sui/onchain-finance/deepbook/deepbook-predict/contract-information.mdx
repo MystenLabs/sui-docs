@@ -504,6 +504,42 @@ Structure your code so none of these become assumptions:
 - **Admission grid:** Read it from the market. Admission tick size is mutable protocol state.
 - **Testnet timing:** Treat timing you measure on Testnet as an observation rather than a guarantee. Oracle update frequency and settlement latency are properties of the relayers, not of the contracts.
 
+### How do I plan a move to Mainnet? {#plan-for-mainnet}
+
+Moving an app from Testnet to Mainnet changes every deployment-specific value on this page: the package call targets and original IDs, the shared object IDs, the quote and PLP coin types, the oracle objects, the chain ID and indexing start checkpoint, and the trade path. Keep all of them behind the single network-keyed record above rather than in constants scattered through the code, so the switch is one configuration change.
+
+Keep using the identifiers on this page until a newer deployment explicitly replaces them, and ignore older package IDs from earlier deployments, as the caution under [Upgraded packages carry 2 IDs](#two-ids) explains. No page announces a new deployment, so watching the DeepBookV3 source branch is currently the only signal that one exists.
+
+## Live onchain events
+
+Stream events directly from a full node when a client needs them as they land, and back them with your own store for history. Predict emits its events from 4 modules under the Predict package: `config_events` for lifecycle and configuration, `order_events` for trading, `vault_events` for the pool and its queues, and `builder_code_events` for builder attribution. On Testnet, the queued-order events come from a fifth module, `queue_events`, in the `deepbook_predict_orders` package, so subscribe to both packages there. The following table lists the ones an integrator subscribes to most often, not every event each module declares:
+
+| **Event type** | **Emitted when** |
+| --- | --- |
+| `config_events::MarketCreated` | A lifecycle-cap holder creates and shares a new `ExpiryMarket` |
+| `config_events::ReferenceTickSet` | A market records its reference tick |
+| `config_events::MarketSettled` | A market settles, with `settlement_source` `0` for Pyth and `1` for Block Scholes |
+| `config_events::ExpiryMarketMintPausedUpdated` | An admin pauses or unpauses minting on one market |
+| `config_events::NoTradeWindowUpdated` | An admin changes `no_trade_window_ms` |
+| `order_events::OrderMinted` | A trader opens a position, or on Testnet, a queued mint fills |
+| `order_events::LiveOrderRedeemed` | A trader closes or reduces a live position before expiry, or on Testnet, a queued sell fills |
+| `queue_events::OrderEnqueued` | Testnet only: a trader places a queued order |
+| `queue_events::QueuedOrderFilled` | Testnet only: a queued order fills, beside the Predict order event |
+| `queue_events::QueuedOrderRefunded` | Testnet only: a queued order is refunded, with a reason code |
+| `queue_events::OpenRecordSettled` | Testnet only: the settlement walk pays an Open record |
+| `order_events::SettledOrderRedeemed` | The owner, or a permissionless caller on the owner's behalf, claims a settled position |
+| `vault_events::SupplyRequested` | An account queues a liquidity supply request |
+| `vault_events::SupplyFilled` | The flush fills a queued supply at its mark and mints PLP |
+| `vault_events::WithdrawFilled` | The flush fills a queued withdrawal at its mark and burns PLP |
+| `vault_events::RequestCancelled` | The owner cancels a queued request, or the flush refunds it |
+| `vault_events::FlushExecuted` | The flush drains the liquidity queues at one frozen net asset value (NAV) |
+| `vault_events::FlushRestarted` | A new pool valuation supersedes one that never finished |
+| `builder_code_events::BuilderCodeCreated` | A caller creates a derived `BuilderCode` |
+| `builder_code_events::BuilderCodeSet` | An account changes its sticky builder code attribution |
+| `builder_code_events::BuilderFeesClaimed` | A builder code owner claims accumulated builder fees |
+
+The `SupplyFilled` and `WithdrawFilled` payloads name their quote amounts `usdc_amount`, `fee_usdc`, and `usdc_remaining`, and `WithdrawRequested` carries `min_usdc_out`.
+
 ### Stream events over gRPC
 
 Stream Predict events with `SubscriptionService.SubscribeEvents`, filtering on the Predict package ID, and page the same events historically with `LedgerService.ListEvents` under an identical filter. Sui full nodes no longer serve the older WebSocket subscription API, so do not build on `sui_subscribeEvent`.
