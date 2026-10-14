@@ -42,7 +42,7 @@ answer: >-
   and manage the enclave.
 ---
 
-The Nautilus server logic is located in the directory [`src/nautilus-server`](https://github.com/MystenLabs/nautilus/tree/main/src/nautilus-server). To customize the application, refer to the [Using Nautilus guide](/sui-stack/nautilus/using-nautilus) as a template.
+The Nautilus server logic is located in the directory [`src/nautilus-server`](https://github.com/MystenLabs/nautilus/tree/main/src/nautilus-server). To customize the application, refer to the [Using Nautilus guide](/sui-stack/nautilus/using-nautilus) as a template. The commands on this page use the weather example from that guide; it is an example, not a required use case, and your application defines its own `process_data` logic.
 
 :::info 
 
@@ -60,7 +60,7 @@ The following files typically do not require modification:
 
 - `main.rs` initializes the ephemeral key pair and sets up the HTTP server.
 
-## Local testing 
+## Test locally
 
 You can test most functionality by running the server locally. However, the `get_attestation` endpoint doesn't work locally because it requires access to the Nitro Secure Module (NSM) driver, which is only available when running the code inside the configured EC2 instance. This endpoint functions correctly when the server runs within the enclave as described in the setup steps.
 
@@ -96,7 +96,7 @@ $ curl -H 'Content-Type: application/json' -d '{"payload": { "location": "San Fr
 
 ## Check reproducibility
 
-Every enclave built from the same source code (everything in `/src`) can produce identical PCRs through reproducible builds. This includes any traffic forwarding changes made in `run.sh` (see branch `example-configuration`).
+Every enclave built from the same source code (everything in `/src`) can produce identical PCRs (Platform Configuration Registers) through reproducible builds. This includes any traffic forwarding changes made in `run.sh` (see branch `example-configuration`).
 
 ```sh
 $ cd nautilus/
@@ -123,7 +123,7 @@ $ PCR1=911c87d0abc8c9840a0810d57dfb718865f35dc42010a2d5b30e7840b03edeea83a26aad5
 $ PCR2=21b9efbc184807662e966d34f390821309eeac6802309798826296bf3e8bec7c10edb30948c90ba67310f7b964fc500a
 ```
 
-## Enclave management
+## Manage enclaves
 
 The template allows the admin to register multiple `Enclave` objects associated with one `EnclaveConfig` that defines PCRs. Each `Enclave` object represents a specific enclave instance with a unique public key, while the `EnclaveConfig` tracks the PCR values and their associated version. You can register all new `Enclave` instances with the latest `config_version` to ensure consistency.
 
@@ -133,9 +133,9 @@ This design allows the admin to run multiple instances of the same enclave with 
 
 The deployer of the smart contract holds the `EnclaveCap`, which allows for updating the PCRs and enclave public key if the Nautilus server code has been modified. You can retrieve the new PCRs using `make ENCLAVE_APP=<APP> && cat out/nitro.pcrs`. To update the PCRs or register the enclave again, reuse the steps outlined in the previous section.
 
-## Verified computation in Move
+## Use verified computation in Move
 
-Write frontend code to interact with the enclave for computation, and then send the resulting data to the Move contract for use. For the [weather example](/sui-stack/nautilus/using-nautilus), you can request the enclave to retrieve weather data for a specific location:
+Write frontend code to interact with the enclave for computation, and then send the resulting data to the Move contract for use. For the [weather example](/sui-stack/nautilus/using-nautilus), you can request the enclave to retrieve weather data for a specific location. Replace `<PUBLIC_IP>` with the public IP address of the EC2 instance running the enclave:
 
 ```sh
 $ curl -H 'Content-Type: application/json' -d '{"payload": { "location": "San Francisco"}}' -X POST http://<PUBLIC_IP>:3000/process_data
@@ -163,7 +163,7 @@ $ curl -H 'Content-Type: application/json' -d '{"payload": { "location": "San Fr
 
 </details>
 
-Then use the values from the enclave response, `signature`, `timestamp`, `location`, and `temperature`, to call `update_weather` in the Move contract. In this example, the call is demonstrated using a script, but it should be integrated into your app frontend.
+Then use the values from the enclave response, `signature`, `timestamp`, `location`, and `temperature`, to call `update_weather` in the Move contract. In this example, the call is demonstrated using a script, but it should be integrated into your app frontend. The script takes the following positional arguments, in order: the app package ID, the module name, the one-time witness (OTW) name, the enclave object ID, the signature, the timestamp in milliseconds, the location, and the temperature.
 
 ```sh
 $ sh ../../update_weather.sh \
