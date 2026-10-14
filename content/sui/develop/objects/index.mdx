@@ -53,9 +53,9 @@ Move packages are also objects. When you publish a Move package to Sui, the pack
 
 Transactions on Sui take objects as inputs and produce objects as outputs. When a transaction runs, it can read, mutate, transfer, or delete its input objects. The resulting objects become available for future transactions.
 
-Object ownership determines how a transaction can use an object. An address-owned object can only be used by transactions signed by the owner. A shared object can be used by any transaction, but requires consensus to order concurrent access.
+Object ownership determines how a transaction can use an object. An address-owned object can only be used by transactions signed by the owner. A shared object can be used by any transaction, but requires consensus to order concurrent access. An object can also be owned by another object, and some objects, such as published Move packages, are immutable.
 
-The following example shows a simple Move struct that defines a custom object type:
+To see how these concepts appear in code, the following example shows a simple Move struct that defines a custom object type:
 
 ```move
 public struct TodoList has key {
@@ -65,6 +65,8 @@ public struct TodoList has key {
 ```
 
 The `key` ability marks this struct as a Sui object. The `id` field of type `UID` gives each instance a unique onchain identifier. When you create a value of this type and transfer it to an address, it becomes an owned object on Sui.
+
+The pages in this section cover the object model, how to use objects, and the different object ownership methods in more detail.
 
 import DocCardList from '@theme/DocCardList';
 
