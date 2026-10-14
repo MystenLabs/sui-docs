@@ -45,26 +45,26 @@ answer: >-
   operation.
 ---
 
-Every Sui transaction pays for 2 things: **computational execution** and **long-term object storage**. How you source those funds (from coins, address balances, a sponsor, or at zero cost) depends on what the transaction does and who pays.
+Every Sui transaction pays for 2 things: **computational execution** and **long-term object storage**. How you source those funds (from coins, address balances, a sponsor, or at zero cost) depends on what the transaction does and who pays. For the fee formula and budget rules, see [Gas Fees](/develop/transaction-payment/gas-in-sui).
 
 ## Migrate to address balances {#migration-journey}
 
-[Address balances](/onchain-finance/asset-custody/address-balances) replace UTXO-style coin selection with a single address-owned balance per coin type. Moving your app onto them is 3 steps, each covered by a section on this page and single-sourced from the canonical address-balance guides:
+[Address balances](/onchain-finance/asset-custody/address-balances) replace UTXO-style coin selection with a single address-owned balance per coin type. They are an alternative to holding funds as individual coin objects, and the two coexist. Moving your app onto them is 3 steps, each covered by a section on this page and single-sourced from the canonical address-balance guides:
 
 1. **Source funds automatically.** Replace manual coin selection with `coinWithBalance`, which draws from address balances first and falls back to coin objects. See [Coin selection with `coinWithBalance`](#coin-selection).
 2. **Drop gas costs where you can.** Peer-to-peer transfers of allowlisted stablecoins qualify for zero-gas execution. See [Gasless stablecoin transfers](#gasless).
-3. **Compose multi-step flows atomically.** Chain swaps, deposits, and transfers into one programmable transaction block. See [Composing DeFi operations](#defi-composition).
+3. **Compose multi-step flows atomically.** Chain swaps, deposits, and transfers into one [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). See [Composing DeFi operations](#defi-composition).
 
 You do not have to migrate anything at once. Coin objects and address balances coexist, and the SDK selects between them for you. For what changes at the protocol level, balance-query fields, and backward compatibility, see [Migrating from Coin to Address Balances](/onchain-finance/asset-custody/address-balances/migrate-address-balances). For the full send, withdraw, and gas API across TypeScript, Rust, CLI, and Move, see [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
 
-## Coin selection with `coinWithBalance` {#coin-selection}
+## How does `coinWithBalance` choose which coins to spend? {#coin-selection}
 
 When you build a transaction with the TypeScript SDK, you rarely need to pick individual coin objects. The `coinWithBalance` helper (and the `tx.coin()` shorthand) resolves the required amount automatically:
 
 ```tsx
 import { Transaction, coinWithBalance } from '@mysten/sui/transactions';
 
-// Replace with a real coin type. For allowlisted stablecoins, see
+// Replace with a real coin type in its full package::module::struct form. For allowlisted stablecoins, see
 // /develop/transaction-payment/gasless-stablecoin-transfers#eligible-stablecoins
 const USDC = '0xUSDC_PACKAGE::usdc::USDC';
 
@@ -93,7 +93,7 @@ tx.setGasPayment([]); // Gas paid from address balance — no coin lookup requir
 
 See [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances) for the full API (TypeScript, Rust, CLI, and Move) and [Gas Smashing](/develop/transaction-payment/gas-smashing) for the legacy coin-merge approach.
 
-## Gas payment strategies {#gas-strategies}
+## How does a Sui transaction pay for gas? {#gas-strategies}
 
 Sui offers 4 ways to pay for gas, each suited to different use cases:
 
@@ -132,7 +132,7 @@ The gRPC and GraphQL transports detect eligibility automatically during simulati
 import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { Transaction } from '@mysten/sui/transactions';
 
-// Replace with a real coin type. For allowlisted stablecoins, see
+// Replace with a real coin type in its full package::module::struct form. For allowlisted stablecoins, see
 // /develop/transaction-payment/gasless-stablecoin-transfers#eligible-stablecoins
 const USDC = '0xUSDC_PACKAGE::usdc::USDC';
 const client = new SuiGrpcClient({ network: 'mainnet', baseUrl: 'https://fullnode.mainnet.sui.io:443' });
@@ -149,9 +149,11 @@ tx.moveCall({
 const result = await client.signAndExecuteTransaction({ transaction: tx, signer: keypair });
 ```
 
-## Composing DeFi operations {#defi-composition}
+## How do I compose DeFi operations in one transaction? {#defi-composition}
 
 [Programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) let you chain multiple operations into a single atomic transaction. Outputs from earlier commands feed directly into later ones, with no intermediate state and no partial execution risk.
+
+The examples below use placeholder package and object IDs (`0xDEX_PACKAGE`, `0xPOOL_ID`, `0xYIELD`, `0xVAULT`). Replace them with the real IDs of the protocols you integrate with before running the code.
 
 ### Swap and transfer
 
@@ -192,9 +194,9 @@ const [allUsdc] = tx.splitCoins(
 // 1. Split off 200 USDC and swap to SUI
 const [swapPortion] = tx.splitCoins(allUsdc, [tx.pure.u64(200_000_000)]);
 const [sui] = tx.moveCall({
-  target: '0xDEX::router::swap',
+  target: '0xDEX_PACKAGE::router::swap_exact_input',
   typeArguments: [USDC, '0x2::sui::SUI'],
-  arguments: [tx.object('0xPOOL'), swapPortion, tx.pure.u64(0)],
+  arguments: [tx.object('0xPOOL_ID'), swapPortion, tx.pure.u64(0)],
 });
 
 // 2. Split 900 USDC and deposit into a yield protocol
@@ -228,7 +230,7 @@ If any step fails (slippage breach, paused pool, invalid address), the entire tr
 
 See [Building Transactions](/develop/transactions/ptbs/building-ptb) for the full PTB construction API.
 
-## Decision flowchart
+## Which gas strategy should I use? {#decision-flowchart}
 
 Use this to pick the right gas strategy for your transaction:
 
