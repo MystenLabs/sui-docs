@@ -31,7 +31,7 @@ answer: >-
   tokens, rental mechanics, and asset tokenization.
 ---
 
-Non-fungible tokens (NFTs) on Sui are objects with unique identities that you can own, transfer, and extend with custom logic. Because Sui treats every NFT as a first-class object, you get fine-grained control over ownership, composability, and programmable transfer rules without relying on a central contract registry.
+Non-fungible tokens (NFTs) on Sui are objects with unique identities that you can own, transfer, and extend with custom logic. Because Sui treats every NFT as a first-class object (one with its own unique `ID` and owner, rather than an entry in a contract's mapping), you get fine-grained control over ownership, composability, and programmable transfer rules without relying on a central contract registry.
 
 Every NFT object carries metadata you define in its Move struct. Common fields include a name, description, and URL pointing to offchain media. The Sui framework does not enforce a single metadata schema, so you can design your NFT struct to match your application's requirements exactly.
 
