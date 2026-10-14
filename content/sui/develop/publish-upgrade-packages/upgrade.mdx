@@ -79,17 +79,17 @@ The inability to change packages, however, becomes a problem when considering th
 
 Consider the following details before upgrading your packages.
 
-Module initializers do not re-run with package upgrades. When you publish your initial package, Move runs the `init` function you define for the package once (and only once) at the time of the publish event. Any `init` functions you might include in subsequent versions of your package are ignored. See the [module initializer section](https://move-book.com/programmability/module-initializer) in The Move Book for more information.
+**Module initializers do not re-run with package upgrades.** When you publish your initial package, Move runs the `init` function you define for the package once (and only once) at the time of the publish event. Any `init` functions you might include in subsequent versions of your package are ignored. See the [module initializer section](https://move-book.com/programmability/module-initializer) in The Move Book for more information.
 
-You cannot delete old packages from the network. Nothing prevents other packages from accessing the methods and types defined in the old versions of your upgraded packages. 
+You cannot delete old packages from the network. Nothing prevents other packages from accessing the methods and types defined in the old versions of your upgraded packages. Because a transaction identifies a package version by its package ID, any transaction or package that references an old version's package ID can still call it.
 
-## Upgrade requirements
+## Which changes are compatible with a package upgrade?
 
 To upgrade a package, your package must satisfy the following requirements:
 
-- You must have an `UpgradeTicket` for the package you want to upgrade. The Sui network issues `UpgradeCap`s when you publish a package, then you can issue `UpgradeTicket`s as the owner of that `UpgradeCap`. The Sui Client CLI handles this requirement automatically.
+- You must have an `UpgradeTicket` for the package you want to upgrade. The Sui network issues `UpgradeCap`s when you publish a package, then you can issue `UpgradeTicket`s as the owner of that `UpgradeCap`. After a successful upgrade, the `UpgradeReceipt` from the upgrade is used to update the `UpgradeCap`. The Sui Client CLI handles this requirement automatically.
 
-- Your changes must be layout-compatible with the previous version.
+- Your changes must be layout-compatible with the previous version. A change is layout-compatible only if it follows these rules:
 
   - Existing `public` function signatures must remain the same.
 
@@ -103,13 +103,15 @@ To upgrade a package, your package must satisfy the following requirements:
 
   - You can change non-`public` function signatures, including `public(package)` and `entry` function signatures.
 
+The `sui client upgrade` command checks these requirements and alerts you if the new package doesn't satisfy them.
+
 :::info
 
 If you have a package with a dependency, and that dependency is upgraded, your package does not automatically depend on the newer version. You must explicitly upgrade your own package to point to the new dependency.
 
 :::
 
-## Upgrading
+## How do I upgrade a package?
 
 Use the `sui client upgrade` command to upgrade packages that meet the previous requirements, providing values for the following flags:
 
@@ -124,11 +126,23 @@ When you use the Sui client CLI, the `upgrade` command handles generating the up
 
 :::tip Secure upgrade checklist
 
-Before you run an upgrade, verify the old and new package IDs and the upgrade `digest`, confirm your dependencies resolve to the expected package IDs, and confirm `UpgradeCap` custody (ideally multisig or timelock). When the upgrade changes shared object access, ensure the `migrate` function is authorized (for example, behind an `AdminCap`), emit a migration event for observability, and know when to call [`make_immutable`](/develop/publish-upgrade-packages/custom-policies) to relinquish upgrade authority. See [Security Best Practices](/develop/security/best-practices) for more.
+Before you run an upgrade:
+
+- Verify the old and new package IDs and the upgrade `digest`.
+- Confirm your dependencies resolve to the expected package IDs.
+- Confirm `UpgradeCap` custody (ideally multisig or timelock).
+
+When the upgrade changes shared object access:
+
+- Ensure the `migrate` function is authorized (for example, behind an `AdminCap`).
+- Emit a migration event for observability.
+- Know when to call [`make_immutable`](/develop/publish-upgrade-packages/custom-policies) to relinquish upgrade authority.
+
+See [Security Best Practices](/develop/security/best-practices) for more.
 
 :::
 
-## Migrating users to the latest version
+## How do I migrate users to the latest version?
 
 By default, users can choose to keep using the old version of a package, as well. As a package developer, you must be aware of and account for this possibility.
 
@@ -164,7 +178,7 @@ Another example: you discover a shared object in your package has flawed logic. 
 
 ### Versioned shared objects
 
-When you create packages that involve shared objects, think about upgrades and versioning from the start because all prior versions of a package still exist onchain. A useful pattern is to introduce versioning to the shared object and use a version check to guard access to functions in the package. This limits access to the shared object to the latest package version.
+When you create packages that involve shared objects, think about upgrades and versioning from the start because all prior versions of a package still exist onchain. Without a version check, callers can keep calling the old version of a function, such as the original `increment`, on the same shared object. A useful pattern is to introduce versioning to the shared object and use a version check to guard access to functions in the package. This limits access to the shared object to the latest package version.
 
 Using the earlier `counter` example:
 
@@ -318,9 +332,15 @@ entry fun migrate(c: &mut Counter, a: &AdminCap) {
 }
 ```
 
-Upgrading to this version of the package requires performing the package upgrade and calling the `migrate` function in a follow-up transaction. The `migrate` function:
+Upgrading to this version of the package requires 2 transactions, in this order:
 
-- Is an `entry` function and not `public`. This allows it to be entirely changed, including changing its signature or removing it entirely, in future upgrades.
+1. Perform the package upgrade.
+
+1. In a follow-up transaction, call the upgraded package's `migrate` function, passing the `Counter` and its `AdminCap`.
+
+The `migrate` function:
+
+- Is an `entry` function and not `public`. You can still call it directly from a transaction, but because it is not `public`, the layout-compatibility rules do not apply to its signature. This allows it to be entirely changed, including changing its signature or removing it entirely, in future upgrades.
 
 - Accepts an `AdminCap` and checks that its ID matches the ID of the counter being migrated, making it a privileged operation.
 
@@ -521,7 +541,7 @@ Transaction Digest: GPSpH264CjQPaXQPpMHpkzyGidZnQFvd1yUH5s9ncesi
 
 The result includes an **Object Changes** section with information you need for upgrading: an `UpgradeCap` ID and your package ID.
 
-You can identify the different objects using the `Object.objectType` value in the response. The `UpgradeCap` entry has a value of `String("0x2::package::UpgradeCap")` and the `objectType` for the package reads `String("<PACKAGE-ID>::sui_package::<MODULE-NAME>")`
+You can identify the different objects using the `Object.objectType` value in the response. The `UpgradeCap` entry has a value of `String("0x2::package::UpgradeCap")` and the `objectType` for the package reads `String("<PACKAGE-ID>::sui_package::<MODULE-NAME>")`. In the example output, the `UpgradeCap` ID is the `ObjectID` of the entry whose `ObjectType` is `0x2::package::UpgradeCap` (`UPGRADE-CAP-ID`), and the package ID is the `PackageID` under **Published Objects** (`ORIGINAL-PACKAGE-ID`).
 
 After publishing, the package system automatically records the published address and upgrade capability in `Published.toml`. You do not need to manually edit `Move.toml` with addresses or `published-at` values. See [Move Package Management](/develop/manage-packages/move-package-management) for details on how publication tracking works.
 
