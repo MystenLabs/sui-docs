@@ -86,7 +86,7 @@ This guide demonstrates how to connect a React interface to that "Hello, World!"
 </TabItem>
 </Tabs>
 
-## Sui dApp Kit
+## What is the Sui dApp Kit?
 
 The example frontend uses [`@mysten/dapp-kit`](https://sdk.mystenlabs.com/dapp-kit), which provides React hooks and components for wallet connection, transaction signing, and onchain data queries. The key components used in this example are:
 
@@ -95,6 +95,8 @@ The example frontend uses [`@mysten/dapp-kit`](https://sdk.mystenlabs.com/dapp-k
 - `useSignAndExecuteTransaction`: A React hook that signs and submits a transaction through the connected wallet.
 
 The `dapp-kit.ts` file in the example project configures the Sui dApp Kit provider with network settings. For a deeper walkthrough of building a frontend with Sui dApp Kit, see the [dApp Kit starter app](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/E2/my-first-sui-dapp).
+
+The rest of this guide walks through the example project's frontend files, which use these components to connect a wallet and send transactions to your Move package.
 
 ## Call the Move package
 
@@ -157,11 +159,11 @@ The `Greeting.tsx` file also contains logic that creates and sends a transaction
 
 <ImportContent source="/ui/src/Greeting.tsx" mode="code" org="MystenLabs" repo="sui-stack-hello-world" />
 
-## Connect the React interface to your Move package
+## How do I connect the React interface to my Move package?
 
 The `constants.ts` file is where you connect the React app to your Move package. This file contains a single line that sets your Move package ID as a constant `TESTNET_HELLO_WORLD_PACKAGE_ID`. By default, this file contains a sample package ID. 
 
-Modify this file to include your Move package ID instead.
+Modify this file to include your Move package ID instead. Use the same package ID you verified with `sui client object <PACKAGE_ID>` earlier in this guide. The frontend's transactions call the `new` and `update_text` functions of the package with this ID, so it must match the package you published from the CLI in the ["Hello, World!"](/getting-started/onboarding/hello-world) guide.
 
 <ImportContent source="/ui/src/constants.ts" mode="code" org="MystenLabs" repo="sui-stack-hello-world" />
 
@@ -179,7 +181,7 @@ $ pnpm install
 
 ## Run the React application
 
-Start the React application in your local development environment:
+From the `sui-stack-hello-world/ui` directory, start the React application in your local development environment:
 
 ```sh
 $ pnpm dev
@@ -189,7 +191,7 @@ Then, open `http://localhost:5173/` in your browser. The app prompts you to conn
 
 ## Send SUI tokens to your Slush wallet
 
-If you sent SUI tokens to an address used in the CLI in previous guides, then created a new Slush wallet in your browser, you likely need to send SUI tokens to the Slush wallet. The Slush wallet address is different and separate from the address created and used in the CLI.
+If you sent SUI tokens to an address used in the CLI in previous guides, then created a new Slush wallet in your browser, you likely need to send SUI tokens to the Slush wallet. The Slush wallet address is different and separate from the address created and used in the CLI. The transactions the frontend sends are paid for with gas coins from the connected Slush wallet, so without Testnet SUI in that wallet they fail.
 
 Follow the [Testnet SUI](/getting-started/onboarding/get-coins) instructions to send Testnet tokens to your Slush address. 
 
