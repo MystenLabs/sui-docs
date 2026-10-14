@@ -83,19 +83,19 @@ Move supports activity monitoring through emitting events. Emitting events consi
 
 1. Processing events using either a custom indexer or by polling the network.
 
-## Defining event struct
+## How do I define an event struct? {#defining-event-struct}
 
 Event structs have the `copy` and `drop` abilities. In the event, define the fields you need to capture relevant data about the action.
 
 <ImportContent source="crates/sui-indexer-alt-e2e-tests/packages/emit_event/sources/emit_event.move" mode="code" struct="TestEvent" noComments />
 
-## Using the `emit` function
+## How do I emit an event? {#using-the-emit-function}
 
 Use the `sui::event::emit` function to emit an event when the action you want to monitor occurs:
 
 <ImportContent source="crates/sui-indexer-alt-e2e-tests/packages/emit_event/sources/emit_event.move" mode="code" fun="init" noComments />
 
-## Processing events
+## How do I process events? {#processing-events}
 
 After your Move code emits events, you need to process them. There are 2 approaches:
 
@@ -125,7 +125,7 @@ When you process events, each event object contains the following attributes:
 
 <ImportContent source="examples/trading/contracts/escrow/sources/lock.move" mode="code" fun="lock" noComments />
 
-### Querying events with gRPC
+### How do I query events with gRPC? {#querying-events-with-grpc}
 
 gRPC provides 3 ways to access events:
 
@@ -138,6 +138,8 @@ To combine historical and real-time data, open a `SubscribeEvents` stream first,
 :::info
 Use `client.listEvents()` (v2.23.1+) for common paginated event queries. For checkpoint-bounded `ListEvents` queries, use the proto client (`client.ledgerService.listEvents()`) as shown below. The `GetTransaction` example uses the SDK's `client.core.getTransaction()` method.
 :::
+
+For the definition of the `EventFilter` message passed in `filter`, see the [gRPC service reference](/references/fullnode-protocol).
 
 ```ts
 // Use the generated proto client for ListEvents
@@ -175,7 +177,7 @@ async function getEventsForTransaction(digest: string) {
 }
 ```
 
-### Querying events with GraphQL
+### How do I query events with GraphQL? {#querying-events-with-graphql}
 
 Use `Query.events` with an `EventFilter` to query events by type, sender, module, or checkpoint range.
 
