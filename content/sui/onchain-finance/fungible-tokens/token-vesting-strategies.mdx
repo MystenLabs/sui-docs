@@ -13,6 +13,9 @@ keywords:
   - token vest strategies
   - how to vest tokens
   - how to design token vest
+  - cliff vesting
+  - graded vesting
+  - hybrid vesting
 goal:
   description: >-
     Reader can implement a vesting strategy for your token launch on Sui to
@@ -47,7 +50,7 @@ Implementing and publishing your vesting strategy helps to:
 - Allay fears of rug pulls.
 - Align stakeholder incentives with the project's success.
 
-## Vesting options
+## What vesting options are available? {#vesting-options}
 
 Different vesting strategies are available for your token launch. The best option for your project depends on factors unique to your project and its goals.
 
@@ -121,7 +124,7 @@ An employee's tokens release under the following schedule:
 
 The smart contract for backloaded vesting creates two `Wallet` objects inside a parent wallet, which contains all the tokens to vest. Each child wallet is responsible for its own vesting schedule. You call `new_wallet` with the coins to vest and `start_front`, `start_back`, `duration`, and `back_percentage` values. Based on the values you provide, the contract determines how many tokens to return when the wallet owner calls the `claim` function.
 
-For the example scenario, you could pass the start timestamp for the frontload and the start timestamp for the backload (three years after the frontload start). You would also pass the duration of four years (`126230400000`) and `90` for the `back_percentage` value.
+For the example scenario, you could pass the start timestamp for the frontload and the start timestamp for the backload (three years after the frontload start). You would also pass the duration of four years in milliseconds (`126230400000`, which is four 365.25-day years) and `90` for the `back_percentage` value.
 
 <details>
 
@@ -177,7 +180,7 @@ An employee receives 1,000 tokens to gradually release over a one-year period.
 
 The linear vesting smart contract creates a `Wallet` object with `start` and `duration` fields. The contract uses those values along with the current time to determine the number of tokens that are vested. The current time, in this case, is the time at which the wallet owner calls the `claim` function.
 
-For the example scenario, you create the wallet (call `new_wallet`) with 1,000 tokens, the timestamp for the employee start date, and one year (`31557600000`) as the duration.
+For the example scenario, you create the wallet (call `new_wallet`) with 1,000 tokens, the timestamp for the employee start date, and one year as the duration. Timestamps and durations in these examples are in milliseconds, so one year is `31557600000` (365.25 days × 86,400,000 milliseconds per day).
 
 <details>
 
