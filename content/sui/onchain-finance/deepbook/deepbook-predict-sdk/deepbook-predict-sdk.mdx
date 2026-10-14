@@ -57,7 +57,7 @@ verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict
 
 The DeepBook Predict SDK builds every Predict transaction, reads live Predict state through your Sui client, and decodes the receipts that executed transactions emit. It ships as the `/predict` subpath of the `@mysten/deepbook-v3` TypeScript package, and [DeepBook Predict](/onchain-finance/deepbook/deepbook-predict) explains the markets, positions, and pool behind each call.
 
-## Install {#install}
+## How do I install the Predict SDK? {#install}
 
 Install `@mysten/deepbook-v3` version 2.7.0 or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with its `@mysten/sui` peer dependency at version 2.30.0 or later. The package requires Node.js 22 or later. Version 2.7.0 is the first release that resolves the current package of every Predict deployment and places queued orders, which every Testnet trade has been since Testnet's delayed-execution cutover on 2026-10-09. Earlier releases build immediate trades that Testnet aborts.
 
@@ -72,7 +72,7 @@ Predict needs no separate package. The [DeepBookV3 SDK](/onchain-finance/deepboo
 The package ships 3 subpaths beside its root, each a separate entry in its `exports` map, and Predict uses all 3. Importing a subpath never loads the spot and margin code at the package root. `/predict` and `/sessions` do load the `/account` module, because Predict accounts and session grants both build on the shared account primitive. The 3 subpaths export these surfaces:
 
 - `@mysten/deepbook-v3/predict`: The `predict` client extension and the `PredictClient` class it registers, plus what the client's inputs and outputs use: deployment configuration, unit and tick helpers, typed errors, and receipt types. It also exports the `pricing` namespace for local board pricing, the `cost` namespace for local fee and sizing previews, and the primitives in [Compose your own transactions](#compose). [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts), [Predict Markets and Pricing SDK](/onchain-finance/deepbook/deepbook-predict-sdk/markets), [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions), [Predict Cost SDK](/onchain-finance/deepbook/deepbook-predict-sdk/cost), and [Predict Liquidity SDK](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity) document the client's functions by area.
-- `@mysten/deepbook-v3/account`: The shared account primitive that every Predict account builds on: `AccountContract`, `getAccountConfig`, the generated `accountMoveCalls`, `accountRegistryMoveCalls`, and `accountEvents` namespaces, and the `Account` and `AccountWrapper` Binary Canonical Serialization (BCS) types. See [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#account-subpath).
+- `@mysten/deepbook-v3/account`: The shared account primitive that every Predict account builds on: `AccountContract`, `getAccountConfig`, the generated `accountMoveCalls`, `accountRegistryMoveCalls`, and `accountEvents` namespaces, and the `Account` and `AccountWrapper` Binary Canonical Serialization (BCS) types. See [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 - `@mysten/deepbook-v3/sessions`: Time-limited session keys that trade for an account until a fixed expiry: `SessionsContract`, `getSessionsConfig`, the `MAX_SESSION_DURATION_MS` and `MAX_SESSIONS_PER_ACCOUNT` limits, and the generated `sessionsMoveCalls` and `sessionConfigMoveCalls` namespaces. See [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions).
 
 ## Create the client {#client}
@@ -85,7 +85,7 @@ The client module extends a gRPC client with the Predict client for that network
 
 <ImportContent source="examples/deepbook-predict/src/client.ts" mode="code" tag="client" />
 
-Use `predict` to create the registration that `$extend` takes. It returns a `SuiClientRegistration`, and the Predict client lands on `client.predict` unless you pass another `name`. It takes these parameters:
+Use `predict` to create the registration that the Sui client's `$extend` method takes to register an extension. It returns a `SuiClientRegistration`, and the Predict client lands on `client.predict` unless you pass another `name`. It takes these parameters:
 
 - `network`: The recorded deployment to address, Testnet or Mainnet. The SDK resolves it with `getConfig(network)`.
 - `config`: An optional `PredictConfig` for a deployment of your own. When you pass it, the SDK uses it in place of the recorded deployment and does not consult `network`.
@@ -103,7 +103,7 @@ The Predict client exposes 3 groups of members:
 - `client.predict.read`: Each read runs a simulated transaction or a core object read against the full node, so reads need neither an indexer nor a Predict server.
 - `client.predict.decode`: Each decoder turns an executed transaction's events into a typed receipt with no network call. See [Decode transaction results](#decode).
 
-The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#wrapper-id) covers, `queueIdFor(marketId)`, which derives a market's queue ID, and `cfg`, the `PredictConfig` that the client uses.
+The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) covers, `queueIdFor(marketId)`, which derives a market's queue ID, and `cfg`, the `PredictConfig` that the client uses.
 
 The 2 recorded networks run different trade paths. Testnet runs Predict protocol version 4, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders. Mainnet runs protocol version 3, where `tx.mint` and its siblings fill immediately, until its own cutover. `client.predict.read.executionMode()` returns `'delayed'` or `'immediate'`, so branch on it rather than on the network name. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers both paths.
 
@@ -205,7 +205,7 @@ Outputs typed `number` are display values. The SDK converts them from the raw in
 
 The helpers use fixed 6-decimal and 9-decimal scales. Of the configuration's `units`, the client reads only `positionLotSize`, to check that each `quantity` is a whole lot.
 
-## Errors {#errors}
+## How do I handle Predict errors? {#errors}
 
 Almost every failure you handle in application code surfaces as one of 3 typed errors that `/predict` exports:
 
@@ -215,7 +215,7 @@ Almost every failure you handle in application code surfaces as one of 3 typed e
 
 The node decodes a constant name only for an error constant that its module declares with `#[error]`, and only over gRPC or GraphQL. The Predict, account, and sessions packages declare their error constants as plain `u64` codes, so from version 2.7.0 the SDK names most of their aborts itself, from a table generated from the Move sources, and `abortName` carries that name. A module the table does not cover, or an unknown code, still yields `null`, so keep `module` and `code` as the reliable identifier. Earlier releases left it `null` for these packages. `describePredictError(error)` turns a `PredictMoveError` into readable text for the aborts an app meets on the queued paths, such as a stale oracle input, which clears within seconds and deserves a retry rather than an error page. A simulation that fails without a Move abort throws a plain `Error` carrying the node's message.
 
-Resolve `module` before you look up `code`. Error numbers restart at `0` in every module, so the same number means something different depending on where it came from. [Find the page for a Move abort](/onchain-finance/deepbook/deepbook-predict/contract-information#abort-module-map) maps each module to the reference page carrying its table.
+Resolve `module` before you look up `code`. Error numbers restart at `0` in every module, so the same number means something different depending on where it came from. [Find the page for a Move abort](/onchain-finance/deepbook/deepbook-predict/contract-information) maps each module to the reference page carrying its table.
 
 <ImportContent source="packages/deepbook-v3/src/predict/errors.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="14-43" />
 
@@ -225,7 +225,7 @@ The SDK never executes a transaction, so a write that fails after your signer su
 
 <ImportContent source="packages/deepbook-v3/src/predict/errors.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="75-75" />
 
-The following sample handles both kinds of failure:
+The following sample handles both kinds of failure. It executes through `client.core`, the core API that the Sui client exposes:
 
 ```ts
 import { decodeMoveAbort, PredictInputError, PredictMoveError } from '@mysten/deepbook-v3/predict';
@@ -249,7 +249,7 @@ if (result.$kind === 'FailedTransaction' && !result.FailedTransaction.status.suc
 }
 ```
 
-## Decode transaction results {#decode}
+## How do I decode transaction results? {#decode}
 
 `client.predict.decode` turns the events of an executed transaction into typed receipts. Each decoder is pure: it reads only the result you pass and makes no network call.
 
@@ -277,15 +277,15 @@ The following table lists every decoder, the event it reads, and the page that d
 
 | **Decoder** | **Event** | **Receipt** | **Documented in** |
 | --- | --- | --- | --- |
-| `createManager` | `AccountCreated` | `CreateManagerReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#decode) |
-| `deposit` | `Deposited` | `BalanceChangeReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#decode) |
-| `withdraw` | `Withdrawn` | `BalanceChangeReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#decode) |
-| `builderCode` | `BuilderCodeSet` | `BuilderCodeReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts#decode) |
-| `mint`, `mints` | `OrderMinted` | `MintReceipt` | [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#decode) |
-| `redeem`, `redeems` | `LiveOrderRedeemed` | `RedeemReceipt` | [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#decode) |
-| `claim`, `claims` | `SettledOrderRedeemed` | `ClaimReceipt` | [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#decode) |
-| `plpRequest` | `SupplyRequested` or `WithdrawRequested` | `PlpRequestReceipt` | [Predict Liquidity SDK](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity#decode) |
-| `plpCancel` | `RequestCancelled` | `PlpCancelReceipt` | [Predict Liquidity SDK](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity#decode) |
+| `createManager` | `AccountCreated` | `CreateManagerReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) |
+| `deposit` | `Deposited` | `BalanceChangeReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) |
+| `withdraw` | `Withdrawn` | `BalanceChangeReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) |
+| `builderCode` | `BuilderCodeSet` | `BuilderCodeReceipt` | [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) |
+| `mint`, `mints` | `OrderMinted` | `MintReceipt` | [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) |
+| `redeem`, `redeems` | `LiveOrderRedeemed` | `RedeemReceipt` | [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) |
+| `claim`, `claims` | `SettledOrderRedeemed` | `ClaimReceipt` | [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) |
+| `plpRequest` | `SupplyRequested` or `WithdrawRequested` | `PlpRequestReceipt` | [Predict Liquidity SDK](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity) |
+| `plpCancel` | `RequestCancelled` | `PlpCancelReceipt` | [Predict Liquidity SDK](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity) |
 
 ## Compose your own transactions {#compose}
 
@@ -333,6 +333,8 @@ import { getConfig, loadLivePricer, toGeneratedConfig } from '@mysten/deepbook-v
 const cfg = getConfig('testnet');
 const tx = new Transaction();
 
+// MARKET_ID is the expiry market's ID. Market IDs change as markets expire and new ones open,
+// so read it at runtime rather than hardcoding it.
 // The market-bound `Pricer`, as a result that later commands in this PTB borrow.
 const pricer = tx.add(
 	loadLivePricer(toGeneratedConfig(cfg), {
@@ -344,4 +346,4 @@ const pricer = tx.add(
 
 <ImportContent source="packages/deepbook-v3/src/predict/tx/trade.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="32-35" />
 
-The `args` parameter takes the market ID and the 3 oracle object IDs that `cfg.underlyings[symbol]` carries. Pass `pricer` to a `/sessions` Predict wrapper such as `SessionsContract.mintExactQuantity`, which [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions#trade) walks through.
+The `args` parameter takes the market ID and the 3 oracle object IDs that `cfg.underlyings[symbol]` carries. Pass `pricer` to a `/sessions` Predict wrapper such as `SessionsContract.mintExactQuantity`, which [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) walks through.
