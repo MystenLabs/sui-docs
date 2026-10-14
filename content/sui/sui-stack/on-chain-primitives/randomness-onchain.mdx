@@ -40,11 +40,13 @@ answer: >-
   generating random values of different types.
 ---
 
+Randomness is a valuable tool to simulate chance onchain, but can also expose flaws in your logic. Understanding the vulnerabilities and accounting for them can mitigate the threat exposure for your smart contracts.
+
 A Move function can create a new instance of `RandomGenerator` and use it for generating random values of different types. For example, `generate_u128(&mut generator), generate_u8_in_range(&mut generator, 1, 6)` or the following example:
 
 ```move
 entry fun roll_dice(r: &Random, ctx: &mut TxContext): Dice {
-  let mut generator = new_generator(r, ctx); // generator is a PRG
+  let mut generator = new_generator(r, ctx); // generator is a PRG (pseudorandom generator)
   Dice { value: random::generate_u8_in_range(&mut generator, 1, 6) }
 }
 ```
@@ -92,7 +94,7 @@ For many use cases, like when selecting a raffle winner or lottery numbers, this
 
 Split the logic into 2 functions that different transactions must call.
 
-1. The first transaction, `tx1`, calls the first function, which fetches a random value and stores it in an object that is unreadable by other commands in `tx1`. For example, the function might transfer the object to the caller or store the transaction digest and check that it is different on read.
+1. The first transaction, `tx1`, calls the first function, which fetches a random value and stores it in an object that is unreadable by other commands in `tx1`. For example, the function might transfer the object to the caller or store the transaction digest and check that it is different on read, so that only a later transaction can read the value.
 
 1. The second transaction, `tx2`, calls a second function, which reads the stored value and completes the operation. `tx2` might fail, but now the random value is fixed and cannot be modified using repeated calls.
 
@@ -175,9 +177,11 @@ public fun attack(guess: u8, r: &Random, ctx: &mut TxContext): Ticket {
 
 The attacker can now call `attack` with a guess and always revert the fee transfer if the guess is incorrect. To protect against composition attacks, define your function as a private `entry` function so functions from other modules cannot call it.
 
-The Move compiler enforces this behavior by rejecting `public` functions with `Random` as an argument.
+The Sui Move compiler enforces this behavior by rejecting `public` functions with `Random` as an argument.
 
 ## Programmable transaction block (PTB) restrictions
+
+A PTB chains several commands into a single transaction that executes atomically, and the output of one command can be passed as input to a later command.
 
 A similar attack to the one previously described involves PTBs even when `play_dice` is defined as a private `entry` function. For example, consider the `entry play_dice(guess: u8, fee: Coin<SUI>, r: &Random, ctx: &mut TxContext): Ticket { … }` function defined earlier, the attacker can publish the following function and send a PTB with commands `play_dice(...), attack(Result(0))` where `Result(0)` is the output of the first command:
 
@@ -205,7 +209,7 @@ The Move compiler enforces this behavior by rejecting `public` functions with `R
 
 ## Accessing `Random` from TypeScript
 
-If you want to call `roll_dice(r: &Random, ctx: &mut TxContext)` in module `example`, use the following code:
+If you want to call `roll_dice(r: &Random, ctx: &mut TxContext)` in module `example`, use the following code, where `${PACKAGE_ID}` is the ID of the published package that contains the `example` module:
 
 ```typescript
 const tx = new Transaction();
@@ -226,10 +230,10 @@ To securely access randomness:
 
 - Prefer generating randomness using function-local `RandomGenerator`. Always create it internally from `&Random`; never accept a `RandomGenerator` as a function parameter.
 
-- Balance gas usage across all outcome paths so that winning and losing branches cost roughly the same and an attacker cannot infer the result from gas before the transaction commits.
+- Balance gas usage across all outcome paths so that winning and losing branches cost roughly the same and an attacker cannot infer the result from gas before the transaction commits. See [Resource usage](#resource-usage).
 
 - Account for the PTB restriction: only `TransferObjects` and `MergeCoins` commands can follow a `MoveCall` that consumes `Random`, so complete the draw-and-resolve in a single Move call.
 
-- For high-stakes flows, use a commit-reveal pattern (commit and pay in one transaction, reveal the outcome in a later transaction) so no one can inspect and revert outcomes atomically.
+- For high-stakes flows, use a commit-reveal pattern (commit and pay in one transaction, reveal the outcome in a later transaction) so no one can inspect and revert outcomes atomically. [Divide logic](#divide-logic) describes this two-transaction pattern.
 
 For the canonical guidance, see [Onchain randomness](/develop/security/best-practices#onchain-randomness).
