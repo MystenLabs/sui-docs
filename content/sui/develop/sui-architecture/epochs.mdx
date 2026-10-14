@@ -40,7 +40,7 @@ On Sui, an epoch is a period of time defined by the network. During this time, t
 
 Epoch values are included in the metadata of all [transactions](/develop/transactions/txn-overview). A transaction is only valid if executed before its expiration epoch.
 
-## Reconfiguration
+## What happens during reconfiguration?
 
 Reconfiguration is a critical process occurring at the end of each epoch. It involves several key steps to adjust the network for the upcoming epoch:
 
@@ -52,10 +52,10 @@ Reconfiguration is a critical process occurring at the end of each epoch. It inv
 
 1. **Validator set change:** Any pending staking and unstaking requests during the epoch are finalized and reflected in the validators' stake distribution. Any pending validator change requests are processed, including adding new validators and removing existing validators. This is the sole opportunity for altering the validator set and stake distribution.
 
-1. **Protocol upgrade:** If agreed upon by 2f+1 validators, the network might upgrade to a new protocol version, encompassing new features, bug fixes, and updates to Move framework libraries.
+1. **Protocol upgrade:** If agreed upon by 2f+1 validators (a supermajority quorum, where f is the maximum number of faulty validators the network can tolerate), the network might upgrade to a new protocol version, encompassing new features, bug fixes, and updates to Move framework libraries.
 
-## Object versioning across epochs
+## Do object versions change across epochs?
 
-Sui's [object versioning](/develop/objects/versioning) ensures that each object update writes a new version. For address-owned and immutable objects, transactions reference a specific object version. For consensus-managed objects, including shared objects and consensus-address-owned party objects, consensus determines the next version during scheduling.
+Object versioning matters for epochs because conflicting transactions on the same owned object can leave that object equivocated until the next epoch. Sui's [object versioning](/develop/objects/versioning) ensures that each object update writes a new version. For address-owned and immutable objects, transactions reference a specific object version. For consensus-managed objects, including shared objects and consensus-address-owned party objects, consensus determines the next version during scheduling.
 
 Applications should avoid submitting conflicting transactions that use the same owned object concurrently. Depending on how validator reservations are split, one transaction might be rejected because the object version is already reserved, or competing transactions can equivocate the object until the next epoch. Prefer a single [programmable transaction block](/develop/transactions/ptbs/building-ptb) for related operations, or use SDK/client execution helpers that manage object and gas coin concurrency for you.
