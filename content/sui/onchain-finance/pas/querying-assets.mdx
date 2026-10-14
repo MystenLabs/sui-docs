@@ -48,11 +48,15 @@ A wallet address on Sui can hold 2 kinds of balances:
 
 - **PAS balances:** Managed by PAS on behalf of the wallet address
 
-From your perspective, both belong to the same address. PAS balances are held in a derived Account object, but transfers always target the Account address, not the wallet address. The SDK resolves the underlying Account transparently.
+From your perspective, both belong to the same wallet. PAS balances, however, are held in a derived Account object that has its own address, so transfers always target the Account address, not the wallet address. The SDK resolves the underlying Account from the wallet address transparently.
 
-## Query PAS balances
+## How do I read PAS balances for an address?
 
-To read a wallet's PAS balances, derive the internal Account address from the wallet address using the PAS SDK (the derivation is deterministic), then query it with core SDK balance methods.
+To read a wallet's PAS balances:
+
+1. Create a client and extend it with the PAS SDK: import `SuiGrpcClient` from `@mysten/sui/grpc` and `pas` from `@mysten/pas`, then call `.$extend(pas())` on the client.
+2. Derive the internal Account address from the wallet address with `client.pas.deriveAccountAddress` (the derivation is deterministic).
+3. Query the derived address with core SDK balance methods (`listBalances` or `getBalance`).
 
 The following diagram shows the derivation flow:
 
@@ -71,6 +75,8 @@ Wallet Address (for example, 0xAlice)
 Account Address (deterministic, same every time)
 ```
 
+In the diagram and examples, `0xAlice` is a placeholder; substitute a full Sui wallet address.
+
 The derived address is different per network (Mainnet compared to Testnet) because the PAS namespace object has a different ID on each network. The SDK handles this based on the client network configuration.
 
 The following example shows how to query both regular and PAS-managed balances:
@@ -79,7 +85,7 @@ The following example shows how to query both regular and PAS-managed balances:
 import { SuiGrpcClient } from '@mysten/sui/grpc';
 import { pas } from '@mysten/pas';
 const client = new SuiGrpcClient({ network: 'mainnet' }).$extend(pas());
-const walletAddress = '0xAlice';
+const walletAddress = '0xAlice'; // placeholder: use a full Sui address
 // Regular balances — query the wallet address directly
 const { balances: regularBalances } = await client.listBalances({
     owner: walletAddress,
@@ -91,11 +97,12 @@ const { balances: pasBalances } = await client.listBalances({
 // Single asset type
 const { balance } = await client.getBalance({
     owner: client.pas.deriveAccountAddress(walletAddress),
+    // placeholder: replace '0xabc...' with the full package address
     coinType: '0xabc...::my_coin::MY_COIN',
 });
 ```
 
-### Check if a wallet has a PAS Account
+### How do I check whether a wallet has a PAS Account?
 
 `getObject` throws an `ObjectError` when the object does not exist, so it never returns a missing Account as a value to test. Use `getObjects`, which returns the error in place of the object instead of throwing:
 
