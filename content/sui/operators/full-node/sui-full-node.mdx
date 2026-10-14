@@ -44,13 +44,13 @@ answer: >-
   checkpoints, and epoch changes.
 ---
 
+Sui full nodes validate blockchain activities, including transactions, checkpoints, and epoch changes. Each full node stores and services the queries for the blockchain state and history. This page explains how to set up, configure, and run a full node: hardware and software requirements, gRPC configuration, network ports, and day-to-day operation.
+
 :::info
 
 These instructions are for advanced users. If you just need a local development environment, you should instead follow the instructions in [Create a Local Sui Network](/getting-started/onboarding/local-network) to create a local full node, validators, and faucet.
 
 :::
-
-Sui full nodes validate blockchain activities, including transactions, checkpoints, and epoch changes. Each full node stores and services the queries for the blockchain state and history.
 
 This role enables validators to focus on servicing and processing transactions. When a validator commits a new set of transactions (or a block of transactions), the validator pushes that block to all connected full nodes that then service the queries from clients.
 
@@ -75,7 +75,7 @@ Because a checkpoint carries a quorum of validator signatures, a full node that 
 
 A Sui full node is essentially a read-only view of the network state. Unlike validator nodes, full nodes cannot sign transactions, although they can validate the integrity of the chain by re-executing transactions that a quorum of validators previously committed.
 
-A Sui full node has the potential to maintain the full history of the chain. That changes with gRPC as JSON-RPC gets phased out.
+A Sui full node has the potential to maintain the full history of the chain. How much history a node actually retains depends on its pruning and retention configuration; see [Retention window](#gRPC-retention).
 
 Validator nodes store only the latest transactions on the frontier of the object graph (for example, transactions with >0 unspent output objects).
 
@@ -83,13 +83,15 @@ Validator nodes store only the latest transactions on the frontier of the object
 
 Follow the instructions here to run your own Sui full node. Sui full nodes run using the `sui-node` binary.
 
-### Hardware requirements 
+### What hardware does a Sui full node need? {#hardware-requirements}
 
 Suggested minimum hardware to run a Sui full node:
 
 - CPUs: 8 physical cores / 16 vCPUs
 - RAM: 128 GB
 - Storage (SSD): 4 TB NVMe drive
+
+Disk usage grows with the history and indexes you retain. Without an active pruning configuration, a node can fill 7 TB or more; see [pruning configuration](/operators/data-management/managing-data#pruning).
 
 ### Software requirements 
 
@@ -125,7 +127,9 @@ Follow these steps to enable indexed gRPC functionality on a full node. The gRPC
 1. Add `rpc.enable-indexing: true` to `fullnode.yaml` (see config below).
 2. In the same configuration update, optionally configure the [ledger history list APIs](#ledger-history-configuration) and [retention window](#gRPC-retention).
 3. Restart the node. The initial gRPC index build takes time depending on your hardware; the node might not serve other traffic during this phase.
-4. Verify connectivity and query the historical range required by your clients. `end_checkpoint` is exclusive. Paginate past any `ITEM_LIMIT` responses and confirm that the stream terminates with `CHECKPOINT_BOUND`. Compare the latest checkpoint returned by `GetCheckpoint` with the node's `last_executed_checkpoint` metric before cutover:
+4. Verify connectivity and query the historical range required by your clients. `end_checkpoint` is exclusive. Paginate past any `ITEM_LIMIT` responses and confirm that the stream terminates with `CHECKPOINT_BOUND`. Compare the latest checkpoint returned by `GetCheckpoint` with the node's `last_executed_checkpoint` metric before cutover. For developer-facing usage of these APIs, see [Ledger history list APIs](/develop/accessing-data/grpc/using-grpc).
+
+    In the following commands, replace `<YOUR_NODE>` with your node's host name or IP address, `<FIRST_REQUIRED_CHECKPOINT>` with the first checkpoint your clients need, and `<LAST_REQUIRED_CHECKPOINT_PLUS_ONE>` with one more than the last checkpoint they need:
     ```sh
     $ grpcurl -plaintext <YOUR_NODE>:9000 sui.rpc.v2.LedgerService/GetCheckpoint
     $ grpcurl -plaintext -d '{
@@ -160,7 +164,7 @@ Refer to the [`RpcConfig` source](https://github.com/MystenLabs/sui/blob/main/cr
 
 #### Ledger history configuration {#ledger-history-configuration}
 
-The `rpc.ledger-history` block tunes the three historical list APIs: `ListTransactions`, `ListEvents`, and `ListCheckpoints`. These APIs scan inverted indexes to serve filtered queries over past transactions and events. See [Ledger history list APIs](/develop/accessing-data/grpc/using-grpc#ledger-history-list-apis) for developer-facing usage.
+The `rpc.ledger-history` block tunes the three historical list APIs: `ListTransactions`, `ListEvents`, and `ListCheckpoints`. These APIs scan inverted indexes to serve filtered queries over past transactions and events. See [Ledger history list APIs](/develop/accessing-data/grpc/using-grpc) for developer-facing usage.
 
 ```yaml
 rpc:
@@ -205,7 +209,7 @@ rpc:
 
 :::caution
 
-`bitmap-bucket-scan-budget` must be greater than or equal to `max-bitmap-filter-literals`. If not, the node rejects the configuration at startup because a filtered request could exhaust its scan budget before any filter leaf produces a result.
+`bitmap-bucket-scan-budget` must be greater than or equal to `max-bitmap-filter-literals`. If not, the node rejects the configuration at startup. Each filter literal becomes one bitmap leaf, so with a smaller budget a filtered request could exhaust its scan budget before any filter leaf produces a result.
 
 :::
 
@@ -223,6 +227,8 @@ authority-store-pruning-config:
 
 Adjust the gRPC data retention period based on your full node's resource profile and whether you've disabled JSON-RPC or not. In any case, test the longer retention period for performance and scalability before using gRPC in your application or offering it to other developers.
 
+gRPC queries for data pruned beyond the retention window return `NOT_FOUND`. To serve that data, query the [Archival Service](/develop/accessing-data/archival-store) or increase `num-epochs-to-retain` in your pruning config.
+
 ### Network ports {#network-ports}
 
 A Sui full node uses the following ports by default:
@@ -234,6 +240,8 @@ A Sui full node uses the following ports by default:
 | `9184` | TCP | Prometheus metrics | No (binds to `0.0.0.0` by default; restrict in production) |
 | `1337` | TCP | Admin interface | No (binds to `localhost` by default) |
 | `8080` | TCP | Internal validator network | No (validators only) |
+
+Port `8080` serves the internal validator network and is listed for reference only. Full node operators do not need to expose it; full node peering uses `8084/UDP`.
 
 :::caution
 
@@ -321,7 +329,13 @@ The Sui repository includes a guide on running a full node through [Docker Compo
 This alone is not suitable for a production environment, but you can use it to get a full node up and running quickly on a virtual machine or local machine for development purposes.
 See [Running a full node](#running-a-full-node) for instructions relevant to production use cases.
 
-Run the commands in this section from the same folder. Replace `branch-name` in URLs with the branch that matches your target network, such as `mainnet`, `testnet`, or `devnet`.
+Run the commands in this section from the same folder. Replace `branch-name` in URLs with the branch that matches your target network:
+
+| Target network | `branch-name` value |
+|---|---|
+| Mainnet | `mainnet` |
+| Testnet | `testnet` |
+| Devnet | `devnet` |
 
 1. Install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/). Docker Desktop includes Docker Compose.
 
@@ -371,7 +385,7 @@ You can also build `sui-node` directly from the Sui repository using [Cargo](htt
 
 1. Install the prerequisites listed in [Software requirements](#software-requirements).
 
-1. Clone the Sui repository, replacing `branch-name` with the branch for your target network:
+1. Clone the Sui repository, replacing `branch-name` with the branch for your target network (see the branch table in [Using Docker Compose](#using-docker-compose)):
 
     ```sh
     $ git clone https://github.com/MystenLabs/sui.git -b branch-name
@@ -386,7 +400,7 @@ You can also build `sui-node` directly from the Sui repository using [Cargo](htt
     $ cargo run --release --bin sui-node -- --config-path fullnode.yaml
     ```
 
-### Setting up a full node
+### How do I set up a full node? {#setting-up-a-full-node}
 
 When you are ready to run `sui-node` in your production environment, you can set up your full node by completing the following steps:
 
@@ -507,11 +521,11 @@ metrics-address: "0.0.0.0:9180"
 
 By default, `sui-node` writes its logs to standard error. When you run the node under systemd and do not override the output settings, `journalctl` captures these logs.
 
-The `RUST_LOG` environment variable controls the log filter. The default level is `info`. You can raise or lower the level for individual components, for example `sui_core=debug`. For more on filter syntax, see [Logging levels](/operators/observability#logging-levels) in the observability guide.
+The `RUST_LOG` environment variable controls the log filter. The default level is `info`. You can raise or lower the level for individual components, for example `sui_core=debug`. For more on filter syntax, see the [observability guide](/operators/observability).
 
 ### Recommended systemd unit
 
-The following unit file runs `sui-node` and sends its output to the systemd journal. Adjust the binary path, configuration path, user, and `RUST_LOG` filter for your environment.
+The following unit file runs `sui-node` and sends its output to the systemd journal. The example uses the binary path `/usr/local/bin/sui-node`, the configuration path `/opt/sui/fullnode.yaml`, and the `sui` user. Adjust these values and the `RUST_LOG` filter if your environment differs.
 
 ```ini title='/etc/systemd/system/sui-node.service'
 [Unit]
@@ -645,5 +659,5 @@ For network-specific upgrade instructions, see [Node Updates](/operators/full-no
 | `Address already in use` on port 9184 | Another process is using the metrics port | Change `metrics-address` in `fullnode.yaml` to a different port (for example, `0.0.0.0:9180`). |
 | Disk full (7TB+) | Pruning not configured or not active | Apply a [pruning configuration](/operators/data-management/managing-data#pruning) and wait 3 to 5 days for compaction. |
 | `genesis.blob` chain mismatch | Wrong genesis file for target network | Download the correct `genesis.blob` from [sui-genesis](https://github.com/MystenLabs/sui-genesis). See [Genesis](/operators/genesis#network-identity). |
-| Peer connections rejected | Firewall blocking P2P ports | Open ports 8080 (P2P) and 8084 (discovery) in your firewall. See [Node Updates](/operators/full-node/updates) for port requirements. |
+| Peer connections rejected | Firewall blocking P2P ports | Open port 8084/UDP (P2P state sync and peer discovery) in your firewall. See [Network ports](#network-ports) for port requirements. |
 | gRPC queries return `NOT_FOUND` for old data | Data pruned beyond retention window | Query the [Archival Service](/develop/accessing-data/archival-store) for historical data, or increase `num-epochs-to-retain` in your pruning config. |
