@@ -19,6 +19,20 @@ keywords:
   - history
   - account
   - bigvector
+  - deepbook sdk
+  - accountOpenOrders
+  - checkManagerBalance
+  - getOrder
+  - getQuoteQuantityOut
+  - getBaseQuantityOut
+  - open orders
+  - pool state
+  - query pool
+  - managerKey
+  - poolKey
+  - coinKey
+  - order struct
+  - deep required
 goal:
   description: Developer can use the DeepBookV3 SDK to read the state of a pool
   requires:
@@ -58,6 +72,8 @@ Pools are shared objects that represent a market. See [Query the Pool](/onchain-
 ## Pool functions
 
 The DeepBookV3 SDK exposes functions that you can call to read the state of a pool. These functions typically require a `managerKey`, `coinKey`, `poolKey`, or a combination of these. For details on these keys, see [DeepBookV3 SDK](/onchain-finance/deepbook/deepbookv3-sdk#keys). The SDK includes some default keys that you can view in the `constants.ts` file.
+
+The functions on this page are of two kinds. Query functions return a `Promise` with the requested data. Some functions in the [Administrative functions](#administrative-functions) and [Referral functions](#referral-functions) sections instead return a function that takes a `Transaction` object. Each function's description states which kind it returns.
 
 :::tip SDK unit handling
 Input amounts, quantities, and prices should be provided in standard decimal format (such as `10.5` SUI or `0.00001` nBTC). The SDK handles conversion to base units internally. Returned amounts are also in standard decimal format.
@@ -148,8 +164,8 @@ Use `getOrder` to retrieve an order's information. The call returns a `Promise` 
 
 **Parameters**
 
-`poolKey`: String that identifies the pool to query.
-`orderId`: ID of the order to query.
+- `poolKey`: String that identifies the pool to query.
+- `orderId`: ID of the order to query.
 
 <ImportContent source="/packages/deepbook-v3/src/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="getOrder" signatureOnly />
 
@@ -263,7 +279,7 @@ Use `getLevel2TicksFromMid` to retrieve level 2 order book ticks from mid-price 
 
 ### lockedBalance
 
-Use `lockedBalance` to retrieve a `BalanceManager` locked balance in the pool. The call returns a `Promise` in the `Order` struct, which has the following form:
+Use `lockedBalance` to retrieve a `BalanceManager` locked balance in the pool. The call returns a `Promise` with the locked base, quote, and DEEP balances, which has the following form:
 
 ```ts
 {
@@ -275,7 +291,8 @@ Use `lockedBalance` to retrieve a `BalanceManager` locked balance in the pool. T
 
 **Parameters**
 
-`poolKey`: String that identifies the pool to query. `balanceManagerKey`: key of the balance manager defined in the SDK.
+- `poolKey`: String that identifies the pool to query.
+- `balanceManagerKey`: key of the balance manager defined in the SDK.
 
 <ImportContent source="/packages/deepbook-v3/src/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="lockedBalance" signatureOnly />
 
