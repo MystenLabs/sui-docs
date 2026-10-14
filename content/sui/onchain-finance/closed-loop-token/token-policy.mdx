@@ -52,7 +52,9 @@ answer: >-
 
 `TokenPolicy` is a shared object that a token owner can create using the `TreasuryCap`. Having a publicly available `TokenPolicy` enables onchain discovery of allowed actions and their conditions. This is useful for wallets and other services that want to provide a better user experience for token holders.
 
-## Create and share
+Creating a `TokenPolicy` also returns a `TokenPolicyCap`. The `TokenPolicyCap` is required to manage the policy: allowing and disallowing actions, and adding or removing rules. Consuming spent balance with `token::flush` requires the `TreasuryCap`.
+
+## How do I create and share a TokenPolicy?
 
 You create a new `TokenPolicy` using the `token::new_policy` function. The function takes the `TreasuryCap` as an argument and returns a `TokenPolicy` object and a managing capability.
 
@@ -66,9 +68,9 @@ public fun new_policy<T>(
 
 You must use the `token::share_policy` function to share the `TokenPolicy` object.
 
-## Allow and disallow
+## How do I allow or disallow an action on my token?
 
-To allow methods without any conditions, use the `token::allow` function. The function takes a `TokenPolicy` and `TokenPolicyCap` as arguments. If allowed, the action can be confirmed in the `TokenPolicy` using the `token::confirm_request` function (see [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy)).
+To allow methods without any conditions, use the `token::allow` function. The function takes a `TokenPolicy` and `TokenPolicyCap` as arguments, along with the name of the action as a `String` (for example, `"transfer"` or `"to_coin"`). If allowed, the action can be confirmed in the `TokenPolicy` using the `token::confirm_request` function (see [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy)).
 
 ```move
 // module sui::token
@@ -82,11 +84,11 @@ public fun allow<T>(
 
 Similarly, you can use the `token::disallow` function to completely disable an action; it takes the same arguments as `token::allow`.
 
-## Adding rules
+## How do I add rules to an action?
 
 `TokenPolicy` can specify custom conditions for each action. These conditions are called rules and are typically implemented as separate Move modules. The identifier of the rule is its type. See [Rules](/onchain-finance/closed-loop-token/rules) for more information.
 
-The pseudo-code structure of the `TokenPolicy` is as follows. Each action can have multiple rules associated with it.
+The pseudo-code structure of the `TokenPolicy` is as follows. Each action can have multiple rules associated with it. In this example, `0x0...` is a placeholder; each rule is identified by its full type.
 
 ```yaml
 TokenPolicy
@@ -115,9 +117,9 @@ public fun add_rule_for_action<T, Rule: drop>(
 
 Signature for the reverse operation `token::remove_rule_for_action` is symmetrical to `token::add_rule_for_action`.
 
-## Consume spent balance
+## How do I consume a spent token balance?
 
-Spent balance can be consumed from the `TokenPolicy` using the `token::flush` function. It requires a `TreasuryCap`.
+Spent balance can be consumed from the `TokenPolicy` using the `token::flush` function. It requires a `TreasuryCap`. For more on spent balance, see [Spending](/onchain-finance/closed-loop-token/spending).
 
 ```move
 // module sui::token
@@ -137,6 +139,6 @@ public fun flush<T>(
 | disallow                    | Disallow an action in the `TokenPolicy`                                |
 | add_rule_for_action         | Add a rule for an action in the `TokenPolicy`                          |
 | remove_rule_for_action      | Remove a rule for an action in the `TokenPolicy`                       |
-| confirm_request             | Confirm an `ActionRequest` with a `TokenPolicy`                          |
+| confirm_request             | Confirm an `ActionRequest` with a `TokenPolicy` (see [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy)) |
 | confirm_request_mut         | Similar to `confirm_request` but only works for `spend` action       |
 | flush                       | Flush the spent balance from the `TokenPolicy` (see [Spending](/onchain-finance/closed-loop-token/spending)) |
