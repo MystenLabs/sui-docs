@@ -504,12 +504,6 @@ Structure your code so none of these become assumptions:
 - **Admission grid:** Read it from the market. Admission tick size is mutable protocol state.
 - **Testnet timing:** Treat timing you measure on Testnet as an observation rather than a guarantee. Oracle update frequency and settlement latency are properties of the relayers, not of the contracts.
 
-### How do I plan a move to Mainnet? {#plan-for-mainnet}
-
-Moving an app from Testnet to Mainnet changes every deployment-specific value on this page: the package call targets and original IDs, the shared object IDs, the quote and PLP coin types, the oracle objects, the chain ID and indexing start checkpoint, and the trade path. Keep all of them behind the single network-keyed record above rather than in constants scattered through the code, so the switch is one configuration change.
-
-Keep using the identifiers on this page until a newer deployment explicitly replaces them, and ignore older package IDs from earlier deployments, as the caution under [Upgraded packages carry 2 IDs](#two-ids) explains. No page announces a new deployment, so watching the DeepBookV3 source branch is currently the only signal that one exists.
-
 ## Live onchain events
 
 Stream events directly from a full node when a client needs them as they land, and back them with your own store for history. Predict emits its events from 4 modules under the Predict package: `config_events` for lifecycle and configuration, `order_events` for trading, `vault_events` for the pool and its queues, and `builder_code_events` for builder attribution. On Testnet, the queued-order events come from a fifth module, `queue_events`, in the `deepbook_predict_orders` package, so subscribe to both packages there. The following table lists the ones an integrator subscribes to most often, not every event each module declares:
