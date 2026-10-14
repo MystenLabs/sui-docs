@@ -28,12 +28,16 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+Install the MVR CLI through Cargo, prebuilt binaries, or from source, then use `mvr add` to add named package dependencies to your `Move.toml` and `sui move build` to resolve and build them.
+
 Use the MVR CLI to manage your package dependencies and to interact with the Move Registry (MVR). The MVR CLI is a command line tool that enables:
 
 - Adding dependencies to your Move project.
 - Building your Move project with MVR dependencies.
 
-## Installation
+This page assumes you already have a Sui Move project with a `Move.toml` file and can build it with `sui move build`.
+
+## How do I install the MVR CLI?
 
 There are several ways to install the MVR CLI tool.
 
@@ -42,7 +46,7 @@ There are several ways to install the MVR CLI tool.
 Use the following command to install using Cargo:
 
 ```sh
-cargo install --locked --git https://github.com/mystenlabs/mvr --branch release mvr
+cargo install --locked --git https://github.com/MystenLabs/mvr --branch release mvr
 ```
 
 ### From binaries
@@ -67,7 +71,7 @@ After downloading the file, rename the binary to `mvr` and add its location to y
   ```
   </TabItem>
   <TabItem label="Bash" value='bash'>
-  1. Open your `.bashrc` file (or `.bash_profile` on macOS). This file is typically located at `~/.bashrc` in macOS. If it does not exist, create it.
+  1. Open your `.bashrc` file (or `.bash_profile` on macOS). This file is typically located at `~/.bashrc`, or at `~/.bash_profile` on macOS. If it does not exist, create it.
   ```sh
   $ nano ~/.bashrc
   ```
@@ -105,7 +109,7 @@ To install from source:
 
 1. Clone the `mvr` repository.
     ```sh
-    git clone https://github.com/mystenlabs/mvr.git
+    git clone https://github.com/MystenLabs/mvr.git
     ```
 1. Open a console or terminal to the `mvr/mvr-cli` directory of the repository.
     ```sh
@@ -124,12 +128,18 @@ After completing your install from one of the above methods, use a terminal or c
 :::
 </div>
 
-## Add dependencies
+## How do I add MVR dependencies to a Move project?
 
 To add a dependency to your Move code, use the `mvr add` command. This command adds the dependency to your `Move.toml` file.
 
 ```sh
 mvr add <package_name> --network <mainnet|testnet>
+```
+
+For example, the following command adds the `@mvr/app` package from mainnet:
+
+```sh
+mvr add @mvr/app --network mainnet
 ```
 
 MVR adds a new entry to your `Move.toml` file. The following shows an example of the information that MVR adds.
@@ -143,7 +153,7 @@ app = { r.mvr = "@mvr/app" }
 network = "mainnet"
 ```
 
-## Build against MVR dependencies
+## How do I build a Move project with MVR dependencies?
 
 Use `sui move build` as usual when building Move packages. The command automatically invokes MVR CLI to resolve dependencies and build your project.
 
