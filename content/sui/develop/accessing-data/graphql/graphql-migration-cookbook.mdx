@@ -75,6 +75,8 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+To migrate from JSON-RPC to GraphQL, replace each JSON-RPC call with the corresponding GraphQL query or mutation: use `Query.transaction` for transaction lookups, `Query.events` with an `EventFilter` for event queries, `Address.balance` for balances, `Address.objects` for owned objects, and `Mutation.executeTransaction` for submission.
+
 Each recipe pairs a JSON-RPC call with its GraphQL replacement and explains the key differences. For the full method mapping and decision criteria, see the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration). For GraphQL concepts, pagination, and scope, see [GraphQL for Sui RPC](/develop/accessing-data/graphql/graphql-rpc).
 
 :::info
@@ -92,6 +94,8 @@ GraphQL queries run against the online IDE or any GraphQL endpoint. Access the s
 - **Devnet:** https://graphql.devnet.sui.io/graphql
 
 For `curl` examples, replace `<GRAPHQL_ENDPOINT>` with your provider's GraphQL URL. See [GraphQL for Sui RPC](/develop/accessing-data/graphql/graphql-rpc) for headers, variables, fragments, and pagination details.
+
+The `curl` examples wrap the JSON payload in single quotes, which works in POSIX shells such as bash and zsh. If your shell does not treat single quotes this way, adjust the quoting and escaping of the `-d` payload accordingly.
 
 ```sh
 curl -X POST <GRAPHQL_ENDPOINT> \
@@ -974,11 +978,19 @@ query ($tx: JSON!) {
 }
 ```
 
+**Variables (BCS-encoded transaction):**
+
+```json
+{
+  "tx": { "bcs": { "value": "<BASE64_TX_BYTES>" } }
+}
+```
+
 </TabItem>
 </Tabs>
 
 **Key differences:**
-- `simulateTransaction` accepts a JSON transaction matching the Sui gRPC transaction schema, or a BCS-encoded transaction with `{"bcs": {"value": "<base64>"}}`.
+- `simulateTransaction` accepts, through the `JSON!`-typed `$tx` variable, a JSON transaction matching the Sui gRPC transaction schema, or a BCS-encoded transaction with `{"bcs": {"value": "<base64>"}}`. If you already have the transaction bytes you would pass to `sui_dryRunTransactionBlock`, use the BCS form shown in the variables example.
 - Set `doGasSelection: true` to have the service automatically select gas coins for the simulation.
 
 ## Get reference gas price
