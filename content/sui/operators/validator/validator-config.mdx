@@ -38,20 +38,20 @@ answer: >-
 
 Validators on Sui run specialized validator nodes that can execute more tasks than full nodes. Validators handle staking, gas price reference, and tallying rules.
 
-## Validator requirements
+## What do I need to run a Sui validator? {#validator-requirements}
 
 To run a Sui validator, you must set up and configure a Sui validator node. Specific steps you must take include:
 
-1. Install and configure Sui.
-2. Configure port and protocol settings.
+1. Install and configure Sui. See [Deployment](#deployment) and [Configuration](#configuration).
+2. Configure port and protocol settings. See [Connectivity](#connectivity) and [Network buffer](#network-buffer).
 3. Configure key management.
 4. Configure storage.
 5. Update software.
-6. Execute onchain commands to interact with the network.
+6. Execute onchain commands to interact with the network. See [Set up staking](#set-up-staking).
 7. Update the gas price survey.
 8. Report to other validators.
 
-### Hardware requirements
+### What hardware does a Sui validator need? {#hardware-requirements}
 
 Suggested minimum hardware specifications to run a Sui validator node:
 
@@ -61,6 +61,8 @@ Suggested minimum hardware specifications to run a Sui validator node:
 - Network: 1 Gbps
 
 <ImportContent source="staking-pool-reqs" mode="snippet" />
+
+### How do I set up staking on my validator node? {#set-up-staking}
 
 To set up staking on your validator node:
 
@@ -72,7 +74,7 @@ To set up staking on your validator node:
 
 [Learn more about validator staking rewards](/operators/validator/validator-rewards).
 
-## Deployment
+## How do I deploy a Sui validator node? {#deployment}
 
 You can deploy a Sui node in a number of ways.
 
@@ -98,7 +100,7 @@ $ cargo build --release --bin sui-node
 
 For more information on deploying a validator, refer to the [Sui for Node Operators](https://github.com/MystenLabs/sui/blob/main/nre/sui_for_node_operators.md) guide.
 
-## Configuration
+## How do I configure a Sui validator node? {#configuration}
 
 Use one of the following configuration guides for your deployment option:
 
@@ -116,7 +118,7 @@ For more information on configuring a validator, refer to the [Sui for Node Oper
 
 See [Validator](https://github.com/MystenLabs/sui/blob/main/nre/config/validator.yaml) for configuration templates.
 
-## Connectivity
+## Which ports does a Sui validator use? {#connectivity}
 
 `sui-node` uses the following ports by default:
 
@@ -130,7 +132,7 @@ See [Validator](https://github.com/MystenLabs/sui/blob/main/nre/config/validator
 
 To run a validator successfully, you must open ports 8080-8084 as outlined, including the specific protocol (TCP/UDP).
 
-## Network buffer
+## How do I increase the network buffer sizes? {#network-buffer}
 
 Load testing on Sui validator networks suggests that the default Linux network buffer sizes are too small.
 Increase them using one of the following two methods:
