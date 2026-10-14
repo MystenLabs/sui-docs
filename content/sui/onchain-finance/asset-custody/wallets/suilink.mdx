@@ -38,7 +38,7 @@ questions:
 answer: Use SuiLink to connect wallets across different chains.
 ---
 
-[SuiLink](https://www.suilink.io/) enables securely linking wallet addresses from different blockchains to a Sui wallet address. Upon creating a SuiLink, you receive a soulbound NFT that serves as authenticated proof of ownership for your connected wallets.
+[SuiLink](https://www.suilink.io/) enables securely linking wallet addresses from different blockchains to a Sui wallet address. Upon creating a SuiLink, you receive a soulbound (non-transferable) NFT that serves as authenticated proof of ownership for your connected wallets.
 
 ## Key features
 
@@ -49,13 +49,13 @@ SuiLink provides the following capabilities:
 - **Enhanced discoverability**: Projects in the [Sui ecosystem](https://github.com/sui-foundation/awesome-sui/tree/main) can discover you based on your activity across all connected wallets.
 - **Reward eligibility**: Unlock opportunities for cross-chain rewards, priority features, and [exclusive events](https://luma.com/sui-network) within the Sui network.
 
-### Supported networks
+### Which networks does SuiLink support?
 
 SuiLink currently supports linking wallets cross-chain between Sui and Ethereum (Sui-to-Ethereum), and Sui and Solana (Sui-to-Solana).
 
-Sui-to-Sui linking is currently only supported programmatically with a custom solution for the [Playtron wallet app](https://wallet.playtron.one/). For more information, visit the [SuiPlay0X1 SuiLink integration guide](/sui-stack/suiplay0x1/wallet-integration#suilink).
+Sui-to-Sui linking is currently only supported programmatically with a custom solution for the [Playtron wallet app](https://wallet.playtron.one/). For more information, visit the [SuiPlay0X1 SuiLink integration guide](/sui-stack/suiplay0x1/wallet-integration).
 
-## Creating a SuiLink
+## How to create a SuiLink
 
 Creating a SuiLink incurs a small gas fee on the Sui network to mint the soulbound NFT. Ensure you have some SUI tokens in your wallet to complete the connection.
 
@@ -106,7 +106,7 @@ When building an application on Sui, you can integrate SuiLink to verify cross-c
 </TabItem>
 </Tabs>
 
-### Querying SuiLink objects
+### How to query SuiLink objects
 
 To retrieve a user's SuiLink connections, use the following gRPC query:
 
