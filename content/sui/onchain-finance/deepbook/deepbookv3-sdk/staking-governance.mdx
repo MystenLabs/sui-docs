@@ -50,11 +50,11 @@ Examples of interacting with staking and governance. These functions typically r
 
 See [Staking and Governance](/onchain-finance/deepbook/deepbookv3/contract-information/staking-governance) for more information on the staking and governance API.
 
-## Staking and governance functions
+## How do I stake, vote, and claim rebates with the SDK?
 
 ### stake
 
-Use `stake` to stake an amount you specify into a specific pool. The call returns a `Transaction` object.
+Use `stake` to stake an amount you specify into a specific pool. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 
@@ -68,7 +68,7 @@ stake(poolKey: string, balanceManagerKey: string, stakeAmount: number);
 
 ### unstake
 
-Use `unstake` to unstake from a particular pool. The call returns a `Transaction` object.
+Use `unstake` to unstake from a particular pool. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 
@@ -81,19 +81,19 @@ unstake(poolKey: string, balanceManagerKey: string);
 
 ### submitProposal
 
-Use `submitProposal` to submit a governance proposal. The call returns a `Transaction` object.
+Use `submitProposal` to submit a governance proposal. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 
-- `params`: A `ProposalParams` object that defines the proposal.
+- `params`: A `ProposalParams` object that defines the proposal. It contains `poolKey` (string), `balanceManagerKey` (string), `takerFee` (number), `makerFee` (number), and `stakeRequired` (number). See the `ProposalParams` interface in the submitProposal custom function example below.
 
 ```tsx
-submitProposal({ params: ProposalParams });
+submitProposal(params: ProposalParams);
 ```
 
 ### vote
 
-Use `vote` to vote on a proposal. The call returns a `Transaction` object.
+Use `vote` to vote on a proposal. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 
@@ -102,7 +102,7 @@ Use `vote` to vote on a proposal. The call returns a `Transaction` object.
 - `proposal_id`: String that identifies the proposal to vote on.
 
 ```tsx
-vote(poolKey: string, balanceManagerKey: string, proposal_id: string)
+vote(poolKey: string, balanceManagerKey: string, proposal_id: string);
 ```
 
 ### `claimRebates`
@@ -116,9 +116,9 @@ Use `claimRebates` to claim maker/taker rebates for a balance manager in a speci
 
 <ImportContent source="packages/deepbook-v3/src/transactions/deepbook.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="claimRebates" signatureOnly/>
 
-## Examples
+## How do I call these functions from a custom class?
 
-The following examples demonstrate custom staking and governance functions that you can place into the `DeepBookMarketMaker` class. 
+The following examples demonstrate custom staking and governance functions that you can place into the `DeepBookMarketMaker` class. Each example first shows the SDK function signature, which returns a function that takes a `Transaction` object, followed by a custom function that calls the SDK through `this.governance` and passes the result to `tx.add()`.
 
 ### stake custom function
 
