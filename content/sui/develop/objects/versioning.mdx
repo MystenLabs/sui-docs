@@ -61,11 +61,22 @@ Objects on Sui are versioned either through the [fastpath](#fastpath-objects) or
 
 Sui uses [Lamport timestamps](https://en.wikipedia.org/wiki/Lamport_timestamp) in its versioning algorithm. This guarantees versions are never re-used: a transaction sets the new version for all objects it touches to `1 + max(version of all input objects)`. For example, a transaction transferring object `O` at version 5 using gas object `G` at version 3 updates both to version `1 + max(5, 3) = 6`.
 
+The following table summarizes the two paths. Each is described in detail in the sections below.
+
+| Property | Fastpath | Consensus |
+| --- | --- | --- |
+| Ownership types | Address-owned, immutable | Address-owned, party, shared |
+| Who sets the version | The sender names the exact version | Consensus assigns the version during scheduling |
+| Transaction input reference | ID and version | Shared objects: ID, the version the object was shared at, and a flag indicating mutable access |
+| Latency | Suited to latency-sensitive applications | Can increase when multiple transactions contend for an object |
+| Multiple senders | Requires offchain coordination | No offchain coordination needed |
+| Good fit for | Latency- or gas-sensitive applications, no complex multi-party transactions, existing offchain coordination | Applications that require coordination between multiple parties |
+
 ## Fastpath objects
 
 :::tip
 
-It is recommended to use [party objects](/develop/objects/object-ownership/party) rather than fastpath objects.
+It is recommended to use [party objects](/develop/objects/object-ownership/party) rather than fastpath objects. Party objects are versioned through [consensus](#consensus-objects), not the fastpath.
 
 :::
 
@@ -83,7 +94,7 @@ Consensus objects can be [address-owned](/develop/objects/object-ownership/addre
 
 Transactions accessing multiple consensus objects or particularly popular objects might see increased latency due to contention. The trade-off is flexibility: multiple addresses can access the same object in a coordinated way without offchain coordination.
 
-You reference [shared](/develop/objects/object-ownership/shared) transaction inputs by ID, the version the object was shared at, and a flag indicating whether it is accessed mutably. You don't specify the precise access version because consensus determines that during scheduling, one transaction's output version becomes the next transaction's input version. Immutably referenced shared objects participate in scheduling but don't increment the object's version.
+You reference [shared](/develop/objects/object-ownership/shared) transaction inputs by ID, the version the object was shared at, and a flag indicating whether it is accessed mutably. You don't specify the precise access version because consensus determines that during scheduling, the step where consensus sequences the transactions that access the object and assigns their versions: one transaction's output version becomes the next transaction's input version. Immutably referenced shared objects participate in scheduling but don't increment the object's version.
 
 Consensus is a good fit for applications that require coordination between multiple parties.
 
