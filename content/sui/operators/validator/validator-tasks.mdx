@@ -1,8 +1,9 @@
 ---
 title: Validator Node Management
 description: >-
-  Learn the processes you need to perform to ensure your validator nodes are
-  always optimized.
+  Reference guide for ongoing Sui validator node operations, covering storage
+  management, key management, metrics, logs, dashboards, software updates, state
+  sync, and joining or leaving the validator set.
 keywords:
   - run sui validator
   - sui validator tasks
@@ -62,6 +63,8 @@ $ cat /opt/sui/config/validator.yaml | grep db-path
   db-path: /opt/sui/db/authorities_db
   db-path: /opt/sui/db/consensus_db
 ```
+
+The configuration file has two `db-path` entries, one for each database (`authorities_db` and `consensus_db`), and both are located under `/opt/sui/db/`.
 
 Ensure that you have an appropriately sized disk mounted for the database to write to.
 
@@ -166,7 +169,7 @@ When you need to update the `sui-node` software, use the following process. Foll
 
 ## State sync
 
-Checkpoints in Sui contain the permanent history of the network. They are comparable to blocks in other blockchains with one key difference: they lag instead of lead. All transactions are final and executed before being included in a checkpoint.
+Checkpoints in Sui contain the permanent history of the network. They are comparable to blocks in other blockchains with one key difference: they lag instead of lead, meaning all transactions are final and executed before being included in a checkpoint.
 
 These checkpoints synchronize between validators and full nodes through a dedicated peer-to-peer state sync interface.
 
@@ -201,7 +204,7 @@ $ chmod +x sui
 
 Ensure that the `sui` binary release/version matches that of the deployed network, as this is often required.
 
-### Updating onchain metadata
+### How to update onchain metadata
 
 You can leverage the [validator tool](https://github.com/MystenLabs/sui/blob/main/nre/validator_tool.md) to perform a majority of the following tasks.
 
@@ -214,7 +217,7 @@ An active or pending validator can update its onchain metadata by submitting a t
 
 Other metadata (keys, addresses, and so on) only come into effect at the next epoch.
 
-To update metadata, a validator makes a `MoveCall` transaction that interacts with the system object. For example:
+To update metadata, a validator makes a `MoveCall` transaction that interacts with the system object. In the following commands, `0x3` is the package that contains the `sui_system` module and `0x5` is the system object. For example:
 
 1. To update `name` to `new_validator_name`, use the Sui Client CLI to call `sui_system::update_validator_name`:
 
@@ -275,6 +278,8 @@ Call `sui_system::request_set_gas_price`:
 $ sui client call --package 0x3 --module sui_system --function request_set_gas_price --args 0x5 {cap_object_id} {new_gas_price} --gas-budget 10000
 ```
 
+Replace `{cap_object_id}` with the ID of the current valid `Cap` object, which you can find with `sui client objects` as described in [Operation Cap](#operation-cap).
+
 ### Reporting/un-reporting validators
 
 To report a validator or undo an existing report, the sender needs to hold a valid [`UnverifiedValidatorOperationCap`](#operation-cap). The sender can be the validator itself or a trusted delegatee.
@@ -287,7 +292,7 @@ $ sui client call --package 0x3 --module sui_system --function report_validator/
 
 After `2f + 1` other validators by voting power report a validator, the network slashes their staking rewards.
 
-### Joining the validator set
+### How to join the validator set
 
 To join the validator set, you need to first sign up as a validator candidate by calling `sui_system::request_add_validator_candidate` with your metadata and initial configs:
 
@@ -301,7 +306,7 @@ After an address becomes a validator candidate, any address (including the candi
 $ sui client call --package 0x3 --module sui_system --function request_add_validator --args 0x5 --gas-budget 10000000
 ```
 
-### Leaving the validator set
+### How to leave the validator set
 
 To leave the validator set starting next epoch, the sender needs to be an active validator in the current epoch and should call `sui_system::request_remove_validator`:
 
