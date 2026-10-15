@@ -40,7 +40,7 @@ answer: >-
   to capture near-real time or epoch time in your Sui packages.
 ---
 
-If you need a near real-time measurement (within a few seconds) for your application, use the immutable reference of time provided by the `Clock` module in Move. The reference value from this module updates with every consensus commit. If you do not need the current time, use the `epoch_timestamp_ms` function to refer to the timestamp of when the current epoch started.
+If you need a near real-time measurement (within a few seconds) for your application, use the immutable reference of time that the `Clock` module in Move provides. The reference value from this module updates with every consensus commit. If you do not need the current time, use the `epoch_timestamp_ms` function to refer to the timestamp of when the current epoch started.
 
 ## The `sui::clock::Clock` module
 
@@ -50,11 +50,11 @@ Use the `timestamp_ms` function from the `sui::clock` module to extract a Unix t
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/clock.move" mode="code" fun="timestamp_ms" noComments />
 
-The example below demonstrates an entry function that emits an event containing a timestamp from `sui::clock::Clock`:
+The following `clock.move` example demonstrates an entry function that emits an event containing a timestamp from `sui::clock::Clock`:
 
 <ImportContent source="examples/move/basics/sources/clock.move" mode="code" noComments />
 
-Call the previous entry function with the following format, passing `0x6` as the address for the `Clock` parameter:
+Call the `access` entry function with the following format, passing `0x6` as the address for the `Clock` parameter:
 
 <ImportContent source="info-gas-budget" mode="snippet" />
 
@@ -68,7 +68,7 @@ Successful calls to `sui::clock::timestamp_ms` in the same transaction always pr
 
 Any transaction that requires access to `sui::clock::Clock` must go through consensus because the only available instance is a shared object. As a result, this technique is not suitable for transactions that must use the single-owner fastpath. See [Epoch timestamps](#epoch-timestamps) for a single-owner-compatible source of timestamps.
 
-Transactions that use this workflow must accept it as an immutable reference, not a mutable reference or value. This prevents contention, as transactions that access `sui::clock::Clock` can only read it, so they do not need to be sequenced relative to each other. Validators refuse to sign transactions that do not meet this requirement. Packages that include entry functions that accept `sui::clock::Clock` or `&mut Clock` fail to publish.
+Transactions that use this workflow must accept it as an immutable reference, not a mutable reference or value. This prevents contention, as transactions that access `sui::clock::Clock` can only read it, so they do not need sequencing relative to each other. Validators refuse to sign transactions that do not meet this requirement. Packages that include entry functions that accept `sui::clock::Clock` or `&mut Clock` fail to publish.
 
 The following functions test `sui::clock::Clock`-dependent code by manually creating a `Clock` object and manipulating its timestamp. This is only possible in test code:
 
@@ -86,7 +86,7 @@ Use the following function from the `sui::tx_context` module to access the times
 
 This function returns the point in time when the current epoch started as a millisecond granularity Unix timestamp in a `u64`. This value changes roughly once every 24 hours when the epoch changes.
 
-Tests based on `sui::test_scenario` can use `later_epoch` to exercise time-sensitive code that uses `epoch_timestamp_ms:
+Tests based on `sui::test_scenario` can use `later_epoch` to exercise time-sensitive code that uses `epoch_timestamp_ms`:
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/test/test_scenario.move" mode="code" fun="later_epoch" noComments />
 

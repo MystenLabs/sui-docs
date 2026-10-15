@@ -67,11 +67,11 @@ By the end of this guide, you can:
 </TabItem>
 </Tabs>
 
-This guide uses the [Walrus Snake](https://github.com/MystenLabs/walrus-sites/tree/main/examples/snake) game as a concrete deployment example throughout. Walrus Snake is a minimal static site that demonstrates the complete Walrus Sites workflow: deploying files to Walrus, creating an onchain site object, configuring resources with `ws-resources.json`, and accessing the site through a portal. The [Domain Names with SuiNS](/sui-stack/suins/sui-stack-suins) guide builds on this guide to show how to attach a human-readable name to your deployed site.
+The [Walrus Snake](https://github.com/MystenLabs/walrus-sites/tree/main/examples/snake) game is the concrete deployment example throughout. Walrus Snake is a minimal static site that demonstrates the complete Walrus Sites workflow: deploying files to Walrus, creating an onchain site object, configuring resources with `ws-resources.json`, and accessing the site through a portal. The [Domain Names with SuiNS](/sui-stack/suins/sui-stack-suins) guide builds on this example to show how to attach a human-readable name to your deployed site.
 
 ## Introduction to Walrus Sites
 
-A Walrus Site is a static website whose assets are stored on Walrus and whose resource index lives on Sui. There is no traditional web server. The site's content is censorship-resistant and verifiable because it is backed by decentralized storage with onchain ownership.
+A Walrus Site is a static website whose assets live on Walrus and whose resource index lives on Sui. There is no traditional web server. The site's content is censorship-resistant and verifiable because decentralized storage with onchain ownership backs it.
 
 Walrus Sites have 4 components that work together.
 
@@ -81,7 +81,7 @@ Walrus stores your site's static assets (HTML, CSS, JavaScript, images, fonts, a
 
 ### The Sui site object
 
-Each Walrus Site corresponds to a single [Sui object](/develop/sui-architecture/object-model) defined by the Walrus Sites Move contract. The object has a basic structure:
+Each Walrus Site corresponds to a single [Sui object](/develop/sui-architecture/object-model) that the Walrus Sites Move contract defines. The object has a basic structure:
 
 ```move
 public struct Site has key, store {
@@ -90,7 +90,7 @@ public struct Site has key, store {
 }
 ```
 
-Each resource in the site is attached as a [dynamic field](/develop/objects/dynamic-fields) of type `Resource`:
+The site object stores each resource as a [dynamic field](/develop/objects/dynamic-fields) of type `Resource`:
 
 ```move
 public struct Resource has store, drop {
@@ -102,10 +102,10 @@ public struct Resource has store, drop {
 
 The `path` field corresponds to the resource's URL path (for example, `/index.html`), and `blob_id` is the Walrus identifier for the file's content. Together, the site object and its dynamic fields form an onchain index that maps every resource path to its content on Walrus.
 
-Because the site object is a standard Sui object, it has a single owner: the wallet that deployed the site. Only that wallet can update or destroy the site. Ownership can be transferred to a different wallet. You can also assign a SuiNS name to the object to give your site a human-readable domain.
+Because the site object is a standard Sui object, it has a single owner: the wallet that deployed the site. Only that wallet can update or destroy the site. The owner can transfer ownership to a different wallet. You can also assign a SuiNS name to the object to give your site a human-readable domain.
 
 :::info
-Blobs are stored for a fixed number of [epochs](/develop/sui-architecture/epochs). On Mainnet, each epoch lasts 14 days. On Testnet, each epoch lasts 1 day. The maximum storage duration is 53 epochs. The `--epochs` value you pass to `deploy` sets how long your site stays available, so multiply it by the epoch length of your target network when you plan a deployment.
+Walrus stores blobs for a fixed number of [epochs](/develop/sui-architecture/epochs). On Mainnet, each epoch lasts 14 days. On Testnet, each epoch lasts 1 day. The maximum storage duration is 53 epochs. The `--epochs` value you pass to `deploy` sets how long your site stays available, so multiply it by the epoch length of your target network when you plan a deployment.
 :::
 
 ### The site-builder CLI
@@ -141,7 +141,7 @@ sequenceDiagram
     P-->>BR: response with headers
 ```
 
-The public Mainnet portal operated by Mysten Labs is at `https://wal.app`. Anyone can self-host a portal. See [Deploy a Local Portal](https://docs.wal.app/docs/sites/portals/deploy-locally) for setup instructions.
+Mysten Labs operates the public Mainnet portal at `https://wal.app`. Anyone can self-host a portal. See [Deploy a Local Portal](https://docs.wal.app/docs/sites/portals/deploy-locally) for setup instructions.
 
 ## Tooling
 
@@ -210,7 +210,7 @@ $ site-builder deploy [OPTIONS] --epochs <EPOCHS> <DIRECTORY>
 | `--object-id <OBJECT_ID>` | Object ID of an existing site to update. |
 | `--list-directory` | Generates an index page for directories without an `index.html`. |
 
-`deploy` determines whether to publish or update based on whether it finds an object ID: from `--object-id`, or from the `object_id` field in `ws-resources.json`. If no ID is found, it publishes a new site and writes the resulting object ID to `ws-resources.json` automatically.
+`deploy` determines whether to publish or update based on whether it finds an object ID: from `--object-id`, or from the `object_id` field in `ws-resources.json`. If it finds no ID, it publishes a new site and writes the resulting object ID to `ws-resources.json` automatically.
 
 Other commands: `convert` converts a site object ID to the Base36 subdomain format; `sitemap` lists all resources at a given object ID; `update-resource` adds or replaces a single resource in an existing site; `destroy` permanently removes the site object.
 
@@ -225,7 +225,7 @@ Walrus Sites support almost any traditional static Web2 site built for modern br
 - **Static sites only.** No server-side rendering, no request handlers, and no runtime redirects. Use the `routes` field in `ws-resources.json` for client-side routing.
 - **No secrets.** All content is fully public. Never embed API keys, private keys, or credentials in site files.
 - **Maximum redirect depth.** The `https://wal.app` portal enforces a maximum of 3 consecutive redirects.
-- **Service-worker portal limitations.** Sites cannot register their own service worker, PWAs are not supported, and iOS wallet in-app browsers cannot load the site. These limitations do not apply to the server-side portal at `https://wal.app`.
+- **Service-worker portal limitations.** Sites cannot register their own service worker, the service-worker portal does not support PWAs, and iOS wallet in-app browsers cannot load the site. These limitations do not apply to the server-side portal at `https://wal.app`.
 - **SuiNS required for human-readable URLs.** Without a SuiNS name, your site is only accessible through a Base36-encoded subdomain.
 
 For the full list with technical detail, see [Known Restrictions](https://docs.wal.app/docs/sites/known-restrictions).
@@ -250,9 +250,9 @@ $ git clone https://github.com/MystenLabs/walrus-sites.git && cd walrus-sites
 $ site-builder --context=testnet deploy examples/snake --epochs 1
 ```
 
-On Testnet, 1 epoch lasts 1 day. Use a larger number to keep the site available longer. Deploying a small static site (under 1 MB) for 1 epoch on Testnet costs approximately 0.1 WAL. Mainnet costs vary with the WAL token price and the size of your site.
+On Testnet, 1 epoch lasts 1 day. Use a larger number to keep the site available longer. Deploying a small static site (under 1MB) for 1 epoch on Testnet costs approximately 0.1 WAL. Mainnet costs vary with the WAL token price and the size of your site.
 
-A successful deployment prints the object ID of the new site and the URL where it can be browsed:
+A successful deployment prints the object ID of the new site and the URL where you can browse it:
 
 ```
 Created new site!
@@ -300,9 +300,9 @@ The Walrus Snake example shows all supported fields:
 
 The fields are:
 
-- **`object_id`:** Written automatically by `deploy` after the first deployment. The field is absent from the source file but appears in your local copy after the first run. Subsequent deploys read it to update the same site.
+- **`object_id`:** `deploy` writes this field automatically after the first deployment. The field is absent from the source file but appears in your local copy after the first run. Subsequent deploys read it to update the same site.
 - **`headers`:** Custom HTTP response headers per resource path. Supports glob patterns.
-- **`routes`:** Client-side routing rules for SPAs. Wildcards may only appear at the end of a pattern.
+- **`routes`:** Client-side routing rules for SPAs. Wildcards can only appear at the end of a pattern.
 - **`redirects`:** Static redirects with explicit HTTP status codes. The target can be an internal path or an external URL.
 - **`metadata`:** Site metadata stored in the Sui object and displayed in wallets.
 - **`site_name`:** The human-readable name stored in the Sui site object.
@@ -334,7 +334,7 @@ Rebuild your site before running `deploy` again if you use a web framework. The 
 
 ## How do I point a SuiNS name at a Walrus Site?
 
-Without a SuiNS name, your site is only accessible through a Base36-encoded subdomain derived from the site object ID, for example `58gr4pinoayuijgdixud23441t55jd94ugep68fsm72b8mwmq2.wal.app`. Base36 subdomains are not supported on the `wal.app` portal, so a SuiNS name is required to browse your Mainnet site there. Base36 subdomains still work on local servers and alternative portals. To give your site a human-readable URL like `my-project.wal.app`, you must assign a SuiNS name to the site object.
+Without a SuiNS name, your site is only accessible through a Base36-encoded subdomain derived from the site object ID, for example `58gr4pinoayuijgdixud23441t55jd94ugep68fsm72b8mwmq2.wal.app`. The `wal.app` portal does not support Base36 subdomains, so you need a SuiNS name to browse your Mainnet site there. Base36 subdomains still work on local servers and alternative portals. To give your site a human-readable URL like `my-project.wal.app`, you must assign a SuiNS name to the site object.
 
 SuiNS is a decentralized naming service on Sui that maps human-readable names (ending in `.sui`) to Sui object IDs and wallet addresses. After deploying your site and obtaining its object ID, you register a SuiNS name and point its target address to the site object ID. The portal at `https://wal.app` resolves SuiNS names and serves the corresponding site.
 
@@ -363,6 +363,6 @@ For the step-by-step process of registering a name and linking it to your site o
 
 **Deploy fails: directory has no `index.html`.** `site-builder` requires `index.html` at the root of the directory you pass to `deploy`. For frameworks that output to a subfolder, pass the subfolder (for example, `dist/`, `build/`, or `out/`), not the project root.
 
-**`ws-resources.json` validation error.** A wildcard in `routes` or `ignore` appears in the middle of a path pattern (for example, `/path/*/to`). Wildcards may only appear at the end of a pattern.
+**`ws-resources.json` validation error.** A wildcard in `routes` or `ignore` appears in the middle of a path pattern (for example, `/path/*/to`). Wildcards can only appear at the end of a pattern.
 
 **Testnet site not visible.** Testnet has no public portal. Self-host a local portal using the [local portal setup guide](https://docs.wal.app/docs/sites/portals/deploy-locally) or use a community-hosted Testnet portal.

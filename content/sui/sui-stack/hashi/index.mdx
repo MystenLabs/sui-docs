@@ -42,7 +42,7 @@ Hashi is the Sui native Bitcoin orchestrator. It is a protocol for securing and 
 
 :::info
 
-Hashi is currently live on Testnet. Access the Testnet instance at [testnet.hashi.sui.io](https://testnet.hashi.sui.io).
+Hashi is currently live on Testnet. Access the [Testnet instance](https://testnet.hashi.sui.io).
 
 :::
 
@@ -54,7 +54,7 @@ The protocol supports 2 core flows:
 
 - **Deposit:**
   1. You send BTC to a Hashi-managed Bitcoin address derived for your Sui address.
-  2. The Bitcoin transaction is confirmed.
+  2. The Bitcoin network confirms the transaction.
   3. Hashi mints an equivalent `Coin<BTC>` on Sui and delivers it to your address.
 - **Withdrawal:**
   1. You burn your `Coin<BTC>` on Sui and specify a Bitcoin destination address.
@@ -64,7 +64,7 @@ To run these flows programmatically, use the [Hashi SDK](#hashi-sdk). For withdr
 
 ### Security
 
-Hashi protects against outflow vulnerabilities through a Guardian-based rate limiter on Bitcoin withdrawals. The rate limiter uses a configurable token-bucket mechanism denominated in BTC. Withdrawals are processed in approximate FIFO order, and you can cancel a pending withdrawal at any time before the committee selects it for processing ([rate limiter design](https://mystenlabs.github.io/hashi/design/limiter/)).
+Hashi protects against outflow vulnerabilities through a Guardian-based rate limiter on Bitcoin withdrawals. The rate limiter uses a configurable token-bucket mechanism denominated in BTC. The committee processes withdrawals in approximate first-in, first-out (FIFO) order, and you can cancel a pending withdrawal at any time before the committee selects it for processing ([rate limiter design](https://mystenlabs.github.io/hashi/design/limiter/)).
 
 ## Hashi SDK
 

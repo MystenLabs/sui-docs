@@ -45,10 +45,10 @@ The [Nautilus repo](https://github.com/MystenLabs/nautilus) provides scaffolding
 An onchain template includes the minimal smart contract code required to register a Nautilus instance and its public key. 
 
 :::important
-Nautilus is NOT just about running code in privacy-preserving manner in a TEE. Part of the overall value proposition is **onchain verification** of computation integrity:
+Nautilus is **not** just about running code in privacy-preserving manner in a TEE. Part of the overall value proposition is **onchain verification** of computation integrity:
 
-1. PCRs (enclave measurements) must be registered and verified onchain
-2. Every computation result could optionally be verified onchain
+1. You must register and verify PCRs (enclave measurements) onchain.
+2. You can optionally verify every computation result onchain.
 :::
 
 ## Developer workflow 
@@ -63,7 +63,7 @@ To use Nautilus in your app:
 
 4. Upload signed responses from the registered enclave, verify them onchain, and consume the results in your smart contract.
 
-This guide walks you through the following steps:
+To build the weather example, you complete the following steps:
 
 1. Write and deploy a basic Nautilus offchain instance using AWS Nitro Enclaves. The example instance runs a server that fetches weather data for a specific location.
 
@@ -71,7 +71,7 @@ This guide walks you through the following steps:
 
 :::info
 
-Frontend code is not included in this guide. 
+The weather example walkthrough does not include frontend code.
 
 :::
 
@@ -109,7 +109,7 @@ This should print a version that begins with `2`:
 aws-cli/2.x.x
 ```
 
-Configure the single sign on for the AWS CLI tool using the command:
+Configure single sign-on (SSO) for the AWS CLI tool using the command:
 
 ```bash
 aws configure sso
@@ -130,19 +130,19 @@ rm ~/.aws/config
 
 ###step Log in to AWS SSO 
 
-After configuring AWS SSO, you will be redirected to login through a browser window. Choose an account and the role `AdministratorAccess`. AWS should create a profile such as `AdministratorAccess-094557288217`.
+After you configure AWS SSO, AWS redirects you to log in through a browser window. Choose an account and the role `AdministratorAccess`. AWS should create a profile such as `AdministratorAccess-094557288217`.
 
 The number `094557288217` is an example AWS account ID. Replace it with your own account ID wherever it appears in the commands on this page.
 
 :::caution
 
-`AdministratorAccess` is used here only to simplify this walkthrough. In production, do not grant broad administrator permissions: scope an IAM role to the least privilege the enclave deployment actually needs (EC2, Nitro Enclaves, and KMS as applicable). Never log AWS credentials, enclave secrets, or attestation private material, and always verify the enclave's PCRs against the values registered onchain before trusting any output it produces. See the [Nautilus](/develop/security/best-practices#nautilus) section of the Security Best Practices guide.
+This walkthrough uses `AdministratorAccess` only for simplicity. In production, do not grant broad administrator permissions: scope an IAM role to the least privilege the enclave deployment actually needs (EC2, Nitro Enclaves, and KMS as applicable). Never log AWS credentials, enclave secrets, or attestation private material, and always verify the enclave's PCRs against the values registered onchain before trusting any output it produces. See the [Nautilus](/develop/security/best-practices#nautilus) section of the Security Best Practices guide.
 
 :::
 
 ###step List existing EC2 SSH key pairwise
 
-Run the following command to list all key pairs created in your AWS account. These are used only for SSH into EC2.
+Run the following command to list all key pairs created in your AWS account. You use these only for SSH into EC2.
 
 ```bash
 aws ec2 describe-key-pairs \
@@ -176,7 +176,7 @@ Set the `KEY_PAIR` variable with the name of your EC2 key pair:
 export KEY_PAIR=<your-key-pair-name>
 ```
 
-Then, you must set the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` environment variables. These are required for the Nautilus provisioning script.
+Then, you must set the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` environment variables. The Nautilus provisioning script requires these.
 
 Export the values for these variables using the command:
 
@@ -192,7 +192,7 @@ Then, load these credentials:
 source ~/aws-temp-creds.sh
 ```
 
-Confirm that they have been set properly:
+Confirm that you set them properly:
 
 ```bash
 env | grep AWS_
@@ -286,9 +286,9 @@ The setup script:
 
 When the enclave starts, it generates a fresh key pair and exposes the following endpoints:
 
-- `health_check`: Probes allowed domains inside the enclave. This logic is built into the template and does not require modification.
+- `health_check`: Probes allowed domains inside the enclave. The template includes this logic, and it does not require modification.
 
-- `get_attestation`: Returns a signed attestation document over the enclave public key. Use this during onchain registration. This logic is built into the template and does not require modification.
+- `get_attestation`: Returns a signed attestation document over the enclave public key. Use this during onchain registration. The template includes this logic, and it does not require modification.
 
 - `process_data`: Fetches weather data from an external API, signs it with the enclave key, and returns the result. You must implement this customizable logic.
 
@@ -313,7 +313,7 @@ Enter secret name: weather-api-key # anything you like
 Enter secret value: 045a27812dbe456392913223221306 # this is an example api key, you can get your own at weatherapi.com
 ```
 
-The output will include:
+The output includes:
 
 - Instance ID
 
@@ -334,7 +334,7 @@ Wait 2 to 3 minutes for EC2 initialization.
 
 ###step Copy the Nautilus repo to EC2
 
-When the script completes successfully, changes are generated in `/src/nautilus-server/run.sh` and `expose_enclave.sh`. You must copy these changes to EC2, as they are required when building the enclave image.
+When the script completes successfully, it generates changes in `/src/nautilus-server/run.sh` and `expose_enclave.sh`. You must copy these changes to EC2, because the enclave image build requires them.
 
 The provisioning script launches the EC2 instance and generates these files on your local machine. After you copy the repo, you build the enclave image and run it on the EC2 instance with `make`, as shown in the next step.
 
@@ -350,9 +350,9 @@ rsync -avz -e "ssh -i ~/.ssh/<your-alias>.pem" \
 
 :::info
 
-To allow the enclave to access additional external domains, add them to `allowed_endpoints.yaml`. If you update this file, you must rerun `configure_enclave.sh` to generate a new instance, as the endpoint list is compiled into the enclave build.
+To allow the enclave to access additional external domains, add them to `allowed_endpoints.yaml`. If you update this file, you must rerun `configure_enclave.sh` to generate a new instance, because the build compiles the endpoint list into the enclave.
 
-You can optionally create a secret to store any sensitive value you do not want included in the codebase. The secret is passed to the enclave as an environment variable. You can verify newly created secrets or find existing ARNs in the [AWS Secrets Manager console](https://us-east-1.console.aws.amazon.com/secretsmanager/).
+You can optionally create a secret to store any sensitive value you do not want included in the codebase. The enclave receives the secret as an environment variable. You can verify newly created secrets or find existing ARNs in the [AWS Secrets Manager console](https://us-east-1.console.aws.amazon.com/secretsmanager/).
 
 :::
 
@@ -364,7 +364,7 @@ ssh -i ~/.ssh/<your-alias>.pem ec2-user@<public-ip>
 # example: ssh -i ~/.ssh/melas-se-3.pem ec2-user@18.208.226.122
 ```
 
-You are now inside the directory containing the server code, including the committed file changes from the previous step. Next, build the enclave image, run it, and expose the HTTP endpoint on port 3000.
+You are now inside the directory containing the server code, including the committed file changes from the previous step. Next, build the enclave image, run it, and expose the HTTP endpoint on **port 3000**.
 
 ```sh
 $ cd nautilus/
@@ -553,13 +553,13 @@ For non-production development, you can inject a private key instead of generati
 
 :::danger
 
-For development only. Never use in production as all-zero PCRs provide no attestation guarantees and injected keys compromise the TEE security model.
+Use this approach for development only. Never use it in production, because all-zero PCRs provide no attestation guarantees and injected keys compromise the TEE security model.
 
 :::
 
 ## Troubleshooting
 
-- **Traffic forwarder error:** Ensure all targeted domains are listed in the `allowed_endpoints.yaml`. Use the following command to test enclave connections to all domains.
+- **Traffic forwarder error:** Ensure that `allowed_endpoints.yaml` lists all targeted domains. Use the following command to test enclave connections to all domains.
 
 ```sh
 $ curl -H 'Content-Type: application/json' -X GET http://<PUBLIC_IP>:3000/health_check
@@ -583,9 +583,9 @@ $ curl -H 'Content-Type: application/json' -X GET http://<PUBLIC_IP>:3000/health
 
 - **Docker is not running:** The EC2 instance might still be starting up. Wait a few moments, then try again.
 
-- **Cannot connect to enclave:** This might be due to a VSOCK communication issue. Verify that the enclave is running and properly exposed with `sh expose_enclave.sh`.
+- **Cannot connect to enclave:** This might be due to a VSOCK communication issue. Verify that the enclave is running and that you exposed it with `sh expose_enclave.sh`.
 
-- **SSO expired:** This error can be fixed with the commands:
+- **SSO expired:** Fix this error with the following commands:
 
 ```bash
 aws sso login --profile AdministratorAccess-094557288217
@@ -593,7 +593,7 @@ aws configure export-credentials --profile AdministratorAccess-094557288217 --fo
 source ~/aws-temp-creds.sh
 ```
 
-- **PEM “invalid format”:** Your file is empty or corrupted. Recreate the keypair.
+- **PEM invalid format:** Your file is empty or corrupted. Recreate the key pair.
 
 - **rsync permission denied:** Fix permissions: `chmod 700 ~/.ssh\chmod 400 ~/.ssh/<your-alias>.pem`
 

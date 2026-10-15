@@ -1,8 +1,8 @@
 ---
 title: Configure OpenID Providers
 description: >-
-  zkLogin can be integrated with an application using an OpenID provider's OAuth
-  Client ID and redirect URI.
+  You can integrate zkLogin with an application using an OpenID provider's
+  OAuth Client ID and redirect URI.
 keywords:
   - zklogin
   - how to integrate zklogin
@@ -47,11 +47,11 @@ questions:
   - Which OpenID providers work with zkLogin?
   - Which domains do I need to allowlist?
 answer: >-
-  zkLogin can be integrated with an application using an OpenID provider's OAuth
-  Client ID and redirect URI.
+  You can integrate zkLogin with an application using an OpenID provider's
+  OAuth Client ID and redirect URI.
 ---
 
-To integrate zkLogin with your app, you need an OAuth client from at least one of the [available providers](#openid-providers). You will use the Client ID and redirect URI from those providers in your zkLogin project. For example, the following TypeScript code constructs a Google login URL for testing.
+To integrate zkLogin with your app, you need an OAuth client from at least one of the [available providers](#openid-providers). You use the Client ID and redirect URI from those providers in your zkLogin project. For example, the following TypeScript code constructs a Google login URL for testing.
 
 :::caution
 
@@ -106,9 +106,9 @@ Select a tab for instruction on configuring the client ID (`$CLIENT_ID` in the p
 <TabItem label="Google" value="google">
 
 1. Navigate a browser to the [Google Cloud dashboard](https://console.cloud.google.com/projectselector2/home/dashboard). Either sign in or register for a Google Cloud account.
-1. Open **APIs & Services** > **Credentials** using the Google Cloud dashboard navigation. 
+1. Open **APIs and Services** > **Credentials** using the Google Cloud dashboard navigation. 
 
-    ![1](images/google-nav.png 'Open APIs & Services > Credentials')
+    ![1](images/google-nav.png 'Open APIs and Services > Credentials')
 
 1. On the Credentials page, select **CREATE CREDENTIALS** > **OAuth client ID**.
 
@@ -178,7 +178,7 @@ Add applications to Kakao
 
 Find client ID
 
-1. Toggle on **Kakao Login Activation** and **OpenID Connect Activation**.Set the redirect URL in **Kakao Login** under **Product Settings**.This should be the wallet or application frontend.
+1. Toggle on **Kakao Login Activation** and **OpenID Connect Activation**. Set the redirect URL in **Kakao Login** under **Product Settings**. This should be the wallet or application frontend.
 
 ![1](../../develop/cryptography/images/zklogin-kakao3.png "Set Redirect URL")
 
@@ -200,11 +200,11 @@ Set redirect URL
 
 	Find Client ID and Client Secret
 
-1. Set Redirect URL in **OAuth & Permissions** under **Features**. This should be the wallet or application frontend.
+1. Set the redirect URL in **OAuth and Permissions** under **Features**. This should be the wallet or application frontend.
 
 	![1](../../develop/cryptography/images/zklogin-slack3.png "Set Redirect URL")
 
-	Set Redirect URL
+	Set redirect URL
 
 </TabItem>
 
@@ -228,7 +228,7 @@ Set redirect URL
 
 1. Create a Services ID
 
-	A Services ID identifies a specific instance of your app and is used as the OAuth `client_id`. You need a Services ID if you want to use **Sign In with Apple** for your web app.
+	A Services ID identifies a specific instance of your app and serves as the OAuth `client_id`. You need a Services ID if you want to use **Sign In with Apple** for your web app.
 
 	![1](../../develop/cryptography/images/zklogin-apple3.png "Create a Services ID")
 
@@ -236,16 +236,16 @@ Set redirect URL
 
 1. Create a new identifier and select **Services IDs** as the identifier type.
 
-    - In the next step, enter a name for your app that will be displayed to the users during the sign-in process and a unique identifier that will be used as the OAuth `client_id`. Make sure to enable **Sign In with Apple** by checking the box next to it.
-	- Click the **Configure** button next to **Sign In with Apple** to set up the domain and redirect URLs for your app. You need to specify the domain name where your app is hosted and the redirect URL that will handle the OAuth response from Apple.
+    - In the next step, enter a name for your app that users see during the sign-in process and a unique identifier that serves as the OAuth `client_id`. Make sure to enable **Sign In with Apple** by checking the box next to it.
+	- Click the **Configure** button next to **Sign In with Apple** to set up the domain and redirect URLs for your app. You need to specify the domain name where your app is hosted and the redirect URL that handles the OAuth response from Apple.
 
-	Select the App ID that you created in the previous step as the Primary App ID. This will associate your Services ID with your App ID.
+	Select the App ID that you created in the previous step as the Primary App ID. This associates your Services ID with your App ID.
 
-	Enter the domain name of your app (for example, example-app.com) and the redirect URL that will receive the authorization code from Apple (for example, https://example-app.com/redirect). Apple does not allow localhost or IP addresses as valid domains or redirect URLs.
+	Enter the domain name of your app (for example, example-app.com) and the redirect URL that receives the authorization code from Apple (for example, https://example-app.com/redirect). Apple does not allow localhost or IP addresses as valid domains or redirect URLs.
 
 	Click **Save** and then **Continue** and **Register** until you complete this step.
 
-	You have now created an App ID and a Services ID for your app. The identifier of your Services ID is your OAuth `client_id`. In my example, that is com.example.client.
+	You have now created an App ID and a Services ID for your app. The identifier of your Services ID is your OAuth `client_id`. In this example, that is com.example.client.
 
 	![1](../../develop/cryptography/images/zklogin-apple4.png "Set Redirect URL")
 	

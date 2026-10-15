@@ -35,7 +35,7 @@ Use the MVR CLI to manage your package dependencies and to interact with the Mov
 - Adding dependencies to your Move project.
 - Building your Move project with MVR dependencies.
 
-This page assumes you already have a Sui Move project with a `Move.toml` file and can build it with `sui move build`.
+To use the MVR CLI, you need a Sui Move project with a `Move.toml` file that you can build with `sui move build`.
 
 ## How do I install the MVR CLI?
 
@@ -57,7 +57,7 @@ After downloading the file, rename the binary to `mvr` and add its location to y
 
 <Tabs groupId='packagemanagers'>
   <TabItem label="Zsh" value='zsh'>
-  1. Open your `.zshrc` file. This file is typically located at `~/.zshrc` in macOS. If it does not exist, create it.
+  1. Open your `.zshrc` file. This file is typically at `~/.zshrc` in macOS. If it does not exist, create it.
   ```sh
   $ nano ~/.zshrc
   ```
@@ -71,7 +71,7 @@ After downloading the file, rename the binary to `mvr` and add its location to y
   ```
   </TabItem>
   <TabItem label="Bash" value='bash'>
-  1. Open your `.bashrc` file (or `.bash_profile` on macOS). This file is typically located at `~/.bashrc`, or at `~/.bash_profile` on macOS. If it does not exist, create it.
+  1. Open your `.bashrc` file (or `.bash_profile` on macOS). This file is typically at `~/.bashrc`, or at `~/.bash_profile` on macOS. If it does not exist, create it.
   ```sh
   $ nano ~/.bashrc
   ```
@@ -136,7 +136,7 @@ To add a dependency to your Move code, use the `mvr add` command. This command a
 mvr add <package_name> --network <mainnet|testnet>
 ```
 
-For example, the following command adds the `@mvr/app` package from mainnet:
+For example, the following command adds the `@mvr/app` package from Mainnet:
 
 ```sh
 mvr add @mvr/app --network mainnet
