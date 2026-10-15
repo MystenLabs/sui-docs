@@ -38,11 +38,13 @@ answer: >-
   See [Archival Store and Service](/develop/accessing-data/archival-store) for
   more information on the stack.
 ---
+This page explains how to run the Sui archival stack in production: a Google Cloud Bigtable store, the `sui-kvstore-alt` indexer that writes chain history to it, and the `sui-kv-rpc` gRPC service that serves it.
+
 <ImportContent source="indexer-archival" mode="snippet" />
 
 See [Archival Store and Service](/develop/accessing-data/archival-store) for more information on the stack.
 
-## Architecture overview
+## What are the components of the archival stack? {#architecture-overview}
 
 1. **Google Cloud Bigtable**: The backing store that holds all historical chain data across 14 tables.
 2. **`sui-kvstore-alt`** (Indexer): Reads checkpoints from the remote checkpoint store and writes processed data to Bigtable.
@@ -85,7 +87,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 
 The public HTTPS endpoints (`https://checkpoints.mainnet.sui.io`, `https://checkpoints.testnet.sui.io`) keep only the latest 30 days. Use the GCS buckets above for backfill.
 
-## Bigtable setup
+## How do I set up Bigtable? {#bigtable-setup}
 
 ### Create a Bigtable instance
 
@@ -168,7 +170,7 @@ Each SSD node holds up to 5 TB; stay under 70% (3.5 TB per node).
 
 Configure automated backups. Daily with 7-day retention is a reasonable default. See the [Bigtable backup documentation](https://cloud.google.com/bigtable/docs/backups).
 
-## Indexer setup
+## How do I run the archival indexer? {#indexer-setup}
 
 `sui-kvstore-alt` reads checkpoints and writes to Bigtable through 14 pipelines.
 
@@ -215,6 +217,13 @@ That one command backfills from genesis and then indexes at the tip. There is no
 
 Exactly one checkpoint source is allowed (`--remote-store-gcs`, `--remote-store-url`, `--rpc-api-url`, and so on); passing two is a startup error. `--streaming-url` is not one of them and runs alongside whichever you pick.
 
+To choose the checkpoint source:
+
+- **Backfilling from genesis (the standard setup):** use `--remote-store-gcs` with your network's bucket.
+- **Reading from an HTTPS checkpoint store:** use `--remote-store-url`. The public HTTPS endpoints keep only the latest 30 days, so use the GCS buckets for backfill.
+- **Reading history from a full node instead of a bucket:** use `--rpc-api-url`, with `--rpc-username` / `--rpc-password` if it needs credentials. Do not set it for the standard setup.
+- **In every case:** add `--streaming-url` for live checkpoints.
+
 :::info
 
 Mysten Labs plans to enable requester-pays on the public checkpoint buckets in the future. Streaming from your own full node avoids these costs.
@@ -223,7 +232,7 @@ Mysten Labs plans to enable requester-pays on the public checkpoint buckets in t
 
 ### Indexer configuration {#indexer-configuration}
 
-`--config` takes an optional TOML file. **You do not need one.** The tables below are reference only.
+`--config` takes an optional TOML file. **You do not need one.** The tables below are reference only. The one change this page calls for is disabling adaptive write rate limiting if you cannot provide a single-cluster-routing app profile; see [Adaptive write rate limiting](#adaptive-write-rate-limiting).
 
 #### Adaptive write rate limiting {#adaptive-write-rate-limiting}
 
@@ -233,6 +242,8 @@ The indexer paces its own Bigtable writes from the `RateLimitInfo` directives Bi
 - It starts at 10 requests per second.
 - It grows only when the directive is positive, latency is healthy, and the indexer is driving at least 80% of the current limit.
 - It cuts to 0.7x on a severe latency observation or a `DeadlineExceeded`, `Unavailable`, or `ResourceExhausted` response.
+
+The manual alternative is the static `total-max-rows-per-second` and `max-rows-per-second` limits, measured in rows per second. Leave them unset; a static limit starves the adaptive controller.
 
 It requires a **single-cluster-routing app profile**. Disable it only if you cannot provide one:
 
@@ -315,7 +326,7 @@ Use one indexer instance. One instance can drive a 30-node cluster, the largest 
 
 Bigtable writes are idempotent, so you can run several instances at the tip for rolling deployments.
 
-## Archival service setup
+## How do I run the archival service? {#archival-service-setup}
 
 `sui-kv-rpc` is a gRPC server that reads from Bigtable and exposes the [`LedgerService`](/references/fullnode-protocol) API.
 
@@ -423,7 +434,7 @@ See [Security Best Practices](/develop/security/best-practices).
 
 :::
 
-## Monitoring
+## How do I monitor the archival stack? {#monitoring}
 
 Both binaries export Prometheus metrics on port 9184 at `/metrics`.
 
