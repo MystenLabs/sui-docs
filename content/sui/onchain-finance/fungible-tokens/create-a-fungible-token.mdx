@@ -51,11 +51,13 @@ Assets created using the Currency Standard are free-flowing, [wrappable](/develo
 
 The `Currency<T>` type represents open-loop fungible tokens. Currencies are denominated by their type parameter `T`, which is also associated with metadata (like name, symbol, and decimal precision) that applies to all instances of `Currency<T>`. The `sui::coin_registry` module exposes an interface over `Currency<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Currency<T>` is interchangeable with any other unit of `T`, similar to how traditional fiat currencies operate.
 
-## Coin Registry
+In short: the `Currency<T>` object holds the metadata for coin type `T`, and the `TreasuryCap` mints and burns `Coin<T>` objects unless the supply model locks the `TreasuryCap` inside the `Currency` (see [Configure supply model](#configure-supply-model)).
+
+## What is the Coin Registry?
 
 The Coin Registry system provides a centralized approach to currency management through the `sui::coin_registry` module. The registry is a shared object located at address `0xc` that stores metadata, supply information, and regulatory status for all registered coin types.
 
-## Creation options
+## Which creation option should I use?
 
 The registry supports two different coin creation flows:
 
@@ -72,7 +74,7 @@ Both creation methods return a `CurrencyInitializer<T>` that allows for addition
 
 ## Standard creation (recommended)
 
-Use the `new_currency` function at any time after the coin type is published. It creates a shared `Currency<T>` object, where type `T` must be a key-only type (`public struct MyCoin has key { id: UID }`):
+Use the `new_currency` function at any time after the coin type is published. It creates a shared `Currency<T>` object, where type `T` must be a key-only type, meaning a struct that has only the `key` ability (`public struct MyCoin has key { id: UID }`):
 
 <ImportContent source="examples/move/coin/sources/non_otw_currency.move" mode="code" fun="new_currency" noComments />
 
@@ -158,7 +160,7 @@ currency.burn(coin);
 
 **Fixed supply:** Neither minting nor burning is possible. The `Currency` locks the `TreasuryCap` and freezes the supply.
 
-## Manage metadata
+## How do I manage currency metadata?
 
 The `MetadataCap<T>` controls who can update the currency's name, description, and icon URL. The `finalize` function returns it.
 
@@ -191,3 +193,5 @@ Once deleted, no one can update the currency's name, description, or icon URL.
 The following example creates a non-OTW currency with a burn-only supply, mints the total supply, and transfers both the minted coins and the `MetadataCap` to the publisher:
 
 <ImportContent source="examples/move/coin/sources/non_otw_currency.move" mode="code" fun="new_currency" noComments />
+
+This example covers creation only. To mint or burn coins after creation, see [Mint and burn coins](#mint-and-burn-coins).
