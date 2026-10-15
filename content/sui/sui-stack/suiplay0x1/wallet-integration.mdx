@@ -1,9 +1,10 @@
 ---
 title: Wallet Integration Options
 description: >-
-  SuiPlay0X1 supports integration with several wallet solutions, including
-  self-custodial wallets, zkLogin wallets, Playtron wallets, and custodial
-  wallets.
+  Compare self-custodial, zkLogin, Playtron zkLogin, and custodial wallet
+  options for SuiPlay0X1, including trade-offs around sponsored transactions,
+  SuiLink for linking on-device and off-device wallets, and soulbound NFT
+  assignment.
 keywords:
   - self-custodial wallets
   - zkLogin wallets
@@ -45,7 +46,7 @@ answer: >-
 
 <ImportContent source="suiplay" mode="snippet" />
 
-You have several options for what wallet you develop for on the SuiPlay0X1. There are some concepts to keep in mind when deciding which wallets to target.
+SuiPlay0X1 games can integrate with self-custodial wallets, zkLogin wallets, the Playtron zkLogin wallet, or custodial wallets, but games that run on the SuiPlay0X1 device must support the Playtron zkLogin wallet as the default option. There are some concepts to keep in mind when deciding which wallets to target.
 
 - [Self-custodial wallets](#self-custodial-wallets): Users control their private keys and own their assets directly.
 - [zkLogin wallets](#zkLogin-wallets): Traditional zkLogin wallets (or [Enoki](https://enoki.mystenlabs.com/) wallets) are a unique wallet type to Sui. zkLogin wallets are tied to a Web2 auth provider (such as Google OAuth). The user authenticates with their traditional auth provider, which associates a wallet to their social account by utilizing zero knowledge proofs. This grants them access to their zkLogin wallet through an ephemeral key pair that does not correlate auth provider user metadata with their onchain attributed address. If the ephemeral key pair resides on the client side, the zkLogin wallet is self-custodial.
@@ -68,7 +69,7 @@ The zkLogin wallet uses an ephemeral key pair that does not correlate user metad
 
 In their most basic form, zkLogin wallets are siloed to the app that creates them. Users essentially create a new wallet for each application that supports zkLogin. This model is intentional to prevent users from having to remember passports for each wallet instance, and to match their expectations for Web2. If your intent is to keep your users in your game without the need to connect their wallet to another application, the basic zkLogin is a good choice.
 
-[Enoki by Mysten Labs](https://enoki.mystenlabs.com/) is a SaaS solution that allows you to access zkLogin, sponsored transactions, and more using an API key for a monthly fiat subscription. Use Enoki for zkLogin functionality enables Enoki Connect access. Enoki Connect enables portability for your embedded zkLogin wallet where other applications can choose to allow users to connect through your game wallet. See the [Enoki Connect documentation](https://docs.enoki.mystenlabs.com/enoki-connect) for more details.
+[Enoki by Mysten Labs](https://enoki.mystenlabs.com/) is a SaaS solution that allows you to access zkLogin, sponsored transactions, and more using an API key for a monthly fiat subscription. Using Enoki for zkLogin functionality also gives you access to Enoki Connect. Enoki Connect enables portability for your embedded zkLogin wallet where other applications can choose to allow users to connect through your game wallet. See the [Enoki Connect documentation](https://docs.enoki.mystenlabs.com/enoki-connect) for more details.
 
 ### Playtron zkLogin wallet {#playtron-zkLogin-wallet}
 
@@ -100,7 +101,7 @@ Be careful when selecting a third-party custodial wallet provider as this might 
 
 :::
 
-## Selecting the optimal wallet integration
+## Which wallet integration should I choose?
 
 The best wallet to select for your app depends on the goals of your project. There is usually not a single, best solution, but some choices are better than others when weighing the tradeoffs between different approaches.
 
@@ -127,7 +128,7 @@ The following strategies offer some recommendations on how to best address the r
 ### Option 1: Playtron zkLogin wallet plus dApp Kit combo (Recommended)
 
 - On-device, the game uses the Playtron wallet as default.
-- Off-device, the game uses appKit to enable the user to use the Playtron wallet, or bring their own self-custody wallet through a web portal.
+- Off-device, the game uses dApp Kit to enable the user to use the Playtron wallet, or bring their own self-custody wallet through a web portal.
 - If the user has initially played off-device with their own self-custody wallet, they can use our [companion app](https://wallet.playtron.one) to link their wallet to their Playtron wallet. If playing the game requires:
   - Only read access: The game can run on-device and read linked self-custody wallets, functioning normally. 
   - Transacting: Users can transfer assets from their self-custody wallet to their Playtron wallet, facilitated by the companion app.
@@ -170,7 +171,7 @@ This option is effectively a special case of the recommended approach. If your g
 - Provides onchain wallet activity per user, while still maintaining basic UX and obfuscating wallet mechanics from the user.
 - Unlike custodial wallets, users still need to pay for gas. You can always [sponsor transactions](/develop/transaction-payment/sponsor-txn) instead to assume this responsibility.
 - In essence, the wallet is self-custodied by users in this scenario as you do not have access to the private keys. Users do not need to record or protect seed phrases, however. 
-- Ultimately, you can’t avoid users having a wallet if you want them to experience Web3 benefits. The Playtron ecosystem provides this as the game OS shows user assets and the companion app always serves game-centric wallet needs. If you use a custodial wallet, you must consider how to show users their assets, teach them how to transfer assets, and other needs that Playtron provides out of the box.
+- Ultimately, you can’t avoid users having a wallet if you want them to experience Web3 benefits. The Playtron ecosystem provides this as the game OS shows user assets and the companion app always serves game-centric wallet needs. If you use a game-specific zkLogin wallet, you must consider how to show users their assets, teach them how to transfer assets, and other needs that Playtron provides out of the box.
 
 ## Enoki Connect (optional) {#enoki-connect}
 
@@ -179,7 +180,7 @@ As a reminder, standard game-specific zkLogin and Enoki wallets are app-specific
 With Enoki Connect, you can upgrade your game-specific zkLogin wallet to make it portable across the Sui ecosystem.
 
 - Users can connect their game wallet directly to marketplaces and other apps. 
-- External apps must manually add your game's wallet to their supported wallet list, which requires you to reach out or develop a business relationship. apps must individually enable your game-specific wallet to have it appear in the list of connectable wallets on their sites.
+- External apps must individually add your game's wallet to their supported wallet list to have it appear in the list of connectable wallets on their sites. This is a business process: it requires you to reach out or develop a business relationship with each app.
 - Requires additional implementation work to upgrade an existing game-specific zkLogin or Enoki wallet.
 
 ### Recommended hybrid approach
