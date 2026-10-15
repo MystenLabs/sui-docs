@@ -42,10 +42,10 @@ The DeepBook referral system allows users to earn fees by referring traders to t
 
 ## How referrals work
 
-1. **Mint a referral:** Anyone can mint a `DeepBookPoolReferral` for a specific pool with a specified multiplier. The referral permanently ties to the pool you minted it from and can only earn fees from trades in that pool.
-2. **Set referral:** Traders associate their `BalanceManager` with a pool-specific referral using a `TradeCap`. Each `BalanceManager` can be associated with different referrals from different pools simultaneously.
+1. **Mint a referral (`mint_referral`):** Anyone can mint a `DeepBookPoolReferral` for a specific pool with a specified multiplier. The referral permanently ties to the pool you minted it from and can only earn fees from trades in that pool.
+2. **Set referral (`set_balance_manager_referral`):** Traders associate their `BalanceManager` with a pool-specific referral using a `TradeCap`. Each `BalanceManager` can be associated with different referrals from different pools simultaneously. Setting a new referral for a pool replaces any referral previously set for that same pool. For example, setting a new referral for pool A replaces the earlier pool A referral but leaves the referral set for pool B in place.
 3. **Earn fees:** When the balance manager executes taker orders in that pool, the system automatically allocates referral fees based on the multiplier. Maker orders do not generate referral fees.
-4. **Claim rewards:** Referrers can claim their accumulated fees in base, quote, and DEEP tokens.
+4. **Claim rewards (`claim_pool_referral_rewards`):** Referrers can claim their accumulated fees in base, quote, and DEEP tokens.
 
 ## API
 
@@ -216,6 +216,8 @@ Get the pool ID associated with a pool referral object.
 </details>
 
 ## Events
+
+DeepBook emits the following events for referral activity. To track referral fees as trades allocate them, watch `ReferralFeeEvent`. To track when referral owners withdraw those fees, watch `ReferralClaimed`.
 
 <details>
 <summary>`DeepBookReferralCreatedEvent`</summary>
