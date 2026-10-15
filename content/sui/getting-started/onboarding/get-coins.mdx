@@ -56,7 +56,7 @@ answer: >-
 
 To perform transactions on a Sui network, you need SUI tokens to pay for gas and storage. 
 
-For applications on Mainnet, you must buy real SUI on exchanges like Coinbase, OKX, or Robinhood. Its value is determined by market factors such as supply and demand, network utility, and perceived value.
+For applications on Mainnet, you must buy real SUI on exchanges like Coinbase, OKX, or Robinhood. Market factors such as supply and demand, network utility, and perceived value determine its value.
 
 Because Mainnet tokens cost real money, development can be expensive. That's why Sui provides Devnet and Testnet networks, which mirror Mainnet features and enable you to build and test safely for an affordable cost.
 
@@ -87,7 +87,7 @@ Create Sui account and setup CLI environment.
 $ sui client
 ```
 
-If this is the first time running the `sui client` CLI tool, it asks you to provide a Sui full node server URL (or press enter for the default Testnet), select an encryption scheme to generate an address, and stores the configuration in a `client.yaml` file. For more information, refer to the [Sui client CLI tutorial](/references/cli/client).
+If this is the first time running the `sui client` CLI tool, it asks you to provide a Sui full node server URL (or press <kbd>Enter</kbd> for the default Testnet), select an encryption scheme to generate an address, and stores the configuration in a `client.yaml` file. For more information, refer to the [Sui client CLI tutorial](/references/cli/client).
 
 If this is not your first time running `sui client`, then you already have a `client.yaml` file in your local environment. If you'd like to create a new address for this tutorial, use the command:
 
@@ -110,7 +110,7 @@ Then, follow these steps:
 1. Use the network dropdown to select the correct network: Testnet, Devnet, or Localnet. Use the Testnet for most use cases before deploying to Mainnet for production. [Learn more](/getting-started/onboarding/configure-sui-client) about the available networks and their differences. 
 1. Click the **Request SUI** button. 
 
-To request more SUI, refresh your browser and click the **Request SUI** button again. The requests are rate limited, however, so too many requests results in a waiting period before you can request more tokens.
+To request more SUI, refresh your browser and click the **Request SUI** button again. The faucet rate limits requests, however, so too many requests result in a waiting period before you can request more tokens.
 
 ### Community faucets 
 
@@ -164,7 +164,7 @@ If you need an alternative method to get SUI tokens for deployment on Testnet or
 
 :::tip
 
-Every method to obtain SUI tokens for Testnet and Devnet is rate limited. If you need a large amount of SUI tokens, use a local network.
+Every method to obtain SUI tokens for Testnet and Devnet has rate limits. If you need a large amount of SUI tokens, use a local network.
 
 :::
 
@@ -175,7 +175,7 @@ Every method to obtain SUI tokens for Testnet and Devnet is rate limited. If you
 1. Join [Discord](https://discord.gg/sui).
    
    If you try to join the Sui Discord channel using a newly created Discord account, you might need to wait a few days for validation.
-1. Request SUI tokens in the Sui [#devnet-faucet](https://discord.com/channels/916379725201563759/971488439931392130) or [#testnet-faucet](https://discord.com/channels/916379725201563759/1037811694564560966) Discord channels. Send the following message to the channel, replacing `<YOUR SUI ADDRESS>` with your client address:
+1. Request SUI tokens in the Sui [`#devnet-faucet`](https://discord.com/channels/916379725201563759/971488439931392130) or [`#testnet-faucet`](https://discord.com/channels/916379725201563759/1037811694564560966) Discord channels. Send the following message to the channel, replacing `<YOUR SUI ADDRESS>` with your client address:
    ```sh
    !faucet <YOUR SUI ADDRESS>
    ```
