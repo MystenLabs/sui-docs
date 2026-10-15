@@ -75,7 +75,6 @@ Key points:
 
 - Call `tx_context::dummy()` to create a transaction context for testing without a real transaction.
 - Objects with the `key` ability contain a `UID` that must be created with `object::new`. Transfer or destroy every object before the test ends to avoid resource safety errors.
-- Objects with the `key` ability contain a `UID` that must be created with `object::new`. Transfer or destroy every object before the test ends to avoid resource safety errors.
 - Use `assert!` to verify expected values. The second argument is an error code that appears in the test output if the assertion fails.
 
 ### Test-only code
@@ -95,6 +94,8 @@ fun create_test_sword(ctx: &mut TxContext): Sword {
     }
 }
 ```
+
+The attribute works the same way on `use` statements and on functions: in this example, both the `sui::test_scenario` import and the `create_test_sword` helper exist only in test builds.
 
 You can also mark an entire module as test-only. Place test modules in a `tests/` directory inside your package, or define them inline:
 
@@ -164,6 +165,8 @@ fun test_sword_transactions() {
 }
 ```
 
+This example assumes the module under test defines a `sword_create(magic, strength, ctx)` function that takes the magic and strength values and a `&mut TxContext` and returns a `Sword`, similar to the `create_test_sword` helper shown earlier.
+
 Key operations:
 
 | Operation | Purpose |
@@ -172,8 +175,8 @@ Key operations:
 | `scenario.next_tx(sender)` | Advance to the next transaction with a new sender |
 | `scenario.take_from_sender<T>()` | Take an owned object of type `T` from the current sender |
 | `scenario.return_to_sender(obj)` | Return an object to the current sender |
-| `take_shared<T>(&scenario)` | Take a shared object from the virtual store |
-| `return_shared(obj)` | Return a shared object to the virtual store |
+| `test_scenario::take_shared<T>(&scenario)` | Take a shared object from the virtual store |
+| `test_scenario::return_shared(obj)` | Return a shared object to the virtual store |
 | `scenario.ctx()` | Get the current transaction context |
 | `scenario.end()` | End the scenario and clean up |
 
@@ -189,6 +192,8 @@ The Sui framework provides several modules that simplify common testing tasks:
 |---|---|
 | [`std::unit_test`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/move-stdlib/sources/unit_test.move) | `destroy` function for cleaning up objects in tests, plus `assert_eq!` and `assert_ref_eq!` macros for better error messages |
 | [`std::debug`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/move-stdlib/sources/debug.move) | `print` function for debug output during test runs |
+
+Use `std::unit_test::destroy` for cleanup, not `sui::test_utils::destroy`, which is deprecated.
 
 Example using `std::unit_test::destroy` to clean up an object without writing a custom destructor:
 
@@ -206,7 +211,7 @@ fun test_with_cleanup() {
 }
 ```
 
-## Running tests
+## How to run tests
 
 Run all tests in your package with:
 
@@ -239,7 +244,7 @@ Use `--statistics` to see gas usage for each test:
 $ sui move test --statistics
 ```
 
-### Test coverage
+### How to check test coverage
 
 Measure how much of your code the tests exercise:
 
@@ -247,6 +252,8 @@ Measure how much of your code the tests exercise:
 $ sui move test --coverage
 $ sui move coverage summary --test
 ```
+
+Run these in order: the first command runs your tests and collects coverage data, and the second reads that data and prints the summary.
 
 ```
 +-------------------------+
@@ -269,7 +276,7 @@ Uncovered lines are highlighted, showing exactly where to add test coverage.
 
 For the full list of CLI options, see the [`sui move` CLI reference](/references/cli/move).
 
-## Debugging test failures
+## How to debug test failures
 
 When a test fails, the [Move Trace Debugger](/references/ide/debugger) lets you step through execution line by line in VS Code. Generate a trace and open it in the debugger:
 
@@ -286,4 +293,4 @@ Move tests validate contract logic in a package-local environment. For full appl
 - **Local network testing:** Run a [local Sui network](/getting-started/onboarding/local-network) to test transactions, object interactions, and gas costs against a real execution environment before deploying to Testnet.
 - **Testnet deployment:** Deploy your packages to [Testnet](/getting-started/onboarding/configure-sui-client) to verify behavior with real network conditions, indexing, and RPC queries.
 - **Dry runs:** Use `sui client call --dry-run` or `devInspectTransactionBlock` to simulate a transaction against the current network state without executing it. This catches issues like incorrect object versions or insufficient gas before you submit.
-- **SDK integration tests:** Use the [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript) to write integration tests that submit transactions, query state, and verify end-to-end flows from a client perspective. For an example of a full test matrix (Move contract tests, SDK unit/integration tests, and E2E tests), see the [Sui Stack Messaging test suite](/sui-stack/messaging/testing).
+- **SDK integration tests:** Use the [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript) to write integration tests that submit transactions, query state, and verify end-to-end flows from a client perspective.
