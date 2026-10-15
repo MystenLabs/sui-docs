@@ -109,7 +109,7 @@ It takes this parameter:
 
 ### `SessionsConfig` {#sessions-config}
 
-`SessionsConfig` holds the IDs every builder needs: the latest `deepbook_sessions` package to call, the original `deepbook_sessions` package ID that v1 structs and dynamic-field keys still carry, the shared `SessionsConfig` object, the `account` package, and the shared `AccountRegistry`. `sessionsPackageIdV1` is optional and matters only where the package has been upgraded: on Testnet, where `sessions` is at version 2, the two IDs differ, and on Mainnet, where it is at version 1, they are the same. The account IDs are the same ones `AccountContract` takes on [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts), because sessions is an account app on the same registry.
+`SessionsConfig` holds the IDs every builder needs: the latest `deepbook_sessions` package to call, the original `deepbook_sessions` package ID that v1 structs and dynamic-field keys still carry, the shared `SessionsConfig` object, the `account` package, and the shared `AccountRegistry`. `sessionsPackageIdV1` is optional and matters only where the package has been upgraded. Both networks have upgraded `sessions`, so the two IDs differ on both. The account IDs are the same ones `AccountContract` takes on [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts), because sessions is an account app on the same registry.
 
 <ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="27-38" />
 
@@ -273,7 +273,7 @@ The following example lists an account's grants, splits them at the current time
 
 ## How to trade as a session key {#trade}
 
-Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Version 2.7.0 records Testnet's Sessions v3 package, and Mainnet needs version `TBD-DBU-890: SDK release` or later. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
+Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Version 2.7.0 records Testnet's Sessions v3 package, and Mainnet needs version `TBD-DBU-890: SDK release` or later. On Mainnet, 2.7.0 resolves Sessions version 2, `0xec678aee…`. Mainnet's `SessionsConfig` watermark is 1, so that package still authorizes sessions and runs the DeepBook spot calls, but its Predict wrappers abort with `EPackageVersionDisabled` because they call a Predict version below 4. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
 
 ### Queue orders as the session key {#queue-as-session}
 
@@ -349,7 +349,7 @@ The following example builds an owner-signed revocation, reads a session's expir
 - `cancelLiveOrders`: Cancels several DeepBook spot orders.
 - `withdrawSettledAmounts`: Sweeps settled DeepBook spot proceeds into account custody.
 
-Whether these calls succeed depends on a DeepBook registry authorization that differs by network, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers how to check it.
+Whether these calls succeed depends on a DeepBook registry authorization. A chain read on 2026-10-15 found it on both networks, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
 
 Each generated function takes an options object with these fields:
 
