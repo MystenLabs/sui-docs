@@ -66,7 +66,7 @@ Three shared objects sit on top of the spot order book:
 | `MarginPool` | The lending pool for a single asset. Your borrow draws from it, and your interest accrues to it. |
 | `MarginRegistry` | Governance state. It stores each pool's risk parameters and tracks which DeepBook pools have margin enabled. |
 
-Each `MarginManager` borrows from one margin pool at a time, base or quote. That is isolated margin, not a cross-pool account, which keeps risk on a single axis. See [Design](/onchain-finance/deepbook/deepbook-margin/design) for the full object model.
+Each `MarginManager` borrows from one margin pool at a time, base or quote. That is isolated margin, not a cross-pool account: the manager's collateral and borrow are tied to its one DeepBook pool rather than shared across pools, which keeps risk on a single axis. See [Design](/onchain-finance/deepbook/deepbook-margin/design) for the full object model.
 
 One number governs everything you can do with a position:
 
@@ -118,7 +118,7 @@ Your borrow accrues interest under a kinked utilization model. Rates rise gently
 
 If your risk ratio falls to the liquidation threshold, a liquidator repays part of your debt and takes a reward from your collateral, sized to restore your position to the target liquidation ratio rather than to close it entirely. You keep a smaller, healthier position, minus the reward. A deeply underwater position can be fully liquidated, and the lending pool can absorb bad debt. Monitoring your ratio and acting early, by adding collateral or reducing the position, is the only defense.
 
-To build an application on top of margin rather than trade it directly, see [Integrating DeepBook Margin](/onchain-finance/deepbook/deepbook-margin/margin-integration) for the structural differences from the spot path, and the [DeepBook Margin SDK](/onchain-finance/deepbook/deepbook-margin-sdk) reference for the TypeScript surface.
+To build an application on top of margin rather than trade it directly, see [Integrating DeepBook Margin](/onchain-finance/deepbook/deepbook-margin/margin-integration) for the structural differences from the spot path, and the DeepBook Margin SDK reference for the TypeScript surface.
 
 import DocCardList from '@theme/DocCardList';
 
