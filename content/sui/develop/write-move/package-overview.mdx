@@ -44,17 +44,19 @@ Sui uses Move through three constructs: packages, modules, and objects.
 
 A Move package is a set of Move bytecode published to the Sui network. Packages are immutable. You can upgrade a package, but upgrading creates a new onchain version while leaving all prior versions intact. Once published, other packages can import and use a package's modules, and anyone can inspect its contents or trace its logic using a Sui Explorer.
 
-A Move module defines a package's interaction with onchain objects. Each module name is unique within its package.
+A Move module defines a package's interaction with onchain objects. A package contains one or more modules, and each module name is unique within its package.
 
 A Move object is typed data governed by a Move module. Each object is a struct with fields that can contain primitive types such as integers and addresses, other objects, or non-object structs.
 
-## Packages are immutable
+## Are Move packages immutable?
 
 After you publish a package object to a network, it lives there permanently. You cannot directly change the code of an onchain package. Once published, other packages can import and use the modules it provides.
 
 If developers could modify onchain packages after publication, downstream behavior could change in unexpected ways. For example, a developer fixing an overlooked bug could unintentionally change the execution of every dependent package.
 
-### Making packages immutable
+### How do I make a package immutable?
+
+The code of a published package never changes, but as long as a package's `UpgradeCap` exists, its holder can authorize upgrades that publish new versions of the package. Making a package immutable removes that ability.
 
 You can call the Move function `sui::package::make_immutable` to destroy a package's `UpgradeCap` and make the package permanently immutable. This eliminates single-key risk but also prevents all future bug fixes and feature additions.
 
