@@ -85,7 +85,7 @@ Use separate backfill and steady-state processes. Both processes use the same da
 3. Restart with fullnode gRPC polling and streaming through a production-grade endpoint from an RPC provider.
 4. If an outage or lag exceeds the fullnode's retention, stop the process, recover the missing range from the GCS bucket, and then switch back to fullnode gRPC.
 
-### How do I backfill from requester pays GCS? {#backfill-from-requester-pays-gcs}
+### How do I backfill from Requester Pays GCS? {#backfill-from-requester-pays-gcs}
 
 Because the checkpoint buckets are Requester Pays, Google Cloud charges access to your own billing project. Configure Google credentials that can charge an enabled billing project. Pass the billing project in the `x-goog-user-project` header:
 
