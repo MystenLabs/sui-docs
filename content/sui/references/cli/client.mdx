@@ -63,7 +63,7 @@ The following examples demonstrate some of the most often used commands. For exa
 
 ### List available network environments
 
-Use the `sui client envs` command to find the network environments set up in the CLI. The information for these environments is also stored in the client.yaml file in the Sui configuration directory (`~/.sui/sui_config`).
+Use the `sui client envs` command to find the network environments set up in the CLI. The CLI also stores the information for these environments in the client.yaml file in the Sui configuration directory (`~/.sui/sui_config`).
 
 ```sh
 ╭────────┬────────────────────────────────────┬────────╮
@@ -202,12 +202,12 @@ $ sui client dynamic-field 0x5
 ```
 
 :::info
-The version number in `objectType` (for example, `SuiSystemStateInnerV2`) reflects the protocol version active at the time of the query and may differ depending on the current epoch or network upgrade state.
+The version number in `objectType` (for example, `SuiSystemStateInnerV2`) reflects the protocol version active at the time of the query and might differ depending on the current epoch or network upgrade state.
 :::
 
 ### Send SUI or objects
 
-Use `sui client ptb` to transfer SUI or objects from one address to another. The PTB CLI exposes the same operations used by SDK transaction builders, such as `--split-coins`, `--merge-coins`, and `--transfer-objects`.
+Use `sui client ptb` to transfer SUI or objects from one address to another. The PTB CLI exposes the same operations that SDK transaction builders use, such as `--split-coins`, `--merge-coins`, and `--transfer-objects`.
 
 Assume you have two addresses:
 
@@ -272,12 +272,12 @@ $ sui client send-funds \
 The most common options are:
 
 - `--to`: Recipient address (or its keystore alias). Required.
-- `--amount`: Amount to send in the coin's smallest unit (MIST for SUI). Required unless `--all-coins` is set.
+- `--amount`: Amount to send in the coin's smallest unit (MIST for SUI). Required unless you set `--all-coins`.
 - `--coin-type`: Coin type to send. Defaults to `0x2::sui::SUI`.
 - `--all-coins`: Send all owned coin objects of the specified type (not address-balance funds). Conflicts with `--amount` and `--from-address-balance`.
-- `--from-address-balance`: Draw the amount from the sender's address balance rather than their coins. Without it, coins are preferred and the address balance is only used if the coins cannot cover the amount. Conflicts with `--all-coins`.
+- `--from-address-balance`: Draw the amount from the sender's address balance rather than their coins. Without it, the command prefers coins and uses the address balance only if the coins cannot cover the amount. Conflicts with `--all-coins`.
 
-Either way, the recipient is paid into their address balance. Gas is selected separately: it comes from the sender's address balance when that can cover the budget, and from their coins otherwise.
+Either way, the command pays the recipient into their address balance. The command selects gas separately: it comes from the sender's address balance when that can cover the budget, and from their coins otherwise.
 
 ### Transfer an object to party ownership
 
@@ -293,7 +293,7 @@ $ sui client party-transfer \
 
 `sui client test-publish` and `sui client test-upgrade` publish and upgrade packages without recording the published addresses in the package's `Published.toml`. They build the package for a given environment and publish it on the current network, taking dependency addresses from an ephemeral publication file (the pubfile) and recording the new publication information back into that pubfile. This is useful for testing a package against the live network without mutating your canonical publication state. For background, see [Move Package Management](/develop/manage-packages/move-package-management).
 
-Publish a package ephemerally, building for the `testnet` environment and recording publication info in a pubfile:
+Publish a package ephemerally, building for the `testnet` environment and recording publication information in a pubfile:
 
 ```sh
 $ sui client test-publish --pubfile-path Pub.testnet.toml --build-env testnet
@@ -307,7 +307,7 @@ $ sui client test-upgrade --pubfile-path Pub.testnet.toml --build-env testnet
 
 The key options are:
 
-- `--pubfile-path`: Path to the ephemeral publication file. If omitted, defaults to `Pub.<active-env-alias>.toml` based on the active Sui environment alias.
+- `--pubfile-path`: Path to the ephemeral publication file. If you omit it, it defaults to `Pub.<active-env-alias>.toml` based on the active Sui environment alias.
 - `--build-env`, `-e`: Environment to build the package for.
 
 These commands do not write to `Published.toml`. Use `sui client publish` and `sui client upgrade` for normal, persistent publication.
@@ -316,7 +316,7 @@ These commands do not write to `Published.toml`. Use `sui client publish` and `s
 
 Several commands that build a transaction accept `--serialize-unsigned-transaction` (to output base64 `TransactionData`) and `--serialize-signed-transaction` (to output base64 `SenderSignedData`). The `serialized-tx` and `execute-combined-signed-tx` commands consume those outputs. This is useful for [offline signing](/develop/transactions/transaction-auth/offline-signing) and multisig flows where the build, sign, and execute steps happen separately.
 
-Use `sui client serialized-tx` to dry-run, dev-inspect, or execute an already serialized `TransactionData` (base64-encoded BCS). The sender, gas payment, and gas budget are read from the serialized data:
+Use `sui client serialized-tx` to dry-run, dev-inspect, or execute an already serialized `TransactionData` (base64-encoded BCS). The command reads the sender, gas payment, and gas budget from the serialized data:
 
 ```sh
 # Inspect without executing
@@ -328,21 +328,21 @@ $ sui client serialized-tx <TX_BYTES>
 
 A related command, `sui client serialized-tx-kind`, takes a serialized `TransactionKind` instead and lets you supply gas payment and budget separately with `--gas` and `--gas-budget`.
 
-Use `sui client execute-combined-signed-tx` to execute a combined `SenderSignedData` blob (transaction data plus its signatures). This is the output produced by passing `--serialize-signed-transaction` to a transaction-building command:
+Use `sui client execute-combined-signed-tx` to execute a combined `SenderSignedData` blob (transaction data plus its signatures). A transaction-building command produces this output when you pass it `--serialize-signed-transaction`:
 
 ```sh
 $ sui client execute-combined-signed-tx --signed-tx-bytes <SIGNED_TX_BYTES>
 ```
 
-To execute a transaction whose data and signatures were produced separately (for example, signed with `sui keytool sign`), use `sui client execute-signed-tx --tx-bytes <TX_BYTES> --signatures <SIGNATURE>` instead.
+To execute a transaction whose data and signatures you produced separately (for example, by signing with `sui keytool sign`), use `sui client execute-signed-tx --tx-bytes <TX_BYTES> --signatures <SIGNATURE>` instead.
 
 ### Replay a transaction
 
-Client commands to replay transactions have been deprecated in favor of the `sui replay` command. Learn about replaying a transaction and how it can be used for debugging or profiling in the [Transaction Replay](/references/cli/replay), [Debugging Transactions](/references/ide/debugger), and [Transaction Trace Analysis](/references/cli/trace-analysis) guides.
+The `sui replay` command replaces the deprecated client commands to replay transactions. Learn about replaying a transaction and how you can use it for debugging or profiling in the [Transaction Replay](/references/cli/replay), [Debugging Transactions](/references/ide/debugger), and [Transaction Trace Analysis](/references/cli/trace-analysis) guides.
 
 ## Publish a Move package
 
-One of the main uses of the `sui client` command is to publish smart contracts on the Sui network. This example switches the current environment to Devnet, then builds, tests, and publishes one of the existing Move examples available in the Sui repository: [sui/examples/move](https://github.com/MystenLabs/sui/tree/main/examples/move)
+One of the main uses of the `sui client` command is to publish smart contracts on the Sui network. This example switches the current environment to Devnet, then builds, tests, and publishes one of the existing Move examples available in the Sui repository: [sui/examples/move](https://github.com/MystenLabs/sui/tree/main/examples/move).
 
 This example also makes use of `sui move` commands. To learn more about those commands, see [Sui Move CLI](/references/cli/move).
 
@@ -350,7 +350,7 @@ This example also makes use of `sui move` commands. To learn more about those co
     ```sh
     $ cd examples/move/first_package
     ```
-1. Switch to Devnet network. This command uses an alias, so the `devnet` value might be different for you, depending on the alias name set in your configuration (use `sui client envs` for a list of your defined networks and their aliases).
+1. Switch to Devnet network. This command uses an alias, so the `devnet` value might be different for you, depending on the alias name you set in your configuration (use `sui client envs` for a list of your defined networks and their aliases).
     ```sh
     $ sui client switch --env devnet
     ```
