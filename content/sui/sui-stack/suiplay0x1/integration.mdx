@@ -38,18 +38,18 @@ answer: >-
 
 <ImportContent source="suiplay" mode="snippet" />
 
-Your integration options depend on the environments you expect your users to interact with your game. The Playtron GameOS SDK handles on-device integration, including wallet access, OS-level features, and environment detection. The Sui dApp Kit handles off-device integration for web, desktop, and mobile contexts. Use one or both depending on where your game runs.
+To integrate your game with SuiPlay0X1, use the Playtron GameOS SDK on the device and the Sui dApp Kit off the device. Which one you need depends on the environments you expect your users to interact with your game. The Playtron GameOS SDK handles on-device integration, including wallet access, OS-level features, and environment detection. The Sui dApp Kit handles off-device integration for web, desktop, and mobile contexts. Use one or both depending on where your game runs.
 
 ## What SDKs are available for SuiPlay0X1 integration?
 
 Two SDKs support SuiPlay0X1 integration:
 
-- **Playtron GameOS SDK:** For games running directly on the SuiPlay0X1 device. Provides OS-level features and automatic Playtron wallet access.
-- **Sui dApp Kit:** For games running on web, desktop, or mobile. Enables Playtron zkLogin wallet as a connection option in off-device contexts.
+- **[Playtron GameOS SDK](https://github.com/playtron-os/playtron-sdk):** For games running directly on the SuiPlay0X1 device. Provides OS-level features and automatic Playtron wallet access.
+- **[Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit):** For games running on web, desktop, or mobile. Enables Playtron zkLogin wallet as a connection option in off-device contexts.
 
 ## On device integration
 
-For on-device game integration, you need the [Playtron GameOS SDK](https://github.com/playtron-os/playtron-sdk). The SDK provides access to OS-level features, such as environment detection, remote PACT attestation, virtual keyboard and browser utilities, and Sui wallet integration.
+For on-device game integration, you need the [Playtron GameOS SDK](https://github.com/playtron-os/playtron-sdk). The SDK provides access to OS-level features, such as environment detection (checking whether your game is running on GameOS), remote PACT attestation, virtual keyboard and browser utilities, and Sui wallet integration.
 
 The Playtron GameOS SDK repository contains the installation and initialization steps to begin development. The repository also contains examples on how to use the SDK in C++, C#, and Node.js environments. The .dll build files needed to compile the C++ code are provided. For the C# and Node.js examples, you can install the necessary dependencies from the respective package manager.
 
@@ -83,7 +83,7 @@ For off-device integration, use the [Sui dApp Kit](https://sdk.mystenlabs.com/da
 
 The Sui dApp Kit documentation site (linked in the previous paragraph), provides the installation instructions for the SDK. With the SDK integrated into your gaming project, you can enable Playtron zkLogin wallet as a connection option.
  
-The dApp Kit runs in TypeScript, meaning your game needs TypeScript processing to integrate with this SDK. If your game is a web-based game, or you navigate users to a browser to perform Web3 transactions on your associated website, this should not be an issue. 
+The dApp Kit is a TypeScript library, meaning your game needs a JavaScript environment, such as a browser, to integrate with this SDK. If your game is a web-based game, or you navigate users to a browser to perform Web3 transactions on your associated website, this should not be an issue. 
 
 If you're unable to run TypeScript, you can always support sending assets from your wallet to the Playtron wallet. Users can also access their Playtron wallet address through the [companion web application](https://wallet.playtron.one). Finally, you can support sending assets from your game on a different platform. For example, the user can use your PC client to transfer assets to their Playtron wallet, then continue playing on-device.
 
@@ -97,7 +97,7 @@ npm install @mysten/dapp-kit-react @mysten/sui
 
 :::info
 
-`@mysten/dapp-kit` without a suffix is the deprecated 1.x package. Older tutorials that wrap your app in `SuiClientProvider` and `WalletProvider` target that version. New games should use `@mysten/dapp-kit-react`.
+`@mysten/dapp-kit` without a suffix is the deprecated 1.x package. Older tutorials that wrap your app in `SuiClientProvider` and `WalletProvider` target that version. New games should use `@mysten/dapp-kit-react`, or `@mysten/dapp-kit-core` if the front end does not use React.
 
 :::
 

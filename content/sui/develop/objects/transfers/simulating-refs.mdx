@@ -41,9 +41,9 @@ answer: >-
 ---
 
 
-Everything on the Sui blockchain is an object. When you develop Move packages for the Sui network, you typically manipulate or use onchain objects in some way through functionality available in the Sui API. For most API functions, you provide an object by reference.
+Programmable transaction blocks (PTBs) do not currently allow you to pass an object reference returned by one transaction command into another. This page shows how to use the borrow module in the Sui framework to simulate references so you can include objects by reference in your PTBs.
 
-References are a key construct when programming in Move and on Sui. Most of the functionality available in the Sui API takes objects by reference.
+Everything on the Sui blockchain is an object. When you develop Move packages for the Sui network, you typically manipulate or use onchain objects in some way through functionality available in the Sui API. References are a key construct when programming in Move and on Sui, and for most API functions, you provide an object by reference.
 
 There are 2 ways to use an object:
 
@@ -57,9 +57,9 @@ There are 2 ways to use an object:
 
 Programmable transaction blocks (PTBs) do not currently allow the use of object references returned from one of its transaction commands. You can use input objects to the PTB, objects created by the PTB (like `MakeMoveVec`), or returned from a transaction command by value as references in subsequent transaction commands. If a transaction command returns a reference, however, you cannot use that reference in any call, significantly limiting certain common patterns in Move.
 
-## The borrow module
+## What is the borrow module for?
 
-The Sui framework includes a [borrow](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/borrow.md) module that offers a solution to the reference problem. The module provides access to an object by value but builds a model that makes it impossible to destroy, transfer, or wrap the object retrieved. The borrow module exposes a `Referent` object that wraps another object (the object you want to reference). The module uses the hot potato pattern (through a `Borrow` instance) to allow retrieval of the wrapped object by value. Within the same PTB, the module then forces the object to be returned to the `Referent`. The `Borrow` instance guarantees that the object returned is the same that was retrieved.
+The Sui framework includes a [borrow](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/borrow.md) module that offers a solution to the reference problem. Because PTBs can use an object returned by value as a reference in subsequent transaction commands, the borrow module works around the limitation by handing out the object you want to reference by value instead of returning a reference. The module provides access to an object by value but builds a model that makes it impossible to destroy, transfer, or wrap the object retrieved. The borrow module exposes a `Referent` object that wraps another object (the object you want to reference). The module uses the hot potato pattern (through a `Borrow` instance, a value that you cannot drop or save anywhere, so it must be consumed in the same transaction that retrieves it) to allow retrieval of the wrapped object by value. Within the same PTB, the module then forces the object to be returned to the `Referent`. The `Borrow` instance guarantees that the object returned is the same that was retrieved.
 
 As an example, consider the following module stub that exposes an object (`Asset`) and a function (`use_asset`) to use that object.
 
@@ -130,7 +130,7 @@ Now the PTB can retrieve the asset, use it in a call to `use_asset`, and return 
 
 ## Considerations
 
-The `Borrow` object is the key to the guarantees the borrow module offers. The definition of `Borrow` is
+The `Borrow` object is the key to the guarantees the borrow module offers. The definition of `Borrow`, which is part of the borrow module in the Sui framework rather than something you define yourself, is
 `struct Borrow { ref: address, obj: ID }`
 which makes it such that you cannot drop or save its instance anywhere, so it must be consumed in the same transaction that retrieves it (hot potato). Moreover, fields in the `Borrow` struct make sure that the object returned is for the same `Referent` and the object that was originally held by the `Referent` instance. In other words, there is no way to either keep the object retrieved or to swap it with another object in a different `Referent`.
 
@@ -152,9 +152,18 @@ You must consider the implications of using the borrow module and whether you ha
 
 Finally, the `Referent` model forces the usage of a mutable reference and returns an object by value. Both have significant implications when designing an API. You must be careful in what logic your modules provide and how objects are exposed.
 
-## Example
+## How do I pass an object by reference in a PTB?
 
-Extending the previous example, a PTB that calls `use_asset` is written as follows:
+Extending the previous example, a PTB that calls `use_asset` follows these steps:
+
+1. Load the `AssetManager` object.
+1. Call `get_asset` to retrieve the `Asset` by value along with its `Borrow` instance.
+1. Pass the `Asset` to `use_asset`.
+1. Call `return_asset` with the `AssetManager`, the `Asset`, and the `Borrow` to return the asset to its `Referent` within the same PTB.
+
+The example uses the `Transaction` class from the `@mysten/sui` TypeScript SDK. Replace `0xaddr1` with the address of the package that contains `another_module`, `0xaddr2` with the address of the package that contains `a_module`, and `assetManagerId` with the ID of your `AssetManager` object.
+
+The PTB is written as follows:
 
 ```typescript
 // initialize the PTB

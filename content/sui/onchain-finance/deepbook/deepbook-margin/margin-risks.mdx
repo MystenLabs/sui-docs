@@ -52,7 +52,7 @@ Margin trading amplifies both gains and losses. Before using DeepBook Margin, yo
 
 The most significant risk in margin trading is **liquidation** - the forced closure of your position when it becomes too risky for the protocol to maintain.
 
-### How liquidation works
+### How does liquidation work?
 
 When you borrow funds to trade, you must maintain a minimum [risk ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio) (the ratio of your total assets to total debts). If your position's risk ratio falls to or below the **Liquidation Risk Ratio**, anyone can liquidate your position.
 
@@ -60,7 +60,7 @@ When you borrow funds to trade, you must maintain a minimum [risk ratio](/onchai
 For SUI/USDC (5x leverage), when your risk ratio falls between 1.1 and 1.2, you are in the **warning zone**. For WAL/USDC and DEEP/USDC (3x leverage), the warning zone is between 1.2 and 1.3. At these levels, even minor price movements can push you into liquidation. Monitor your position carefully and consider adding collateral or reducing your position size.
 :::
 
-### Partial liquidation
+### What happens in a partial liquidation?
 
 Liquidation in DeepBook Margin is **partial**, not total. The protocol only liquidates enough of your position to restore your risk ratio to the **Target Liquidation Risk Ratio** (1.25 for SUI/USDC, 1.5 for WAL/USDC and DEEP/USDC).
 
@@ -95,6 +95,8 @@ Let's walk through a concrete example using the SUI/USDC trading pair, which has
 | 1.35 | 360 | 460 | 1.15 | Danger zone |
 | 1.275 | 340 | 440 | 1.10 | Liquidatable |
 | 1.20 | 320 | 420 | 1.05 | Underwater |
+
+In this table, **Danger zone** marks the lower part of the warning zone, just above the 1.1 Liquidation Risk Ratio, where a small further drop makes the position liquidatable.
 
 **What happens at 1.275 USDC per SUI:**
 - Your risk ratio hits 1.1 (the liquidation threshold for SUI/USDC)
@@ -138,7 +140,7 @@ Crypto markets can move 10-20% in hours. Flash crashes, short squeezes, exchange
 
 When you borrow funds, you pay interest that accrues continuously. This interest is **variable** and can change significantly based on pool utilization.
 
-### How interest rates fluctuate
+### How do interest rates fluctuate?
 
 DeepBook Margin uses a [kinked interest rate model](/onchain-finance/deepbook/deepbook-margin/contract-information/interest-rates) where rates increase gradually up to an optimal utilization point, then spike dramatically.
 
@@ -196,11 +198,11 @@ DeepBook Margin implements multiple safeguards against oracle issues:
 
 :::caution
 
-These onchain protections do not remove your own data-hygiene responsibility. Monitor oracle freshness and be aware that the prices, risk ratios, and liquidation thresholds shown in a UI, wallet, or indexer can lag the onchain state. Never make margin decisions on stale or cached offchain data. Also understand the limits of liquidation automation: keepers and TPSL orders are best-effort and can be delayed or fail during congestion or extreme volatility, so do not assume a position always closes at your expected price. See [oracle and offchain data](/develop/security/best-practices#oracle-and-offchain-data).
+These onchain protections do not remove your own data-hygiene responsibility. Monitor oracle freshness and be aware that the prices, risk ratios, and liquidation thresholds shown in a UI, wallet, or indexer can lag the onchain state. Never make margin decisions on stale or cached offchain data. Also understand the limits of liquidation automation: keepers and TPSL orders are best-effort and can be delayed or fail during congestion or extreme volatility, so do not assume a position always closes at your expected price. See [oracle and offchain data](/develop/security/best-practices#how-should-i-handle-oracle-and-offchain-data-safely).
 
 :::
 
-## Risk mitigation strategies
+## How do I avoid liquidation?
 
 ### 1. Use less than maximum leverage
 
@@ -213,6 +215,7 @@ Just because you can borrow at 5x doesn't mean you should. Consider:
 - Check your position regularly, especially during volatile markets
 - Set up alerts if possible
 - Know your liquidation price
+- See the [Leveraged Position Workflow](/onchain-finance/deepbook/deepbook-margin/leveraged-workflow) for reading each risk parameter onchain
 
 ### 3. Use Take Profit / Stop Loss orders
 
@@ -247,4 +250,3 @@ If you're new to margin trading:
 | Oracle risk | Prices might not reflect true market | Understand oracle mechanics, avoid extreme leverage |
 
 With these risks in mind, the [Leveraged Position Workflow](/onchain-finance/deepbook/deepbook-margin/leveraged-workflow) walks through opening, monitoring, and closing a position on Testnet, reading each risk parameter onchain as you go.
-

@@ -37,6 +37,12 @@ answer: >-
 
 Community developer tools for Nautilus include options like Marlin Oyster for deploying dockerized applications, with support for PCR verification in trusted execution environments for confidential compute workflows.
 
+This page covers the following tools:
+
+- [Marlin Oyster](#deploy-dockerized-nautilus-apps-to-marlin): Deploy Dockerized Nautilus apps to enclaves without managing AWS infrastructure yourself.
+- [Nautilus-Ops](#nautilus-ops): A command-line tool to build and deploy enclave images, register enclaves on chain, and verify enclave signatures.
+- [nautilus-ts](#nautilus-ts): A TypeScript framework for building Nautilus apps inside AWS Nitro Enclaves.
+
 :::caution
 
 These tools are developed and maintained by Sui community members. Do your own due diligence for security, performance, and other guarantees if you decide to use these in a production environment.
@@ -49,13 +55,13 @@ Marlin Oyster integrates with the Nautilus framework to remove the operational o
 
 To use Nautilus, you can either manage AWS Nitro Enclaves yourself or use Marlin Oyster. When you manage enclaves yourself, you must manage AWS accounts, networking configurations, enclave images, and attestation infrastructure.
 
-Marlin Oyster handles deterministic enclave builds, provisioning, and attestation. You deploy enclave-powered apps with only a Docker image, Oyster CLI, and Sui. No direct AWS interaction is required. Marlin Oyster preserves all cryptographic guarantees, including hardware-backed Nitro security, reproducible enclave measurements (Platform Configuration Registers (PCRs)), and trust-minimized execution.
+Marlin Oyster handles deterministic enclave builds, provisioning, and attestation. You deploy enclave-powered apps with only a Docker image, Oyster CLI, and Sui. No direct AWS interaction is required. Marlin Oyster preserves all cryptographic guarantees, including hardware-backed Nitro security, reproducible enclave measurements (Platform Configuration Registers (PCRs), which confirm that code running in the enclave is authentic and unmodified), and trust-minimized execution.
 
 It transforms Trusted Execution Environment (TEE) access into a transparent and decentralized marketplace. An abstracted Sui Move contract enables you to submit jobs, pay with stablecoins, and expose workloads to Oyster operators. Builds are deterministic, meaning enclave integrity and identity are fully verifiable.
 
 You can learn more about Marlin Oyster and Nautilus in [Marlin docs](https://docs.marlin.org/oyster/build-cvm/guides/sui-oyster/).
 
-### How it works
+### How does Marlin Oyster work?
 
 Marlin Oyster uses the following workflow:
 
@@ -66,7 +72,7 @@ Marlin Oyster uses the following workflow:
 
 This workflow provides the same cryptographic guarantees as a self-managed Nautilus deployment.
 
-### Custom PCR verification
+### How does custom PCR verification work?
 
 Sui supports custom PCR verification. AWS Nitro Enclaves use PCR verification to confirm that code running in an isolated environment is authentic and unmodified. Nautilus uses custom PCR verification to provide verifiable confidential compute without trust assumptions and to enable use cases where confidential apps can prove their code is running in a TEE and has not been tampered with.
 

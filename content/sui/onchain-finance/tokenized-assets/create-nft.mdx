@@ -48,6 +48,8 @@ answer: >-
 
 On Sui, every object is unique and has an owner, properties that other blockchains like Ethereum require a dedicated standard such as [ERC-721](https://erc721.org/) to achieve.
 
+The following diagram shows how a caller gets an NFT attribute, such as its name, on a blockchain that is not object based. The smart contract must fetch the metadata from offchain storage before it can return the value.
+
 ```mermaid
 
 sequenceDiagram
@@ -62,7 +64,7 @@ sequenceDiagram
  
 Imagine you create a Rare Reef Shark NFT collection on Sui and another blockchain that is not object based. To get an attribute like the shark's name on the other blockchain, you would need to interact with the smart contract that created the NFT to get that information (typically from offchain storage) using the NFT ID. On Sui, the name attribute is a field on the object that defines the NFT itself. This construct provides a more direct process for accessing NFT metadata because the smart contract that needs the information can return the name directly from the object.
 
-## Use cases
+## What are the common use cases for NFTs on Sui?
 
 NFTs on Sui are useful in a wide range of applications:
 
@@ -73,11 +75,11 @@ NFTs on Sui are useful in a wide range of applications:
 - **NFT rentals**: NFTs can be rented to other users for a defined period using Kiosk extensions. This enables use cases where a holder wants to monetize an asset without selling it.
 - **Encrypted media**: NFTs can wrap encrypted content so that only the owner can access the underlying asset, which enables freemium and try-before-you-buy models.
 
-## NFTs vs tokenized assets
+## How do NFTs differ from tokenized assets?
  
 On Sui, both NFTs and [tokenized assets](/onchain-finance/tokenized-assets/asset-tokenization) are objects. The protocol does not distinguish between them. The difference is in how you design your smart contract.
  
-An NFT is typically an object with a supply of 1 and metadata specific to that instance, such as a name, description, or image URL. A tokenized asset is designed for fractional ownership, with a supply greater than 1 and metadata shared across all fractions. Tokenized assets can also be split or merged, which NFTs are not designed for.
+An NFT is typically an object with a supply of 1 and metadata specific to that instance, such as a name, description, or image URL. A tokenized asset is designed for fractional ownership, with a supply greater than 1 and metadata shared across all fractions. Tokenized assets can also be split or merged, which NFTs are not designed for. The protocol does not enforce these supply values; your smart contract design determines them.
  
 The following table summarizes the key design differences:
  
@@ -89,7 +91,7 @@ The following table summarizes the key design differences:
 | Use case | Unique ownership of a single item | Fractional ownership of an asset |
 | Example | A unique piece of digital art | Fractional shares in real estate |
 
-## Example
+## How do I create an NFT on Sui?
 
 The following example creates a basic NFT on Sui. The `TestnetNFT` struct defines the NFT with `id`, `name`, `description`, and `url` fields.
 
@@ -103,14 +105,6 @@ The module includes functions to return NFT metadata. You can call the `name` fu
 
 <ImportContent source="examples/move/nft/sources/testnet_nft.move" mode="code" fun="name" noComments />
 
-<details>
-
-<summary>
-
-`testnet_nft.move`
-
-</summary>
+The following is the complete `testnet_nft.move` module:
 
 <ImportContent source="examples/move/nft/sources/testnet_nft.move" mode="code" />
-
-</details>

@@ -59,11 +59,11 @@ builder_paths:
 
 Resolving an outcome means fixing the value a market pays out against. Two kinds of outcome need two different approaches, and the difference is whether the answer is a number a price feed already reports.
 
-## Price-based resolution for parametric outcomes
+## How do I settle a parametric outcome against a price?
 
 A parametric outcome is a deterministic function of a price: a settlement at expiry, whether the price crossed a strike, whether it touched a barrier. An oracle already reports the number, so resolution is reading it at the right moment and freezing it.
 
-The pattern is a market that settles exactly once, at or after a defined expiry, through the same staleness-checked read a liquidation uses. The resolver holds the expiry and the frozen settlement:
+The pattern is a market that settles exactly once, at or after a defined expiry, through the same staleness-checked read a liquidation uses, a read that refuses a stale price rather than settling against it. The resolver holds the expiry and the frozen settlement:
 
 <ImportContent source="examples/oracle-adapter/move/sources/market_resolver.move" mode="code" struct="Market" />
 
@@ -73,7 +73,7 @@ Two failure modes stay separate from any oracle failure: settling before expiry 
 
 For a production worked example, DeepBook Predict settles each market through a permissionless [`try_settle`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) transition that anyone can call after expiry. It reads the exact price stamped at the expiry timestamp, records that price and the payout liability once, and returns `false` rather than inventing a mark when no exact price exists yet. Every later read, including settled redemption, consumes the recorded price instead of reading an [oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle). The mechanism, resolve once at expiry and read recorded state afterward, is the same.
 
-## Optimistic resolution for subjective outcomes
+## How do I resolve a subjective outcome onchain?
 
 A subjective outcome is not a price: did a team win, did a proposal pass, did an event occur? No price feed reports it, so no oracle resolves it for you. The established design is optimistic: someone proposes an answer and posts a bond, a challenge window opens, and if nobody disputes, the answer stands; if someone disputes, a higher authority decides and the loser's bond pays the winner.
 
@@ -116,8 +116,16 @@ module example::optimistic_resolver {
 }
 ```
 
+In the sketch, a question moves through these states:
+
+1. `propose` locks the proposer's bond, records the answer, sets `challenge_ends_ms`, and leaves the question `Proposed`.
+2. Before `challenge_ends_ms`, anyone can call `dispute` with a matching bond, which moves the question to `Disputed` and routes it to escalation.
+3. If the window passes with no dispute, `settle_undisputed` moves the question to `Resolved`, the proposed answer stands, and the bond returns.
+4. If the question is `Disputed`, `resolve_disputed` applies the escalation authority's ruling, moves the question to `Resolved`, and the loser's bond pays the winner.
+
 The load-bearing decisions are the escalation authority and the bond sizing, and both are yours to design: a multisig for a small market, a token vote for a large one, and a bond large enough that a false proposal is unprofitable. Build and audit this yourself rather than assuming a protocol provides it.
 
-## Choosing
+## Which resolution pattern should I use?
 
-If the outcome is a number a feed reports, resolve it against the oracle with a staleness-checked read and settle once. If the outcome is a judgment, no oracle helps: implement an optimistic process with a bond, a dispute window, and an escalation authority you control.
+- **Outcome is a number a feed reports** → resolve it against the oracle with a staleness-checked read and settle once.
+- **Outcome is a judgment** → no oracle helps: implement an optimistic process with a bond, a dispute window, and an escalation authority you control.

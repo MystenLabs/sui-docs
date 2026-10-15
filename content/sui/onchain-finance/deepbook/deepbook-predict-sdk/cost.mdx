@@ -58,7 +58,7 @@ verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict
 
 The `cost` namespace on `@mysten/deepbook-v3/predict` prices a Predict trade without touching the chain. It is an exact integer port of the deployed fee path, not an estimate: feed it the same inputs the execution sees and it returns the same raw amounts the contract charges. That makes it the right tool for an order ticket that has to re-price on every keystroke, for a board of candidate strikes, and for sizing a spend before a transaction exists.
 
-It pairs with the [`pricing` namespace](/onchain-finance/deepbook/deepbook-predict-sdk/markets#pricing), which supplies the probabilities. `pricing` answers *what is this range worth*, `cost` answers *what will it debit*.
+It pairs with the [`pricing` namespace](/onchain-finance/deepbook/deepbook-predict-sdk/markets), which supplies the probabilities. `pricing` answers *what is this range worth*, `cost` answers *what will it debit*.
 
 ```ts
 import { cost, pricing } from '@mysten/deepbook-v3/predict';
@@ -66,11 +66,11 @@ import { cost, pricing } from '@mysten/deepbook-v3/predict';
 
 :::caution
 
-A local preview is arithmetic, not a preflight. `cost` never reads the chain, so it cannot see your balance, your builder code, the expiry's cash backing, a paused market, or the no-trade window, and it cannot tell you whether the probabilities you handed it are fresh. Confirm every trade with [`read.quoteMint`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#quote-mint), [`read.quoteMintCost`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#quote-mint-cost), or [`read.quoteRedeem`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#quote-redeem), which dry-run the real transaction against real state.
+A local preview is arithmetic, not a preflight. `cost` never reads the chain, so it cannot see your balance, your builder code, the expiry's cash backing, a paused market, or the no-trade window, and it cannot tell you whether the probabilities you handed it are fresh. Confirm every trade with [`read.quoteMint`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), [`read.quoteMintCost`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), or [`read.quoteRedeem`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), which dry-run the real transaction against real state.
 
 :::
 
-## What the arithmetic needs {#inputs}
+## What does the arithmetic need? {#inputs}
 
 Every entry point in this namespace takes the same 3 kinds of input.
 
@@ -95,13 +95,13 @@ Pass either shape as `probabilities`:
 - **Raw boundary probabilities** you already hold, as 1e9-scaled `bigint` values. Use `probabilityToRaw` on a value from `read.price`. This is the exact path, and the result sets `exactProbabilities` to `true`.
 - **A local pricer snapshot plus the range's strikes in USD**, as `{ pricer, lower, upper }`. `cost` prices the boundaries itself with the same float math the `pricing` namespace uses, so the result is close but not bit-exact, and `exactProbabilities` is `false`.
 
-`exactProbabilities` reports only how the probabilities arrived. It does not certify that they came from the chain, that they are fresh, or that any other input matches execution state.
+`exactProbabilities` reports only how the probabilities arrived. It does not certify that they came from the chain, that they are fresh, or that any other input matches execution state. On either path, treat the result as a preview and confirm it with a chain quote before you submit.
 
 ### The book, when inventory impact is on {#book}
 
 The inventory-impact charge is priced against the market's payout tree, so a policy with a non-zero `inventoryImpactMaxRate` needs a `book` argument: `maxPayout`, `totalPayout`, and the payout peak inside the candidate range, plus the peak outside it for a close. Both deployments ship with impact disabled, so `book` is not needed until an admin turns it on.
 
-## Mint previews {#mint-previews}
+## How do I preview a mint's cost? {#mint-previews}
 
 ### `cost.mintCost` {#mint-cost}
 
@@ -116,6 +116,13 @@ Use `cost.mintCost` to price an exact payout quantity, the local twin of `tx.min
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="563-592" />
 
 Note that `fees` here has no `referral` member, unlike the chain quote's. A referral is a split of protocol proceeds, not a trader debit, so it never changes `cost`.
+
+A full mint preview runs in this order:
+
+1. Read the market's fee policy with `read.feePolicy(market)`, or from the market's `MarketCreated` event.
+2. Read the range's price with `read.price` and convert each finite boundary with `probabilityToRaw`.
+3. Call `cost.mintCost` with the policy, the market's `expiryMs`, the probabilities, and the quantity.
+4. Before submitting, confirm the trade with `read.quoteMint`.
 
 ```ts
 import { cost, probabilityToRaw } from '@mysten/deepbook-v3/predict';
@@ -150,9 +157,9 @@ The same 3 sizing limits that qualify the onchain entrypoint qualify this one, b
 - **The maximum-payout step-down is best effort.** It preserves the contract's own fallback, rounding included, so it can miss a larger admissible fill or reject a `minQuantity` that another fill would have met.
 - **Backing is not a sizing input.** Neither this function nor the chain quote preflights the expiry's cash backing or its exposure-index capacity.
 
-Submit the result through [`tx.mintCost`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#mint-cost), which works on either network. This preview itself is pure arithmetic, so it needs no deployment at all.
+Submit the result through [`tx.mintCost`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), which works on either network. This preview itself is pure arithmetic, so it needs no deployment at all.
 
-## Close previews {#close-previews}
+## What does closing a live position pay out? {#close-previews}
 
 ### `cost.redeemLiveProceeds` {#redeem-live-proceeds}
 
@@ -175,9 +182,9 @@ An order ID packs the position's durable terms, and 2 helpers unpack the parts a
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="993-998" />
 
-## Fee components {#fee-components}
+## Which fee components can I compute client-side? {#fee-components}
 
-Each term of the fee path is exported on its own, for a UI that itemizes a charge or a test that pins one. [Design](/onchain-finance/deepbook/deepbook-predict/design#fee-components) explains what each one is for:
+Each term of the fee path is exported on its own, for a UI that itemizes a charge or a test that pins one. [Design](/onchain-finance/deepbook/deepbook-predict/design) explains what each one is for:
 
 | **Function** | **Move counterpart** | **Returns** |
 | --- | --- | --- |
@@ -202,5 +209,5 @@ The fee subsidy rate became admin-set in Predict protocol version 4, so version 
 
 - [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions): the builders and chain quotes these previews stand in for.
 - [Predict Markets SDK](/onchain-finance/deepbook/deepbook-predict-sdk/markets): `read.pricer`, the snapshot these functions price from, and the `pricing` namespace.
-- [Design](/onchain-finance/deepbook/deepbook-predict/design#fee-components): what each fee component charges for.
+- [Design](/onchain-finance/deepbook/deepbook-predict/design): what each fee component charges for.
 - [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict): the Move entrypoints and their abort codes.

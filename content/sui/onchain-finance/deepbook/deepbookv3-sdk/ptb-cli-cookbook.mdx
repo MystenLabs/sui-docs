@@ -49,9 +49,9 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Build common DeepBook [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) from reusable templates for both the [`sui client ptb` CLI](/references/cli/ptb) and the TypeScript SDK. These templates start with the syntax rules that cause the most CLI errors, then cover coin operations, generic Move calls, and DeepBook flows.
+Build common DeepBook [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) from reusable templates for both the [`sui client ptb` CLI](/references/cli/ptb) and the TypeScript SDK. The `sui client ptb` CLI needs `@`-prefixed object IDs, angle-bracket type arguments, and quoted arrays. These templates start with those syntax rules, which cause the most CLI errors, then cover coin operations, generic Move calls, and DeepBook flows.
 
-CLI examples are verified against `sui` version 1.62.0. DeepBook Move argument order is verified against the [DeepBookV3 sources](https://github.com/MystenLabs/deepbookv3/tree/main/packages/deepbook/sources). Generic TypeScript samples pass compile checks against `@mysten/sui` version 2.22.1. The DeepBook SDK samples follow the documented [DeepBookV3 SDK](/onchain-finance/deepbook/deepbookv3-sdk) usage. None are executed in this document, so dry-run each command before you rely on it.
+CLI examples are verified against `sui` version 1.62.0. DeepBook Move argument order is verified against the [DeepBookV3 sources](https://github.com/MystenLabs/deepbookv3/tree/main/packages/deepbook/sources). Generic TypeScript samples pass compile checks against `@mysten/sui` version 2.22.1. The DeepBook SDK samples follow the documented DeepBookV3 SDK usage. None are executed in this document, so dry-run each command before you rely on it.
 
 :::tip
 
@@ -59,9 +59,11 @@ Use `sui client ptb --preview` to print the PTB commands without executing, and 
 
 :::
 
-## Most common `sui client ptb` errors
+## How do I avoid common `sui client ptb` errors?
 
 Most `sui client ptb` failures come from 3 formatting rules. Get these right and the rest follows.
+
+The examples use shell variables such as `$OBJECT_ID` and `$RECIPIENT`. Replace them with your own values before you run a command. For DeepBook package IDs, pools, and coin types, see [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information).
 
 ### Object IDs need an `@` prefix
 
@@ -99,9 +101,9 @@ $ sui client ptb \
     --gas-budget 10000000
 ```
 
-Use `--assign` to name a command result, then index into it with `.0`, `.1`, and so on.
+Use `--assign` to name a command result, then index into it with `.0`, `.1`, and so on. Later commands in the same PTB refer to the result by that name, as `--transfer-objects` does with `coins.0` and `coins.1` above.
 
-## Split, merge, and transfer coins
+## How do I split, merge, and transfer coins?
 
 <Tabs groupId="ptb-interface">
 <TabItem value="cli" label="CLI">
@@ -143,7 +145,7 @@ merge.mergeCoins(merge.object(PRIMARY_COIN), [merge.object(COIN_1), merge.object
 </TabItem>
 </Tabs>
 
-## Move call with object and type arguments
+## How do I make a Move call with object and type arguments?
 
 <Tabs groupId="ptb-interface">
 <TabItem value="cli" label="CLI">
@@ -171,11 +173,13 @@ tx.moveCall({
 </TabItem>
 </Tabs>
 
-## DeepBook: deposit and place an order in one PTB
+## How do I deposit and place a DeepBook order in one PTB?
 
 For compile-checked SDK versions of these compositions, plus a three-legged lend, trade, and stake example, see [Composing DeepBook transactions](/onchain-finance/deepbook/deepbookv3-sdk/composing-transactions).
 
 Get the DeepBookV3 package ID, pool, and coin types from [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information). Set `DEEPBOOK` to the DeepBookV3 package ID. Do not use the CLI `deepbook` name alias, which resolves to the legacy DeepBook address, not DeepBookV3.
+
+In the SDK samples, string keys such as `'SUI_DBUSDC'`, `'DEEP_SUI'`, and `'DBUSDC'` are pool and coin keys. Look them up in [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information) and the DeepBookV3 SDK constants. `'MANAGER_1'` is a balance manager key; see [Balance Manager](/onchain-finance/deepbook/deepbookv3-sdk/balance-manager).
 
 Placing an order requires a trade proof and takes 13 typed arguments. The TypeScript SDK generates the proof and encodes the arguments for you, so it is the recommended path. Deposit into the `BalanceManager` and place the order in the same transaction so both settle atomically.
 
@@ -224,9 +228,9 @@ Placing an order from the CLI is impractical: `pool::place_limit_order` needs a 
 </TabItem>
 </Tabs>
 
-## DeepBook: flash loan borrow and repay
+## How do I write a DeepBook flash loan PTB?
 
-A flash loan returns a `FlashLoan` hot potato that you must return in the same transaction, or the whole transaction aborts. `borrow_flashloan_base` returns `(Coin<Base>, FlashLoan)`. `return_flashloan_base` takes the pool, the repaid coin, and the `FlashLoan`.
+A flash loan returns a `FlashLoan` hot potato: a value that you must pass back to the pool in the same transaction, or the whole transaction aborts. `borrow_flashloan_base` returns `(Coin<Base>, FlashLoan)`. `return_flashloan_base` takes the pool, the repaid coin, and the `FlashLoan`.
 
 <Tabs groupId="ptb-interface">
 <TabItem value="ts" label="TypeScript (SDK)">
@@ -276,8 +280,8 @@ The flash loan CLI template above has its flag syntax verified against `sui` 1.6
 
 :::
 
-## Verify before you execute
+## How do I verify a PTB before I execute it?
 
 1. Add `--preview` to any command to print its PTB commands without executing.
 2. Add `--dry-run` to estimate gas and surface argument or type errors.
-3. For DeepBook object IDs and coin and pool keys, see [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information) and the [DeepBookV3 SDK](/onchain-finance/deepbook/deepbookv3-sdk) constants.
+3. For DeepBook object IDs and coin and pool keys, see [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information) and the DeepBookV3 SDK constants.

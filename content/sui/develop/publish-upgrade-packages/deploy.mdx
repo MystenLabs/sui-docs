@@ -57,15 +57,16 @@ answer: >-
 
 Publishing deploys your compiled Move package as an immutable object on a Sui network. After publishing, you receive a package ID that other modules and transactions use to call your functions.
 
-## Publish a package
+## How do I publish a Move package?
 
-To publish a package, run `sui client publish` from the package root directory:
+To publish a package, run `sui client publish` from the package root directory (the directory that contains `Move.toml`):
 
 ```sh
+$ cd <PACKAGE_ROOT>
 $ sui client publish
 ```
 
-The command compiles your package, submits a publish transaction, and returns the package ID, the `UpgradeCap` object ID, and any objects created during the `init` function.
+The command compiles your package, submits a publish transaction, and returns the package ID, the `UpgradeCap` object ID (the capability that controls future upgrades of the package; see the caution below), and any objects created during the `init` function.
 
 ### Dry-run before publishing
 
@@ -77,11 +78,11 @@ $ sui client publish --dry-run
 
 The dry-run output shows the gas budget required, the objects that would be created, and any errors in your package.
 
-### Estimate gas
+### How do I estimate gas before publishing?
 
 The gas cost of publishing depends on the size of your compiled bytecode. Use `--dry-run` to see the exact gas budget required. For most packages, the gas cost is between 0.1 and 1 SUI. Large packages with many modules or dependencies cost more.
 
-## Post-publish verification
+## How do I verify the bytecode of a published package?
 
 After publishing, verify that the onchain bytecode matches your local source:
 
@@ -91,7 +92,7 @@ $ sui client verify-source
 
 This command rebuilds your package with the toolchain that originally published it and compares the resulting bytecode against the onchain version. Run this from your package directory.
 
-## Publish to different networks
+## How do I publish to a different network?
 
 Your active environment determines which network receives the publish transaction. Switch environments before publishing:
 
@@ -108,7 +109,7 @@ Publishing is irreversible. Once you publish a package, you cannot remove it fro
 
 :::
 
-## Serialize for multisig signing
+## How do I publish a package with a multisig?
 
 For production deployments that use multisig custody, serialize the unsigned publish transaction instead of executing it directly:
 
@@ -116,5 +117,10 @@ For production deployments that use multisig custody, serialize the unsigned pub
 $ sui client publish --serialize-unsigned-transaction
 ```
 
-This outputs base64-encoded transaction bytes that you can distribute to multisig signers. After collecting enough signatures, submit the signed transaction with `sui client execute-signed-tx`.
+The multisig publish workflow runs in this order:
+
+1. Serialize the unsigned publish transaction with the command above. It outputs base64-encoded transaction bytes.
+1. Distribute the transaction bytes to your multisig signers.
+1. Collect enough signatures from the signers.
+1. Submit the signed transaction with `sui client execute-signed-tx`.
 

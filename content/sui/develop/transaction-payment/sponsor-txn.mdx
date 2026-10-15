@@ -67,7 +67,7 @@ A sponsored transaction involves three roles:
 
 - **Sponsor:** The entity that funds the gas station.
 
-The gas station and sponsor are often the same entity. For example, a Web3 gaming company might run its own gas station to offer free-to-play experiences during user acquisition. Alternatively, the company could use a third-party gas station service instead of maintaining its own.
+The gas station and sponsor are often the same entity, but they differ when the sponsor uses a third-party gas station. For example, a Web3 gaming company might run its own gas station to offer free-to-play experiences during user acquisition. Alternatively, the company could use a third-party gas station service instead of maintaining its own.
 
 ## Data structure
 
@@ -109,7 +109,7 @@ A few details of note for the preceding code:
 
 To construct a correct sponsored transaction, you must first build a `TransactionData` object. If you are neither the user or the sponsor, you pass the transaction to both parties to sign. If you're the sponsor, you sign the transaction and then pass it and the signature to the other party (in the form of `SenderSignedTransaction`) for them to sign. In practice, the latter is the more common scenario. 
 
-## Create sponsored transactions using a `GasData` object
+## How do I create a sponsored transaction using a `GasData` object?
 
 To use a `GasData` object to sponsor the gas fees for a transaction, create a `GasData` object that covers the fees determined for the transaction. The user doesn't need to know how much the fee is or approve it.
 
@@ -127,9 +127,9 @@ A sponsor transaction using a `GasData` object involves the following steps:
 
 ### `GasLessTransactionData`
 
-`GasLessTransactionData` is `TransactionData` without `GasData`. It is not a `sui-core` data structure; it is only an interface between user and sponsor.
+`GasLessTransactionData` is `TransactionData` without `GasData`. A user sends it to the sponsor so the sponsor can add `GasData` and construct the full `TransactionData` (see [User proposed transaction](#user-proposed-transaction)). It is not a `sui-core` data structure; it is only an interface between user and sponsor, so the following struct is an illustrative sketch rather than a type you import.
 
-The following example constructs a `GasLessTransactionData`  object:
+The following sketch shows the shape of a `GasLessTransactionData` object:
 
 ```rust
 pub struct GasLessTransactionData {
@@ -141,7 +141,7 @@ pub struct GasLessTransactionData {
 
 ### User proposed transaction
 
-You examine the transaction to verify it's within your approved applications before providing gas payment. 
+You examine the transaction to verify it's within your approved applications before providing gas payment. For checks to apply, such as allowlisting `moveCall` targets and capping the gas budget, see [Production hardening](#production-hardening).
 
 A user-proposed sponsored transaction involves the following steps:
 
@@ -175,7 +175,7 @@ You can use a sponsor proposed transaction to propose rewards claims, promotiona
 
 ![Sponsor-proposed sponsored transaction sequence](./images/sequence_sponsor-txn-sponsor-proposed_v1.png)
 
-### Wildcard gas payment
+### What is wildcard gas payment?
 
 You sponsor any valid transaction with few restrictions.
 
@@ -203,13 +203,13 @@ pub fn submit_sole_signed_transaction(sole_signed_data: SenderSignedData) -> Res
 pub fn submit_dual_signed_transaction(dual_signed_data: SenderSignedData) -> Result<(Transaction, CertifiedTransactionEffects), Error>;
 ```
 
-## Risk considerations
+## What are the risks of sponsored transactions?
 
 Sponsored transactions involve multiple parties, which introduces additional risks.
 
 ### Concurrent object use
 
-Sponsored transactions still need valid, current object references for both the user's inputs and the sponsor's gas payment. If another inflight transaction already uses one of those same object versions, the sponsored transaction can be rejected and must be rebuilt or re-signed with updated references. If competing transactions split validator reservations, the object can be equivocated until the next epoch.
+Sponsored transactions still need valid, current object references for both the user's inputs and the sponsor's gas payment. If another inflight transaction already uses one of those same object versions, the sponsored transaction can be rejected and must be rebuilt or re-signed with updated references. If competing transactions split validator reservations, the object can be equivocated until the next epoch. Equivocation here means that conflicting transactions using the same object version each hold part of the validators' reservations, so the object cannot be used again until the next epoch.
 
 Both the user and the sponsor can introduce this conflict:
 
@@ -250,11 +250,13 @@ const sponsor = new Ed25519Keypair();
 // 1. User builds the transaction
 const tx = new Transaction();
 tx.setSender(user.toSuiAddress());
+// Placeholder: replace 0xPACKAGE::module::function with your package ID, module, and function
 tx.moveCall({ target: '0xPACKAGE::module::function' });
 
 // 2. Sponsor sets gas payment
 tx.setGasOwner(sponsor.toSuiAddress());
 tx.setGasBudget(10_000_000);
+// Placeholder: replace objectId, version, and digest with a SUI coin object owned by the sponsor
 tx.setGasPayment([{ objectId: '0x...', version: '1', digest: '...' }]);
 
 // 3. Build the transaction bytes

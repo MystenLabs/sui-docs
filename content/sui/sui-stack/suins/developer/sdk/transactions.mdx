@@ -25,6 +25,8 @@ answer: >-
   ability to compose multiple operations in a single transaction.
 ---
 
+Use `SuinsTransaction` to build programmable transaction blocks (PTBs) for SuiNS operations: `register`, `renew`, `setTargetAddress`, `setDefault`, `setUserData`, and `burnExpired`. You can compose several of these operations in a single transaction. Subname operations (create, edit, extend, and remove subnames) are covered separately in [Subname Transactions](./subnames).
+
 :::caution
 
 The examples on this page use `SuinsClient`. `@mysten/suins` 2.0 still exports it, but the [`suins()` client extension](/sui-stack/suins/developer/sdk) is the preferred pattern. The `SuinsTransaction` commands themselves are unchanged, but the client you pass them is constructed differently. See [Migrating @mysten/suins](https://sdk.mystenlabs.com/sui/migrations/sui-2.0/suins).
@@ -36,11 +38,11 @@ You need to instantiate it once in every programmable transaction block (PTB) th
 
 ## Pyth price feeds
 
-SuiNS names are priced in USDC. Paying in SUI or NS needs a live exchange rate, which the contracts read from the [Pyth](https://docs.pyth.network/price-feeds) oracle, so those transactions must include a price info object.
+SuiNS names are priced in USDC. Paying in SUI or NS needs a live exchange rate, which the contracts read from the [Pyth](https://docs.pyth.network/price-feeds) oracle, so those transactions must include a price info object. Transactions that pay in USDC don't need one.
 
 Pyth serves its price updates from Hermes, which requires an access token. Create a free [Pyth](https://app.pyth.com/explore) account and copy the key from **View your API key**. Keep it out of browser code, so the fetch always happens on a server.
 
-You can get a price info object into your transaction in two ways.
+You can get a price info object into your transaction in two ways. If your server builds the whole PTB, use the first approach. If you build the PTB in the browser, use the second, which still keeps the fetch and the access token on your server.
 
 ### Fetch and build on a server
 
@@ -86,7 +88,11 @@ Either way, pass the resulting `priceInfoObjectId` to the `register` and `renew`
 
 This is a list of all the available PTB commands supported through the SDK.
 
-### Register a name
+Replace placeholder values such as `0xMyAddress`, `0xMyNftObject`, and `0xMyCoinObject` with your own addresses and object IDs.
+
+### How to register a name
+
+`register` returns the name's NFT. Transfer it to an address or pass it to other commands in the same PTB, as the combined example later on this page shows.
 
 ```js
 
@@ -106,6 +112,7 @@ const register = async (name: string, years: number) => {
         domain: 'myname.sui',
         years: 3,
         coinConfig,
+        coin: '0xMyCoinObject', // Only required for NS/USDC
         priceInfoObjectId, // Only required for SUI/NS
     });
 
@@ -142,9 +149,9 @@ const renew = async (nftId: string, name: string, years: number) => {
 }
 ```
 
-### Set a name's target address
+### How to set a name's target address
 
-This works the same for names and subnames.
+The target address is the address the name resolves to. This works the same for names and subnames.
 
 ```js
 const setTargetAddress = async (nftId: string, address: string) => {
@@ -246,7 +253,7 @@ const burnExpired = async (nftId: string) => {
 ```
 
 
-## Combined example
+## How to compose multiple operations in a single PTB
 
 The following code snippet registers a SuiNS name using NS, sets its target address, and sets it as the default name for the target address in a single PTB. You could also add transaction commands to do even more in the same PTB if you wanted to, like create subnames and so on, but that is beyond the scope of this example.
 

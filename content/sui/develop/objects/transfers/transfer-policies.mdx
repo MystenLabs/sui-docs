@@ -52,7 +52,7 @@ The rule logic enables someone to publish a new rule module, such as a fixed fee
 
 A rule needs to provide 4 main components:
 
-1. A `RuleWitness` struct, which uniquely identifies the rule.
+1. A `RuleWitness` struct, which uniquely identifies the rule. Only the rule module can create it, so it serves as a static authorization method for the rule.
 
 1. A `config` type which is stored in the `TransferPolicy` and is used to configure the rule.
 
@@ -61,6 +61,18 @@ A rule needs to provide 4 main components:
 1. An actionable function which adds the receipt into the `TransferRequest` and potentially adds to the `TransferPolicy` balance if the functionality involves some monetary transaction.
 
 The `TransferPolicy` module allows removing any rule at any time, as guaranteed by the constraints on the rule's configuration. 
+
+### How do I add a rule to a `TransferPolicy`?
+
+1. Publish a rule module that defines the 4 components above.
+
+1. As the `TransferPolicyCap` holder, call the rule's set function (named `add` in the examples on this page). It calls `policy::add_rule` with the rule witness, the policy, the cap, and the rule's `Config`.
+
+1. On each transfer, the buyer calls the rule's actionable function, which calls `policy::add_receipt` to add the rule's receipt to the `TransferRequest`.
+
+1. When `confirm_request` runs, the receipts are compared against the policy's rules, and the request is confirmed only if they match.
+
+Every `add` function on this page takes the `&mut TransferPolicy<T>` and the `&TransferPolicyCap<T>`. Rules that have configuration take additional arguments, such as `amount_bp` in the royalty rule or `start_time` in the time-based rule.
 
 ### Example
 
@@ -132,7 +144,9 @@ To implement a percentage-based fee, such as royalties, a rule module must know 
 
 - The object ID that was used for selling, such as a kiosk
 
-The `sui::transfer_policy` module provides public functions to access the fields `paid()`, `item()`, and `from()`.
+The [`sui::transfer_policy`](https://docs.sui.io/references/framework/sui_sui/transfer_policy) module provides public functions to access the fields `paid()`, `item()`, and `from()`.
+
+The following example expresses the royalty in basis points (bp). `MAX_BP` is `10_000`, which represents 100% of the paid amount, so 1 bp is 0.01%.
 
 ```move
 module examples::royalty_rule {
@@ -177,6 +191,8 @@ module examples::royalty_rule {
 }
 ```
 
+Because `pay` takes `&mut Coin<SUI>`, the coin is not consumed: the rule splits off the fee with `coin::split`, and the remaining balance stays in the buyer's coin.
+
 ## Time-based rules
 
 Rules apply to more than just payments and fees. Some rules might permit trading only before or after a specific time. Because rules are not standardized, you can encode logic with any object.
@@ -211,7 +227,7 @@ module examples::time_rule {
 }
 ```
 
-## `TransferRequest` receipts
+## How do `TransferRequest` receipts satisfy rules?
 
 The `TransferRequest` includes a field called `receipts`, which is a `VecSet` of `TypeName`. When the `confirm_request` call runs, the system compares the receipts against `TransferPolicy.rules`. If receipts do not match rules, the system rejects the request and the transaction fails.
 
@@ -249,7 +265,7 @@ module sui::transfer_policy {
 
 There are 2 ways to authorize an action: 
 
-1. Static, by using a witness pattern.
+1. Static, by using a witness pattern, such as the `Rule` struct in the previous examples.
 
 1. Dynamic, through a capability pattern. 
 
@@ -314,9 +330,9 @@ module examples::capability_rule {
 }
 ```
 
-## Policies for kiosks 
+## How do transfer policies work with kiosks?
 
-When a kiosk purchase occurs, the system creates a `TransferRequest` hot potato, and only the matching `TransferPolicy` can confirm it to unblock the transaction.
+When a kiosk purchase occurs, the system creates a `TransferRequest` hot potato, a value that must be resolved before the transaction ends, and only the matching `TransferPolicy` can confirm it to unblock the transaction.
 
 A kiosk can trade an item of type `T` only if the `TransferPolicy` for `T` exists and the buyer can access it. A purchase issues a `TransferRequest` that must be resolved in a matching `TransferPolicy`. If no policy exists or the buyer can't access it, the transaction fails.
 
