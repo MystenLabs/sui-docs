@@ -132,6 +132,8 @@ rm ~/.aws/config
 
 After configuring AWS SSO, you will be redirected to login through a browser window. Choose an account and the role `AdministratorAccess`. AWS should create a profile such as `AdministratorAccess-094557288217`.
 
+The number `094557288217` is an example AWS account ID. Replace it with your own account ID wherever it appears in the commands on this page.
+
 :::caution
 
 `AdministratorAccess` is used here only to simplify this walkthrough. In production, do not grant broad administrator permissions: scope an IAM role to the least privilege the enclave deployment actually needs (EC2, Nitro Enclaves, and KMS as applicable). Never log AWS credentials, enclave secrets, or attestation private material, and always verify the enclave's PCRs against the values registered onchain before trusting any output it produces. See the [Nautilus](/develop/security/best-practices#nautilus) section of the Security Best Practices guide.
@@ -213,6 +215,8 @@ Expected output:
 ```
 
 If this works, then your AWS environment is ready to use with Nautilus. 
+
+If these temporary credentials expire later in the walkthrough, refresh them using the commands under **SSO expired** in [Troubleshooting](#troubleshooting).
 
 ###step View the Nautilus repository structure
 
@@ -332,6 +336,8 @@ Wait 2 to 3 minutes for EC2 initialization.
 
 When the script completes successfully, changes are generated in `/src/nautilus-server/run.sh` and `expose_enclave.sh`. You must copy these changes to EC2, as they are required when building the enclave image.
 
+The provisioning script launches the EC2 instance and generates these files on your local machine. After you copy the repo, you build the enclave image and run it on the EC2 instance with `make`, as shown in the next step.
+
 ```bash
 rsync -avz -e "ssh -i ~/.ssh/<your-alias>.pem" \
   /Users/<you>/suistack/nautilus/ \
@@ -362,13 +368,26 @@ You are now inside the directory containing the server code, including the commi
 
 ```sh
 $ cd nautilus/
-$ make ENCLAVE_APP=<APP> && make run # this builds the enclave and runs it, ex. `make ENCLAVE_APP=weather-example`
-$ sh expose_enclave.sh # this exposes port 3000 to the Internet for traffic
+# Build the enclave and run it, for example with ENCLAVE_APP=weather-example
+$ make ENCLAVE_APP=<APP> && make run
+# Expose port 3000 to the Internet for traffic
+$ sh expose_enclave.sh
 ```
 
 Use `make run-debug` instead of `make run` to run the enclave in debug mode. This prints all logs, where the production build does not. In debug mode, the PCR values are all zeros and are not valid for production use.
 
-You can now interact with the enclave from the outside world. You can find the `PUBLIC_IP` in the AWS console.
+The build writes the enclave's PCR values to `out/nitro.pcrs`. Print them and record them as environment variables, because you need them to register the enclave onchain:
+
+```sh
+$ cat out/nitro.pcrs
+$ PCR0=<PCR0-value-from-nitro.pcrs>
+$ PCR1=<PCR1-value-from-nitro.pcrs>
+$ PCR2=<PCR2-value-from-nitro.pcrs>
+```
+
+Set these variables in the shell where you run the commands in the Register the enclave onchain step. For an example of the file's contents, see [Artifacts for Twitter example](#artifacts-for-twitter-example).
+
+You can now interact with the enclave from the outside world. You can find the `PUBLIC_IP` in the AWS console. To confirm the enclave is running, run the health check below; a successful response lists each allowed domain with a `true` status, as shown under [Troubleshooting](#troubleshooting).
 
 ```sh
 # Run a health check:
@@ -386,6 +405,8 @@ Optionally, you can set up an application load balancer (ALB) for the EC2 instan
 ###step Register the enclave onchain
 
 After finalizing the Rust code, the app administrator can register the enclave with the corresponding PCRs and public key.
+
+The onchain half of the weather example is in the `move/weather-example` directory of the Nautilus repo, and the enclave utility functions are in `move/enclave`.
 
 ```sh
 # Optionally
@@ -419,6 +440,7 @@ $ MODULE_NAME=weather
 $ OTW_NAME=WEATHER
 
 # Make sure all env vars are populated
+# PCR0, PCR1, and PCR2 are the values you recorded from out/nitro.pcrs after building the enclave
 $ echo $APP_PACKAGE_ID
 $ echo $ENCLAVE_PACKAGE_ID
 $ echo $CAP_OBJECT_ID
@@ -447,6 +469,8 @@ $ sh ../../register_enclave.sh $ENCLAVE_PACKAGE_ID $APP_PACKAGE_ID $ENCLAVE_CONF
 $ ENCLAVE_OBJECT_ID=0x1c9ccfc0f391f5e679e1f9f7d53c7fa455bf977e0f6dc71222990401f359c42a
 ```
 
+If you modify the Rust server code, copy the changes to EC2, rebuild the enclave with `make`, record the new values from `out/nitro.pcrs`, and then rerun `update_pcrs` and `register_enclave.sh` as shown above.
+
 You can view an [example enclave config object](https://testnet.suivision.xyz/object/0x58a6a284aaea8c8e71151e4ae0de2350ae877f0bd94adc2b2d0266cf23b6b41d) containing PCR values on SuiScan. Additionally, see an [example enclave object](https://testnet.suivision.xyz/object/0xe0e70df5347560a1b43e5954267cadd1386a562095cb4285f2581bf2974c838d) that includes the registered enclave public key.
 
 ###step Stop your EC2 instance 
@@ -472,6 +496,8 @@ make ENCLAVE_APP=weather-example
 make run
 sh expose_enclave.sh
 ```
+
+You don't need to rerun `configure_enclave.sh` when you reconnect: the `run.sh` and `expose_enclave.sh` changes it generated are already on the instance from when you copied the repo. Rerun it only if you change `allowed_endpoints.yaml`.
 
 ## Artifacts for Twitter example
 
@@ -518,7 +544,7 @@ You can view an [example enclave config object](https://testnet.suivision.xyz/ob
 
 You can find the frontend code for the Twitter example [in this repository](https://github.com/MystenLabs/nautilus-twitter/tree/main/frontend).
 
-## Development mode
+## How do I develop against Nautilus locally?
 
 For non-production development, you can inject a private key instead of generating it inside the enclave and run the enclave in debug mode anywhere.
 
