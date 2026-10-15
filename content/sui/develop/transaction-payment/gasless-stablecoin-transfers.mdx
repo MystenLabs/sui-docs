@@ -78,9 +78,9 @@ All gasless stablecoin transfers have a minimum transfer balance of 0.01. The ne
 
 The protocol configuration (`get_gasless_allowed_token_types` in `sui-types`) governs the stablecoins eligible for gasless stablecoin transfers, and the list can change across protocol versions. The current allowlist is:
 
-{/* TABLE:GASLESS_TOKENS, validated by scripts/validate-gasless-tokens.mjs against lib.rs */}
+{/* TABLE:GASLESS_TOKENS — validated by scripts/validate-gasless-tokens.mjs against lib.rs */}
 
-| Symbol | Issuer | Package address |
+| Symbol | Issuer | Package Address |
 | --------|--------------|--------------|
 | USDC | Circle | 0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC |
 | USDSUI | Bridge/Stripe | 0x44f838219cf67b058f3b37907b655f226153c18e33dfcd0da559a844fea9b1c1::usdsui::USDSUI |
