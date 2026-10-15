@@ -55,7 +55,7 @@ The following example that demonstrates the Seal-Nautilus pattern uses the follo
 
 1. Seal [CLI](https://github.com/MystenLabs/seal/tree/main/crates/seal-cli): In particular, [`encrypt` and `fetch-keys`](https://seal-docs.wal.app/SealCLI/#7-encrypt-and-fetch-keys-using-service-providers) are used for this example.
 
-1. Move contract `move/seal-policy/seal_policy.move`: Defines the `seal_approve` policy that verifies the signature committed to the wallet public key using the enclave ephemeral key.
+1. Move contract `move/seal-policy/seal_policy.move`: Defines the `seal_approve` policy that verifies the signature committed to the wallet public key using the enclave ephemeral key. The wallet and the enclave ephemeral key are separate key pairs, both generated inside the enclave; see the list of enclave keys in the security guarantees section below for the role of each.
 
 [View the example's full source code](https://github.com/MystenLabs/nautilus/tree/main/src/nautilus-server/src/apps/seal-example).
 
@@ -98,7 +98,7 @@ The admin builds and runs the enclave with the exposed `/get_attestation` endpoi
 
 1. The enclave can now serve `/process_data` requests.
 
-## Security guarantees
+## What security guarantees does the Seal-Nautilus pattern provide?
 
 :::caution
 
@@ -133,6 +133,10 @@ An enclave operates without direct internet access, so it cannot fetch secrets f
 This delegation is secure because the Seal responses are encrypted under the enclave's encryption key, so only the enclave can decrypt the fetched Seal responses. The public keys of the Seal servers in `seal_config.yaml` are defined by the admin in the enclave, so the enclave can verify the decrypted Seal key has not been tampered with.
 
 ## Example deployment steps
+
+The following steps walk through the phases above using the weather example: Step 0 covers Phase 1, Step 1 encrypts the secret, Steps 2–4 cover Phase 2, and Steps 5–6 cover Phase 3. Before you start, you need the Sui CLI, a clone of the [Seal repo](https://github.com/MystenLabs/seal) to run the Seal CLI, and an EC2 instance configured for enclaves as described in the main Nautilus guide.
+
+Values in angle brackets, such as `<PUBLIC_IP>`, `<ENCRYPTED_OBJECT>`, and `<FETCH_KEY_REQUEST>`, are placeholders to replace with your own values. The object IDs, package IDs, and PCR values shown in the commands are example outputs; use the values from your own build and publish output.
 
 ### Step 0: Build, run, and register enclave
 
@@ -301,7 +305,7 @@ curl -H 'Content-Type: application/json' -d '{"payload": { "location": "San Fran
 {"response":{"intent":0,"timestamp_ms":1755805500000,"data":{"location":"San Francisco","temperature":18}},"signature":"4587c11eafe8e78c766c745c9f89b3bb7fd1a914d6381921e8d7d9822ddc9556966932df1c037e23bedc21f369f6edc66c1b8af019778eb6b1ec1ee7f324e801"}
 ```
 
-## Handle multiple secrets
+## How do I handle multiple secrets?
 
 Because Seal uses public key encryption, you can encrypt many secrets using the same fixed ID value of 0. Repeat Step 1 with any data, using the same package ID and the same ID value of 0.
 
@@ -309,7 +313,7 @@ Run Steps 2–4 once to cache the Seal keys for the enclave.
 
 Once keys are cached, decrypt any encrypted object by implementing one or more provision endpoints similar to Step 5.
 
-## Multiple enclaves
+## Can multiple enclaves use the same secret?
 
 Multiple enclaves can access the same Seal encrypted secret. An alternative is to use one enclave to provision to other attested enclaves directly, without needing to fetch keys from Seal.
 
