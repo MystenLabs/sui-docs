@@ -64,7 +64,7 @@ There are various ways to use object fields to store primitive data and other ob
 
 Fortunately, Sui provides dynamic fields with arbitrary names, not just identifiers, that are added and removed on-the-fly, which only affect gas when they are accessed. Dynamic fields can store heterogeneous values. 
 
-## Fields and object fields
+## What is the difference between fields and object fields?
 
 There are 2 types of dynamic field: fields and object fields, which differ based on how you store their values:
 
@@ -72,6 +72,8 @@ There are 2 types of dynamic field: fields and object fields, which differ based
 | --- | --- | --- |
 | Fields | Can store any value that has `store`, however an object stored in this kind of field is considered wrapped and is not accessible through its ID by external tools (explorers, wallets, and so on).| [`dynamic_field`](https://github.com/MystenLabs/sui/tree/main/crates/sui-framework/packages/sui-framework/sources/dynamic_field.move) |
 | Object field | Values must be objects (have the `key` ability, and `id: UID` as the first field), but are still accessible at their ID to external tools.| [`dynamic_object_field`](https://github.com/MystenLabs/sui/tree/main/crates/sui-framework/packages/sui-framework/sources/dynamic_object_field.move) |
+
+In practice, choose an object field when the stored object must stay visible at its own ID to external tools such as explorers and wallets. With a plain field, a stored object is wrapped and can only be reached through its parent.
 
 ## Field names
 
@@ -107,7 +109,7 @@ This function takes the `Child` object by value and makes it a dynamic field of 
 
 1. The `Parent` object owns the `Child` object, and can refer to it by the name `b"child"`.
 
-A transaction that attempts to add a field with the same `<Name>` type and value as one that is already defined fails. You can modify fields in-place by borrowing them mutably and you can overwrite them safely by removing the old value first.
+A transaction that attempts to add a field with the same `<Name>` type and value as one that is already defined on the same parent object fails. You can modify fields in-place by borrowing them mutably and you can overwrite them safely by removing the old value first.
 
 ## Accessing dynamic fields
 
@@ -163,9 +165,9 @@ The value that is returned can be interacted with just like any other value. For
 
 A transaction that attempts to remove a non-existent field, or a field with a different `Value` type, fails.
 
-## Deleting an object with dynamic fields
+## What happens when you delete an object with dynamic fields?
 
-It is possible to delete an object that has (potentially non-`drop`) dynamic fields still defined on it. Because field values can be accessed only through the dynamic field's associated object and field name, deleting an object that has dynamic fields still defined on it renders them all inaccessible to future transactions. This is true regardless of whether the field's value has the `drop` ability. This might not be a concern when adding a small number of statically known additional fields to an object, but is particularly undesirable for onchain collection types that could be holding unboundedly many key-value pairs as dynamic fields.
+It is possible to delete an object that has (potentially non-`drop`) dynamic fields still defined on it. Because field values can be accessed only through the dynamic field's associated object and field name, deleting an object that has dynamic fields still defined on it renders them all inaccessible to future transactions. This is true regardless of whether the field's value has the `drop` ability. This might not be a concern when adding a small number of statically known additional fields to an object, but is particularly undesirable for onchain collection types that could be holding unboundedly many key-value pairs as dynamic fields. For those cases, consider the `Table` and `Bag` collections described in the following section, which count their entries and protect against accidental deletion when non-empty.
 
 ## `Table` and `Bag`
 
@@ -239,6 +241,8 @@ The functions add, read, write, and remove entries from the collection, respecti
 Like with dynamic fields, it is an error to attempt to overwrite an existing key, or access and remove a non-existent key.
 
 :::
+
+To check whether a key is present before you add, borrow, or remove it, use the `contains` functions described in [Querying for containment](#querying-for-containment).
 
 The extra flexibility of `Bag`'s heterogeneity means the type system does not statically prevent attempts to add a value with one type, and then borrow or remove it at another type. This pattern fails at runtime, similar to the behavior for dynamic fields.
 
