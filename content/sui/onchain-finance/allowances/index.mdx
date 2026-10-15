@@ -35,9 +35,15 @@ answer: >-
   time.
 ---
 
-Allowances let an address authorize another address to spend from its [address balance](/onchain-finance/asset-custody/address-balances) within limits it sets, and revoke that permission at any time. Funds stay in the funder's balance until a spend succeeds, so an allowance is a permission, not a deposit.
+Allowances let an address authorize another address to spend from its [address balance](/onchain-finance/asset-custody/address-balances) within limits it sets, and revoke that permission at any time. Typical uses include subscriptions and agent payments.
 
-A direct allowance names a spender whose signature is enough to spend within the limits. An app-bound allowance routes every spend through the Move module of a specific app, which can also change the spender. Both kinds are shared objects that the funder revokes with a capability only the funder holds.
+## How do allowances differ from sending funds to another wallet?
+
+Funds stay in the funder's balance until a spend succeeds, so an allowance is a permission, not a deposit.
+
+## What kinds of allowances are there?
+
+A direct allowance names a spender that can spend within the limits with its own signature, without further approval from the funder. An app-bound allowance routes every spend through the Move module of a specific app, which can also change the spender. Both kinds are shared objects that the funder revokes with a capability only the funder holds.
 
 import DocCardList from '@theme/DocCardList';
 
