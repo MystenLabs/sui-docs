@@ -62,9 +62,9 @@ answer: >-
   world!".
 ---
 
-In the previous guide, ["Hello, World!"](/getting-started/onboarding/hello-world), you deployed a Move package and interacted with it to create an object that stored the text "Hello world!".
+In the previous guide, ["Hello, World!"](/getting-started/onboarding/hello-world), you deployed a Move package and interacted with it to create an object that stored the text `Hello world!`.
 
-This guide demonstrates how to connect a React interface to that "Hello, World!" package, giving any user a way to interact with the Move package from their browser and set a custom greeting.
+You can connect a React interface to that "Hello, World!" package to give any user a way to interact with the Move package from their browser and set a custom greeting.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -155,7 +155,7 @@ The `CreateGreeting.tsx` file contains logic that creates and sends a transactio
 
 ### `Greeting.tsx`
 
-The `Greeting.tsx` file also contains logic that creates and sends a transaction to your Move package. However, this transaction calls the `update_text` function of the package, which modifies the text to replace "Hello world!" with the text of your choosing.
+The `Greeting.tsx` file also contains logic that creates and sends a transaction to your Move package. However, this transaction calls the `update_text` function of the package, which modifies the text to replace `Hello world!` with the text of your choosing.
 
 <ImportContent source="/ui/src/Greeting.tsx" mode="code" org="MystenLabs" repo="sui-stack-hello-world" />
 
@@ -191,7 +191,7 @@ Then, open `http://localhost:5173/` in your browser. The app prompts you to conn
 
 ## Send SUI tokens to your Slush wallet
 
-If you sent SUI tokens to an address used in the CLI in previous guides, then created a new Slush wallet in your browser, you likely need to send SUI tokens to the Slush wallet. The Slush wallet address is different and separate from the address created and used in the CLI. The transactions the frontend sends are paid for with gas coins from the connected Slush wallet, so without Testnet SUI in that wallet they fail.
+If you sent SUI tokens to an address used in the CLI in previous guides, then created a new Slush wallet in your browser, you likely need to send SUI tokens to the Slush wallet. The Slush wallet address is different and separate from the address you created and used in the CLI. The frontend pays for its transactions with gas coins from the connected Slush wallet, so without Testnet SUI in that wallet the transactions fail.
 
 Follow the [Testnet SUI](/getting-started/onboarding/get-coins) instructions to send Testnet tokens to your Slush address. 
 
@@ -203,19 +203,19 @@ The Slush wallet prompts you to approve this transaction.
 
 :::danger 
 
-If there is a problem, the prompt to approve the transaction displays the error message. Common errors include "Unable to Process Transaction" due to either insufficient gas coins or an incorrect Move package ID. 
+If there is a problem, the prompt to approve the transaction displays the error message. Common errors include `Unable to Process Transaction` due to either insufficient gas coins or an incorrect Move package ID. 
 
 [Obtain Testnet SUI](/getting-started/onboarding/get-coins) or [confirm you have the correct Move package ID](/getting-started/onboarding/hello-world) to resolve these errors.
 
 :::
 
-After you approve the transaction, the browser window displays the `Greeting` object's ID and its content, which by default is "Hello world!"
+After you approve the transaction, the browser window displays the `Greeting` object's ID and its content, which by default is `Hello world!`.
 
 To change this text, enter a different greeting in the text box below the default value and click **Update**. The Slush wallet prompts you to approve the transaction.
 
 !["Hello, World!" default greeting](./images/hello-world-default.png)
 
-After you approve the transaction, the new greeting is displayed:
+After you approve the transaction, the browser window displays the new greeting:
 
 !["Hello, World!" modified greeting](./images/hello-world-modified.png)
 

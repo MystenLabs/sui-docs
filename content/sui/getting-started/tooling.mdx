@@ -6,7 +6,7 @@ description: >-
   indexers, and community tools.
 keywords:
   - developer tools
-  - sui CLI
+  - Sui CLI
   - suiup
   - move-analyzer
   - MVR
@@ -59,11 +59,11 @@ answer: >-
 
 import React from 'react';
 
-This page lists developer tools for building, testing, deploying, and auditing Move packages on Sui, including CLI tools, IDE extensions, SDKs, indexers, and community tools. Each tool includes a description, installation command, and link to its source.
+Developer tools for building, testing, deploying, and auditing Move packages on Sui include CLI tools, IDE extensions, SDKs, indexers, and community tools. Each tool includes a description, installation command, and link to its source.
 
 :::caution
 
-Tools tagged as Community are maintained by third-party developers. Mysten Labs, Sui Foundation, and Walrus Foundation do not guarantee their functionality, security, or compatibility with the latest platform updates.
+Third-party developers maintain tools tagged as Community. Mysten Labs, Sui Foundation, and Walrus Foundation do not guarantee their functionality, security, or compatibility with the latest platform updates.
 
 :::
 
@@ -577,8 +577,8 @@ Frontend toolkits, wallet integration, authentication, and app scaffolding.
 
 <ToolCard
   name="human.tech Wallet Protocol (WaaP) SDK"
-  description="White label embedded wallets with social login, biometrics and gas sponsorship. One account works across apps, and also signs on Solana and EVM."
-  notes="Non-custodial. Keys are reconstructed in secure hardware, the user keeps ownership and can export at any time. Policies are enforced before a signature exists, and WaaP Squid Mode adds decentralized signing across the Ika network."
+  description="White label embedded wallets with social login, biometrics, and gas sponsorship. One account works across apps, and also signs on Solana and EVM."
+  notes="Non-custodial. WaaP reconstructs keys in secure hardware. The user keeps ownership and can export at any time. WaaP enforces policies before a signature exists, and WaaP Squid Mode adds decentralized signing across the Ika network."
   install="npm install @human.tech/waap-sdk"
   docs="https://docs.waap.human.tech/for-apps"
   website="https://wallet.human.tech"
@@ -826,7 +826,7 @@ Indexers, data APIs, and analytics services for querying onchain state.
 
 <ToolCard
   name="ZettaBlock"
-  description="Generate custom GraphQL or REST APIs from SQL queries and incorporate private off-chain data."
+  description="Generate custom GraphQL or REST APIs from SQL queries and incorporate private offchain data."
   docs="https://docs.zettablock.com"
   website="https://zettablock.com/"
   community
@@ -942,7 +942,7 @@ Block explorers and network monitoring dashboards.
 
 <ToolCard
   name="Local Sui Explorer"
-  description="Sui Explorer for your localnet."
+  description="Sui Explorer for your Localnet."
   github="https://github.com/suiware/sui-explorer"
   community
 />
@@ -979,7 +979,7 @@ Block explorers and network monitoring dashboards.
 
 ## Oracles
 
-Price feeds and off-chain data delivery for onchain contracts.
+Price feeds and offchain data delivery for onchain contracts.
 
 <ToolGrid>
 <ToolCard
@@ -1043,15 +1043,15 @@ Autonomous agents, verifiable inference, and TEE infrastructure.
 
 <ToolCard
   name="Local Sui MCP Server"
-  description="Local MCP server exposing 29 agent-callable tools for querying Sui via gRPC, GraphQL, and Archival Service with automatic transport routing."
+  description="Local MCP server exposing 29 agent-callable tools for querying Sui through gRPC, GraphQL, and Archival Service with automatic transport routing."
   github="https://github.com/abhinavg6/sui-mcp-server"
   community
 />
 
 <ToolCard
   name="human.tech Wallet Protocol (WaaP) CLI"
-  description="Agent payments from a headless wallet, with spend caps the AI agent cannot raise. Scoped, expiring grants let it transact autonomously on Sui, Solana and EVM."
-  notes="The agent holds no key. Every request passes a policy gate server-side before a signature exists, so a prompt-injected agent has nothing to reach for. Grants are bound by recipient, chain, a cumulative spend ceiling and an expiry. Agentic pay-per-use without a browser or a human in the loop for each transaction."
+  description="Agent payments from a headless wallet, with spend caps the AI agent cannot raise. Scoped, expiring grants let it transact autonomously on Sui, Solana, and EVM."
+  notes="The agent holds no key. Every request passes a policy gate server-side before a signature exists, so a prompt-injected agent has nothing to reach for. Grants bind to a recipient, a chain, a cumulative spend ceiling, and an expiry. Agentic pay-per-use without a browser or a human in the loop for each transaction."
   install="npm install -g @human.tech/waap-cli"
   docs="https://docs.waap.human.tech/for-agents"
   website="https://wallet.human.tech/agents"
@@ -1155,7 +1155,7 @@ SDKs for building on Sui, grouped by language. Use the filter bar to search by l
 
 <ToolCard
   name="DeepBookV3 SDK"
-  description="TypeScript SDK for integrating with DeepBook V3."
+  description="TypeScript SDK for integrating with DeepBookV3."
   github="https://github.com/MystenLabs/ts-sdks/tree/main/packages/deepbook-v3"
   website="https://www.npmjs.com/package/@mysten/deepbook-v3"
   language="TypeScript"
@@ -1439,7 +1439,7 @@ SDKs for building on Sui, grouped by language. Use the filter bar to search by l
 
 ### DeFi protocol SDKs
 
-These SDKs are built and maintained by their respective protocol teams for integrating with specific DeFi protocols on Sui.
+Their respective protocol teams build and maintain these SDKs for integrating with specific DeFi protocols on Sui.
 
 <ToolGrid>
 <ToolCard

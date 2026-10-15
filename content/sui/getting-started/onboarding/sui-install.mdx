@@ -85,7 +85,7 @@ Install the Sui CLI and verify it works. The CLI creates and manages address bal
 
 :::tip Looking for something else?
 
-This page covers installation only. For other common tasks:
+For common tasks other than installation:
 
 - [Configure a Sui Client](/getting-started/onboarding/configure-sui-client)
 - [Get SUI from Faucet](/getting-started/onboarding/get-coins)
@@ -115,15 +115,15 @@ This page covers installation only. For other common tasks:
 
 ## Quick install 
 
-You use the Sui CLI to interact with the Sui network, deploy packages, and manage assets. To install the Sui CLI, you can use [`suiup`](https://github.com/MystenLabs/suiup), a tool for installing and switching between versions of Sui stack components.
+You use the Sui CLI to interact with the Sui network, deploy packages, and manage assets. To install the Sui CLI, you can use [`suiup`](https://github.com/MystenLabs/suiup), a tool for installing and switching between versions of Sui Stack components.
 
-[`suiup`](https://github.com/MystenLabs/suiup) is the most effective installation method, as it allows you to easily install and switch between different versions of not only the Sui CLI but also other Sui stack components like [`walrus`](https://docs.wal.app/usage/setup) and [`mvr`](https://github.com/MystenLabs/mvr). 
+[`suiup`](https://github.com/MystenLabs/suiup) is the most effective installation method, as it allows you to easily install and switch between different versions of not only the Sui CLI but also other Sui Stack components like [`walrus`](https://docs.wal.app/usage/setup) and [`mvr`](https://github.com/MystenLabs/mvr). 
 
-Alternative quick install instructions for [Homebrew](https://brew.sh/) or [Chocolately](https://chocolatey.org/) do not support installing other Sui stack components. You need to install other components through their individual binaries if you'd like to use them in the future. 
+Alternative quick install instructions for [Homebrew](https://brew.sh/) or [Chocolatey](https://chocolatey.org/) do not support installing other Sui Stack components. You need to install other components through their individual binaries if you'd like to use them in the future. 
 
 :::caution 
 
-Installations using Homebrew or Chocolatey might take several minutes if you do not have any of the [Sui prerequisites](/getting-started/onboarding/install-source) installed. Using `suiup` is often much faster and highly recommended.
+Installations using Homebrew or Chocolatey might take several minutes if you do not have any of the [Sui prerequisites](/getting-started/onboarding/install-source) installed. Using `suiup` is often much faster. Use `suiup` when possible.
 
 :::
 
@@ -138,9 +138,9 @@ $ suiup install sui@testnet
 
 `suiup install sui@testnet` installs the Testnet-compatible toolchain. Replace `testnet` with `mainnet` or `devnet` as needed. To get a Sui address and connect to Testnet, [configure a Sui client](/getting-started/onboarding/configure-sui-client) after you verify the installation.
 
-The quick install is suitable for most use cases. For those wanting more control over the installation process, you can [install from source](/getting-started/onboarding/install-source) or [install binaries](/getting-started/onboarding/install-binaries).
+The quick install is suitable for most use cases. If you want more control over the installation process, you can [install from source](/getting-started/onboarding/install-source) or [install binaries](/getting-started/onboarding/install-binaries).
 
-If Sui is already installed from a previous development environment, be sure to upgrade to the [latest version](/getting-started/onboarding/install-binaries).
+If you already installed Sui in a previous development environment, be sure to upgrade to the [latest version](/getting-started/onboarding/install-binaries).
 
 ### How do I verify the installation?
 
@@ -162,6 +162,8 @@ Then, you can [create a "Hello, World!" example](/getting-started/onboarding/hel
 
 ## Installation details 
 
+The following sections describe installation files and the default configuration file.
+
 ### `suiup` installation details 
 
 Refer to the `suiup` repository's [README](https://github.com/MystenLabs/suiup?tab=readme-ov-file#paths-used-by-the-suiup-tool) for information regarding installation files and their locations. 
@@ -169,15 +171,15 @@ Refer to the `suiup` repository's [README](https://github.com/MystenLabs/suiup?t
 
 ### Where is the default configuration file?
 
-Regardless of whether you used `suiup`, Homebrew, or Chocolately, Sui stores a primary configuration in the `~/.sui/sui_config/client.yaml` file. This file defines settings and preferences for your environment, such as:
+Regardless of whether you used `suiup`, Homebrew, or Chocolatey, Sui stores a primary configuration in the `~/.sui/sui_config/client.yaml` file. This file defines settings and preferences for your environment, such as:
 
-- Network environment details for Mainnet, Testnet, Devnet, and Localnet networks.
+- Network environment details for Mainnet, Testnet, Devnet, and Localnet networks
 
-- Active environment, which specifies the network the CLI commands target.
+- Active environment, which specifies the network the CLI commands target
 
-- Active address, which specifies the Sui address the CLI uses for transactions and queries.
+- Active address, which specifies the Sui address the CLI uses for transactions and queries
 
-- Keystore location, which specifies where Sui stores your address' private keys.
+- Keystore location, which specifies where Sui stores your address' private keys
 
 ## Troubleshooting
 
@@ -190,12 +192,12 @@ Open a new terminal window after installing. If the issue persists, verify that 
 $ command -v sui
 ```
 
-If no path is printed, the install directory is not in your `PATH`. The default `suiup` install location is `~/.local/bin` (see [`suiup` README](https://github.com/MystenLabs/suiup?tab=readme-ov-file#paths-used-by-the-suiup-tool)). Add `export PATH="$HOME/.local/bin:$PATH"` to your shell profile (`~/.bashrc`, `~/.zshrc`, or `~/.bash_profile`), then restart your terminal.
+If the command prints no path, the install directory is not in your `PATH`. The default `suiup` install location is `~/.local/bin` (see [`suiup` README](https://github.com/MystenLabs/suiup?tab=readme-ov-file#paths-used-by-the-suiup-tool)). Add `export PATH="$HOME/.local/bin:$PATH"` to your shell profile (`~/.bashrc`, `~/.zshrc`, or `~/.bash_profile`), then restart your terminal.
 
 </details>
 
 <details>
-<summary>Client/server API version mismatch</summary>
+<summary>Client and server API version mismatch</summary>
 
 Your local Sui CLI version does not match the network you are targeting. Switch to the correct version with [`suiup`](https://github.com/MystenLabs/suiup):
 

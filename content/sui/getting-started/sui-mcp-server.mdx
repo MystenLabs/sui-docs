@@ -39,11 +39,11 @@ answer: >-
   search docs directly from your editor.
 ---
 
-The Sui MCP (Model Context Protocol) server provides AI coding assistants with direct access to Sui developer documentation and other important source material such as blogs, GitHub source code, and example apps. The Sui MCP server does not use data cached longer than a few hours, so your AI assistant has access to the most up to date content when it references the MCP server. Other agents may cache source information for several weeks before crawling an updated version, leading to instances where a feature may be released on Mainnet but your agent isn't aware of it. 
+The Sui MCP (Model Context Protocol) server provides AI coding assistants with direct access to Sui developer documentation and other important source material such as blogs, GitHub source code, and example apps. The Sui MCP server does not use data cached longer than a few hours, so your AI assistant has access to the most up to date content when it references the MCP server. Other agents might cache source information for several weeks before crawling an updated version, leading to instances where a feature might be live on Mainnet but your agent isn't aware of it. 
 
 You connect the server to your IDE so your AI assistant can search and retrieve Sui documentation without leaving your editor.
 
-The server is hosted at `https://sui.mcp.kapa.ai`, so your IDE needs network access to that URL. It exposes 2 tools:
+The server runs at `https://sui.mcp.kapa.ai`, so your IDE needs network access to that URL. It exposes 2 tools:
 
 - **`search_sui_knowledge_sources`:** Searches across all Sui documentation and returns ranked results with source URLs and content.
 
@@ -123,7 +123,7 @@ The server enforces per-user rate limits ([Kapa MCP overview](https://docs.kapa.
 After configuring the MCP server, verify that your IDE can access it:
 
 1. Open your AI assistant in the IDE.
-2. Ask a question about Sui development (for example, "How do programmable transaction blocks work on Sui?").
+2. Ask a question about Sui development (for example, how programmable transaction blocks work on Sui).
 3. Confirm that the assistant references Sui documentation in its response.
 
 If the connection fails, check that the URL `https://sui.mcp.kapa.ai` is accessible from your network and that you completed the browser authentication step.
