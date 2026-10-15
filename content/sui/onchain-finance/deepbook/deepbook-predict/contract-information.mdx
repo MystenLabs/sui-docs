@@ -23,7 +23,7 @@ keywords:
   - order desk
   - delayed execution
 last_verified: 2026-10-13
-verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict publish 4 at 0x98235c58 read on chain 2026-10-15, upgrade GRE9hRtF at checkpoint 334077809, record in deepbookv3 #1363; Mainnet predict_orders and sessions v3 records still to land, see TBD-DBU-890) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13; '@mysten/deepbook-v3' 2.7.0
+verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict publish 4 at 0x98235c58, upgrade GRE9hRtF at checkpoint 334077809, recorded by deepbookv3 #1363; Mainnet predict_orders publish 1 at 0x7cd41de3 with OrderDesk 0x87b0a872 and QueueRegistry 0x8d4f0c67, publish 91f5tZpY at checkpoint 334309297; both read on chain 2026-10-15; Mainnet sessions v3 record still to land, see TBD-DBU-890) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13; '@mysten/deepbook-v3' 2.7.0
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -146,7 +146,7 @@ Predict is 9 packages rather than one. Move call targets, event type prefixes, a
 | **Package** | **Call target** | **Original ID** | **Contents** |
 | --- | --- | --- | --- |
 | `predict` | `0x98235c5842831c9b5f51dc637cf34c91db2aca5510802eb6ebfec63f5b71a7bb` | `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba` | Markets, pricing, fills, protocol configuration, registry, and the PLP pool |
-| `predictOrders` | `TBD-DBU-890: Mainnet predict_orders ID` | Same | `deepbook_predict_orders`: the order desk, the market queues, and every queued-order entrypoint |
+| `predictOrders` | `0x7cd41de311f8f3efb2c239b38773a4010fce3bef0120cd55f479843077c98903` | Same | `deepbook_predict_orders`: the order desk, the market queues, and every queued-order entrypoint |
 | `predictMath` | `0x19262d18a3ce9f1c304defbacc89f36585152acde73e626231200d10617fb9a7` | Same | `deepbook_predict_math`: pricing math and Pyth-verified Lazer prices |
 | `propbook` | `0xa6c8f32015b5b41d34ee09995a2e9d7a21cdecf0e1910a50b264fd252cd33831` | Same | Oracle registry, Pyth feeds, and Block Scholes stores |
 | `account` | `0x4e1dd01465713c9d832313fed5f45c222a4d5c62a533d6da96764c8b2a245d58` | Same | Account custody, balances, and the `Auth` authorization type |
@@ -172,8 +172,8 @@ Predict has no single top-level object. It splits state across shared objects th
 | `deepbookRegistry` | `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d` | DeepBook core registry that the `deepbookCoreAccount` app authorization references |
 | `usdcCurrency` | `0x75cfbbf8c962d542e99a1d15731e6069f60a00db895407785b15d14f606f2b4a` | Native USDC's existing shared `coin_registry::Currency` record |
 | `plpCurrency` | `0x28189f5a4eafbe81ea1b043db2cc00efe7067fbecf1e518531aae86a7890f8f2` | The PLP `coin_registry::Currency` record |
-| `orderDesk` | `TBD-DBU-890: Mainnet OrderDesk ID` | `deepbook_predict_orders::desk::OrderDesk`: the delayed-execution policy and the order-flow package's version floor |
-| `queueRegistry` | `TBD-DBU-890: Mainnet QueueRegistry ID` | `deepbook_predict_orders::desk::QueueRegistry`: the root every market's `MarketQueue` ID derives from |
+| `orderDesk` | `0x87b0a87262aacf58eaff567eed2fb7cb0f9cbc1f5ce33ef79216cd26d13a1b5b` | `deepbook_predict_orders::desk::OrderDesk`: the delayed-execution policy and the order-flow package's version floor |
+| `queueRegistry` | `0x8d4f0c671862f065ac7f2c2cb24abc47cf75ed8fc8e5e52c1d4bdfa53eee164f` | `deepbook_predict_orders::desk::QueueRegistry`: the root every market's `MarketQueue` ID derives from |
 | `pythLazerState` | `0xd0db9c1e9212a98120384bf78d8b8c985d87b9ee6921dffcf9d1394062911573` | Pyth Lazer's `State` object, which a filler reads for the current Lazer package before it verifies signed updates |
 | `denyList` | `0x0000000000000000000000000000000000000000000000000000000000000403` | Framework deny list, which every queue call that can send USDC reads |
 | `accumulatorRoot` | `0x0000000000000000000000000000000000000000000000000000000000000acc` | Framework funds accumulator that delivers payouts, builder fees, referral fees, and liquidity fills |

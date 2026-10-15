@@ -75,7 +75,7 @@ answer: >-
   held in the account on both networks, and settlement is the permissionless
   try_settle.
 last_verified: 2026-10-13
-verified_against: deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet built from 98128174, byte-identical); Testnet ProtocolConfig and OrderDesk read 2026-10-13 and 2026-10-14, Mainnet values from its 2026-10-20 reopening; '@mysten/deepbook-v3' 2.7.0; queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet built from 98128174, byte-identical); Testnet ProtocolConfig and OrderDesk read 2026-10-13 and 2026-10-14, Mainnet OrderDesk read 2026-10-15, other Mainnet values from its 2026-10-20 reopening; '@mysten/deepbook-v3' 2.7.0; queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
 ---
 
 Trading on DeepBook Predict runs through the `deepbook_predict::expiry_market` module and, from protocol version 4, through the `queue` module of the `deepbook_predict_orders` package. One shared `ExpiryMarket` object exists per underlying and expiry, and it owns that expiry's USDC custody, strike exposure index, congestion estimator, mint pause flag, and flush stamp. Every call on this page is a `public fun` that you invoke from a programmable transaction block with a `moveCall`. Several of them take values only another command in the same block can produce, a transaction-local `Pricer` and a single-use account `Auth`, so plan the whole flow as one block.
@@ -699,7 +699,7 @@ Admission checks only the mint's own cash need against spare cash, and reserves 
 
 ### The order-desk policy {#delayed-execution-policy}
 
-`DelayedExecutionPolicy` lives in the shared `OrderDesk`. The values below are the launch policy, which a chain read of the Testnet `OrderDesk` on 2026-10-14 matched field for field and which Mainnet's `OrderDesk` launched with on 2026-10-20:
+`DelayedExecutionPolicy` lives in the shared `OrderDesk`. The values below are the launch policy. Chain reads matched them field for field on the Testnet `OrderDesk` on 2026-10-14 and on the Mainnet `OrderDesk` on 2026-10-15, the day it was published:
 
 | **Field** | **Value on both networks** | **Bound** | **What it does** |
 | --- | --- | --- | --- |
