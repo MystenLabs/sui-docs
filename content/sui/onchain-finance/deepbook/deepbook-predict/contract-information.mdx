@@ -23,7 +23,7 @@ keywords:
   - order desk
   - delayed execution
 last_verified: 2026-10-13
-verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict v4, predict_orders, and sessions v3 records still to land, see TBD-DBU-890) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13; '@mysten/deepbook-v3' 2.7.0
+verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict publish 4 at 0x98235c58 read on chain 2026-10-15, upgrade GRE9hRtF at checkpoint 334077809, record in deepbookv3 #1363; Mainnet predict_orders and sessions v3 records still to land, see TBD-DBU-890) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13; '@mysten/deepbook-v3' 2.7.0
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -108,7 +108,7 @@ A Move package upgrade publishes at a new address and keeps its original one. Th
 - **Call target:** the latest published address. Every `moveCall` target, and every `Auth` or capability argument resolved against the package, uses it.
 - **Original ID:** the address the package was first published at. Every type tag keeps it forever, so struct types, event type prefixes, the PLP coin type, and dynamic-field keys are all built from the original ID, never from the call target.
 
-A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` version that introduced them: the Testnet version 5 address `0x0654ecbe…` and the Mainnet version 4 address `TBD-DBU-890: Mainnet predict v4 call target`. The version numbers do not line up across networks, so check the defining ID on each one.
+A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` version that introduced them: the Testnet version 5 address `0x0654ecbe…` and the Mainnet version 4 address `0x98235c58…`. The version numbers do not line up across networks, so check the defining ID on each one.
 
 The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. Version 2.7.0 records Testnet's delayed-execution deployment, and version `TBD-DBU-890: SDK release` (DBU-899) is the first to record Mainnet's. Version 2.7.0 still resolves Mainnet's protocol version 3 call target, which stopped working when Mainnet's watermark passed it, so a Mainnet integration needs the later release.
 
@@ -145,7 +145,7 @@ Predict is 9 packages rather than one. Move call targets, event type prefixes, a
 
 | **Package** | **Call target** | **Original ID** | **Contents** |
 | --- | --- | --- | --- |
-| `predict` | `TBD-DBU-890: Mainnet predict v4 call target` | `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba` | Markets, pricing, fills, protocol configuration, registry, and the PLP pool |
+| `predict` | `0x98235c5842831c9b5f51dc637cf34c91db2aca5510802eb6ebfec63f5b71a7bb` | `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba` | Markets, pricing, fills, protocol configuration, registry, and the PLP pool |
 | `predictOrders` | `TBD-DBU-890: Mainnet predict_orders ID` | Same | `deepbook_predict_orders`: the order desk, the market queues, and every queued-order entrypoint |
 | `predictMath` | `0x19262d18a3ce9f1c304defbacc89f36585152acde73e626231200d10617fb9a7` | Same | `deepbook_predict_math`: pricing math and Pyth-verified Lazer prices |
 | `propbook` | `0xa6c8f32015b5b41d34ee09995a2e9d7a21cdecf0e1910a50b264fd252cd33831` | Same | Oracle registry, Pyth feeds, and Block Scholes stores |

@@ -128,7 +128,7 @@ The SDK records the Testnet and Mainnet deployments, so you never transcribe a p
 
 <ImportContent source="packages/deepbook-v3/src/predict/config/types.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="59-110" />
 
-Version 2.7.0's Testnet configuration records the delayed-execution fields, and its Mainnet configuration leaves them unset, so the queued builders and reads throw `PredictInputError` on Mainnet with that release. Version `TBD-DBU-890: SDK release` (DBU-899) records Mainnet's. `predictDelayedExecution` is the Predict version that introduced the delayed-execution types and events, `0x0654ecbe…` on Testnet and `TBD-DBU-890: Mainnet predict v4 call target` on Mainnet, which the decoders match those events against.
+Version 2.7.0's Testnet configuration records the delayed-execution fields, and its Mainnet configuration leaves them unset, so the queued builders and reads throw `PredictInputError` on Mainnet with that release. Version `TBD-DBU-890: SDK release` (DBU-899) records Mainnet's. `predictDelayedExecution` is the Predict version that introduced the delayed-execution types and events, `0x0654ecbe…` on Testnet and `0x98235c58…` on Mainnet, which the decoders match those events against.
 
 Resolve the configuration once at startup and pass the result down, rather than inlining an ID at a call site. Every value in it is deployment-specific, and most differ between Mainnet and Testnet. The `config.ts` sample in [Create the client](#client) keeps them in a single network-keyed record: a `NETWORK` constant selects Testnet or Mainnet, and every other value derives from it.
 
