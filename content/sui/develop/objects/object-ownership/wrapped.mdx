@@ -15,6 +15,10 @@ keywords:
   - option wrap
   - vector wrap
   - wrap object vector
+  - store ability
+  - object locking
+  - trusted swap
+  - nested objects
 goal:
   description: >-
     Reader understands wrapped objects are object data structures nested inside
@@ -81,9 +85,9 @@ public struct Bar has key, store {
 }
 ```
 
-If you put the object of type `Bar` into an object of type `Foo`, the object type `Foo` wraps the object type `Bar`. The object type `Foo` is the wrapper or wrapping object.
+If you put the object of type `Bar` into an object of type `Foo`, the object type `Foo` wraps the object type `Bar`. The object type `Foo` is the wrapper or wrapping object. As a result, the wrapped `Bar` object no longer exists independently onchain: you cannot look it up by its ID or pass it as an argument in a Move call, and you can access it only through `Foo`.
 
-## Wrapping and unwrapping
+## How do I wrap and unwrap an object?
 
 <CodeWalkthrough source="examples/move/basics/sources/object_basics.move" language="move">
   <Step lines="72-74" title="Create a wrapped object">
@@ -94,7 +98,7 @@ If you put the object of type `Bar` into an object of type `Foo`, the object typ
   </Step>
 </CodeWalkthrough>
 
-## Direct wrapping
+## How does direct wrapping work?
 
 Direct wrapping occurs when an object type contains another object type as a direct field. In direct wrapping, the wrapped object cannot be extracted without destroying the wrapper. This provides strong encapsulation guarantees and is ideal for implementing object locking patterns. Direct wrapping requires explicit contract calls to modify access.
 
@@ -158,6 +162,8 @@ public fun request_swap(
 
 In the preceding function, you must pass the object by value so that it is fully consumed and wrapped into `SwapRequest`. The example also provides a fee of type `Coin<SUI>` and checks that the fee is sufficient. The example turns `Coin` into `Balance` when it's put into the `wrapper` object. This is because `Coin` is only used to pass objects, such as transaction inputs or objects sent to addresses. For coin balances that need to be embedded in other structs, use `Balance` instead to avoid the overhead of carrying around an unnecessary `UID` field.
 
+The snippets on this page do not show the definitions of constants such as `MIN_FEE`, `EFeeTooLow`, and `EBadSwap`. View them in the full [`trusted_swap`](https://github.com/MystenLabs/sui/blob/main/examples/move/trusted_swap) source.
+
 The wrapper object is then sent to the service operator with the address specified in the call as `service`.
 
 The interface for the function that the service operator can call to perform a swap between 2 objects sent from 2 addresses resembles:
@@ -208,7 +214,7 @@ Because the contract defined only 1 way to deal with `SwapRequest` (`execute_swa
 
 View the full source code in the [`trusted_swap`](https://github.com/MystenLabs/sui/blob/main/examples/move/trusted_swap) example.
 
-## Wrapping through `Option`
+## How do I wrap an object through `Option`?
 
 When an object `Bar` is directly wrapped into `Foo`, there is not much flexibility, as a `Foo` object must have a `Bar` object in it, and to take out the `Bar` object you must destroy the `Foo` object. 
 
@@ -269,7 +275,7 @@ Because `Sword` is a Sui object type without `drop` ability, if the warrior alre
 
 View the source code in the [`simple_warrior`](https://github.com/MystenLabs/sui/tree/main/examples/move/simple_warrior) example or check out the [`hero`](https://github.com/MystenLabs/sui/tree/main/examples/move/hero) example for a more complex implementation.
 
-## Wrapping through `vector`
+## How do I wrap an object through `vector`?
 
 The concept of wrapping objects in a `vector` field of another object is similar to wrapping through `Option`, as an object can contain 0, 1, or many wrapped objects of the same type.
 
