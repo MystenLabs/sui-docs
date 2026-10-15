@@ -64,7 +64,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This guide answers what replaces the deprecated Sui JSON-RPC API. The 2 replacements are [gRPC](/develop/accessing-data/grpc) for real-time full node access, archival service access and transaction execution, and [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc) for rich, structured queries over live and historical blockchain data. Jump to [choosing between them](#choose-your-replacement), the [method mapping](#method-mapping), [migration gotchas](#migration-gotchas), or [examples for high-traffic paths](#examples-for-high-traffic-paths).
+The deprecated Sui JSON-RPC API has 2 replacements: [gRPC](/develop/accessing-data/grpc) for real-time full node access, Archival Service access, and transaction execution, and [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc) for rich, structured queries over live and historical blockchain data. Jump to [choosing between them](#choose-your-replacement), the [method mapping](#method-mapping), [migration gotchas](#migration-gotchas), or [examples for high-traffic paths](#examples-for-high-traffic-paths).
 
 <ImportContent source="json-rpc-deprecation" mode="snippet" />
 
@@ -72,9 +72,9 @@ JSON-RPC is deprecated. Sui is decommissioning it on the following timeline. The
 
 | Milestone | Target date |
 | --- | --- |
-| Disable JSON-RPC on Sui Foundation's mainnet full nodes | Week of July 27, 2026 |
+| Disable JSON-RPC on Sui Foundation's Mainnet full nodes | Week of July 27, 2026 |
 | Sui Foundation stops publishing JSON-RPC snapshots for full nodes | End of August 2026 |
-| Implicit fallback from JSON-RPC to archival service disconnected | End of September 2026 |
+| Implicit fallback from JSON-RPC to Archival Service disconnected | End of September 2026 |
 | Full decommission of JSON-RPC from full nodes, including code removal | Mid-October 2026 |
 
 ## Should I use gRPC or GraphQL RPC? {#choose-your-replacement}
@@ -129,7 +129,7 @@ The following table maps common JSON-RPC method families to their gRPC service a
 | `suix_getCoinMetadata` | `StateService.GetCoinInfo` | `Query.coinMetadata` |
 | `suix_getOwnedObjects` | `StateService.ListOwnedObjects` | `Address.objects` |
 | `suix_getDynamicFields` | `StateService.ListDynamicFields` | `Object.dynamicFields` |
-| `suix_getDynamicFieldObject` | Derive the dynamic field's object ID locally from the parent object ID and the field name, then call `LedgerService.GetObject`. `ListDynamicFields` is not needed when you already know the field name. | `Object.dynamicObjectField` |
+| `suix_getDynamicFieldObject` | Derive the dynamic field's object ID locally from the parent object ID and the field name, then call `LedgerService.GetObject`. You do not need `ListDynamicFields` when you already know the field name. | `Object.dynamicObjectField` |
 | `suix_queryTransactionBlocks` | `LedgerService.ListTransactions` with a `TransactionFilter` for paginated, filtered queries over a checkpoint range. Use `SubscriptionService.SubscribeTransactions` with the same filter for a live stream of matching transactions. | `Query.transactions` with a `TransactionFilter` |
 | `suix_queryEvents` (deprecated) | `LedgerService.ListEvents` with an `EventFilter` for paginated, filtered queries over a checkpoint range. Use `SubscriptionService.SubscribeEvents` with the same filter for a live stream. For a single transaction's events, use `LedgerService.GetTransaction` with `events` in the field mask. See [Emitting Events](/develop/accessing-data/using-events#querying-events-with-grpc) for examples and migration guidance. | `Query.events` with an `EventFilter`. See [Emitting Events](/develop/accessing-data/using-events#querying-events-with-graphql) for examples. |
 | `sui_subscribeEvent`, `sui_subscribeTransaction` (WebSocket) | `SubscriptionService.SubscribeEvents` with an `EventFilter`, or `SubscriptionService.SubscribeTransactions` with a `TransactionFilter`. Use `SubscriptionService.SubscribeCheckpoints` if you need entire checkpoints. All 3 support server-side filtering. | No streaming subscription. Poll `Query.events` with an `EventFilter`, or `Query.transactions` with a `TransactionFilter`. |
@@ -147,13 +147,13 @@ The JSON-RPC `unsafe_*` builder methods do not have a one-to-one replacement on 
 
 ### No implicit archival fallback in full node gRPC
 
-JSON-RPC sometimes resolved requests for older data through fallback paths that were transparent to the caller. Full node gRPC does not do this. A full node serves only the data within its retention window, and `LedgerService` returns "not found" for anything older.
+JSON-RPC sometimes resolved requests for older data through fallback paths that were transparent to the caller. Full node gRPC does not do this. A full node serves only the data within its retention window, and `LedgerService` returns `not found` for anything older.
 
 The 3 interfaces differ in how they reach pruned history:
 
 - **Full node gRPC** serves the complete RPC surface (transaction execution, point lookups, checkpoint subscriptions), but only within the full node's retention window.
 
-- **The Archival Service** is a separate gRPC service that serves unpruned point lookups for checkpoints, transactions, and objects. It is scoped to those point lookups, so it does not serve the rest of the full node RPC surface, such as transaction execution or live state queries. Reuse the same `LedgerService` methods, but point the client at an Archival Service endpoint such as `archive.mainnet.sui.io:443` or your provider's archival URL. A "not found" response from the full node for data older than its retention window is the signal to retry the same lookup against the Archival Service. See [Archival Store](/develop/accessing-data/archival-store).
+- **The Archival Service** is a separate gRPC service that serves unpruned point lookups for checkpoints, transactions, and objects. It handles only those point lookups, so it does not serve the rest of the full node RPC surface, such as transaction execution or live state queries. Reuse the same `LedgerService` methods, but point the client at an Archival Service endpoint such as `archive.mainnet.sui.io:443` or your provider's archival URL. A `not found` response from the full node for data older than its retention window is the signal to retry the same lookup against the Archival Service. See [Archival Store](/develop/accessing-data/archival-store).
 
 - **GraphQL** is a unified interface that serves both recent data and, when the operator configures archival access, unpruned point lookups, with no client-side fallback.
 
@@ -163,7 +163,7 @@ JSON-RPC accepts a positional array of arguments. gRPC uses typed protobuf messa
 
 ### What replaces JSON-RPC WebSocket subscriptions? {#websocket-subscriptions-are-replaced-by-grpc-streaming}
 
-JSON-RPC offered WebSocket subscriptions for events and transactions, which have been deprecated since mid-2024. Sui does not carry those forward. Use `SubscriptionService` over gRPC server streaming instead: `SubscribeEvents` with an `EventFilter` replaces `sui_subscribeEvent`, `SubscribeTransactions` with a `TransactionFilter` replaces `sui_subscribeTransaction`, and `SubscribeCheckpoints` delivers entire checkpoints. All 3 support server-side filtering. Subscriptions begin at the current tip and do not support resumption. To avoid gaps:
+JSON-RPC offered WebSocket subscriptions for events and transactions, which Sui deprecated in mid-2024. Sui does not carry those forward. Use `SubscriptionService` over gRPC server streaming instead: `SubscribeEvents` with an `EventFilter` replaces `sui_subscribeEvent`, `SubscribeTransactions` with a `TransactionFilter` replaces `sui_subscribeTransaction`, and `SubscribeCheckpoints` delivers entire checkpoints. All 3 support server-side filtering. Subscriptions begin at the current tip and do not support resumption. To avoid gaps:
 
 1. Open the subscription and immediately drain live frames into durable, bounded storage. Do not leave the subscription unread during backfill.
 2. In a separate worker, backfill with the corresponding `LedgerService` list API (`ListEvents`, `ListTransactions`, or `ListCheckpoints`).
@@ -174,7 +174,7 @@ See [Subscriptions for streaming data](/develop/accessing-data/grpc/what-is-grpc
 
 ### Public load balancer URLs are not production endpoints
 
-The public URLs at `https://fullnode.<network>.sui.io` and `https://graphql.<network>.sui.io/graphql` are rate-limited and intended for development and public-good access. Do not point a production exchange, indexer, or wallet backend at them. Run your own [Sui full node](/operators/full-node/sui-full-node) or contract with a provider for a dedicated gRPC or GraphQL endpoint.
+The public URLs at `https://fullnode.<network>.sui.io` and `https://graphql.<network>.sui.io/graphql` have rate limits and serve development and public-good access. Do not point a production exchange, indexer, or wallet backend at them. Run your own [Sui full node](/operators/full-node/sui-full-node) or contract with a provider for a dedicated gRPC or GraphQL endpoint.
 
 ### Object and coin queries behave differently
 
@@ -196,7 +196,7 @@ JSON-RPC cursors are opaque strings. GraphQL passes cursors through the `after` 
 2. Fetch a fresh cursor from the new API.
 3. Persist it as the resume point.
 
-### Negative filters (MatchNone) work differently
+### Negative filters (`MatchNone`) work differently
 
 JSON-RPC object queries supported `MatchAll`, `MatchAny`, and `MatchNone` filter combinators to include or exclude results by type.
 
@@ -212,7 +212,7 @@ JSON-RPC object queries supported `MatchAll`, `MatchAny`, and `MatchNone` filter
 
 ### Why does my migrated query return no historical data? {#retention-windows}
 
-A full node retains a configurable window of recent data and prunes older history. Your application sees this as "not found" responses. For long-running queries, replays, or audits, plan to fall back to the [Archival Service](/develop/accessing-data/archival-store) for data outside the full node's retention.
+A full node retains a configurable window of recent data and prunes older history. Your application sees this as `not found` responses. For long-running queries, replays, or audits, plan to fall back to the [Archival Service](/develop/accessing-data/archival-store) for data outside the full node's retention.
 
 ### Ecosystem tools use different migration paths
 
@@ -224,7 +224,7 @@ Not all tools in the Sui ecosystem require manual migration:
 
 - **Kiosk SDK** (`@mysten/kiosk`): Continue using a supported JSON-RPC or GraphQL client for Kiosk object and event queries. The currently published Kiosk SDK does not accept `SuiGrpcClient`; migrate only after a Kiosk release explicitly adds gRPC support.
 
-- **Walrus site-builder**: The site-builder manages its own Sui connection through `sites-config.yaml`. Check the [Walrus documentation](https://docs.wal.app/) for gRPC migration status, as the transport is controlled by the Walrus team.
+- **Walrus site-builder**: The site-builder manages its own Sui connection through `sites-config.yaml`. Check the [Walrus documentation](https://docs.wal.app/) for gRPC migration status, because the Walrus team controls the transport.
 
 ## Examples for high-traffic paths
 
@@ -312,6 +312,8 @@ The following tabs show how to list the coins an address owns in JSON-RPC and it
 </Tabs>
 
 ### Events
+
+The following sections show filtered event queries and how to read events from a known transaction.
 
 #### Filtered event queries (GraphQL only)
 
@@ -426,6 +428,6 @@ For manual gas resolution (sponsored transactions, custom gas coin selection), s
 
 ### Validator APY
 
-JSON-RPC provided `suix_getValidatorsApy`. Neither gRPC nor GraphQL has a direct APY field. Validator APY is derived from staking pool exchange rate history stored in dynamic fields on each validator's system-state object. The legacy method used a compounding calculation across up to 30 epoch samples with outlier filtering.
+JSON-RPC provided `suix_getValidatorsApy`. Neither gRPC nor GraphQL has a direct APY field. Validator APY comes from staking pool exchange rate history, which each validator's system-state object stores in dynamic fields. The legacy method used a compounding calculation across up to 30 epoch samples with outlier filtering.
 
 To compute APY after migration, query the validator set and each validator's exchange rate history, then apply a compounding formula client-side. See the [GraphQL migration cookbook](/develop/accessing-data/graphql/graphql-migration-cookbook#get-validator-apy) for the query pattern and [issue #23832](https://github.com/MystenLabs/sui/issues/23832) for the recommended computation.

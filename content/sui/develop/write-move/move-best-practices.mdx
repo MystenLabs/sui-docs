@@ -36,23 +36,25 @@ questions:
 answer: Recommended Move best practices for Sui development.
 ---
 
-This guide outlines recommended conventions and best practices for writing Move smart contracts on Sui. Following these guidelines helps create more maintainable, secure, and composable code that aligns with ecosystem standards.
+Move smart contracts on Sui benefit from recommended conventions and best practices. Following these conventions helps create more maintainable, secure, and composable code that aligns with ecosystem standards.
 
 While these conventions are recommendations rather than strict rules, they represent patterns that have proven effective across many Sui projects. They help create consistency across the ecosystem and make code easier to understand and maintain.
 
 ## How should I structure a Move package?
 
+Structure a Move package by its layout, its modules, and the body of each module.
+
 ### Package
 
 A Sui package consists of:
-- `sources` directory containing the Move code to be uploaded to the blockchain.
-- `Move.toml` manifest file that declares dependencies and other information about the package.
-- `Move.lock` file that the Sui Move toolchain automatically generates to lock the versions of the dependencies.
-- `Published.toml` file that tracks the published addresses and upgrade capabilities for each environment (Mainnet, Testnet).
+- `sources` directory containing the Move code that you upload to the blockchain
+- `Move.toml` manifest file that declares dependencies and other information about the package
+- `Move.lock` file that the Sui Move toolchain automatically generates to lock the versions of the dependencies
+- `Published.toml` file that tracks the published addresses and upgrade capabilities for each environment (Mainnet, Testnet)
 
-Both `Move.lock` and `Published.toml` should be committed to source control. See [Move Package Management](/develop/manage-packages/move-package-management) for full details.
+Commit both `Move.lock` and `Published.toml` to source control. See [Move Package Management](/develop/manage-packages/move-package-management) for full details.
 
-Optionally, you can add a `tests` directory to contain the tests for the package and an `examples` directory to provide use cases for the package. Neither directory is uploaded onchain when you publish the package.
+Optionally, you can add a `tests` directory to contain the tests for the package and an `examples` directory to provide use cases for the package. Publishing the package does not upload either directory onchain.
 
 ```
 sources/
@@ -73,7 +75,7 @@ In your package manifest, the package name should match the name used in your Mo
 
 ### Modules
 
-Modules are the main building blocks of your Move code. They are used to organize and encapsulate related functionality. Design your modules around 1 object or data structure. A variant structure should have its own module to avoid complexity and bugs.
+Modules are the main building blocks of your Move code. They organize and encapsulate related functionality. Design your modules around 1 object or data structure. A variant structure should have its own module to avoid complexity and bugs.
 
 Module declarations don't need to use brackets anymore and the compiler provides default `use` statements for widely used modules, so you don't need to declare all of them.
 
@@ -122,7 +124,7 @@ Here, public functions are the functions modifying state and view functions are 
 
 Try to sort your functions by their purpose and according to the user flow to improve readability. You can also use explicit function names like `admin_set_fees` to make it clear what the function does.
 
-Ideally, test functions should only consist of `[test_only]` helpers for the actual tests that are located in the `tests` directory.
+Ideally, test functions should only consist of `[test_only]` helpers for the actual tests in the `tests` directory.
 
 Group imports by dependency, for example:
 
@@ -142,7 +144,7 @@ Adhering to naming conventions in your code helps readability and ultimately mak
 
 ### Constants
 
-Constants should be uppercase and formatted as snake case. Errors are specific constants that use PascalCase and start with an E. Make them descriptive.
+Constants should be uppercase and use snake case. Errors are specific constants that use PascalCase and start with an E. Make them descriptive.
 
 ```move
 module conventions::constants;
@@ -161,9 +163,9 @@ const E_INVALID_NAME: u64 = 0;
 
 Always declare struct abilities in this order: `key`, `copy`, `drop`, `store`.
 
-Do not use 'potato' in the name of structs. The lack of abilities already defines it as a potato pattern, so the name doesn't need to repeat it.
+Do not use the word potato in the name of structs. The lack of abilities already defines it as a potato pattern, so the name doesn't need to repeat it.
 
-Structs support positional fields that can be used for basic wrappers, dynamic field keys, or as tuples.
+Structs support positional fields that you can use for basic wrappers, dynamic field keys, or as tuples.
 
 Use the `Event` suffix to name structs that emit events.
 
@@ -188,7 +190,7 @@ public struct RequestPotato {}
 
 ### CRUD function names
 
-The following functions follow standard CRUD (Create, Read, Update, Delete) naming conventions:
+The following functions follow standard create, read, update, and delete (CRUD) naming conventions:
 
 - `new`: Creates an empty object.
 - `empty`: Creates an empty struct.
@@ -221,11 +223,11 @@ public struct Receipt<T> has store { ... }
 public struct Receipt<Data> has store { ... }
 ```
 
-## Code Structure
+## Code structure
 
-The following section covers common patterns and best practices specific to Move development on Sui, including object ownership models and function design principles.
+Move development on Sui follows common patterns and best practices for object ownership models and function design.
 
-In the examples on this page, a function body of `abort(0)` with the comment `// Implementation omitted.` is a placeholder for an implementation that is not shown. It is not part of the recommended pattern.
+In the examples on this page, a function body of `abort(0)` with the comment `// Implementation omitted.` is a placeholder for an implementation that the example does not show. It is not part of the recommended pattern.
 
 ### Shared objects
 
@@ -251,7 +253,7 @@ public fun share(shop: Shop) {
 
 ### Pure functions
 
-Keep your functions pure to maintain composability. Do not use `transfer::transfer` or `transfer::public_transfer` inside core functions, except in specific cases where the object is not transferable and shouldn't be modified.
+Keep your functions pure to maintain composability. Do not use `transfer::transfer` or `transfer::public_transfer` inside core functions, except in specific cases where the object is not transferable and the function should not modify it.
 
 ```move
 module conventions::amm;
@@ -322,7 +324,7 @@ For privileged functions:
 
 - Take an explicit capability parameter rather than relying on sender-only authorization.
 - Only use `tx_context::sender()` as the authorization check where the signer is genuinely the only valid actor.
-- When a capability grants rights over a specific object, validate the capability/object relationship (for example, match an ID stored in the capability).
+- When a capability grants rights over a specific object, validate the relationship between the capability and the object (for example, match an ID stored in the capability).
 - Design in a revocation or rotation path from the start.
 - Emit events for privileged actions so they are auditable.
 
@@ -412,7 +414,7 @@ public fun new_shared(deposit: Coin<SUI>, ctx: &mut TxContext) {
 
 ### Admin capability
 
-In admin-gated functions, the capability should be placed as the second parameter. This keeps the capability visible in method signatures and maintains method associativity: with the object being modified as the first parameter, callers use method syntax on that object (`account.set(&cap, ...)`) rather than on the capability (`cap.update(&mut account, ...)`).
+In admin-gated functions, place the capability as the second parameter. This keeps the capability visible in method signatures and maintains method associativity: with the object that the function modifies as the first parameter, callers use method syntax on that object (`account.set(&cap, ...)`) rather than on the capability (`cap.update(&mut account, ...)`).
 
 ```move
 module conventions::social_network;

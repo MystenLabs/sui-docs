@@ -39,7 +39,7 @@ import TabItem from '@theme/TabItem';
 
 Build a production-safe CI/CD pipeline that tests every pull request, automates Testnet publishing, and gates Mainnet publishing and upgrades behind manual approval.
 
-This guide shows how to deploy Move packages through a continuous integration and continuous delivery (CI/CD) pipeline in GitHub Actions. The goal is a production-safe setup, not a single workflow that publishes from a branch. A safe pipeline separates low-risk automation from high-risk actions, keeps signing keys out of logs, and requires a human to approve anything that touches Mainnet.
+You can deploy Move packages through a continuous integration and continuous delivery (CI/CD) pipeline in GitHub Actions. The goal is a production-safe setup, not a single workflow that publishes from a branch. A safe pipeline separates low-risk automation from high-risk actions, keeps signing keys out of logs, and requires a human to approve anything that touches Mainnet.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -65,7 +65,7 @@ flowchart TD
     Gate -->|Rejected| Stop[No deployment]
 ```
 
-The table below maps each tier to its trigger, automation level, and the protection it needs.
+The following table maps each tier to its trigger, automation level, and the protection it needs.
 
 | **Tier** | **Trigger** | **Automation** | **Protection** |
 |---|---|---|---|
@@ -93,7 +93,7 @@ GitHub masks registered secret values in run logs, but you remain responsible fo
 
 :::danger
 
-Never print, echo, or commit a private key. Pass keys to a step through the `env` block rather than inline command interpolation, do not run commands that output the key, and never write a key into the repository, an artifact, or a job summary. A leaked key cannot be revoked, so rotate to a new address if you suspect exposure.
+Never print, echo, or commit a private key. Pass keys to a step through the `env` block rather than inline command interpolation, do not run commands that output the key, and never write a key into the repository, an artifact, or a job summary. You cannot revoke a leaked key, so rotate to a new address if you suspect exposure.
 
 :::
 
@@ -127,7 +127,7 @@ Add these steps to any job that runs the Sui CLI. They install `suiup`, install 
     echo "$HOME/.suiup/bin" >> "$GITHUB_PATH"
 ```
 
-Pin to the release line that matches the target network. Use a Testnet release for the Testnet job and a Mainnet release for the Mainnet job, because the CLI must agree with the onchain Sui framework version. The workflows below set `SUI_VERSION` per file, such as `testnet-1.51.4` or `mainnet-1.51.4`. Replace the version numbers with the current release you intend to pin.
+Pin to the release line that matches the target network. Use a Testnet release for the Testnet job and a Mainnet release for the Mainnet job, because the CLI must agree with the onchain Sui framework version. The CI, Testnet, and Mainnet workflows set `SUI_VERSION` per file, such as `testnet-1.51.4` or `mainnet-1.51.4`. Replace the version numbers with the current release you intend to pin.
 
 ## Test every pull request
 
@@ -254,7 +254,7 @@ The address lives in a repository variable rather than a secret, because address
 
 ## Gate Mainnet publishing and upgrades
 
-The Mainnet workflow triggers on a release tag and names the `mainnet` environment, which carries required reviewers. The run pauses for human approval before it can read any Mainnet secret. The recommended job below builds an unsigned upgrade transaction and hands it off for signing, so no private key enters CI.
+The Mainnet workflow triggers on a release tag and names the `mainnet` environment, which carries required reviewers. The run pauses for human approval before it can read any Mainnet secret. The recommended job in this workflow builds an unsigned upgrade transaction and hands it off for signing, so no private key enters CI.
 
 Save the following workflow as `.github/workflows/mainnet.yml`:
 
@@ -310,7 +310,7 @@ jobs:
           path: unsigned-upgrade.txt
 ```
 
-The artifact holds the Base64 transaction bytes. Sign those bytes with your hardware wallet, multisig, or custody service, then submit the signed transaction with `sui client execute-signed-tx`, as shown earlier. A first Mainnet publish follows the same pattern with `sui client publish --serialize-unsigned-transaction`.
+The artifact holds the Base64 transaction bytes. Sign those bytes with your hardware wallet, multisig, or custody service, then submit the signed transaction with `sui client execute-signed-tx`, as shown in [Prefer external signers for production](#prefer-external-signers-for-production). A first Mainnet publish follows the same pattern with `sui client publish --serialize-unsigned-transaction`.
 
 If you accept single-key risk for a lower-assurance setup, you can sign and submit inside the gated job by importing a Mainnet key from the `mainnet` environment secret, the same way the Testnet job does. The manual approval and restricted secret scope still apply.
 
@@ -322,9 +322,9 @@ Public full nodes might rate-limit requests or lag behind the chain tip. For a M
 
 ## Capture and commit package state
 
-A publish or upgrade produces two kinds of state you need to keep: the IDs returned by the transaction and the updated package lock file.
+A publish or upgrade produces two kinds of state you need to keep: the IDs the transaction returns and the updated package lock file.
 
-### Capture the package ID and UpgradeCap ID
+### Capture the package ID and `UpgradeCap` ID
 
 Publishing with the `--json` flag returns structured object changes. Parse them with `jq` to read the new package ID and the `UpgradeCap` object ID:
 
@@ -347,7 +347,7 @@ Do not push directly from CI to a protected branch. Use a release branch flow in
 
 This keeps the source of truth for onchain state in version control while preserving branch protection.
 
-## Protect the UpgradeCap
+## Protect the `UpgradeCap`
 
 The `UpgradeCap` is the object that authorizes upgrades to your package. Whoever holds it controls every future version of your code.
 

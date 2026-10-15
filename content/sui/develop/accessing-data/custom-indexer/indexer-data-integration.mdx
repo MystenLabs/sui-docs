@@ -74,7 +74,7 @@ The Mainnet and Testnet GCS buckets are:
 
 The public-good HTTPS checkpoint stores are `https://checkpoints.mainnet.sui.io` and `https://checkpoints.testnet.sui.io`. They are public-good testing endpoints with only the most recent 30 days of checkpoints. Do not use them as a production backfill, recovery, fallback, or steady-state source.
 
-The public-good fullnode endpoints are `https://fullnode.mainnet.sui.io:443`, `https://fullnode.testnet.sui.io:443`, and `https://fullnode.devnet.sui.io:443`. They are also for testing only and are not intended for production indexers. For production, obtain a fullnode gRPC endpoint from an RPC provider with capacity and retention appropriate for your workload.
+The public-good fullnode endpoints are `https://fullnode.mainnet.sui.io:443`, `https://fullnode.testnet.sui.io:443`, and `https://fullnode.devnet.sui.io:443`. They are also for testing only, not for production indexers. For production, obtain a fullnode gRPC endpoint from an RPC provider with capacity and retention appropriate for your workload.
 
 ## How do I set up a production indexer? {#recommended-production-flow}
 
@@ -85,9 +85,9 @@ Use separate backfill and steady-state processes. Both processes use the same da
 3. Restart with fullnode gRPC polling and streaming through a production-grade endpoint from an RPC provider.
 4. If an outage or lag exceeds the fullnode's retention, stop the process, recover the missing range from the GCS bucket, and then switch back to fullnode gRPC.
 
-### How do I backfill from Requester Pays GCS? {#backfill-from-requester-pays-gcs}
+### How do I backfill from requester pays GCS? {#backfill-from-requester-pays-gcs}
 
-Because the checkpoint buckets are Requester Pays, access is charged to your own billing project. Configure Google credentials that can charge an enabled billing project. Pass the billing project in the `x-goog-user-project` header:
+Because the checkpoint buckets are Requester Pays, Google Cloud charges access to your own billing project. Configure Google credentials that can charge an enabled billing project. Pass the billing project in the `x-goog-user-project` header:
 
 ```sh
 $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/gcp-credentials.json
@@ -98,7 +98,7 @@ $ cargo run -- \
   --remote-store-header "x-goog-user-project:${GOOGLE_CLOUD_PROJECT}"
 ```
 
-For Testnet, replace the bucket with `mysten-testnet-checkpoints-use4`. Workload Identity or another supported Google credential source can replace the credential file, but the billing project header is still required for Requester Pays.
+For Testnet, replace the bucket with `mysten-testnet-checkpoints-use4`. Workload Identity or another supported Google credential source can replace the credential file, but Requester Pays still requires the billing project header.
 
 ### How do I switch to fullnode gRPC at the network tip? {#switch-to-fullnode-grpc-at-the-network-tip}
 
@@ -138,6 +138,8 @@ Do not use these public-good endpoints for a production indexer. Use a productio
 
 ## Polling-based data sources
 
+The following sections describe each polling-based source.
+
 ### Requester Pays GCS checkpoint buckets
 
 Use `--remote-store-gcs` for full-history backfills and recovery. Do not pass a `gs://` URL to `--remote-store-url`; provide only the bucket name to `--remote-store-gcs` and include the billing header shown in the [production backfill example](#backfill-from-requester-pays-gcs).
@@ -153,7 +155,7 @@ $ export FULLNODE_GRPC_URL=https://your-rpc-provider.example:443
 $ cargo run -- --rpc-api-url "$FULLNODE_GRPC_URL"
 ```
 
-This is useful for Devnet, Localnet, custom networks, and steady-state workloads that do not need the lowest possible latency. Historical availability is limited by the fullnode's retention. For testing, you can replace the provider URL with the public-good endpoint for your network.
+This is useful for Devnet, Localnet, custom networks, and steady-state workloads that do not need the lowest possible latency. The fullnode's retention limits historical availability. For testing, you can replace the provider URL with the public-good endpoint for your network.
 
 ### Public HTTPS checkpoint store: testing only
 
@@ -179,7 +181,7 @@ Use a local path for unit and integration tests with known checkpoint data. Do n
 
 ### Archival Service gRPC
 
-The Archival Service implements the gRPC `LedgerService`. Configure its endpoint through `--rpc-api-url`. Use the public endpoints only for small tests and targeted historical ingestion because they have strict rate limits.
+Archival Service implements the gRPC `LedgerService`. Configure its endpoint through `--rpc-api-url`. Use the public endpoints only for small tests and targeted historical ingestion because they have strict rate limits.
 
 Provider-hosted archival endpoints can offer higher limits and production service-level agreements for point lookups and targeted historical ingestion. Even with a provider endpoint, use GCS by default when you backfill an indexer. Bulk sequential backfill through `LedgerService` typically runs slower and costs more than reading checkpoint files from GCS. Use the Requester Pays GCS buckets unless your provider documents sufficient bulk throughput and acceptable pricing.
 

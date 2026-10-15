@@ -1,8 +1,8 @@
 ---
 title: Address Aliases
 description: >-
-  Address aliases can be used to configure the set of keys that are allowed to
-  sign transactions for a particular address on the Sui network.
+  Address aliases let you configure the set of keys that can sign transactions
+  for a particular address on the Sui network.
 keywords:
   - address aliases
   - aliases
@@ -32,11 +32,11 @@ questions:
   - What is an address alias?
   - How do I add or remove an alias with the Sui CLI?
 answer: >-
-  Address aliases can be used to configure the set of keys that are allowed to
-  sign transactions for a particular address on the Sui network.
+  Address aliases let you configure the set of keys that can sign transactions
+  for a particular address on the Sui network.
 ---
 
-Address aliases can be used to configure the set of keys that are allowed to sign transactions for a particular address on the Sui network.
+Address aliases let you configure the set of keys that can sign transactions for a particular address on the Sui network.
 
 You can use address aliases to:
 - Perform basic key rotation for an address.
@@ -55,18 +55,18 @@ Be extremely careful when making any changes to your aliases. Any new alias you 
 
 Each address on Sui has a set of aliases. New addresses begin as their own alias. That is, a new address `A` has the alias set `{A}`.
 
-An address's aliases are the addresses whose signatures are accepted on its behalf. In other words, the alias set is the set of allowed signers for that address.
+An address's aliases are the addresses whose signatures Sui accepts on its behalf. In other words, the alias set is the set of allowed signers for that address.
 
-You can modify aliases for an address using the Move API in the <UnsafeLink href="/references/framework/sui_sui/address_alias">`sui::address_alias` module</UnsafeLink>. These modification functions must be invoked as top-level programmable transaction block (PTB) commands and cannot be called from other Move functions.
+You can modify aliases for an address using the Move API in the <UnsafeLink href="/references/framework/sui_sui/address_alias">`sui::address_alias` module</UnsafeLink>. You must invoke these modification functions as top-level programmable transaction block (PTB) commands. You cannot call them from other Move functions.
 
 Some constraints for modifying aliases:
 - An address must always have at least one alias.
-- An address can be removed from its own alias set. For example, you can have an address `A` which only allows signatures from `{B, C}`.
+- You can remove an address from its own alias set. For example, you can have an address `A` which only allows signatures from `{B, C}`.
 - The maximum number of allowed aliases for an address is 8.
 
 ### How are transactions with aliased addresses authenticated?
 
-Transactions on Sui are configured with two addresses: a `sender` and a `gas_owner` (which might or might not be the same). For each configured address, a signature is required from one of the signers in its alias set.
+Each transaction on Sui has two configured addresses: a `sender` and a `gas_owner` (which might or might not be the same). For each configured address, the transaction requires a signature from one of the signers in its alias set.
 
 For example, with the following transaction and aliases:
 ```
@@ -80,9 +80,9 @@ aliases[A] = {A, B}
 aliases[X] = {Y}
 ```
 
-To be valid, the transaction `T` would require a signature from either `A` or `B`, and a signature from `Y`.
+To be valid, the transaction `T` requires a signature from either `A` or `B`, and a signature from `Y`.
 
-In this example, even if the transaction had signatures from `[B, Y]` and not from `A`, during execution it would nonetheless have access to everything owned by `A`, and during Move call execution its `TxContext::sender` would be `A`.
+In this example, even if the transaction has signatures from `[B, Y]` and not from `A`, during execution it nonetheless has access to everything owned by `A`, and during Move call execution its `TxContext::sender` is `A`.
 
 ## How do I manage aliases with the Sui CLI?
 
@@ -100,7 +100,7 @@ $ sui client ptb \
     --gas-budget 50000000
 ```
 
-Note the object ID of the `AddressAliases` object in the created objects section of the transaction output. You need this ID for all subsequent alias operations.
+Record the object ID of the `AddressAliases` object in the created objects section of the transaction output. You need this ID for all subsequent alias operations.
 
 ### Add an alias
 
@@ -128,7 +128,7 @@ $ sui client ptb \
 
 :::warning
 
-If you replace your aliases with a set that does not include your own address, you will no longer be able to sign transactions for your address. Only the addresses in the new alias set will have that ability.
+If you replace your aliases with a set that does not include your own address, you can no longer sign transactions for your address. Only the addresses in the new alias set have that ability.
 
 :::
 

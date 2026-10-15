@@ -54,7 +54,7 @@ answer: >-
   to perform multiple commands in a single transaction.
 ---
 
-This guide explores creating a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) on Sui using the [TypeScript SDK](https://sdk.mystenlabs.com/typescript/install) and the Sui CLI. The page closes with a [Rust SDK example](#rust-sdk-example).
+You can create a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) on Sui using the [TypeScript SDK](https://sdk.mystenlabs.com/typescript/install) and the Sui CLI. You can also follow a [Rust SDK example](#rust-sdk-example).
 
 ## How do I build a PTB with the TypeScript SDK?
 
@@ -111,7 +111,7 @@ client.signAndExecuteTransaction({ signer: keypair, transaction: tx });
 
 ## Build PTBs with the CLI
 
-Use `sui client ptb` to build and execute PTBs from the command line. Prefer `sui client ptb` for examples that build transactions, including basic transfers and coin operations, because it exposes the same PTB commands used by SDKs.
+Use `sui client ptb` to build and execute PTBs from the command line. Prefer `sui client ptb` for examples that build transactions, including basic transfers and coin operations, because it exposes the same PTB commands that SDKs use.
 
 The following CLI PTB splits 500,000,000 MIST from the gas coin and transfers the new coin to `eloquent-amber`:
 
@@ -177,7 +177,7 @@ For most transactions, reach for [`tx.coin()` and `tx.balance()`](https://sdk.my
 
 `tx.gas` is available whichever way the transaction pays for gas. When you supply coin objects, the protocol smashes them into a single gas coin. When you pass an empty array to `setGasPayment([])` to draw gas from an [address balance](/onchain-finance/asset-custody/address-balances/using-address-balances), the protocol materializes a synthetic gas coin from the sender's or sponsor's balance. `tx.gas` refers to that coin in either case, so building against it does not force client-side coin or balance resolution. That matters for [offline building](#building-offline), where an unresolved `tx.coin()` or `tx.balance()` intent would need a balance lookup.
 
-You can borrow the gas coin by reference freely: add to it with `mergeCoins`, split from it with `splitCoins`, or pass it to a Move function with `moveCall`. Consuming it by value is restricted to 2 commands:
+You can borrow the gas coin by reference freely: add to it with `mergeCoins`, split from it with `splitCoins`, or pass it to a Move function with `moveCall`. You can consume it by value in only 2 commands:
 
 - `transferObjects`, to send the whole remaining balance to another address.
 - `sui::coin::send_funds`, to deposit it into an address balance.
@@ -199,7 +199,7 @@ If you need the PTB bytes, instead of signing or executing the PTB, you can use 
 
 :::tip
 
-You might need to explicitly call `setSender()` on the PTB to ensure that the `sender` field is populated. This is normally done by the signer before [signing the transaction](/develop/transactions/transaction-auth/auth-overview), but will not be done automatically if you're building the PTB bytes yourself.
+You might need to explicitly call `setSender()` on the PTB to populate the `sender` field. The signer normally sets it before [signing the transaction](/develop/transactions/transaction-auth/auth-overview), but does not set it automatically if you're building the PTB bytes yourself.
 
 :::
 
@@ -247,7 +247,7 @@ You can then omit the `client` argument when calling `build` on the transaction.
 
 ## Gas configuration
 
-The transaction builder comes with default behavior for all gas logic, including automatically setting the gas price, budget, and selecting coins to be used as gas. This behavior can be customized.
+The transaction builder comes with default behavior for all gas logic, including automatically setting the gas price, budget, and selecting coins to use as gas. You can customize this behavior.
 
 ### Gas price
 
@@ -273,9 +273,9 @@ tx.setGasBudget(gasBudgetAmount);
 
 ### Gas payment
 
-By default, the SDK automatically determines the gas payment. It selects all coins at the provided address that are not used as inputs in the PTB.
+By default, the SDK automatically determines the gas payment. It selects all coins at the provided address that the PTB does not use as inputs.
 
-The SDK merges the list of coins used as gas payment down into a single gas coin before executing the PTB, and deletes all but 1 of the gas objects. The gas coin at the 0-index is the coin that all others are merged into.
+The SDK merges the list of coins used as gas payment down into a single gas coin before executing the PTB, and deletes all but 1 of the gas objects. The gas coin at the 0-index is the coin that the SDK merges all others into.
 
 ```ts
 // NOTE: You need to ensure that the coins do not overlap with any
@@ -289,7 +289,7 @@ Gas coins should be objects containing the coin's `{ objectId: string, version: 
 
 The Wallet Standard interface now supports the `Transaction` kind directly. All `signTransaction` and `signAndExecuteTransaction` calls from apps into wallets must provide a `Transaction` class. You can then serialize this PTB class and send it to your wallet for execution.
 
-To serialize a PTB for sending to a wallet, Sui recommends using the `tx.serialize()` function, which returns an opaque string representation of the PTB that can be passed from the Wallet Standard app context to your wallet. You can then convert this back into a `Transaction` using `Transaction.from()`.
+To serialize a PTB for sending to a wallet, Sui recommends using the `tx.serialize()` function, which returns an opaque string representation of the PTB that you can pass from the Wallet Standard app context to your wallet. You can then convert this back into a `Transaction` using `Transaction.from()`.
 
 :::tip
 
@@ -390,7 +390,7 @@ tx.moveCall({
 
 ### `waitForTransaction`
 
-Reads are served from indexed state, which trails execution. After you submit a transaction, use `waitForTransaction` before you query its effects. This prevents race conditions where querying immediately after submission returns no results.
+Reads come from indexed state, which trails execution. After you submit a transaction, use `waitForTransaction` before you query its effects. This prevents race conditions where querying immediately after submission returns no results.
 
 Pass the execution result directly. `signAndExecuteTransaction` returns a discriminated union of `Transaction` and `FailedTransaction`, so the digest is not on the result itself.
 

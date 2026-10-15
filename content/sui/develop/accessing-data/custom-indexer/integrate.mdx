@@ -47,7 +47,7 @@ answer: >-
 
 The `sui-indexer-alt-framework` crate handles checkpoint ingestion, batching, watermarks, and crash recovery, so your service only implements 2 traits: `Processor` extracts the data you care about from each checkpoint, and `Handler` writes it to your store.
 
-The steps below cover the Sui-specific work of adding that pipeline to a service you already have. For the conceptual background, read [Custom Indexing Framework](/develop/accessing-data/custom-indexer/custom-indexers) and [Indexer Pipeline Architecture](/develop/accessing-data/custom-indexer/pipeline-architecture) first.
+The steps on this page cover the Sui-specific work of adding that pipeline to a service you already have. For the conceptual background, read [Custom Indexing Framework](/develop/accessing-data/custom-indexer/custom-indexers) and [Indexer Pipeline Architecture](/develop/accessing-data/custom-indexer/pipeline-architecture) first.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -91,7 +91,7 @@ If your service already pulls in `tokio`, `clap`, or `anyhow`, reconcile the ver
 
 ## Prepare the destination table
 
-Your pipeline needs somewhere to write. The example indexer stores transaction digests in a `transaction_digests` table, created through a Diesel migration:
+Your pipeline needs somewhere to write. The example indexer stores transaction digests in a `transaction_digests` table, which a Diesel migration creates:
 
 <ImportContent source="examples/rust/basic-sui-indexer/migrations/YYYY-MM-DD-HHMMSS_transaction_digests/up.sql" mode="code" />
 
@@ -225,8 +225,8 @@ The example reads `DATABASE_URL` from the environment and passes it to `with_dat
 Sui serves checkpoint data from several sources, and production indexers use different ones for backfill and steady state. See [Checkpoint Data Sources](/develop/accessing-data/custom-indexer/indexer-data-integration) for the full comparison.
 
 - **GCS buckets (production backfill and recovery):** `gs://mysten-testnet-checkpoints-use4` for Testnet or `gs://mysten-mainnet-checkpoints-use4` for Mainnet. These buckets have full checkpoint retention and are Requester Pays enabled, so configure GCS credentials and a billing project before using them.
-- **Fullnode gRPC (production steady state):** Use a production-grade endpoint from an [RPC provider](/develop/accessing-data/rpc-providers) for polling and streaming after the historical backfill reaches the network tip.
-- **Public-good fullnode gRPC (testing only):** `https://fullnode.testnet.sui.io:443`, `https://fullnode.mainnet.sui.io:443`, and `https://fullnode.devnet.sui.io:443`. Do not use these endpoints for production ingestion.
+- **Full node gRPC (production steady state):** Use a production-grade endpoint from an [RPC provider](/develop/accessing-data/rpc-providers) for polling and streaming after the historical backfill reaches the network tip.
+- **Public-good full node gRPC (testing only):** `https://fullnode.testnet.sui.io:443`, `https://fullnode.mainnet.sui.io:443`, and `https://fullnode.devnet.sui.io:443`. Do not use these endpoints for production ingestion.
 - **Public HTTPS checkpoint stores (testing only, most recent 30 days):** `https://checkpoints.testnet.sui.io` for Testnet or `https://checkpoints.mainnet.sui.io` for Mainnet. Do not use these public-good endpoints for production ingestion.
 
 Before reading from a Requester Pays GCS bucket, configure credentials and a billing project, then pass the billing project in the `x-goog-user-project` header. Replace `/path/to/gcp-credentials.json` and `your-billing-project` with your own credentials file and billing project:
@@ -244,9 +244,9 @@ $ cargo run -- \
     --remote-store-header "x-goog-user-project:${GOOGLE_CLOUD_PROJECT}"
 ```
 
-After the indexer reaches the network tip, stop it and restart it against fullnode gRPC. Existing pipelines resume from their committed watermarks, so no data is lost across the switch.
+After the indexer reaches the network tip, stop it and restart it against full node gRPC. Existing pipelines resume from their committed watermarks, so the indexer loses no data across the switch.
 
-**Phase 2, fullnode gRPC polling and streaming for steady state.** Replace `https://your-rpc-provider.example:443` with the endpoint from your RPC provider:
+**Phase 2, full node gRPC polling and streaming for steady state.** Replace `https://your-rpc-provider.example:443` with the endpoint from your RPC provider:
 
 ```sh
 $ export FULLNODE_GRPC_URL=https://your-rpc-provider.example:443

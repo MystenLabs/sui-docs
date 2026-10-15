@@ -48,7 +48,7 @@ answer: >-
   prompt={"Debug this Sui transaction failure. Inspect object refs, gas objects, ownership, versions, and suggest the minimal code or PTB change to make it execute."}
 />
 
-This page provides troubleshooting solutions to common errors.
+The following sections list common Sui errors and their solutions, grouped by address, Move package, system, transaction, and SDK and RPC errors.
 
 If you are working with the TypeScript SDK or RPC, see [Error classification](#error-classification) to tell transport errors, which you retry with backoff, from execution errors, which you fix in your code or parameters.
 
@@ -58,7 +58,7 @@ Errors in this section relate to Sui addresses.
 
 #### `Failed to build Move modules: Unresolved addresses found.`
 
-You are trying to use a named address within your code or a dependency, but the package system cannot resolve it. This typically means you are referencing a package that is not listed in your `[dependencies]` section.
+You are trying to use a named address within your code or a dependency, but the package system cannot resolve it. This typically means you are referencing a package that your `[dependencies]` section does not list.
 
 ##### Solution
 
@@ -69,7 +69,7 @@ Add the missing package as a dependency in your `Move.toml`. For example, if you
 example_dep = { git = "https://github.com/example/repo.git", subdir = "packages/dep", rev = "main" }
 ```
 
-System packages like `std` and `sui` are included implicitly and do not need to be listed.
+The package system includes system packages like `std` and `sui` implicitly, so you do not need to list them.
 
 **Resources**
 
@@ -396,7 +396,7 @@ Indicates that another inflight transaction is already using an object version y
 
 ##### Solution 
 
-Wait for the first transaction to finish, then rebuild or re-sign the transaction so it uses the latest object references. For related operations, combine them into one [programmable transaction block](/develop/transactions/ptbs/building-ptb). For parallel execution, use SDK/client helpers that manage gas coins and object dependencies.
+Wait for the first transaction to finish, then rebuild or re-sign the transaction so it uses the latest object references. For related operations, combine them into one [programmable transaction block](/develop/transactions/ptbs/building-ptb). For parallel execution, use SDK and client helpers that manage gas coins and object dependencies.
 
 **Resources**
 
@@ -408,7 +408,7 @@ Wait for the first transaction to finish, then rebuild or re-sign the transactio
 
 #### `Failed to sign transaction by a quorum of validators because one or more of its objects is equivocated until the next epoch.`
 
-Indicates that competing transactions used the same mutable owned object version and validator reservations were split so that no transaction could obtain quorum. The affected object version is unavailable until the next epoch.
+Indicates that competing transactions used the same mutable owned object version and split validator reservations so that no transaction could obtain quorum. The affected object version is unavailable until the next epoch.
 
 ##### Solution
 
@@ -452,9 +452,9 @@ Ensure all objects you reference in your transaction:
 
 - Use the current version
 
-- Are not referenced twice
+- Appear only once
 
-- Do not exceed a protocol limit of maximum objects. 
+- Do not exceed a protocol limit of maximum objects
 
 Verify you have a sufficient gas balance and that your transaction signature is valid.
 
@@ -508,7 +508,7 @@ The Sui CLI cannot match your active environment to an environment in your packa
 
 ##### Solution
 
-If you are on **Localnet or Devnet**, use `sui client test-publish` instead of `sui client publish`. Ephemeral networks should not be added to the `[environments]` section because their addresses change frequently and would pollute your `Published.toml`.
+If you are on **Localnet or Devnet**, use `sui client test-publish` instead of `sui client publish`. Do not add ephemeral networks to the `[environments]` section because their addresses change frequently and would pollute your `Published.toml`.
 
 If you need to add a persistent custom environment, add an `[environments]` section to your `Move.toml` with the chain ID:
 

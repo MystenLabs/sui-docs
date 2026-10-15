@@ -80,7 +80,7 @@ For managing wallets that support the Ed25519 (EdDSA) signing scheme, Sui follow
 
 Sui follows BIP-32 for managing wallets that support the ECDSA Secp256k1 and ECDSA Secp256r1 signing schemes.
 
-BIP-32 defines the hierarchical deterministic wallet structure to logically associate a set of keys. Grouping keys in this manner reduces the overhead of keeping track of a large number of private keys. This method also allows custodians to issue distinct managed addresses for each user account under one source of control. Using BIP-32 decouples the private key derivation from the public key derivation, enabling the watch-only wallet use case, where a chain of public keys and its addresses can be derived, while the private key can be kept offline for signing.
+BIP-32 defines the hierarchical deterministic wallet structure to logically associate a set of keys. Grouping keys in this manner reduces the overhead of keeping track of a large number of private keys. This method also allows custodians to issue distinct managed addresses for each user account under one source of control. Using BIP-32 decouples the private key derivation from the public key derivation, enabling the watch-only wallet use case, where you can derive a chain of public keys and their addresses while keeping the private key offline for signing.
 
 ### What derivation paths does Sui use? {#key-derivation-paths}
 
@@ -100,11 +100,11 @@ The `purpose` level distinguishes different signing schemes:
 
 - `74` for Secp256r1
 
-BIP-49 and BIP-84, for example, are used to identify script types in Bitcoin. Sui chose `54` to indicate ECDSA Secp256k1 because there is no existing BIP under `54`, avoiding confusion with any Bitcoin standard.
+Bitcoin uses BIP-49 and BIP-84, for example, to identify script types. Sui chose `54` to indicate ECDSA Secp256k1 because there is no existing BIP under `54`, avoiding confusion with any Bitcoin standard.
 
-The `coin_type` value is managed with a repository of all other cryptocurrencies. Both signature schemes use Sui's registered `coin_type`: `784`.
+A repository of all other cryptocurrencies manages the `coin_type` value. Both signature schemes use Sui's registered `coin_type`: `784`.
 
-The `account` level is used for logically separating user accounts and creating specific account categories.
+The `account` level logically separates user accounts and creates specific account categories.
 
 Account-based currencies define only the first 3 levels, while UTXO-based currencies add `change` and `address` level definitions. Because Sui's object-oriented data model is neither UTXO or account-based (it combines both), it employs all 5 levels for maximum compatibility.
 
@@ -116,7 +116,7 @@ Account-based currencies define only the first 3 levels, while UTXO-based curren
 
 ### Mnemonics support
 
-After Sui defines the deterministic way to derive the master key from a seed, BIP-39 is introduced to make the seed more human-readable and memorable using mnemonics. Sui accepts 12, 15, 18, 21, and 24 words from the BIP-39 word list that is properly checksummed, corresponding to 128, 160, 192, 224, and 256 bits of entropy.
+After Sui defines the deterministic way to derive the master key from a seed, Sui uses BIP-39 to make the seed more human-readable and memorable with mnemonics. Sui accepts 12, 15, 18, 21, and 24 words from the BIP-39 word list that is properly checksummed, corresponding to 128, 160, 192, 224, and 256 bits of entropy.
 
 ### How is a Sui address derived from a key? {#address-format}
 
@@ -124,7 +124,7 @@ For deriving a 32-byte Sui address, Sui hashes the signature scheme flag 1-byte 
 
 ## Signatures
 
-When a user submits a signed transaction, a serialized signature and serialized transaction data is submitted. The serialized transaction data is the [Binary Canonical Serialization](https://crates.io/crates/bcs) (BCS) serialized bytes of the struct `TransactionData` and the serialized signature is defined as a concatenation of bytes of `flag || sig || pk`.
+When you submit a signed transaction, you submit a serialized signature and serialized transaction data. The serialized transaction data is the [Binary Canonical Serialization](https://crates.io/crates/bcs) (BCS) serialized bytes of the struct `TransactionData`, and the serialized signature is a concatenation of bytes of `flag || sig || pk`.
 
 ### Signature structure
 
@@ -140,14 +140,14 @@ A Sui signature consists of three components concatenated together:
 
 The following table lists each signing scheme and its corresponding flag, signature format, and public key format:
 
-| Scheme          | Flag | Signature Format | Public Key Format |
+| Scheme          | Flag | Signature format | Public key format |
 | --------------- | ---- | ---------------- | ----------------- |
 | Pure Ed25519    | 0x00 | Compressed, 64 bytes | Compressed, 32 bytes |
 | ECDSA Secp256k1 | 0x01 | Non-recoverable, compressed, 64 bytes | Compressed, 33 bytes |
 | ECDSA Secp256r1 | 0x02 | Non-recoverable, compressed, 64 bytes | Compressed, 33 bytes |
-| multisig        | 0x03 | BCS serialized all signatures, size varies | BCS serialized all participating public keys, size varies |
+| Multisig        | 0x03 | BCS serialized all signatures, size varies | BCS serialized all participating public keys, size varies |
 | zkLogin         | 0x05 | BCS serialized zkLogin inputs, max epoch and ephemeral signature, size varies | Concatenation of iss length, iss bytes, address seed padded to 32-bytes, size varies |
-| passkey         | 0x06 | BCS serialized passkey inputs (`authenticatorData`, `clientDataJson`, `userSignature`), size varies | Compressed, 33 bytes |
+| Passkey         | 0x06 | BCS serialized passkey inputs (`authenticatorData`, `clientDataJson`, `userSignature`), size varies | Compressed, 33 bytes |
 
 ### Signature requirements {#signature-requirements}
 
@@ -159,7 +159,7 @@ When invoking the signing API, you must first hash the intent message of the tra
 
 An accepted ECDSA Secp256k1 and Secp256r1 signature must follow:
 
-1. The internal hash used by ECDSA must be SHA256 [SHA-2](https://en.wikipedia.org/wiki/SHA-2) hash of the transaction data. Sui uses SHA256 because it is supported by [Apple](https://developer.apple.com/forums/thread/89619), HSMs, and it is widely adopted by [Bitcoin](https://en.bitcoin.it/wiki/Elliptic_Curve_Digital_Signature_Algorithm).
+1. The internal hash used by ECDSA must be SHA256 [SHA-2](https://en.wikipedia.org/wiki/SHA-2) hash of the transaction data. Sui uses SHA256 because [Apple](https://developer.apple.com/forums/thread/89619) and HSMs support it, and [Bitcoin](https://en.bitcoin.it/wiki/Elliptic_Curve_Digital_Signature_Algorithm) widely adopts it.
 
 1. The signature must be of length 64 bytes in the form of `[r, s]` where the first 32 bytes are `r`, the second 32 bytes are `s`.
 
@@ -167,13 +167,13 @@ An accepted ECDSA Secp256k1 and Secp256r1 signature must follow:
 
 1. The `s` value must be in the lower half of the curve order. If the signature is too high, convert it to a lower `s` according to [BIP-0062](https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#low-s-values-in-signatures) with the corresponding curve orders using `order - s`. For Secp256k1, the curve order is `0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141`. For Secp256r1, the curve order is `0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551` defined in [Standards for Efficient Cryptography](https://secg.org/SEC2-Ver-1.0.pdf).
 
-1. Ideally, the signature must be generated with deterministic nonce according to [RFC6979](https://www.rfc-editor.org/rfc/rfc6979).
+1. Ideally, generate the signature with a deterministic nonce according to [RFC6979](https://www.rfc-editor.org/rfc/rfc6979).
 
 ### Ed25519 signature requirements
 
 An accepted pure Ed25519 signature must follow:
 
-1. The signature must be produced according to [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.6). The internal hash used is SHA-512.
+1. You must produce the signature according to [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032#section-5.1.6). The internal hash is SHA-512.
 
 1. The signature must be valid according to [ZIP215](https://github.com/zcash/zips/blob/main/zips/zip-0215.rst).
 
@@ -181,13 +181,13 @@ An accepted pure Ed25519 signature must follow:
 
 For more information on advanced signature schemes:
 
-- **zkLogin**: See [zkLogin](/sui-stack/zklogin-integration) for details on zero-knowledge login signatures. The TypeScript SDK provides `ZkLoginSigner` (`@mysten/sui/zklogin`), which wraps an ephemeral signer and automatically produces zkLogin signatures. Its `getKeyScheme()` returns `'ZkLogin'` to distinguish it from other signing schemes.
+- **zkLogin:** See [zkLogin](/sui-stack/zklogin-integration) for details on zero-knowledge login signatures. The TypeScript SDK provides `ZkLoginSigner` (`@mysten/sui/zklogin`), which wraps an ephemeral signer and automatically produces zkLogin signatures. Its `getKeyScheme()` returns `'ZkLogin'` to distinguish it from other signing schemes.
 
-- **Passkey**: See [SIP-8](https://github.com/sui-foundation/sips/blob/main/sips/sip-9.md) for passkey implementation details.
+- **Passkey:** See [SIP-8](https://github.com/sui-foundation/sips/blob/main/sips/sip-9.md) for passkey implementation details.
 
-- **Multisig**: See [Multisig](/develop/transactions/transaction-auth/multisig) for multi-signature transactions.
+- **Multisig:** See [Multisig](/develop/transactions/transaction-auth/multisig) for multi-signature transactions.
 
-- **Offline Signing**: See [Offline Signing](/develop/transactions/transaction-auth/offline-signing) for concrete examples of signing transactions offline.
+- **Offline signing:** See [Offline Signing](/develop/transactions/transaction-auth/offline-signing) for concrete examples of signing transactions offline.
 
 ## Authority signatures
 
@@ -195,15 +195,15 @@ Sui's [collection of validators](/operators/validator) holds 3 distinctive key p
 
 ### Protocol key pair {#protocol-pair}
 
-The protocol key pair provides authority signatures on user-signed transactions if they are verified. When a stake of the authorities that provide signatures on user transactions passes the required 2/3 threshold, Sui executes the transaction. Sui uses the BLS12381 scheme for its fast verification on aggregated signatures for a given number of authorities. In particular, Sui uses the minSig BLS mode, where each individual public key is 96 bytes, while the signature is 48 bytes. The latter is important as typically validators register their keys once at the beginning of each epoch and then they continuously sign transactions; thus, Sui optimizes on minimum signature size.
+The protocol key pair provides authority signatures on user-signed transactions if they pass verification. When a stake of the authorities that provide signatures on user transactions passes the required 2/3 threshold, Sui executes the transaction. Sui uses the BLS12381 scheme for its fast verification on aggregated signatures for a given number of authorities. In particular, Sui uses the minSig BLS mode, where each individual public key is 96 bytes, while the signature is 48 bytes. The latter is important as typically validators register their keys once at the beginning of each epoch and then they continuously sign transactions; thus, Sui optimizes on minimum signature size.
 
 As with the BLS scheme, you can aggregate independent signatures resulting in a single BLS signature payload. Sui also accompanies the aggregated signature with a bitmap to denote which of the validators signed. This effectively reduces the authorities signature size from (2f + 1) × `BLS_sig` size to just 1 `BLS_sig` payload. This has significant network cost benefits resulting in compressed transaction certificates independently on the validators set size.
 
-To counter potential rogue key attacks on BLS12381 aggregated signatures, proof of knowledge of the secret key (KOSK) is used during authority registration. When an authority requests to be added to the validator set, a proof of possession is submitted and verified. See [Intent Signing](/develop/transactions/transaction-auth/intent-signing) on how to create a proof of possession. Unlike most standards, the Sui proof of knowledge scheme commits to the address as well, which offers an extra protection against adversarial reuse of a validator BLS key from another malicious validator.
+To counter potential rogue key attacks on BLS12381 aggregated signatures, Sui uses proof of knowledge of the secret key (KOSK) during authority registration. When an authority requests to join the validator set, it submits a proof of possession, and Sui verifies it. See [Intent Signing](/develop/transactions/transaction-auth/intent-signing) on how to create a proof of possession. Unlike most standards, the Sui proof of knowledge scheme commits to the address as well, which offers an extra protection against adversarial reuse of a validator BLS key from another malicious validator.
 
 ### Aggregated authority signatures {#authority-aggregation}
 
-A single authority signature on a piece of data is represented by `AuthoritySignInfo`. This struct records the `epoch` the signature was produced in, the `authority` that signed, and the BLS signature itself. Verification fails if the `epoch` does not match the committee that checks the signature, because committee membership and stake can change between epochs.
+`AuthoritySignInfo` represents a single authority signature on a piece of data. This struct records the `epoch` in which the authority produced the signature, the `authority` that signed, and the BLS signature itself. Verification fails if the `epoch` does not match the committee that checks the signature, because committee membership and stake can change between epochs.
 
 When enough authorities sign the same data, Sui aggregates their individual signatures into one `AuthorityStrongQuorumSignInfo`. This struct contains three fields:
 
@@ -219,11 +219,11 @@ Because the aggregated signature stays a fixed 48 bytes regardless of committee 
 
 ### Account key pair {#account-pair}
 
-The account that the authority uses to receive payments on staking rewards is secured by the account key pair. Sui uses pure Ed25519 as the signing scheme.
+The account key pair secures the account that the authority uses to receive payments on staking rewards. Sui uses pure Ed25519 as the signing scheme.
 
 ### Network key pair {#network-pair}
 
-The private key is used to perform the TLS handshake required for [consensus](/develop/sui-architecture/consensus) networking. The public key is used for validator identity. Pure Ed25519 is used as the scheme.
+The private key performs the TLS handshake required for [consensus](/develop/sui-architecture/consensus) networking. The public key serves as the validator identity. Sui uses pure Ed25519 as the scheme.
 
 See more authority key toolings in [Validator Tool](https://github.com/MystenLabs/sui/blob/f8b5ad9aaecc3c4b30a060ec5e00bdad9ba75a93/nre/validator_tool.md).
 
@@ -256,7 +256,7 @@ See more test vectors for [pure Ed25519](https://github.com/MystenLabs/sui/blob/
 
 The following high-level process describes the overall workflow for constructing, signing, and executing an onchain transaction:
 
-1. Construct the transaction data by creating a `Transaction` where multiple commands are chained. See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/building-ptb) for more information.
+1. Construct the transaction data by creating a `Transaction` that chains multiple commands. See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/building-ptb) for more information.
 
 2. The SDK's built-in gas estimation and coin selection picks the gas coin. 
 
@@ -270,7 +270,7 @@ See [Examples of signing transactions](#examples-of-signing-transactions) for Ty
 
 If you are using the address balances feature, the feature automatically removes the need to select or merge gas coins entirely.
 
-If you want to use a specific gas coin, first find the gas coin object ID to be used to pay for gas and explicitly use that in the PTB. If there is no gas coin object, use the [splitCoin](/develop/transactions/ptbs/building-ptb) transaction to create a gas coin object. The split coin transaction should be the first transaction call in the PTB.
+If you want to use a specific gas coin, first find the object ID of the gas coin you want to pay for gas with and explicitly use that in the programmable transaction block (PTB). If there is no gas coin object, use the [splitCoin](/develop/transactions/ptbs/building-ptb) transaction to create a gas coin object. The split coin transaction should be the first transaction call in the PTB.
 
 :::
 
@@ -280,13 +280,13 @@ The Sui SDK offers transaction executors to help process multiple transactions f
 
 ### `SerialTransactionExecutor`
 
-Use the `SerialTransactionExecutor` when you process transactions one after another. The executor grabs all the coins from the sender and combines them into a single coin that is used for all transactions.
+Use the `SerialTransactionExecutor` when you process transactions one after another. The executor grabs all the coins from the sender and combines them into a single coin that it uses for all transactions.
 
 Using the `SerialTransactionExecutor` prevents `SequenceNumber` errors by handling the versioning of object inputs across a PTB.
 
 ### `ParallelTransactionExecutor`
 
-Use the `ParallelTransactionExecutor` when you want to process transactions with the same sender at the same time. This class creates and manages a pool of gas coins so parallel transactions do not reuse the same gas coin object version. The class tracks objects used across transactions and orders their processing so object inputs are not reused concurrently.
+Use the `ParallelTransactionExecutor` when you want to process transactions with the same sender at the same time. This class creates and manages a pool of gas coins so parallel transactions do not reuse the same gas coin object version. The class tracks objects used across transactions and orders their processing so concurrent transactions do not reuse object inputs.
 
 ## Examples of signing transactions
 
@@ -498,7 +498,7 @@ sui keytool import "$MNEMONICS" secp256k1
 sui keytool import "$MNEMONICS" secp256r1
 ```
 
-Create a transfer transaction in the CLI. Set the `$SUI_ADDRESS` to the one corresponding to the key pair used to sign. `$GAS_COIN_ID` refers to the object ID that is owned by the sender to be used as gas. `$GAS_BUDGET` refers to the budget used to execute transaction. Then sign with the private key corresponding to the sender address. `$MNEMONICS` refers to 12/15/18/21/24 words from the wordlist, for example, "retire skin goose will hurry this field stadium drastic label husband venture cruel toe wire". Refer to [Keys and Addresses](/develop/transactions/transaction-auth/auth-overview) for more.
+Create a transfer transaction in the CLI. Set the `$SUI_ADDRESS` to the one corresponding to the key pair used to sign. `$GAS_COIN_ID` refers to the ID of an object that the sender owns and uses as gas. `$GAS_BUDGET` refers to the budget used to execute transaction. Then sign with the private key corresponding to the sender address. `$MNEMONICS` refers to 12, 15, 18, 21, or 24 words from the wordlist, for example, `retire skin goose will hurry this field stadium drastic label husband venture cruel toe wire`. Refer to [Keys and Addresses](/develop/transactions/transaction-auth/auth-overview) for more.
 
 `$TX_BYTES` refers to the serialized unsigned transaction produced by the `sui client ptb ... --serialize-unsigned-transaction` command, and `$SERIALIZED_SIGNATURE` refers to the signature produced by the `sui keytool sign` command. Set each variable from the output of the preceding command before running the next one.
 

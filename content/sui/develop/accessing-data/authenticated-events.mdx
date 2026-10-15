@@ -1,8 +1,8 @@
 ---
 title: Authenticated Events
 description: >-
-  Cryptographically verifiable Move events that can be verified by a light
-  client without trusting any intermediary, suitable for trustless event
+  Cryptographically verifiable Move events that a light client can verify
+  without trusting any intermediary, suitable for trustless event
   consumption.
 keywords:
   - authenticated events
@@ -56,20 +56,20 @@ questions:
   - Can a light client verify a Sui event without trusting an RPC provider?
   - Are authenticated events backward compatible with existing events?
 answer: >-
-  Cryptographically verifiable Move events that can be verified by a light
-  client without trusting any intermediary, suitable for trustless event
+  Cryptographically verifiable Move events that a light client can verify
+  without trusting any intermediary, suitable for trustless event
   consumption.
 ---
 
-Authenticated events provide a cryptographically verifiable stream of Move events from Sui smart contracts. Unlike regular events, authenticated events can be verified by a light client without trusting any intermediary, making them suitable for applications that require trustless event consumption.
+Authenticated events provide a cryptographically verifiable stream of Move events from Sui smart contracts. Unlike regular events, authenticated events support verification by a light client without trusting any intermediary, which makes them suitable for applications that require trustless event consumption.
 
 ## Why authenticated events?
 
-Regular Sui events are indexed and queryable, but verifying them requires trusting the RPC provider. Authenticated events solve this by:
+Full nodes index regular Sui events and you can query them, but verifying them requires trusting the RPC provider. Authenticated events solve this by:
 
-1. **Cryptographic commitments**: Events are committed into a Merkle Mountain Range (MMR) structure stored onchain (see the [MMR section](#merkle-mountain-range-mmr) below).
-2. **Checkpoint verification**: The commitment is tied to Sui checkpoints, which are signed by the validator committee.
-3. **Light client verification**: Clients verify the chain from the genesis committee, to checkpoint signatures, to event inclusion proofs.
+1. **Cryptographic commitments:** Sui commits events into a Merkle mountain range (MMR) structure stored onchain (see the [MMR section](#merkle-mountain-range-mmr)).
+2. **Checkpoint verification:** Sui ties the commitment to its checkpoints, which the validator committee signs.
+3. **Light client verification:** Clients verify the chain from the genesis committee, to checkpoint signatures, to event inclusion proofs.
 
 This enables cryptographic verification of event completeness and correctness, with no full node required, and is lightweight enough to run in a browser or on mobile.
 
@@ -105,7 +105,7 @@ public entry fun do_something(value: u64) {
 }
 ```
 
-The event is automatically associated with the package that defines the event type. Only that package can emit events to its stream.
+Sui automatically associates the event with the package that defines the event type. Only that package can emit events to its stream.
 
 ### Are authenticated events backward compatible with regular events?
 
@@ -113,15 +113,15 @@ Authenticated events are fully backward-compatible with regular Sui events. An a
 
 To upgrade:
 
-1. **Contract change**: Replace `event::emit(...)` calls with `event::emit_authenticated(...)` in your Move code.
-2. **Package upgrade**: Deploy the updated package (requires a contract upgrade).
-3. **Optional**: Update consumers to use the authenticated events client for cryptographic verification.
+1. **Contract change:** Replace `event::emit(...)` calls with `event::emit_authenticated(...)` in your Move code.
+2. **Package upgrade:** Deploy the updated package (requires a contract upgrade).
+3. **Optional:** Update consumers to use the authenticated events client for cryptographic verification.
 
 Existing indexers, explorers, and tools that consume regular events continue to see authenticated events without modification.
 
 ### How do I consume and verify events in Rust?
 
-The reference Rust client verifies and streams events from a package. The example assumes `rpc_url`, `genesis_committee`, and `package_id` are defined by your application, and that the code runs in an async function returning a `Result` so that `?` can propagate errors:
+The reference Rust client verifies and streams events from a package. The example assumes your application defines `rpc_url`, `genesis_committee`, and `package_id`, and that the code runs in an async function returning a `Result` so that `?` can propagate errors:
 
 ```rust
 use sui_light_client::authenticated_events::AuthenticatedEventsClient;
@@ -161,7 +161,7 @@ while let Some(result) = stream.next().await {
 
 ### How do I resume a stream from a checkpoint?
 
-To resume a stream, the client needs a verified starting state. To guarantee completeness, this requires an Object Checkpoint State (OCS) inclusion proof showing the `EventStreamHead` at that checkpoint, which only exists if authenticated events were emitted for the stream at that checkpoint. In practice, this is the checkpoint sequence of the last event the client received before a disconnection.
+To resume a stream, the client needs a verified starting state. To guarantee completeness, this requires an Object Checkpoint State (OCS) inclusion proof showing the `EventStreamHead` at that checkpoint, which only exists if the package emitted authenticated events for the stream at that checkpoint. In practice, this is the checkpoint sequence of the last event the client received before a disconnection.
 
 If the specified checkpoint does not have events for that `stream_id`, the client fails to initialize.
 
@@ -212,29 +212,29 @@ The following diagram shows the flow from event emission to light client verific
 | `EventStreamHead` | Onchain commitment structure per package |
 | `LedgerService.ListEvents` | gRPC API that streams the events of a stream |
 | `AuthenticatedEventsClient` | Reference Rust client for verification |
-| MMR (Merkle Mountain Range) | Append-only commitment structure |
+| MMR (Merkle mountain range) | Append-only commitment structure |
 
 ### `emit_authenticated` and accumulator settlement
 
-Users call `emit_authenticated()` to emit authenticated events. This writes a regular event alongside metadata including the `stream_id` to transaction effects.
+You call `emit_authenticated()` to emit authenticated events. This writes a regular event alongside metadata including the `stream_id` to transaction effects.
 
-Events are batched and settled at checkpoint boundaries through the **accumulator settlement** process:
+The **accumulator settlement** process batches and settles events at checkpoint boundaries:
 
-1. **Event emission**: During transaction execution, authenticated events are emitted.
-2. **Consensus commit batching**: Authenticated events are grouped by consensus commit, and a merkle tree is computed over events for each `stream_id`.
-3. **Checkpoint settlement**: At each checkpoint, validators execute a settlement transaction that:
+1. **Event emission:** During transaction execution, the transaction emits authenticated events.
+2. **Consensus commit batching:** Sui groups authenticated events by consensus commit and computes a merkle tree over events for each `stream_id`.
+3. **Checkpoint settlement:** At each checkpoint, validators execute a settlement transaction that:
    - Appends each consensus commit's merkle root to the stream's MMR
    - Updates the `EventStreamHead` object for that `stream_id` with the new MMR state and event count
 
-Each consensus commit's merkle root becomes one leaf of the stream's MMR, so the per-commit merkle trees sit beneath the MMR rather than replacing it. See [Merkle Mountain Range (MMR)](#merkle-mountain-range-mmr) for how those leaves are organized.
+Each consensus commit's merkle root becomes one leaf of the stream's MMR, so the per-commit merkle trees sit beneath the MMR rather than replacing it. See [Merkle Mountain Range (MMR)](#merkle-mountain-range-mmr) for how the MMR organizes those leaves.
 
 ## API reference
 
-Authenticated events use two services: the standard ledger service to read events, and the proof service to verify that the onchain commitment was written at a given checkpoint.
+Authenticated events use two services: the standard ledger service to read events, and the proof service to verify that Sui wrote the onchain commitment at a given checkpoint.
 
 ### `LedgerService.ListEvents`
 
-Events are read through the standard `LedgerService.ListEvents` server-streaming RPC in `sui.rpc.v2`. Authenticated events are ordinary events carrying extra metadata, so they need no separate event API.
+Clients read events through the standard `LedgerService.ListEvents` server-streaming RPC in `sui.rpc.v2`. Authenticated events are ordinary events carrying extra metadata, so they need no separate event API.
 
 ```protobuf
 service LedgerService {
@@ -262,7 +262,7 @@ service ProofService {
 }
 ```
 
-Used to verify that the `EventStreamHead` object was written at a specific checkpoint.
+Use this RPC to verify that Sui wrote the `EventStreamHead` object at a specific checkpoint.
 
 **Request parameters:**
 
@@ -276,7 +276,7 @@ Used to verify that the `EventStreamHead` object was written at a specific check
   - `inclusion` (`OcsInclusionProof`): the object changed in this checkpoint. Contains `object_ref`, `merkle_proof`, `leaf_index`, `tree_root`, and `object_data`, the BCS-encoded object at the committed version. `object_data` is absent when the change was a deletion or a wrap.
   - `non_inclusion` (`OcsNonInclusionProof`): the object did not change in this checkpoint
 
-The inclusion proof verifies that the `EventStreamHead` was written at the specified checkpoint. This is essential for resuming streams: the checkpoint must be one where events were actually emitted.
+The inclusion proof verifies that Sui wrote the `EventStreamHead` at the specified checkpoint. This is essential for resuming streams: the checkpoint must be one where the package actually emitted events.
 
 ### Client configuration
 
@@ -296,17 +296,17 @@ let client = AuthenticatedEventsClient::new_with_config(
 ).await?;
 ```
 
-## Merkle Mountain Range (MMR)
+## Merkle mountain range (MMR)
 
-An MMR is a forest of perfect binary trees (mountains). After `n` leaves are appended, mountain sizes correspond to the set bits in the binary representation of `n`. For example, when `n = 13`, which is `8 + 4 + 1` (`1101` in binary, with bits 3, 2, and 0 set), the mountains have sizes `2^3 = 8`, `2^2 = 4`, and `2^0 = 1`. The diagram below shows an expanded MMR (internal nodes and leaves).
+An MMR is a forest of perfect binary trees (mountains). After the MMR receives `n` leaves, mountain sizes correspond to the set bits in the binary representation of `n`. For example, when `n = 13`, which is `8 + 4 + 1` (`1101` in binary, with bits 3, 2, and 0 set), the mountains have sizes `2^3 = 8`, `2^2 = 4`, and `2^0 = 1`. The diagram in [Expanded MMR with 13 leaves](#expanded-mmr-with-13-leaves) shows an expanded MMR (internal nodes and leaves).
 
-The MMR state in `EventStreamHead` is stored as a compact vector of digests indexed by tree height (not the full expanded tree). This keeps onchain state `O(log n)` in the number of appended leaves.
+`EventStreamHead` stores the MMR state as a compact vector of digests indexed by tree height (not the full expanded tree). This keeps onchain state `O(log n)` in the number of appended leaves.
 
 Key properties of an MMR:
 
 - Compact onchain accumulator state: `O(log n)` digests.
-- Append-only updates: new leaves can be incorporated using only the current accumulator state (without the expanded MMR).
-- Inclusion proofs are `O(log n)` in size. Event-level MMR inclusion proofs are not yet exposed by current RPC services (this is separate from the OCS inclusion proofs exposed by `ProofService`, which prove that the `EventStreamHead` object was written at a checkpoint, not that an individual event is in the MMR). These inclusion proofs can lead to many interesting applications, such as moving data storage offchain, efficient cross-chain reads, and proving inclusion in zero-knowledge (ZK) proofs.
+- Append-only updates: you can incorporate new leaves using only the current accumulator state (without the expanded MMR).
+- Inclusion proofs are `O(log n)` in size. Current RPC services do not yet expose event-level MMR inclusion proofs (this is separate from the OCS inclusion proofs that `ProofService` exposes, which prove that Sui wrote the `EventStreamHead` object at a checkpoint, not that an individual event is in the MMR). These inclusion proofs can lead to many interesting applications, such as moving data storage offchain, efficient cross-chain reads, and proving inclusion in zero-knowledge (ZK) proofs.
 
 ### Expanded MMR with 13 leaves
 
@@ -339,11 +339,11 @@ Leaves (`Lx`) correspond to the per-consensus-commit merkle tree digests, which 
 
 The client establishes trust through the following chain:
 
-1. **Genesis committee**: The client is initialized with the genesis validator committee public keys.
-2. **Trust ratcheting**: When epochs change, the client verifies the new committee was signed by the previous one.
-3. **Checkpoint verification**: Each checkpoint summary is verified against the committee's aggregate signature.
-4. **Object inclusion proof**: The `EventStreamHead` object is proven to be modified at a specific checkpoint.
-5. **MMR verification**: Events are verified against the `EventStreamHead`'s MMR commitment.
+1. **Genesis committee:** You initialize the client with the genesis validator committee public keys.
+2. **Trust ratcheting:** When epochs change, the client verifies that the previous committee signed the new one.
+3. **Checkpoint verification:** The client verifies each checkpoint summary against the committee's aggregate signature.
+4. **Object inclusion proof:** An inclusion proof shows that a specific checkpoint modified the `EventStreamHead` object.
+5. **MMR verification:** The client verifies events against the `EventStreamHead`'s MMR commitment.
 
 The client verifies a checkpoint range by:
 
@@ -358,19 +358,19 @@ The client automatically handles epoch transitions and committee changes.
 
 ## Security guarantees
 
-**Completeness**: When you receive verified event N from a stream, you are guaranteed to have received all events 0..N-1 in the correct order. The MMR structure ensures that any missing or reordered events would cause verification to fail.
+**Completeness:** When you receive verified event N from a stream, verification guarantees that you have received all events 0..N-1 in the correct order. The MMR structure ensures that any missing or reordered events would cause verification to fail.
 
-**What completeness does not guarantee**: An intermediary (for example, an RPC provider) is not obligated to return all events up to a requested checkpoint height. To detect withholding, clients must verify against the onchain `EventStreamHead`, which contains the authoritative event count. The reference client does this automatically. If the events received do not match the onchain commitment, verification fails.
+**What completeness does not guarantee:** An intermediary (for example, an RPC provider) has no obligation to return all events up to a requested checkpoint height. To detect withholding, clients must verify against the onchain `EventStreamHead`, which contains the authoritative event count. The reference client does this automatically. If the events received do not match the onchain commitment, verification fails.
 
-**Correctness**: Each event's content is committed to the MMR. Any modification to event data would cause the computed MMR to diverge from the onchain state.
+**Correctness:** Sui commits each event's content to the MMR. Any modification to event data would cause the computed MMR to diverge from the onchain state.
 
 ## Limitations
 
-- Events are retrievable only if they are indexed on the full node and have not been pruned.
-- Events must be consumed in checkpoint order.
-- The `EventStreamHead` must be updated at the resume checkpoint (authenticated events must have been emitted).
-- One stream per package (`stream_id` = package address).
-- Event-level MMR inclusion proofs are not supported.
+- You can retrieve events only if the full node indexes them and has not pruned them.
+- You must consume events in checkpoint order.
+- The `EventStreamHead` must change at the resume checkpoint (the package must have emitted authenticated events).
+- Each package has one stream (`stream_id` = package address).
+- Sui does not support event-level MMR inclusion proofs.
 
 ## Error handling
 
