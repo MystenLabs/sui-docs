@@ -44,8 +44,8 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - How do I spend a closed-loop token?
-  - Why do closed-loop tokens lack the store ability?
+  - How do I spend a Closed-Loop Token?
+  - Why do Closed-Loop Tokens lack the store ability?
   - How do I gate the spend action?
 answer: >-
   Closed-Loop Tokens lack the `store` ability, so they use a `spend` method that
@@ -55,31 +55,31 @@ answer: >-
 
 [Closed-Loop Tokens](/onchain-finance/closed-loop-token) differ from standard `Coin` types in a key way: `Token` types do not have the `store` ability. This means you cannot store a `Token` inside another object or add it to a balance field the way you can with a `Coin`. An application that accepts a `Token` as payment cannot keep it.
 
-To handle this, `Token` provides a `spend` method. When you call `spend`, the token is consumed and its balance moves into an [`ActionRequest`](/onchain-finance/closed-loop-token/action-request). You then deliver the `ActionRequest` to the [`TokenPolicy`](/onchain-finance/closed-loop-token/token-policy) (which accumulates the spent balance) or burn it directly with a `TreasuryCap`.
+To handle this, `Token` provides a `spend` method. When you call `spend`, the method consumes the token and moves its balance into an [`ActionRequest`](/onchain-finance/closed-loop-token/action-request). You then deliver the `ActionRequest` to the [`TokenPolicy`](/onchain-finance/closed-loop-token/token-policy) (which accumulates the spent balance) or burn it directly with a `TreasuryCap`.
 
 ## How do I spend a token?
 
-Tokens can be spent by calling the `spend` method. It takes the following arguments:
+To spend a token, call the `spend` method. It takes the following arguments:
 
 ```move
 // module sui::token
 public fun spend<T>(token: Token<T>, ctx: &mut TxContext): ActionRequest<T>;
 ```
 
-The `spend` function is defined in the `sui::token` module, along with the `Token` and `ActionRequest` types and the `add_approval` function used in the example below.
+The `sui::token` module defines the `spend` function, along with the `Token` and `ActionRequest` types and the `add_approval` function, which the [gift shop example](#how-do-i-gate-the-spend-action) uses.
 
-As the signature shows, the `Token` object is consumed. Its balance becomes the `spent_balance` in the [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#actionrequest-structure).
+As the signature shows, `spend` consumes the `Token` object. Its balance becomes the `spent_balance` in the [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#actionrequest-structure).
 
 ## What happens to a spent token?
 
-The `ActionRequest` for the `spend` action contains the `Balance` of the spent `Token`, and it can either be confirmed [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request#confirming-with-treasurycap) or [delivered to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy). In the first case, the balance is burned directly in the `TreasuryCap`, and in the second case, it's delivered to the `TokenPolicy` `spent_balance`.
+The `ActionRequest` for the `spend` action contains the `Balance` of the spent `Token`, and you can either confirm it [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request#confirming-with-treasurycap) or [deliver it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy). In the first case, you burn the balance directly with the `TreasuryCap`. In the second case, the balance moves to the `TokenPolicy` `spent_balance`.
 
-Spent balance cannot be used in any way, and it is not possible to withdraw it. The only available action is [flushing](/onchain-finance/closed-loop-token/token-policy#consume-spent-balance) - burning the `spent_balance` by bringing a `TreasuryCap`.
+You cannot use spent balance in any way, and you cannot withdraw it. The only available action is [flushing](/onchain-finance/closed-loop-token/token-policy#consume-spent-balance): burning the `spent_balance` by bringing a `TreasuryCap`.
 
 
 ## How do I gate the spend action?
 
-Normally, the `spend` action should have at least one rule assigned to it to prevent aimless spending, and the recommended way of authorizing the spend in an application that accepts the token is to stamp it right in the function where a spend is performed. Stamping means calling `token::add_approval` with a rule-like witness (here `GiftShop {}`), which adds an approval to the `ActionRequest` recording that the action was performed by that rule. For example:
+Normally, assign at least one rule to the `spend` action to prevent aimless spending. The recommended way to authorize the spend in an application that accepts the token is to stamp it right in the function that performs the spend. Stamping means calling `token::add_approval` with a rule-like witness (here `GiftShop {}`), which adds an approval to the `ActionRequest` recording that the rule performed the action. For example:
 
 ```move
 /// Rule-like witness to stamp the ActionRequest
@@ -102,4 +102,4 @@ public fun buy_gift(
 }
 ```
 
-The caller of `buy_gift` keeps the `Gift` and must still confirm the returned `ActionRequest`, either [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request#confirming-with-treasurycap) or by [delivering it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy), as described in the previous section.
+The caller of `buy_gift` keeps the `Gift` and must still confirm the returned `ActionRequest`, either [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request#confirming-with-treasurycap) or by [delivering it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy), as [What happens to a spent token?](#what-happens-to-a-spent-token) explains.

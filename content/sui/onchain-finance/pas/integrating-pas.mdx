@@ -36,7 +36,7 @@ questions:
 answer: 'To integrate with the Permissioned Assets Standard (PAS), define an approval witness, create a policy with `policy::new_for_currency` that sets the required approval per action, write an approval function that validates a `Request` and calls `request.approve()`, and set template commands so clients can build PTBs automatically.'
 ---
 
-This page explains how to integrate a currency with the Permissioned Assets Standard (PAS): defining approval witnesses, creating a policy, writing approval logic, and registering template commands for clients.
+Integrating a currency with the Permissioned Assets Standard (PAS) involves defining approval witnesses, creating a policy, writing approval logic, and registering template commands for clients.
 
 To integrate with the Permissioned Assets Standard (PAS), you must:
 
@@ -64,13 +64,13 @@ public struct MyTransferApproval() has drop;
 public struct MyClawbackApproval() has drop;
 ```
 
-You can define one witness type per action to serve as its approval. Each witness is registered independently in the policy and can optionally have its own template command.
+You can define one witness type per action to serve as its approval. You register each witness independently in the policy, and each witness can optionally have its own template command.
 
 The policy names the witness required for each action, and your approval function passes that witness to `request.approve()` once its checks pass, so the witness type is what links an action to your approval logic.
 
 ## How do I set up a policy for a currency?
 
-A `Policy<Balance<C>>` defines which approval is required for each action type. You need a `TreasuryCap<C>` to prove ownership of the currency.
+A `Policy<Balance<C>>` defines which approval each action type requires. You need a `TreasuryCap<C>` to prove ownership of the currency.
 
 The following example creates a policy in a package:
 
@@ -98,7 +98,7 @@ Your approval function takes a mutable reference to a `Request`, runs your valid
 
 The function takes the inputs your checks need, such as a registry object, followed by `&mut Request<...>` for the action, for example `Request<SendFunds<Balance<MY_COIN>>>` for transfers. It returns nothing: it either calls `request.approve()` with your witness or aborts.
 
-Transfers require an external check, for example a KYC registry. In the following examples, `MY_COIN` stands for your currency type and `KYCRegistry` for the registry object from the KYC example; substitute your own types:
+Transfers require an external check, for example a know your customer (KYC) registry. In the following examples, `MY_COIN` stands for your currency type and `KYCRegistry` for the registry object from the KYC example; substitute your own types:
 
 ```move
 public fun approve_transfer(
@@ -152,7 +152,7 @@ public fun set_template_command<A: drop>(
 )
 ```
 
-The template is keyed by `A`, the witness type used to approve requests. This creates a one-to-one mapping: for each approval type, there is exactly one template command.
+`set_template_command` keys the template by `A`, the witness type used to approve requests. This creates a one-to-one mapping: for each approval type, there is exactly one template command.
 
 ### Example
 

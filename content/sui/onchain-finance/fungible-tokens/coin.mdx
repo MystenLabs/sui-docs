@@ -63,17 +63,17 @@ answer: >-
   type of object.
 ---
 
-This page explains how the Coin standard (`sui::coin`) lets you create fungible tokens on Sui: creating a coin with `coin::create_currency`, using the `TreasuryCap` to mint and burn coins, creating regulated coins with a deny list, and reading and updating coin metadata.
+The Coin standard (`sui::coin`) lets you create fungible tokens on Sui. It covers creating a coin with `coin::create_currency`, using the `TreasuryCap` to mint and burn coins, creating regulated coins with a deny list, and reading and updating coin metadata.
 
 :::tip
 
-The Coin and Currency standards are both used to create fungible tokens. However, they use different creation methods and store metadata in a different type of object. See [Choosing a Fungible Token Standard](/onchain-finance/fungible-tokens) for a side-by-side comparison.
+You can use both the Coin and Currency standards to create fungible tokens. However, they use different creation methods and store metadata in a different type of object. See [Choosing a Fungible Token Standard](/onchain-finance/fungible-tokens) for a side-by-side comparison.
 
 Coin creates tokens using `coin::create_currency` while Currency uses `sui::coin_registry`.
 
 Coin uses `CoinMetadata` while Currency uses `Currency`.
 
-Fungible tokens created on Sui using the Coin or Currency standard are referred to as coins.
+The documentation refers to fungible tokens created on Sui using the Coin or Currency standard as coins.
 
 For fungible tokens created on Sui using the [Closed-Loop Token standard](/onchain-finance/closed-loop-token), the documentation uses the term tokens. In practice, the terms for both these objects are often interchangeable.
 
@@ -87,7 +87,7 @@ See [Sui Tokenomics](/develop/sui-architecture/tokenomics-overview) to learn mor
 
 ## Fungible tokens
 
-The `Coin<T>` type represents open-loop fungible tokens (see [`Token<T>`](/onchain-finance/closed-loop-token) for closed-loop tokens). Coins are denominated by their type parameter, `T`, which is also associated with metadata (like name, symbol, decimal precision, and so on) that applies to all instances of `Coin<T>`. The `sui::coin` module exposes an interface over `Coin<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Coin<T>` is interchangeable with any other unit of `T`, much like how traditional fiat currencies operate.
+The `Coin<T>` type represents open-loop fungible tokens (see [`Token<T>`](/onchain-finance/closed-loop-token) for closed-loop tokens). The type parameter `T` denominates coins and also has associated metadata (like name, symbol, decimal precision, and so on) that applies to all instances of `Coin<T>`. The `sui::coin` module exposes an interface over `Coin<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Coin<T>` is interchangeable with any other unit of `T`, much like how traditional fiat currencies operate.
 
 ## Coin creation
 
@@ -101,7 +101,7 @@ While `TreasuryCap` is freely transferable, never freeze or share the `TreasuryC
 
 :::
 
-The `TreasuryCap` object is required to mint new coins or to burn current ones. Consequently, only addresses that have access to this object can maintain the coin supply on the Sui network.
+You need the `TreasuryCap` object to mint new coins or to burn current ones. Consequently, only addresses that have access to this object can maintain the coin supply on the Sui network.
 
 The `TreasuryCap` object is transferable, so a third party can take over the management of a coin that you create if you transfer the `TreasuryCap`. After transferring the capability, however, you can no longer mint and burn tokens yourself.
 
@@ -117,7 +117,7 @@ A system-created `DenyList` shared object holds the list of addresses that canno
 
 ### Global pause switch
 
-The `DenyCapV2` object for a regulated coin includes an `allow_global_pause` Boolean field. When set to `true`, the bearer of the `DenyCapV2` object for the coin type can use the `coin::deny_list_v2_enable_global_pause` function to pause coin activity indefinitely. Immediately upon the bearer initiating the pause, the network disallows the coin type as input for any transactions. At the start of the next epoch (epochs last approximately 24 hours), the network additionally disallows all addresses from receiving the coin type.
+The `DenyCapV2` object for a regulated coin includes an `allow_global_pause` Boolean field. When this field is `true`, the bearer of the `DenyCapV2` object for the coin type can use the `coin::deny_list_v2_enable_global_pause` function to pause coin activity indefinitely. Immediately upon the bearer initiating the pause, the network disallows the coin type as input for any transactions. At the start of the next epoch (epochs last approximately 24 hours), the network additionally disallows all addresses from receiving the coin type.
 
 When the bearer of the `DenyCapV2` object for the coin type removes the pause using `coin::deny_list_v2_disable_global_pause`, the coins are immediately available to use again as transaction inputs. Addresses cannot receive the coin type, however, until the following epoch.
 
@@ -129,7 +129,7 @@ Each coin you create includes metadata that describes it. Typically, smart contr
 
 Regular coins using the Coin standard include a `CoinMetadata` object. As mentioned previously, regulated coins build on top of the same procedure that creates regular coins, so they receive the same metadata object in addition to a `RegulatedCoinMetadata` object that includes deny list information.
 
-The metadata object is separate from the `Coin<T>` objects themselves: a single `CoinMetadata<T>` object describes every `Coin<T>` of that type and is created once when you create the coin, while individual `Coin<T>` objects are minted and burned over time.
+The metadata object is separate from the `Coin<T>` objects themselves: a single `CoinMetadata<T>` object describes every `Coin<T>` of that type, and you create it once when you create the coin, while you mint and burn individual `Coin<T>` objects over time.
 
 ### Metadata fields
 
@@ -172,14 +172,14 @@ Use the `coin::burn` function to destroy current tokens.
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/coin.move" mode="code" fun="burn" noComments />
 
-The signature shows that only the `TreasuryCap` and coin object you want to burn are necessary inputs, returning the amount by which the supply was decreased (value of the coin). The function does not allow you to burn more coins than are available in the supply.
+The signature shows that only the `TreasuryCap` and coin object you want to burn are necessary inputs, returning the amount by which the supply decreased (value of the coin). The function does not allow you to burn more coins than are available in the supply.
 
 ## Adding and removing addresses to and from the deny list
 
 The deny list is only applicable to regulated coins. As mentioned previously, when you create a regulated coin you receive a `DenyCapV2` that authorizes the bearer to add and remove addresses from the system-created `DenyList` object. The process works as follows:
 
 1. Create a regulated coin using `coin::create_regulated_currency_v2` to receive the `DenyCapV2`.
-1. Use `coin::deny_list_v2_add` to add an address to the deny list for your coin. Starting immediately upon being added, the address cannot use the coin as an input to transactions, meaning it is unable to send the coin.
+1. Use `coin::deny_list_v2_add` to add an address to the deny list for your coin. Starting immediately after you add it, the address cannot use the coin as an input to transactions, meaning it is unable to send the coin.
 1. At the start of the following epoch, the address is still unable to send the coin but is also unable to receive it.
 1. From that point, the address cannot interact with the coin until the `DenyCapV2` bearer expressly removes it from the deny list using `coin::deny_list_v2_remove`.
 
@@ -195,7 +195,7 @@ You can use the following functions to retrieve data from coins.
 
 :::danger
 
-`CoinMetadata` is planned for deprecation. The Coin standard itself is not.
+A planned deprecation applies to `CoinMetadata`. It does not apply to the Coin standard itself.
 
 :::
 
@@ -215,7 +215,7 @@ Use the `coin::supply` function to get the current supply of a given coin.
 
 ## Update coin metadata
 
-If the `CoinMetadata` object was not frozen upon creation, you can use the following functions to update its values.
+If you did not freeze the `CoinMetadata` object upon creation, you can use the following functions to update its values.
 
 Each function signature is similar. Replace `<FUNCTION-NAME>` and `<ATTRIBUTE-TYPE>` with the values defined in the table to get the signature of each function:
 
@@ -264,7 +264,7 @@ public entry fun update_icon_url<T>(
 
 :::info
 
-`RegulatedCoinMetadata` is frozen upon creation, so there are no functions to update its data.
+Regulated coins freeze `RegulatedCoinMetadata` upon creation, so there are no functions to update its data.
 
 :::
 

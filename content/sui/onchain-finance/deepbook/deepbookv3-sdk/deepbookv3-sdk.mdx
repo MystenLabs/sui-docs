@@ -127,13 +127,13 @@ class DeepBookMarketMaker {
 }
 ```
 
-## Keys: Coin, Pool, and Manager {#keys}
+## Keys: coin, pool, and manager {#keys}
 
-Functions that require the input of a coin, pool, or a manager require the key of any such object as the parameter. The SDK manages a `key:value` relationship of this data in memory. Some default data comes with the SDK (as seen in `utils/constants.ts`). Coins are stored in a `CoinMap` and pools in a `PoolMap` in the config.
+Functions that require the input of a coin, pool, or a manager require the key of any such object as the parameter. The SDK manages a `key:value` relationship of this data in memory. Some default data comes with the SDK (as seen in `utils/constants.ts`). The config stores coins in a `CoinMap` and pools in a `PoolMap`.
 
 ### Balance manager
 
-Before placing any trade, you must supply a balance manager address to the client. The manager key points to an object defined by the `BalanceManager` interface in the client. [BalanceManager docs](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager). Initialize the balance manager with the client. If you don't create a balance manager, you can rely on the client to create one, but then the user must reinitialize the client.
+Before placing any trade, you must supply a balance manager address to the client. The manager key points to an object that the `BalanceManager` interface in the client defines. [BalanceManager docs](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager). Initialize the balance manager with the client. If you don't create a balance manager, you can rely on the client to create one, but then you must reinitialize the client.
 
 Example using an existing balance manager:
 
@@ -282,11 +282,11 @@ class DeepBookMarketMaker {
 }
 ```
 
-`createBalanceManagerAndReinitialize` signs and executes a transaction that creates and shares a balance manager. It then searches the transaction effects' `changedObjects` for the object that was created and whose type includes `BalanceManager`, uses that object's ID as the balance manager address, and recreates the client with it.
+`createBalanceManagerAndReinitialize` signs and executes a transaction that creates and shares a balance manager. It then searches the transaction effects' `changedObjects` for the created object whose type includes `BalanceManager`, uses that object's ID as the balance manager address, and recreates the client with it.
 
 ### Coin
 
-The SDK comes with four default coins on Testnet and five default coins on Mainnet.
+The SDK comes with 4 default coins on Testnet and 5 default coins on Mainnet.
 
 **Default Testnet coins**
 
@@ -303,11 +303,11 @@ The SDK comes with four default coins on Testnet and five default coins on Mainn
 - USDT
 - WETH
 
-You can also initialize the SDK with custom coins to interact with pools that are not supported by default. To do this, create a `CoinMap` object and pass it to the constructor of the client.
+You can also initialize the SDK with custom coins to interact with pools that the SDK does not support by default. To do this, create a `CoinMap` object and pass it to the constructor of the client.
 
 ### Pool
 
-Similar to coins, the SDK comes with default pools, which are defined in `utils/constants.ts` (see [Constants](#constants)). You can provide a `PoolMap` during construction to override this behavior.
+Similar to coins, the SDK comes with default pools, which `utils/constants.ts` defines (see [Constants](#constants)). You can provide a `PoolMap` during construction to override this behavior.
 
 ```tsx
 import { deepbook, type DeepBookClient } from '@mysten/deepbook-v3';
@@ -416,7 +416,7 @@ import { DeepBookMarketMaker } from './deepbookMarketMaker.js';
 })();
 ```
 
-Read-only calls, such as `checkManagerBalance` and `getLevel2Range`, are awaited and return data directly. Transaction-building functions, such as `depositIntoManager` and `withdrawAllFromManager`, return a function that you call with a `Transaction` (`fn(...)(tx)`) to add the call to that transaction; the calls run when you sign and execute the transaction. When you need a function's result as input to later calls in the same transaction, pass it to `tx.add(...)`, which returns the result, as the referral examples do with `mintTradeCap` and `claimPoolReferralRewards`.
+You await read-only calls, such as `checkManagerBalance` and `getLevel2Range`, and they return data directly. Transaction-building functions, such as `depositIntoManager` and `withdrawAllFromManager`, return a function that you call with a `Transaction` (`fn(...)(tx)`) to add the call to that transaction; the calls run when you sign and execute the transaction. When you need a function's result as input to later calls in the same transaction, pass it to `tx.add(...)`, which returns the result, as the referral examples do with `mintTradeCap` and `claimPoolReferralRewards`.
 
 ## Referral functions
 

@@ -505,7 +505,7 @@ A top-up has 2 limits: available idle USDC, and the expiry's remaining funding r
 
 Call `expiry_market::try_settle` first in the same transaction when settlement might be due. An expired unsettled market is a no-op for the rebalance.
 
-On protocol version 4, a market also carries `waiting_cash_need`, the summed worst-case cash need of its queued orders that have not filled yet, readable through `expiry_market::order_flow_state`. The rebalance funds a live market to at least `required_cash + waiting_cash_need`, and its sweep never takes the market below that line, so the cash that waiting orders may fill against stays in the market. The protocol's keeper calls the rebalance after each new queued order, and a queued sell's enqueue builder in the SDK appends it when the sell could need more than the market's spare cash. A fill the market still cannot cover is refunded, never drawn from the pool. See [Queue limits and market cash](/onchain-finance/deepbook/deepbook-predict/contract-information/predict).
+On protocol version 4, a market also carries `waiting_cash_need`, the summed worst-case cash need of its queued orders that have not filled yet, readable through `expiry_market::order_flow_state`. The rebalance funds a live market to at least `required_cash + waiting_cash_need`, and its sweep never takes the market below that line, so the cash that waiting orders might fill against stays in the market. The protocol's keeper calls the rebalance after each new queued order, and a queued sell's enqueue builder in the SDK appends it when the sell could need more than the market's spare cash. The protocol refunds a fill that the market still cannot cover and never draws it from the pool. See [Queue limits and market cash](/onchain-finance/deepbook/deepbook-predict/contract-information/predict).
 
 <details>
 <summary>Source for `rebalance_expiry_cash`</summary>
@@ -619,7 +619,7 @@ Protocol version 4 makes 3 incentive rates admin-set on `ProtocolConfig`, each r
 
 ### Add USDC without minting shares {#add-usdc}
 
-`add_usdc_to_plp` donates USDC into the pool's idle balance and mints nothing. Supply is unchanged and the payer receives no claim, so the whole amount accrues to existing holders as a rise in the mark. That is the difference from `sponsor_fee_incentives`, whose USDC sits in the fee incentive reserve and is excluded from NAV: a contribution here *is* NAV.
+`add_usdc_to_plp` donates USDC into the pool's idle balance and mints nothing. Supply is unchanged and the payer receives no claim, so the whole amount accrues to existing holders as a rise in the mark. That is the difference from `sponsor_fee_incentives`, whose USDC sits in the fee incentive reserve and is excluded from NAV: a contribution here is NAV.
 
 :::info
 
@@ -635,7 +635,7 @@ Three admission rules apply, in this order:
 
 #### Why the bound counts deployed cash {#contribution-cash}
 
-A flush marks every dollar the pool owns, including the cash `rebalance_expiry_cash` has moved out of idle and into a market. A bound that read idle alone could therefore be walked around: rebalancing is permissionless, so a contributor could fill the idle ceiling, park the cash in a market, and contribute again — or simply contribute into the idle headroom of a pool whose markets are already funded.
+A flush marks every dollar the pool owns, including the cash `rebalance_expiry_cash` has moved out of idle and into a market. A contributor could therefore walk around a bound that read idle alone: rebalancing is permissionless, so a contributor could fill the idle ceiling, park the cash in a market, and contribute again. A contributor could also contribute into the idle headroom of a pool whose markets the pool has already funded.
 
 So the guard tests pool cash: idle, plus `pool_accounting::deployed_expiry_cash`, which sums the net USDC funded into each active expiry, sent minus received and floored at zero per expiry. Moving idle into a market leaves that sum unchanged, so parking reopens no headroom. Cash is an upper bound on the pool's own contribution to the mark, because a market's marked liabilities only pull its NAV below its cash.
 

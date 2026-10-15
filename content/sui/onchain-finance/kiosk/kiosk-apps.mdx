@@ -49,15 +49,15 @@ There are two types of apps:
 - [Basic apps](#basic-apps)
 - [Permissioned apps](#permissioned-apps)
 
-Use a basic app when only the kiosk owner needs to modify the data the app adds, such as custom metadata. Use a permissioned app when a third party needs to act in the kiosk (for example, to place or lock items) without the kiosk owner's involvement in every step, or when the app needs storage that is protected from tampering.
+Use a basic app when only the kiosk owner needs to modify the data the app adds, such as custom metadata. Use a permissioned app when a third party needs to act in the kiosk (for example, to place or lock items) without the kiosk owner's involvement in every step, or when the app needs tamper-proof storage.
 
 ## Basic apps
 
-Basic Kiosk apps do not require Kiosk Apps API to function. They usually serve the purpose of adding custom metadata to a kiosk or wrapping/working with existing objects such as `Kiosk` or `KioskOwnerCap`. An example of an app that does not require the API is the Personal Kiosk app.
+Basic Kiosk apps do not require Kiosk Apps API to function. They usually serve the purpose of adding custom metadata to a kiosk or wrapping or working with existing objects such as `Kiosk` or `KioskOwnerCap`. An example of an app that does not require the API is the Personal Kiosk app.
 
 ### UID access through the uid_mut
 
-Kiosk has an `id: UID` field like all objects on Sui, which allows this object to be uniquely identified and carry custom dynamic fields and dynamic object fields. The Kiosk itself is built around dynamic fields and features like place and list are built around dynamic object fields.
+Kiosk has an `id: UID` field like all objects on Sui. This field uniquely identifies the object and lets it carry custom dynamic fields and dynamic object fields. Kiosk itself uses dynamic fields, and features like place and list use dynamic object fields.
 
 ### How do I get mutable access to a Kiosk UID? {#the-uid_mut_as_owner-function}
 
@@ -69,11 +69,11 @@ Function signature:
 
 ### The public uid getter
 
-Anyone can read the `uid` of kiosks. This allows third party modules to read the fields of the kiosk if they're allowed to do so. Therefore enabling the object capability and other patterns.
+Anyone can read the `uid` of kiosks. This allows third party modules to read the fields of the kiosk if they have permission to do so. This enables the object capability and other patterns.
 
 ### Basic app ideas
 
-You can attach custom dynamic fields to your kiosks that anyone can then read (but only you can modify), you can use this to implement basic apps. For example, a Kiosk Name app where you as the kiosk owner can set a name for the kiosk, attach it as a dynamic field, and make it readable by anyone.
+You can attach custom dynamic fields to your kiosks that anyone can then read (but only you can modify). You can use this to implement basic apps. For example, a Kiosk Name app where you as the kiosk owner can set a name for the kiosk, attach it as a dynamic field, and make it readable by anyone.
 
 ```move
 module examples::kiosk_name_ext;
@@ -105,13 +105,13 @@ public fun name(self: &Kiosk): Option<String> {
 
 Permissioned apps use the Kiosk Apps API to perform actions in the kiosk. They usually imply interaction with a third party and provide guarantees for the storage access (preventing malicious actions from the seller).
 
-Just having access to the `uid` is often not enough to build an app due to the security limitations. Only the owner of a kiosk has full access to the `uid`, which means that an app involving a third party would require involvement from the kiosk owner in every step of the process.
+Just having access to the `uid` is often not enough to build an app due to the security limitations. Only the owner of a kiosk has full access to the `uid`, which means that an app involving a third party requires involvement from the kiosk owner in every step of the process.
 
-In addition to limited and constrained access to storage, app permissions are also owner dependent. In the default setup, no party can place or lock items in a kiosk without its owner's consent. As a result, some cases such as collection bidding (offering X SUI for any item in a collection) requires the kiosk owner to approve the bid.
+In addition to limited and constrained access to storage, app permissions are also owner dependent. In the default setup, no party can place or lock items in a kiosk without its owner's consent. As a result, some cases such as collection bidding (offering X SUI for any item in a collection) require the kiosk owner to approve the bid.
 
-## kiosk_extension module
+## `kiosk_extension` module
 
-The `kiosk_extension` module addresses concerns over owner bottlenecks and provides more guarantees for storage access. The module provides a set of functions that enable you to perform certain actions in the kiosk without the kiosk owner's involvement and have a guarantee that the storage of the app is not tampered with.
+The `kiosk_extension` module addresses concerns over owner bottlenecks and provides more guarantees for storage access. The module provides a set of functions that enable you to perform certain actions in the kiosk without the kiosk owner's involvement and have a guarantee that no one tampers with the storage of the app.
 
 ```move
 module example::my_extension;
@@ -128,13 +128,13 @@ These are the key points in the lifecycle of a Sui Kiosk app:
 - You can only install an app with an explicit call in the `kiosk_extension` module.
 - A kiosk owner can revoke permissions of an app at any time by calling the `disable` function.
 - A kiosk owner can re-enable a disabled app at any time by calling the `enable` function.
-- You can only remove apps if the app storage is empty (all items are removed).
+- You can only remove apps if the app storage is empty (you have removed all items).
 
 ## How do I add an app to a kiosk? {#adding-an-app}
 
 For the app to function, the kiosk owner first needs to install it. To achieve that, an app needs to implement the `add` function that the kiosk owner calls to request all necessary permissions.
 
-### Implementing add function
+### Implementing `add` function
 
 The signature of the `kiosk_extension::add` function requires the app witness, making it impossible to install an app without an explicit implementation. The app witness is a struct defined in the app's own module (`Extension` in the following example) that identifies and authorizes the app; the app's `add` function creates it with `Extension {}` and passes it to `kiosk_extension::add`. The following example shows how to implement the `add` function for an app that requires the `place` permission:
 
@@ -163,7 +163,7 @@ Apps can request permissions from the kiosk owner on installation. Permissions f
 
 ### Structure
 
-Permissions are represented as a `u128` integer storing a bitmap. Each of the bits corresponds to a permission, the first bit is the least significant bit. The following table lists all permissions and their corresponding bit:
+A `u128` integer storing a bitmap represents permissions. Each of the bits corresponds to a permission. The first bit is the least significant bit. The following table lists all permissions and their corresponding bit:
 
 | Bit |	Decimal	| Permission |
 | --- | --- | --- |
@@ -174,13 +174,13 @@ Permissions are represented as a `u128` integer storing a bitmap. Each of the bi
 
 :::info
 
-Currently, Sui Kiosk has only two permissions: `place` (first bit) and `lock` and `place` (second bit). Because the second bit grants both `lock` and `place`, the values `2` (`0010`) and `3` (`0011`) grant the same permissions. The remaining bits are reserved for future use.
+Currently, Sui Kiosk has only two permissions: `place` (first bit) and `lock` and `place` (second bit). Because the second bit grants both `lock` and `place`, the values `2` (`0010`) and `3` (`0011`) grant the same permissions. Sui Kiosk reserves the remaining bits for future use.
 
 :::
 
-### Using permissions in the add function
+### Using permissions in the `add` function
 
-It's considered good practice to define a constant containing permissions of the app:
+As a good practice, define a constant containing the permissions of the app:
 
 ```move
 module examples::letterbox_ext;
@@ -200,7 +200,7 @@ public fun add(kiosk: &mut Kiosk, cap: &KioskOwnerCap, ctx: &mut TxContext) {
 
 ### Accessing protected functions
 
-If an app requests and is granted permissions (and isn't disabled), it can access protected functions. The following example shows how to access the `place` function:
+If an app requests and receives permissions (and isn't disabled), it can access protected functions. The following example shows how to access the `place` function:
 
 ```move
 module examples::letterbox_ext;
@@ -218,8 +218,8 @@ public fun place(kiosk: &mut Kiosk, letter: Letter, policy: &TransferPolicy<Lett
 ```
 Currently, two functions are available:
 
-- `place<Ext, T>(Ext, &mut Kiosk, T, &TransferPolicy<T>)` - similar to place
-- `lock<Ext, T>(Ext, &mut Kiosk, T, &TransferPolicy<T>)` - similar to lock
+- `place<Ext, T>(Ext, &mut Kiosk, T, &TransferPolicy<T>)`: Similar to place
+- `lock<Ext, T>(Ext, &mut Kiosk, T, &TransferPolicy<T>)`: Similar to lock
 
 ### How do I check an app's permissions? {#checking-permissions}
 
@@ -227,24 +227,24 @@ Use the `can_place<Ext>(kiosk: &Kiosk): bool` function to check if the app has t
 
 ## App storage
 
-Every app gets its isolated storage as a bag type that only the app module can access (providing the app witness). See [The Move Book](https://move-book.com/programmability/dynamic-collections) to learn more about dynamic collections, like bags, available in Move. After you install an app, it can use the storage to store its data. Ideally, the storage should be managed in a way that allows the app to be removed from the kiosk if there are no active trades or other activities happening at the moment.
+Every app gets its isolated storage as a bag type that only the app module can access (providing the app witness). See [The Move Book](https://move-book.com/programmability/dynamic-collections) to learn more about dynamic collections, like bags, available in Move. After you install an app, it can use the storage to store its data. Ideally, manage the storage so that the kiosk owner can remove the app from the kiosk if there are no active trades or other activities happening at the moment.
 
-The storage is always available to the app if it is installed. The owner of a kiosk can't access the storage of the app if the logic for it is not implemented.
+The storage is always available to an installed app. The owner of a kiosk can't access the storage of the app unless the app implements the logic for it.
 
 ### How does an app access its storage? {#accessing-the-storage}
 
 An installed app can access the storage mutably or immutably using one of the following functions:
 
-- `storage(_ext: Extension {}, kiosk: &Kiosk): Bag`: returns a reference to the storage of the app. Use the function to read the storage.
-- `storage_mut(_ext: Extension {}, kiosk: &mut Kiosk): &mut Bag`: returns a mutable reference to the storage of the app. Use the function to read and write to the storage.
+- `storage(_ext: Extension {}, kiosk: &Kiosk): Bag`: Returns a reference to the storage of the app. Use the function to read the storage.
+- `storage_mut(_ext: Extension {}, kiosk: &mut Kiosk): &mut Bag`: Returns a mutable reference to the storage of the app. Use the function to read and write to the storage.
 
 ## Disabling and removing
 
 The kiosk owner can disable any app at any time. Doing so revokes all permissions of the app and prevents it from performing any actions in the kiosk. The kiosk owner can also re-enable the app at any time.
 
-Disabling an app does not remove it from the kiosk. An installed app has access to its storage until completely removed from the kiosk.
+Disabling an app does not remove it from the kiosk. An installed app has access to its storage until the kiosk owner completely removes it from the kiosk.
 
-In the following example PTBs, replace each `<ID>` with the object ID of your kiosk (`kioskArg`) and of its `KioskOwnerCap` (`capArg`), and replace `<letter_box_package>` with the ID of the package where the app is published.
+In the following example [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks) (PTBs), replace each `<ID>` with the object ID of your kiosk (`kioskArg`) and of its `KioskOwnerCap` (`capArg`), and replace `<letter_box_package>` with the ID of the package where you published the app.
 
 ### How do I disable an app? {#disabling-an-app}
 

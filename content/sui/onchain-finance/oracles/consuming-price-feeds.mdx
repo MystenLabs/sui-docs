@@ -59,7 +59,7 @@ Both Pyth and Switchboard on Sui are pull oracles: the consumer pulls the price 
 
 :::caution
 
-The Pyth Sui SDK talks JSON-RPC, but the Mysten Testnet fullnode serves gRPC, so the default `getFullnodeUrl('testnet')` returns 404 for every SDK call. Point `rpcUrl` at a JSON-RPC provider or your own node. Every Testnet Pyth consumer hits this, and the failure looks like an unrelated 404 rather than an RPC-protocol mismatch. For the same reason, these samples use a JSON-RPC client rather than the `SuiGrpcClient` that the rest of this documentation uses.
+The Pyth Sui SDK talks JSON-RPC, but the Mysten Testnet full node serves gRPC, so the default `getFullnodeUrl('testnet')` returns 404 for every SDK call. Point `rpcUrl` at a JSON-RPC provider or your own node. Every Testnet Pyth consumer hits this, and the failure looks like an unrelated 404 rather than an RPC-protocol mismatch. For the same reason, these samples use a JSON-RPC client rather than the `SuiGrpcClient` that the rest of this documentation uses.
 
 :::
 
@@ -90,17 +90,17 @@ Fetch the latest update for your feed from Hermes, apply it with `updatePriceFee
 
 **Observe:** the transaction succeeds and the read returns a current price. Running this against Testnet for `SUI/USD` returns a price near the live market rate (for example a magnitude of `68005477` at exponent `-8`, or about `0.68` USD) with a confidence interval around `0.1%` of the price. The read goes through the adapter's staleness bound, so a price the update failed to refresh aborts rather than reading old.
 
-The price comes back as an integer magnitude and a signed exponent, and the exponent is typically negative. The price is magnitude × 10^exponent: in the example, `68005477` × 10^-8 = `0.68005477`, about `0.68` USD. Judge the confidence interval relative to the price, as in the `0.1%` above.
+The price comes back as an integer magnitude and a signed exponent, and the exponent is typically negative. The price is magnitude × 10^exponent: in the example, `68005477` × 10^-8 = `0.68005477`, about `0.68` USD. Judge the confidence interval relative to the price, as in the `0.1%` example.
 
 ## What happens when a price feed is stale?
 
-A price that has not been updated recently is stale. Reading it with a tight maximum age aborts with the provider's staleness error rather than returning an old value. This is `dev-inspect`-able, so you can confirm the rejection without spending gas or updating the feed:
+A price that nobody has updated recently is stale. Reading it with a tight maximum age aborts with the provider's staleness error rather than returning an old value. This is `dev-inspect`-able, so you can confirm the rejection without spending gas or updating the feed:
 
 <ImportContent source="examples/oracle-adapter/ts/src/read.ts" mode="code" tag="stale-read" />
 
-**Observe:** with a one-second bound on a feed nobody just updated, the call fails with a `MoveAbort` in `pyth::check_price_is_fresh` (error code `3`, stale price). This is the single most important behavior for a high-stakes consumer to rely on, covered in depth in [Oracle safety](/onchain-finance/oracles/oracle-safety).
+**Observe:** with a one-second bound on a feed nobody just updated, the call fails with a `MoveAbort` in `pyth::check_price_is_fresh` (error code `3`, stale price). This is the single most important behavior for a high-stakes consumer to rely on. [Oracle safety](/onchain-finance/oracles/oracle-safety) covers it in depth.
 
-Switchboard's `current_result` does not gate on age, so there is no equivalent staleness abort to dev-inspect; your consumer checks the timestamps itself, as described in the Switchboard section below.
+Switchboard's `current_result` does not gate on age, so there is no equivalent staleness abort to dev-inspect; your consumer checks the timestamps itself, as the Switchboard section of this page describes.
 
 ## How do I read a Switchboard feed on Sui?
 
