@@ -57,7 +57,7 @@ A price oracle brings offchain data, most often an asset price, onchain so a sma
 
 The stakes are high: a wrong or stale price can drain a lending pool or liquidate a healthy position. Reading a feed is a few lines; reading it safely is the real work, and it is the subject of this cluster.
 
-## Pull and push models
+## What is the difference between a pull and a push oracle?
 
 Two models put a price onchain, and the difference shapes your integration.
 
@@ -66,16 +66,22 @@ Two models put a price onchain, and the difference shapes your integration.
 
 The pull model is the default on Sui because it puts freshness in the consumer's control: the update and the read happen together, so a consumer never acts on a price the transaction did not just refresh.
 
-## Price data lives in shared objects
+## How does price data live in Sui objects?
 
 On Sui, an oracle price is not a global variable. It lives in a shared object that your transaction references:
 
 - **Pyth** stores each feed in a `PriceInfoObject`. You update that object with a signed price, then read it.
 - **Switchboard** stores each feed in an `Aggregator` object. You pull a fresh result into the object, then read it.
 
-Because the update and the read are commands in the same [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks), the object the consumer reads is the one the transaction just refreshed. The order matters: the update command must come before the read. Freshness is a property of a single transaction, not a background guarantee, which is exactly why a consumer checks the price's publish time against the onchain clock.
+Because the update and the read are commands in the same [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks), a single atomic transaction that runs its commands in order, the object the consumer reads is the one the transaction just refreshed. The order matters: the update command must come before the read. Freshness is a property of a single transaction, not a background guarantee, which is exactly why a consumer checks the price's publish time against the onchain clock.
 
-## Choosing a provider
+In outline, a pull integration follows these steps:
+
+1. Offchain, fetch a fresh update: a signed price update from the Hermes service for Pyth, or a fresh oracle response for Switchboard.
+2. In your PTB, apply the update to the feed's shared object: the `PriceInfoObject` for Pyth, or the `Aggregator` for Switchboard.
+3. In the same PTB, after the update command, read the price and confirm it is fresh: `pyth::get_price_no_older_than` rejects a price older than the bound you pass, while with `aggregator::current_result` you check the returned timestamps yourself.
+
+## Should I use Pyth or Switchboard on Sui?
 
 Both [Pyth](https://docs.pyth.network/price-feeds/contract-addresses/sui) and [Switchboard](https://docs.switchboard.xyz/product-documentation/data-feeds/sui) ship audited Move packages on Sui Mainnet and Testnet, and both use the pull model. They differ in emphasis:
 
@@ -87,7 +93,12 @@ Both [Pyth](https://docs.pyth.network/price-feeds/contract-addresses/sui) and [S
 | Feeds | A large catalog of shared price feed IDs, the same across chains | Feeds you configure, including custom data sources |
 | TypeScript | `@pythnetwork/pyth-sui-js` | `@switchboard-xyz/sui-sdk` |
 
-Neither is a default; the right choice depends on which feeds you need and how much control over the feed definition you want. As a concrete reference point, [DeepBook Margin](/onchain-finance/deepbook/deepbook-margin/margin-integration) consumes Pyth `PriceInfoObject`s for its risk math. For custom, non-price data brought onchain through a trusted enclave rather than a price network, see [Nautilus](/sui-stack/nautilus/nautilus-overview).
+Neither is a default; the right choice depends on which feeds you need and how much control over the feed definition you want. As a rule of thumb from the table above:
+
+- Choose **Pyth** if the feed you need is in its catalog of shared price feed IDs, especially if you want the same feed ID across chains, and you want the staleness gate built into the read.
+- Choose **Switchboard** if you need to configure your own feed, including custom data sources, and you are prepared to check freshness yourself against `min_timestamp_ms` / `max_timestamp_ms`.
+
+As a concrete reference point, [DeepBook Margin](/onchain-finance/deepbook/deepbook-margin/margin-integration) consumes Pyth `PriceInfoObject`s for its risk math. For custom, non-price data brought onchain through a trusted enclave rather than a price network, see [Nautilus](/sui-stack/nautilus/nautilus-overview).
 
 ## In this cluster
 
