@@ -180,11 +180,11 @@ Both blob contents and their metadata are public. Blob IDs, blob attributes, and
 
 :::
 
-Walrus uses [erasure coding](https://docs.wal.app/docs/system-overview) to distribute encoded parts of each blob across all [storage nodes](https://docs.wal.app/docs/operator-guide/storage-nodes), maintaining storage costs at approximately 5 times the size of the original blob. This is significantly more cost-efficient than full replication and more resilient than partial replication.
+Walrus uses [erasure coding](https://docs.wal.app/docs/system-overview) to distribute encoded parts of each blob across all [storage nodes](https://docs.wal.app/docs/operator-guide/storage-nodes), maintaining storage costs at approximately 5 times the size of the original blob, according to the Walrus documentation. This is significantly more cost-efficient than full replication and more resilient than partial replication.
 
 The `WalrusFile` API groups multiple files into a single blob when storing them together, which is more storage-efficient than uploading each file separately.
 
-### Blob ID and object ID
+### What is the difference between a blob ID and an object ID?
 
 Every blob has 2 identifiers:
 
@@ -195,11 +195,11 @@ In OnlyFins, the `image_blob_id` field on each `Post` Sui object stores the blob
 
 ### Storage nodes
 
-Storage nodes are the servers that store encoded blob data. When you write a blob, the Walrus client distributes encoded shards across the active storage node committee. When you read a blob, the client fetches enough shards to reconstruct the original data. Writing a blob directly to storage nodes requires approximately 2,200 requests. Reading requires approximately 335 requests.
+Storage nodes are the servers that store encoded blob data. When you write a blob, the Walrus client distributes encoded shards across the active storage node committee. When you read a blob, the client fetches enough shards to reconstruct the original data. Writing a blob directly to storage nodes requires approximately 2,200 requests. Reading requires approximately 335 requests. These counts are approximate figures from the Walrus documentation, not fixed values.
 
 ### Upload relay
 
-The [upload relay](https://docs.wal.app/operator-guide/upload-relay.html) is a server-side proxy that accepts blob data from a client and handles the distribution to storage nodes. Using an upload relay significantly reduces the number of requests a client must make to write a blob. This is especially important in browser environments where issuing thousands of direct requests to storage nodes is not practical. Reads through the Walrus SDK still require many requests regardless of whether you use an upload relay.
+The [upload relay](https://docs.wal.app/operator-guide/upload-relay.html) is a server-side proxy that accepts blob data from a client and handles the distribution to storage nodes. Using an upload relay significantly reduces the number of requests a client must make to write a blob. This is especially important in browser environments where issuing thousands of direct requests to storage nodes is not practical. Reads through the Walrus SDK still require many requests regardless of whether you use an upload relay. The upload relay is part of the write path only; to read blobs over HTTP, use an [aggregator](#aggregator).
 
 ### Publisher
 
@@ -263,12 +263,12 @@ const client = new SuiGrpcClient({
 The [Walrus SDK documentation](https://sdk.mystenlabs.com/walrus) is the single source of truth for all SDK patterns, options, and examples.
 
 :::info
-Some code examples in this guide use `SuiClient` from `@mysten/sui/client` rather than `SuiGrpcClient` from `@mysten/sui/grpc`. `SuiGrpcClient` is the recommended transport for new integrations. All Walrus SDK and transaction APIs are identical regardless of which client you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
+Some code examples in this guide use `SuiClient` from `@mysten/sui/client` rather than `SuiGrpcClient` from `@mysten/sui/grpc`. `SuiGrpcClient` is the recommended transport for new integrations. In current SDK versions, all Walrus SDK and transaction APIs are identical regardless of which client you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
 :::
 
 For React apps, wrap your component tree with a context provider that initializes the client once and makes it available throughout the app. The [walrus-pocs](https://github.com/MystenLabs/walrus-pocs) repo includes focused examples for each SDK operation that show this pattern in a clean Node.js context. For a React-specific provider, initialize `SuiGrpcClient.$extend(walrus())` in your app's root and pass the result through React context using the same pattern shown in the SDK client setup above.
 
-## Uploading data
+## How do I upload data to Walrus?
 
 There are two primary ways to upload data to Walrus: using the CLI directly, or using the TS SDK programmatically. The TS SDK offers two upload APIs: `writeBlob` for raw blobs, and the `WalrusFile` API which stores files efficiently by grouping them together.
 
@@ -357,7 +357,7 @@ When uploading multiple files together, use `writeFiles` with `WalrusFile.from()
   language="ts"
 />
 
-## Reading data
+## How do I read data from Walrus?
 
 Reading assumes you know the ID of the data you want to retrieve. In OnlyFins, blob IDs are stored as fields on `Post` Sui objects and discovered by querying the blockchain. For how to discover blobs you own dynamically, see [Querying blobs](#querying-blobs).
 
@@ -473,6 +473,8 @@ const { data } = useSuiClientQuery('getOwnedObjects', {
   options: { showContent: true },
 });
 ```
+
+In the filter, replace `WALRUS_PACKAGE_ID` with the ID of the Walrus package on the network you are using.
 
 When displaying blob owners, resolve their [SuiNS](https://suins.io/) name if one exists rather than showing a raw address. Use `useResolveSuiNSName` from Sui dApp Kit, which returns the primary SuiNS name for any address, and fall back to a truncated hex string when no name is set.
 
