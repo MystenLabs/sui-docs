@@ -123,7 +123,7 @@ The example uses a single file to create the smart contract for the project (`re
 
 :::caution
 
-The `ADMIN_SECRET_KEY` in this example is for test and development only. Never store a plaintext admin secret key in production. Production deployments should sign with a hardware wallet, HSM, KMS, or multisig rather than an exported private key. Treat the `TreasuryCap`, `DenyCapV2`, and `MetadataCap` as privileged custody objects: govern them transparently (for example, behind multisig or a governance module) and emit events on sensitive actions so holders and integrators can audit changes. See [coin and capability security](/develop/security/best-practices#coin-and-capability-security).
+The `ADMIN_SECRET_KEY` in this example is for test and development only. Never store a plaintext admin secret key in production. Production deployments should sign with a hardware wallet, HSM, KMS, or multisig rather than an exported private key. Treat the `TreasuryCap`, `DenyCapV2`, and `MetadataCap` as privileged custody objects: govern them transparently (for example, behind multisig or a governance module) and emit events on sensitive actions so holders and integrators can audit changes. See [coin and capability security](/develop/security/best-practices#how-do-i-protect-capabilities-and-coins-in-move).
 
 :::
 
