@@ -64,7 +64,7 @@ An allowance has 4 parts:
 - **Funder:** The address that funds the spend.
 - **Spender:** The address allowed to pull from it.
 - **Limits:** How much, how often, and for how long.
-- **Revocation:** The funder can cancel at any time.
+- **Revocation:** The funder can cancel at any time, using the `AllowanceCap` they receive when they grant the allowance.
 
 Think of it as the standing authorization you give a card network: it records who can charge you, and up to what, until you say otherwise. Funds stay in the funder's balance, and Sui debits them only at the moment of a successful spend. There is no escrow, no pre-funding, and no separate wallet to fund.
 
@@ -91,7 +91,7 @@ Per-merchant limits come from an app-bound allowance, where your own Move module
 ## How allowances work
 
 1. **The funder grants it.** In one transaction, the funder names the spender, the coin, and the limits. Sui records the allowance as a [shared object](/develop/objects/object-ownership/shared) and gives the funder an `AllowanceCap`, a revocation capability that cannot be transferred.
-2. **The spender uses it.** The spender sends a normal transaction that declares a withdrawal of a given amount from the funder under the allowance. The spender signs it and pays for it. The funder does not sign anything and does not need to be online.
+2. **The spender uses it.** The spender sends a normal transaction that declares a withdrawal of a given amount from the funder under the allowance. The spender signs it and pays the gas fee for it. The funder does not sign anything and does not need to be online.
 3. **Sui checks it.** The spend goes through only if the allowance is valid and the amount fits its limits. Otherwise, no money moves.
 
 At any point, the funder can revoke. Revoking deletes the allowance, and Sui rejects any later spend against it.
