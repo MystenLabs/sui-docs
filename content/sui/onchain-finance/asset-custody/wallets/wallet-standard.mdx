@@ -94,8 +94,8 @@ This example returns only `SUI_DEVNET_CHAIN`; return every Sui chain your wallet
 Features are standard methods consumers can use to interact with a wallet. Wallets should implement the following features:
 
 **Core features**
-- `standard:connect` - Use to prompt the wallet for account authorization.
-- `standard:events` - Use to listen for changes that happen within the wallet, such as accounts
+- `standard:connect`: Use to prompt the wallet for account authorization.
+- `standard:events`: Use to listen for changes that happen within the wallet, such as accounts
   being added or removed.
 
 **Transaction features**
@@ -103,18 +103,18 @@ Features are standard methods consumers can use to interact with a wallet. Walle
 Libraries built on top of the Wallet Standard (like dApp Kit) require transaction signing capabilities. Implement both current and legacy methods for maximum compatibility:
 
 Current methods:
-- `sui:signTransaction` - Use to prompt the user to sign a transaction and return the serialized
+- `sui:signTransaction`: Use to prompt the user to sign a transaction and return the serialized
   transaction and signature back to the app. This method does not submit the transaction for
   execution.
-- `sui:signAndExecuteTransaction` - Use to prompt the user to sign a transaction, then submit it
+- `sui:signAndExecuteTransaction`: Use to prompt the user to sign a transaction, then submit it
   for execution to the blockchain.
 
 Legacy methods:
-- `sui:signTransactionBlock` - The legacy version of `sui:signTransaction`. Many existing apps still rely on this method.
-- `sui:signAndExecuteTransactionBlock` - The legacy version of `sui:signAndExecuteTransaction`. Many existing apps still rely on this method.
+- `sui:signTransactionBlock`: The legacy version of `sui:signTransaction`. Many existing apps still rely on this method.
+- `sui:signAndExecuteTransactionBlock`: The legacy version of `sui:signAndExecuteTransaction`. Many existing apps still rely on this method.
 
 **Personal message signing**
-- `sui:signPersonalMessage` - Use to prompt the user to sign a personal message and return the
+- `sui:signPersonalMessage`: Use to prompt the user to sign a personal message and return the
   message signature back to the app. This is essential for user verification flows used by many apps.
 
 Implement these features in your wallet class under the `features` property. The keys in square brackets, such as `[StandardConnect]`, are computed property keys: each constant imported from `@mysten/wallet-standard` holds the feature's identifier (for example, `standard:connect`).
@@ -190,9 +190,9 @@ class YourWallet implements Wallet {
 
 The last requirement of the wallet interface is to expose an `accounts` interface. Wallets that comply with the Wallet Standard should automatically populate this array with any previously authorized accounts when the wallet loads. This means:
 
-- On first visit: The array will be empty until the user authorizes accounts through `standard:connect`
+- On first visit: The array is empty until the user authorizes accounts through `standard:connect`
 - On subsequent visits: Previously authorized accounts automatically appear without any app action
-- After revocation: Accounts that have been revoked won't appear in the array
+- After revocation: Revoked accounts do not appear in the array
 
 The accounts use the `ReadonlyWalletAccount` class to construct an account matching the required interface. Each account's `chains` and `features` can be a subset of those the wallet declares, but every chain and feature listed on an account must also exist on the wallet itself.
 
@@ -246,7 +246,7 @@ A typical app flow is:
 4. Sign the transaction with `sui:signTransaction`.
 5. Execute the signed transaction with a Sui client.
 
-Many wallets also combine steps 4 and 5 into one feature, `sui:signAndExecuteTransaction`. Each step is described in the following sections.
+Many wallets also combine steps 4 and 5 into one feature, `sui:signAndExecuteTransaction`. The following sections describe each step.
 
 ### How does my app discover installed wallets?
 
@@ -266,7 +266,7 @@ The `Wallet.accounts` is an array of `WalletAccount`s. Each `WalletAccount` type
 
 ### Features
 
-Both the `Wallet` type and the `WalletAccount` type have a property called `features`. The main wallet functionality is found here. The mandatory features that wallets must implement are listed in the previous code.
+Both the `Wallet` type and the `WalletAccount` type have a property called `features`. This property contains the main wallet functionality. The previous code lists the mandatory features that wallets must implement.
 
 Many wallets choose to omit some non-mandatory features or add some custom features, so be sure to check the relevant wallet documentation if you intend to integrate a specific wallet. Before calling a feature, check that its identifier (for example, `sui:signTransaction`) is present in the wallet's `features`.
 
@@ -279,7 +279,7 @@ The Wallet Standard uses a persistent authorization model. Despite the connect t
 1. **Wallets restore accounts automatically**: When a wallet loads, it should automatically populate its `accounts` array with any previously authorized accounts for the current app. This happens without any app interaction.
 
 2. **Only prompt when necessary**: Call `connect()` only when:
-   - The `accounts` array is empty (first-time user or all accounts were revoked)
+   - The `accounts` array is empty (first-time user or the user revoked all accounts)
    - The current accounts don't meet your requirements (for example, you need an account on a specific chain)
    - The user explicitly wants to authorize more accounts
 
@@ -293,7 +293,7 @@ The `connect()` method has a `silent` parameter that is intended to retrieve pre
 
 :::
 
-When you do call `connect()`, the wallet will open a pop-up for the user to select and authorize which accounts the app can access.
+When you do call `connect()`, the wallet opens a pop-up for the user to select and authorize which accounts the app can access.
 
 ### Revoking account authorization
 
@@ -338,11 +338,11 @@ This example connects to Mainnet. Configure the client for the same network as t
 
 ### Transactions - abbreviated approach
 
-Many wallets abstract the above flow into one feature: `sui:signAndExecuteTransaction`. The required arguments for this feature are the raw transaction and the options with the desired information to be included in the response:
+Many wallets abstract the above flow into one feature: `sui:signAndExecuteTransaction`. The required arguments for this feature are the raw transaction and the options with the desired information to include in the response:
 
 - `showEffects`: Include the transaction effects.
 - `showEvents`: Include the transaction events.
-- `showObjectChanges`: Include all the objects that were deleted, created, or mutated.
+- `showObjectChanges`: Include all the objects that the transaction deleted, created, or mutated.
 - `showBalanceChanges`: Include any coin transfer that took place.
 - `showInput`: Include the transaction's input.
 - `showRawInput`: Same as `showInput` but the format is raw.
@@ -363,7 +363,7 @@ Subscribe your app to events with the following call:
 const unsubscribe = wallet.features['standard:events'].on('change', callback);
 ```
 
-This call returns a function that can be called to unsubscribe from listening to the events.
+This call returns a function that you can call to unsubscribe from listening to the events.
 
 The callback is the handler that contains the logic to perform when the event fires. The input to the callback function is an object with the following type:
 

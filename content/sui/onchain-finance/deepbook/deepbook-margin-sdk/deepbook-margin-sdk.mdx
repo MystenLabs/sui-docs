@@ -126,13 +126,13 @@ class DeepBookMarginTrader {
 
 The `$extend()` call adds the `deepbook` extension to the Sui client, which exposes the DeepBook functions under `client.deepbook`. To see the class instantiated and its methods called, see [Example setup](#example-setup).
 
-## Keys: Coin, Pool, and MarginManager {#keys}
+## Keys: coin, pool, and MarginManager {#keys}
 
-Functions that require the input of a coin, pool, or a margin manager require the key of any such object as the parameter. The SDK manages a `key:value` relationship of this data in memory. Some default data comes with the SDK (as seen in `utils/constants.ts`). Coins are stored in a `CoinMap`, pools in a `PoolMap`, and margin managers in a `MarginManagerMap` in the config.
+Functions that require the input of a coin, pool, or a margin manager require the key of any such object as the parameter. The SDK manages a `key:value` relationship of this data in memory. Some default data comes with the SDK (as seen in `utils/constants.ts`). The config stores coins in a `CoinMap`, pools in a `PoolMap`, and margin managers in a `MarginManagerMap`.
 
 ### Margin manager
 
-Before placing any margin trade, you must supply a margin manager address to the client. The manager key points to an object defined by the `MarginManager` interface in the client. [MarginManager docs](/onchain-finance/deepbook/deepbook-margin/contract-information/margin-manager). Initialize the margin manager with the client. If you don't create a margin manager, you can rely on the client to create one, but then the user must reinitialize the client.
+Before placing any margin trade, you must supply a margin manager address to the client. The manager key points to an object defined by the `MarginManager` interface in the client. [MarginManager docs](/onchain-finance/deepbook/deepbook-margin/contract-information/margin-manager). Initialize the margin manager with the client. If you don't create a margin manager, you can rely on the client to create one, but then you must reinitialize the client.
 
 Example using an existing margin manager:
 
@@ -287,7 +287,7 @@ class DeepBookMarginTrader {
 
 ### Coin
 
-The SDK comes with four default coins on Testnet and five default coins on Mainnet.
+The SDK comes with 4 default coins on Testnet and 5 default coins on Mainnet.
 
 **Default Testnet coins**
 
@@ -304,7 +304,7 @@ The SDK comes with four default coins on Testnet and five default coins on Mainn
 - USDT
 - WETH
 
-You can also initialize the SDK with custom coins to interact with margin pools that are not supported by default. To do this, create a `CoinMap` object and pass it to the constructor of the client.
+You can also initialize the SDK with custom coins to interact with margin pools that the SDK does not support by default. To do this, create a `CoinMap` object and pass it to the constructor of the client.
 
 ### Pool
 
@@ -426,7 +426,7 @@ import { DeepBookMarginTrader } from './deepbookMarginTrader.js';
 
 ## Margin manager referral functions
 
-The SDK provides functions for managing referrals with margin managers. Referrals are pool-specific and must first be minted using the core DeepBook SDK before they can be associated with a margin manager.
+The SDK provides functions for managing referrals with margin managers. Referrals are pool-specific. You must first mint them using the core DeepBook SDK before you can associate them with a margin manager.
 
 ```tsx
 // Set a referral for a margin manager (pool-specific)

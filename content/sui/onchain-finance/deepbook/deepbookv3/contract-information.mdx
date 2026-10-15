@@ -36,11 +36,11 @@ answer: >-
   Mainnet.
 ---
 
-This page contains the contract addresses, supported coins, and pool information for DeepBookV3 on Sui Mainnet.
+DeepBookV3 on Sui Mainnet uses the following contract addresses, supported coins, and pools.
 
 ## Contract versions
 
-DeepBookV3 uses upgradeable contracts. When a contract is upgraded, only `DEEPBOOK_PACKAGE_ID` needs to be updated - previous versions remain compatible unless noted. A redeployment would require updating `DEEPBOOK_PACKAGE_ID`, `REGISTRY_ID`, and all pool IDs.
+DeepBookV3 uses upgradeable contracts. When a contract upgrades, you only need to update `DEEPBOOK_PACKAGE_ID`. Previous versions remain compatible unless noted. A redeployment requires updating `DEEPBOOK_PACKAGE_ID`, `REGISTRY_ID`, and all pool IDs.
 
 ### Current version
 
@@ -249,7 +249,7 @@ Version 2 introduced permissionless pool creation, so pools other than those lis
 
 :::info
 
-Taker and maker fees are listed in basis points (bps), where 1 bps = 0.01%. Taker and maker fees are subject to change based on governance proposals. See [Staking and Governance](/onchain-finance/deepbook/deepbookv3/contract-information/staking-governance) for more information on how the governance process adjusts fees.
+The pool tables list taker and maker fees in basis points (bps), where 1 bps = 0.01%. Taker and maker fees are subject to change based on governance proposals. See [Staking and Governance](/onchain-finance/deepbook/deepbookv3/contract-information/staking-governance) for more information on how the governance process adjusts fees.
 
 :::
 

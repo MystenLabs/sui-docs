@@ -35,16 +35,16 @@ questions:
   - How does the Permissioned Asset Standard work?
   - What are Accounts, Policies, and PolicyCap in PAS?
 answer: >-
-  On Sui, any object with the `store` ability can be freely transferred by its
-  owner. `Balance` and `Coin` both have `store`, meaning if you hold them, you
+  On Sui, the owner of any object with the `store` ability can freely transfer
+  it. `Balance` and `Coin` both have `store`, meaning if you hold them, you
   can send them anywhere on the network with no restrictions.
 ---
 
-On Sui, any object with the `store` ability can be freely transferred by its owner. `Balance` and `Coin` both have `store`, meaning if you hold them, you can send them anywhere on the network with no restrictions.
+On Sui, the owner of any object with the `store` ability can freely transfer it. `Balance` and `Coin` both have `store`, meaning if you hold them, you can send them anywhere on the network with no restrictions.
 
 This works well for general-purpose assets, but creates a problem for regulated assets that need transfer controls, compliance checks, or issuer oversight.
 
-The Permissioned Asset Standard (PAS) solves this by proxying asset ownership through **Accounts:** objects that hold assets and enforce a closed-loop system where every movement is gated by programmable approval logic.
+The Permissioned Asset Standard (PAS) solves this by proxying asset ownership through **Accounts:** objects that hold assets and enforce a closed-loop system where programmable approval logic gates every movement.
 
 You can use PAS through the [TypeScript package](https://www.npmjs.com/package/@mysten/pas) or learn more in the [GitHub repo](https://github.com/MystenLabs/pas).
 
@@ -52,7 +52,7 @@ You can use PAS through the [TypeScript package](https://www.npmjs.com/package/@
 
 For each wallet address (or object ID), PAS creates a one-to-one derived Account. An Account is a shared object that holds assets on behalf of that address. The owner can prove ownership through an `Auth` proof, but cannot freely transfer the assets. This creates a proxy of ownership where the assets follow the constraints of PAS modules, and sequentially, the rules that an issuer defines across one or more packages through approval witnesses.
 
-Every time funds move, they go through hot potato requests that must collect a predefined set of approval stamps (witness structs: types defined in an issuer's package that act as type-level proofs of approval) before they can resolve within the transaction. Hot potato requests have no `drop` or `store` ability, so the transaction aborts if the request is not resolved.
+Every time funds move, they go through hot potato requests that must collect a predefined set of approval stamps (witness structs: types defined in an issuer's package that act as type-level proofs of approval) before they can resolve within the transaction. Hot potato requests have no `drop` or `store` ability, so the transaction aborts if it does not resolve the request.
 
 The following diagrams compare asset ownership with and without PAS:
 
@@ -64,17 +64,17 @@ The following diagrams compare asset ownership with and without PAS:
 
 ![Restricted asset ownership with PAS](./images/restricted-ownership.svg)
 
-Each asset type can have its own policy that defines which witnesses are required to approve each action. This means different assets can adhere to completely different rules. One asset might require a single compliance stamp, while another might need approvals from multiple independent contracts.
+Each asset type can have its own policy that defines which witnesses must approve each action. This means different assets can adhere to completely different rules. One asset might require a single compliance stamp, while another might need approvals from multiple independent contracts.
 
-The result is that assets are held in a closed system where every movement is gated by programmable, composable approval logic that the issuer defines at the policy level.
+As a result, assets stay in a closed system where programmable, composable approval logic, which the issuer defines at the policy level, gates every movement.
 
 There is no way to transfer a managed `Balance<C>` out of the system without going through a request that collects the required approvals.
 
-For currencies, this is enforced at the Move type level:
+For currencies, Move enforces this at the type level:
 
-- `Balance<C>` is stored as object balance on the Account UID (not as a field on the `Account` struct), using `balance::send_funds` and `balance::redeem_funds`. See [Balance tracking](#balance-tracking).
+- PAS stores `Balance<C>` as object balance on the Account UID (not as a field on the `Account` struct), using `balance::send_funds` and `balance::redeem_funds`. See [Balance tracking](#balance-tracking).
 
-- The only way to move funds is through request hot potatoes that must be resolved in the same transaction.
+- The only way to move funds is through request hot potatoes that the same transaction must resolve.
 
 - Resolution requires matching the approval set defined in the `Policy<Balance<C>>`.
 
@@ -91,7 +91,7 @@ Namespace (shared, singleton)
 └── Templates             ← derived from (namespace_id, TemplateKey)
 ```
 
-All objects use derived addresses (`sui::derived_object`): each object's address is computed from a parent ID and a key, as shown in the preceding diagram. This makes them deterministic and queryable without onchain lookups.
+All objects use derived addresses (`sui::derived_object`): PAS computes each object's address from a parent ID and a key, as the preceding diagram shows. This makes them deterministic and queryable without onchain lookups.
 
 ### Namespace
 
@@ -120,7 +120,7 @@ A `Policy<T>` defines resolvable actions for a managed asset type `T`:
 
 - **Required approvals:** Per action type (`send_funds`, `unlock_funds`, `clawback_funds`).
 
-- **Clawback flag:** Whether issuer clawback is allowed.
+- **Clawback flag:** Whether the policy allows issuer clawback.
 
 - **Versioning:** Synced from Namespace. Can block package versions.
 
@@ -161,11 +161,11 @@ The following are the available request types:
 
 ### Approval matching
 
-Approvals are matched by type identity using `TypeName`. The approval set must be exactly equal (same types, same count, same order through `VecSet` insertion) to the policy required approvals.
+PAS matches approvals by type identity using `TypeName`. The approval set must be exactly equal (same types, same count, same order through `VecSet` insertion) to the policy required approvals.
 
 :::info
 
-In the current version, each action supports only a single approval witness. Multi-approval support (requiring stamps from multiple independent contracts) is planned for a future release.
+In the current version, each action supports only a single approval witness. Multi-approval support (requiring stamps from multiple independent contracts) is on the roadmap for a future release.
 
 :::
 
@@ -192,7 +192,7 @@ Account (shared object)
        └── Balance<MY_COIN> stored via balance::send_funds(balance, account_object_address)
 ```
 
-Balances are not stored as fields on the `Account` struct. They are stored as object balance on the Account UID, using `balance::send_funds` to send funds to the Account object address and `balance::withdraw_funds_from_object` (through `UID.withdraw_funds_from_object`) to pull them out.
+PAS does not store balances as fields on the `Account` struct. It stores them as object balance on the Account UID, using `balance::send_funds` to send funds to the Account object address and `balance::withdraw_funds_from_object` (through `UID.withdraw_funds_from_object`) to pull them out.
 
 ### Balance flow
 
@@ -212,7 +212,7 @@ Deposits are permissionless (anyone can deposit into any Account). Withdrawals a
 
 ## How do wallet-owned and object-owned Accounts differ?
 
-Accounts can be owned by wallet addresses or objects.
+Wallet addresses or objects can own Accounts.
 
 The following example shows both authentication methods:
 
@@ -240,7 +240,7 @@ let policy_addr: address = namespace.policy_address<Balance<MY_COIN>>();
 
 :::caution
 
-PAS provides the enforcement primitives (closed loop, type-safe approvals, atomic resolution), but it does not enforce your business or compliance policy. Deciding who can transfer and under what conditions is your responsibility, implemented in your approval witnesses before calling `request.approve()`. Because the approval witnesses are the only gate on asset movement, audit them carefully: a flawed or overly permissive witness undermines the entire closed loop. See [access control](/develop/security/best-practices#access-control).
+PAS provides the enforcement primitives (closed loop, type-safe approvals, atomic resolution), but it does not enforce your business or compliance policy. Deciding who can transfer and under what conditions is your responsibility. You implement it in your approval witnesses before calling `request.approve()`. Because the approval witnesses are the only gate on asset movement, audit them carefully: a flawed or overly permissive witness undermines the entire closed loop. See [access control](/develop/security/best-practices#access-control).
 
 :::
 
@@ -248,9 +248,9 @@ PAS guarantees the following:
 
 - **Closed loop:** Managed assets cannot leave the system without going through a request with matching approvals.
 
-- **Type-safe approvals:** Approval witnesses are checked by `TypeName`. You cannot forge an approval from a different package.
+- **Type-safe approvals:** PAS checks approval witnesses by `TypeName`. You cannot forge an approval from a different package.
 
-- **Atomic resolution:** Requests are hot potatoes. They must be resolved in the same transaction or the transaction aborts.
+- **Atomic resolution:** Requests are hot potatoes. The same transaction must resolve them, or the transaction aborts.
 
 - **Deterministic addressing:** All objects use derived addresses. There is no hidden state and no non-deterministic object creation.
 

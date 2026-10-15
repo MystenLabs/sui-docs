@@ -56,7 +56,7 @@ Different vesting strategies are available for your token launch. The best optio
 
 ### Cliff vesting
 
-Cliff vesting releases the entire amount of tokens after a specific period called the cliff. Until the cliff period passes, no tokens are released.
+Cliff vesting releases the entire amount of tokens after a specific period called the cliff. Until the cliff period passes, no tokens release.
 
 #### Example scenario
 
@@ -146,7 +146,7 @@ With performance-based vesting, achieving specific goals or metrics triggers ves
 
 A team's tokens vest in relation to the number of monthly active users (MAUs). All tokens become vested after the platform reaches its goal of 10 million MAUs.
 
-Similarly, milestone-based vesting creates vest events when specific project or personal milestones are achieved rather than being tied to time-based conditions.
+Similarly, milestone-based vesting creates vest events when someone reaches specific project or personal milestones, rather than relying on time-based conditions.
 
 #### Example scenario
 
@@ -196,7 +196,7 @@ For the example scenario, you create the wallet (call `new_wallet`) with 1,000 t
 
 ### Immediate vesting
 
-All tokens vest immediately, meaning they are fully available as soon as they are allocated.
+All tokens vest immediately, meaning they are fully available as soon as you allocate them.
 
 :::info Example scenario
 
@@ -206,8 +206,8 @@ An early investor receives their full allocation of tokens at the time of purcha
 
 With immediate vesting, you could transfer tokens directly to an address. Opting for a smart contract approach provides several advantages over a manual transfer:
 
-- **Transparency and accountability:** The transaction is stored on chain for any interested parties to verify. The smart contract logic identifies the exact purpose of the transaction.
-- **Conditional enforcement:** You can enforce specific conditions. For example, you could create a [milestone-based vesting](#milestone) contract that you update to 100% complete only after certain conditions are met, like accepting terms of an agreement.
+- **Transparency and accountability:** The transaction remains onchain for any interested parties to verify. The smart contract logic identifies the exact purpose of the transaction.
+- **Conditional enforcement:** You can enforce specific conditions. For example, you could create a [milestone-based vesting](#milestone) contract that you update to 100% complete only after certain conditions hold, like accepting terms of an agreement.
 - **Auditable record:** Provides a record for compliance and reporting.
 - **Flexibility:** Allows you to perform other actions as the terms of an agreement change, like conversion to another token before claiming.
 

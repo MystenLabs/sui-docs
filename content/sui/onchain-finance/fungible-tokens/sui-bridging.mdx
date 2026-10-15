@@ -1,8 +1,8 @@
 ---
 title: Bridging Tokens
 description: >-
-  Moving tokens from one blockchain to another is called bridging. To bridge
-  tokens from another blockchain to Sui, you can use the Sui Bridge, Wormhole
+  Bridging moves tokens from one blockchain to another. To bridge
+  tokens from another blockchain to Sui, you can use Sui Bridge, Wormhole
   Connect, Wormhole Portal Bridge, or ZetaChain.
 keywords:
   - bridge
@@ -43,12 +43,12 @@ questions:
   - Which assets does the Sui Bridge support?
   - What are the bridge contract addresses?
 answer: >-
-  Moving tokens from one blockchain to another is called bridging. To bridge
-  tokens from another blockchain to Sui, you can use the Sui Bridge, Wormhole
+  Bridging moves tokens from one blockchain to another. To bridge
+  tokens from another blockchain to Sui, you can use Sui Bridge, Wormhole
   Connect, Wormhole Portal Bridge, or ZetaChain.
 ---
 
-Bridging is the process of moving tokens from one blockchain to another. When you use a bridge to move tokens between incompatible blockchains, the tokens are wrapped and converted to a derivative token for the target blockchain (for example, Wormhole-minted tokens or ZetaChain ZRC-20 tokens, described below). You can transfer tokens from other blockchains to Sui, or transfer SUI tokens to other blockchains.
+Bridging is the process of moving tokens from one blockchain to another. When you use a bridge to move tokens between incompatible blockchains, the bridge wraps the tokens and converts them to a derivative token for the target blockchain (for example, Wormhole-minted tokens or ZetaChain ZRC-20 tokens, described below). You can transfer tokens from other blockchains to Sui, or transfer SUI tokens to other blockchains.
 
 Sui supports bridging through [Sui Bridge](#sui-bridge), [Wormhole Connect](#wormhole-connect), [Wormhole Portal Bridge](#wormhole-portal-bridge), and [ZetaChain](#zetachain). Each bridge offers different features and capabilities to suit various use cases. To confirm the Sui address of a bridged token, see the [Token address list](#token-address-list).
 
@@ -60,7 +60,7 @@ Bridge tokens at [bridge.sui.io](https://bridge.sui.io/).
 
 ### Operation and governance
 
-Sui Bridge is operated and governed by Sui validators, the same set that secures the Sui network. Bridge transfers and other actions require validator signatures with a threshold of voting power. Governance is handled by validator voting.
+Sui validators, the same set that secures the Sui network, operate and govern Sui Bridge. Bridge transfers and other actions require validator signatures with a threshold of voting power. Validator voting handles governance.
 
 To learn how to set up a Sui Bridge full node, see [Sui Bridge Validator Node Configuration](/operators/bridge-node-configuration).
 
@@ -78,9 +78,9 @@ Sui Bridge supports bridging between Sui and other networks with the following a
 
 ### What are the Sui Bridge package IDs and contract addresses? {#package-ids-and-contract-addresses}
 
-The following package IDs and addresses are reserved for Sui Bridge:
+Sui Bridge reserves the following package IDs and addresses:
 
-| Asset | Address/ID |
+| Asset | Address or ID |
 | --- | --- |
 | Sui Bridge package on Sui | [`0xb`](https://suiscan.xyz/mainnet/object/0x000000000000000000000000000000000000000000000000000000000000000b/txs) |
 | Sui Bridge object on Sui | [`0x9`](https://suiscan.xyz/mainnet/object/0x0000000000000000000000000000000000000000000000000000000000000009) |
@@ -115,7 +115,7 @@ Audit reports:
 
 A limiter protects funds by constraining the total value of assets leaving Sui Bridge in a 24-hour window. It tracks value hourly and aggregates from the last 24 hours, refreshing every hour. The limit applies globally and varies by direction (Ethereum → Sui versus Sui → Ethereum). It also caps the maximum single transfer.
 
-Limits are set by validator committee vote and announced in the [mn-validator-announcements channel](https://discord.com/channels/916379725201563759/1093852827627040768) on Discord. The global limit is currently $16 million from Ethereum to Sui and $7 million from Sui to Ethereum per 24 hours.
+The validator committee sets limits by vote and announces them in the [mn-validator-announcements channel](https://discord.com/channels/916379725201563759/1093852827627040768) on Discord. The global limit is currently $16 million from Ethereum to Sui and $7 million from Sui to Ethereum per 24 hours.
 
 ### Asset pricing
 
@@ -123,7 +123,7 @@ Sui Bridge v1 uses static pricing to calculate limits. ETH is priced at $2,600. 
 
 ### What are the minimum and maximum transfer amounts? {#minimum-and-maximum-transfers}
 
-There is no minimum transfer, but very small fractions can be rounded down. For ETH and WETH, reduced precision of eight decimals rounds 10.0000000000000001 down to 10.
+There is no minimum transfer, but the bridge can round down very small fractions. For ETH and WETH, reduced precision of eight decimals rounds 10.0000000000000001 down to 10.
 
 | Token | Minimal value | 
 | --- | --- |
@@ -136,20 +136,20 @@ The maximum transfer equals the global USD limit. See [Global limiter](#global-l
 
 Bridge transfers are not instant. Each direction has a different finality requirement:
 
-- **Ethereum to Sui:** The bridge waits for a configurable number of Ethereum block confirmations before minting tokens on Sui. This confirmation depth protects against Ethereum chain reorganizations. The exact depth is set by the bridge validator committee.
+- **Ethereum to Sui:** The bridge waits for a configurable number of Ethereum block confirmations before minting tokens on Sui. This confirmation depth protects against Ethereum chain reorganizations. The bridge validator committee sets the exact depth.
 - **Sui to Ethereum:** The bridge waits for Sui transaction finality before releasing tokens on the Ethereum side. The Ethereum transaction itself then requires Ethereum block confirmations before funds are available.
 
-When you build an app that credits users for bridged assets (for example, an on-ramp flow where a user bridges ETH to Sui), do not credit the user until the bridge transfer is fully confirmed on the destination chain. Poll the bridge status to check whether the transfer is complete before updating your app state.
+When you build an app that credits users for bridged assets (for example, an on-ramp flow where a user bridges ETH to Sui), do not credit the user until the destination chain fully confirms the bridge transfer. Poll the bridge status to check whether the transfer is complete before updating your app state.
 
 :::caution
 
-Do not assume a bridge transfer is complete based on the source chain transaction alone. A source chain transaction confirms that the user initiated the bridge, but tokens are not available on the destination chain until the bridge validators process and finalize the transfer. Crediting users prematurely exposes your app to double-spend risk if the source transaction is reorganized.
+Do not assume a bridge transfer is complete based on the source chain transaction alone. A source chain transaction confirms that the user initiated the bridge, but tokens are not available on the destination chain until the bridge validators process and finalize the transfer. Crediting users prematurely exposes your app to double-spend risk if a chain reorganization reverts the source transaction.
 
 :::
 
 ## Wormhole Connect {#wormhole-connect}
 
-Wormhole Connect lets you bridge tokens from any supported Wormhole chain into Sui, with an extra drop of SUI for gas fees. Developers can also embed Connect in their own websites and apps.
+Wormhole Connect lets you bridge tokens from any supported Wormhole chain into Sui, with an extra drop of SUI for gas fees. You can also embed Connect in your own websites and apps.
 
 :::tip
 
@@ -159,19 +159,19 @@ See [Cross-Chain Token Transfers with Wormhole Connect](https://wormhole.com/doc
 
 ### Supported assets
 
-Wormhole Connect supports lock-and-mint bridging for ETH, WETH, USDC, MATIC, WMATIC, BNB, WBNB, AVAX, WAVAX, FTM, WFTM, CELO, GLMR, WGLRM, and SOL across Ethereum, Polygon, BSC, Avalanche, Celo, Moonbeam, Solana, and Sui. Bridged tokens are received as Wormhole-minted tokens on the destination chain. See the [Wormhole token list](https://github.com/wormhole-foundation/wormhole-token-list). Some tokens support swapping on destination DEXs.
+Wormhole Connect supports lock-and-mint bridging for ETH, WETH, USDC, MATIC, WMATIC, BNB, WBNB, AVAX, WAVAX, FTM, WFTM, CELO, GLMR, WGLRM, and SOL across Ethereum, Polygon, BSC, Avalanche, Celo, Moonbeam, Solana, and Sui. You receive bridged tokens as Wormhole-minted tokens on the destination chain. See the [Wormhole token list](https://github.com/wormhole-foundation/wormhole-token-list). Some tokens support swapping on destination DEXs.
 
 ### Features
 
-**Automatic relay**: On EVM chains and Sui, Wormhole Connect can pay destination-chain gas automatically. Users only pay gas on the source chain.
+**Automatic relay:** On EVM chains and Sui, Wormhole Connect can pay destination-chain gas automatically. Users only pay gas on the source chain.
 
-**Gas drop-off**: Users can pay an extra fee on the source chain to receive a small amount of native gas on the destination chain. For example, bridging USDC from Ethereum to Sui can include a fee in USDC to receive SUI for gas. This feature is supported on EVM chains and Sui.
+**Gas drop-off:** Users can pay an extra fee on the source chain to receive a small amount of native gas on the destination chain. For example, bridging USDC from Ethereum to Sui can include a fee in USDC to receive SUI for gas. EVM chains and Sui support this feature.
 
 See the [Wormhole FAQ](https://wormhole.com/docs/products/connect/overview/) for details.
 
 ## Wormhole Portal Bridge
 
-The [Portal Bridge](https://www.portalbridge.com/sui), powered by Wormhole, supports bridging assets from any of the [22 supported Wormhole chains](https://www.wormhole.com/network).
+[Portal Bridge](https://www.portalbridge.com/sui), powered by Wormhole, supports bridging assets from any of the [22 supported Wormhole chains](https://www.wormhole.com/network).
 
 ## ZetaChain {#zetachain}
 
@@ -181,25 +181,25 @@ The [Portal Bridge](https://www.portalbridge.com/sui), powered by Wormhole, supp
 
 ZetaChain supports native cross-chain transfers for tokens such as:
 
-- **Bitcoin (BTC)**: Native Bitcoin transfers through HTLC
+- **Bitcoin (BTC):** Native Bitcoin transfers through HTLC
 
-- **Ethereum (ETH)**: Native ETH and ERC-20 tokens including USDC, USDT, WBTC
+- **Ethereum (ETH):** Native ETH and ERC-20 tokens including USDC, USDT, and WBTC
 
-- **Polygon (MATIC)**: Native MATIC and Polygon tokens
+- **Polygon (MATIC):** Native MATIC and Polygon tokens
 
-- **BSC (BNB)**: Native BNB and BEP-20 tokens
+- **BSC (BNB):** Native BNB and BEP-20 tokens
 
-- **Avalanche (AVAX)**: Native AVAX and Avalanche C-Chain tokens
+- **Avalanche (AVAX):** Native AVAX and Avalanche C-Chain tokens
 
-- **Layer 2 chains**: Arbitrum, Optimism, Base
+- **Layer 2 chains:** Arbitrum, Optimism, and Base
 
-Assets bridged through ZetaChain are represented as ZRC-20 tokens on the ZetaChain network and can be transferred to any connected chain.
+ZetaChain represents bridged assets as ZRC-20 tokens on the ZetaChain network, and you can transfer them to any connected chain.
 
 See the [ZetaChain supported networks](https://www.zetachain.com/docs/developers/chains/list) for the complete list.
 
 ### Omnichain messaging
 
-Beyond asset transfers, ZetaChain's Universal App framework enables smart contracts to communicate across all connected chains. Developers can build applications that:
+Beyond asset transfers, ZetaChain's Universal App framework enables smart contracts to communicate across all connected chains. You can build applications that:
 
 - Call functions on contracts across multiple blockchains.
 
@@ -219,17 +219,17 @@ ZetaChain uses a proof-of-stake validator network to observe transactions on ext
 
 1. The validators trigger the corresponding action on the destination chain.
 
-All cross-chain operations are handled automatically without manual intervention.
+ZetaChain handles all cross-chain operations automatically without manual intervention.
 
 ### Gas handling
 
 ZetaChain provides flexible gas payment options:
 
-- **Pay on source chain**: Pay all fees upfront on the source chain in ZETA, USDC, or USDT.
+- **Pay on source chain:** Pay all fees upfront on the source chain in ZETA, USDC, or USDT.
 
-- **Automatic gas drop**: Receive native tokens on the destination chain for transaction fees.
+- **Automatic gas drop:** Receive native tokens on the destination chain for transaction fees.
 
-- **Custom gas logic**: Implement application-specific gas payment models.
+- **Custom gas logic:** Implement application-specific gas payment models.
 
 ### Gateway contracts
 

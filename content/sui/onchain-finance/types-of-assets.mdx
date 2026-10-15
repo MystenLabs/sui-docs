@@ -49,13 +49,13 @@ On Sui, there are a variety of fungible, non-fungible, and other types of asset 
 
 :::tip
 
-The Coin and Currency standards are both used to create fungible tokens. However, they use different creation methods and store metadata in a different type of object.
+You use both the Coin and Currency standards to create fungible tokens. However, they use different creation methods and store metadata in a different type of object.
 
 Coin creates tokens using `coin::create_currency` while Currency uses `sui::coin_registry`.
 
 Coin uses `CoinMetadata` while Currency uses `Currency`.
 
-Fungible tokens created on Sui using the Coin or Currency standard are referred to as **coins**.
+The documentation refers to fungible tokens created on Sui using the Coin or Currency standard as **coins**.
 
 For fungible tokens created on Sui using the [Closed-Loop Token standard](/onchain-finance/closed-loop-token), the documentation uses the term **tokens**. In practice, the terms for both these objects are often interchangeable.
 
@@ -63,22 +63,22 @@ For fungible tokens created on Sui using the [Closed-Loop Token standard](/oncha
 
 ## Choose a standard
 
-The following table summarizes the fungible asset standards described on this page. Each section below has more detail and links to the full documentation.
+The following table summarizes the fungible asset standards that this page describes. The section for each standard has more detail and links to the full documentation.
 
 | Standard | Module | Ownership and transfers | Metadata | Use it when |
 | --- | --- | --- | --- | --- |
 | Coin | `sui::coin` | `key` and `store` abilities; supports wrapping and public transfers | `CoinMetadata<T>` | You maintain an existing coin created with `sui::coin`, or your coin does not require advanced supply tracking or regulatory features |
 | Currency | `sui::coin_registry` | Wrappable and freely transferable; can be stored in any application | `Currency<T>` object in Coin Registry | You are creating a new coin, or you need advanced supply management, regulatory features such as deny lists, or registry integration |
-| Permissioned Asset Standard (PAS) | — | Assets are held in Account objects (one per address) and move between Accounts only through requests approved and resolved in the same programmable transaction block (PTB) | — | You need account-based transfer controls and compliance checks |
-| Closed-Loop Token | `sui::token` | `key` ability only; can only be owned by an account; custom policies for transfers, spends, and conversions | — | Not recommended for new designs; use PAS in place of CLT |
+| Permissioned Asset Standard (PAS) |  | Account objects (one per address) hold assets, and assets move between Accounts only through requests approved and resolved in the same programmable transaction block (PTB) |  | You need account-based transfer controls and compliance checks |
+| Closed-Loop Token | `sui::token` | `key` ability only; only an account can own it; custom policies for transfers, spends, and conversions |  | Not recommended for new designs; use PAS in place of CLT |
 
 ## Fungible tokens: Coin standard
 
 The Coin standard defines fungible tokens that have `key` and `store` abilities. Coin supports wrapping and public transfers. It uses the [`sui::coin`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/coin.md) module. Coin refers to a **single object wrapper for a fungible asset**.
 
-The `Coin<T>` type represents open-loop fungible tokens. Coins are denominated by their type parameter, `T`, which is also associated with metadata (like name, symbol, and decimal precision) that applies to all instances of `Coin<T>`.
+The `Coin<T>` type represents open-loop fungible tokens. A coin's type parameter, `T`, sets its denomination. `T` also links to metadata (like name, symbol, and decimal precision) that applies to all instances of `Coin<T>`.
 
-Fungible tokens created using the Coin standard are referred to as **coins**.
+The documentation refers to fungible tokens created using the Coin standard as **coins**.
 
 When you create a coin using the `coin::create_currency` function, the publisher of the smart contract that creates the coin receives a `TreasuryCap` object. The Coin standard uses `CoinMetadata` to define the coin's metadata.
 
@@ -86,7 +86,7 @@ When you create a coin using the `coin::create_currency` function, the publisher
 
 Use the Coin standard if you are:
 
-- Working with legacy code or maintaining an existing coin that was created with the `sui::coin` module
+- Working with legacy code or maintaining an existing coin created with the `sui::coin` module
 
 - Creating a coin that does not require advanced supply tracking or regulatory features
 
@@ -96,21 +96,21 @@ Use the Coin standard if you are:
 
 ### Address balances
 
-Address balances tie fungible assets to a Sui address directly. They replace the UTXO-style `Coin<T>` model, where balances are calculated by summing all `Coin<T>` objects owned by an address. With the address balance functionality, each Sui address can have one address-owned balance for each currency they own, with the total balance being the sum of all `Coin<T>` objects plus the address balance. `Coin<T>` and address balances can exist together, however address balances provide several advantages over using `Coin<T>` alone.
+Address balances tie fungible assets to a Sui address directly. They replace the UTXO-style `Coin<T>` model, where you calculate a balance by summing all `Coin<T>` objects an address owns. With the address balance functionality, each Sui address can have one address-owned balance for each currency they own, with the total balance being the sum of all `Coin<T>` objects plus the address balance. `Coin<T>` and address balances can exist together, however address balances provide several advantages over using `Coin<T>` alone.
 
 For the full specification, see [SIP-58: Sui Address Balances](https://github.com/sui-foundation/sips/blob/main/sips/sip-58.md).
 
 ## Fungible tokens: Currency standard
 
-The Currency standard is an example of an open-loop system. It supports free-flowing, [wrappable](/develop/objects/object-ownership/wrapped), [freely transferable](/develop/objects/transfers/custom-rules) fungible assets that you can store in any application. It uses the [`sui::coin_registry`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/coin_registry.md) module and the `Currency` object for metadata. **Currency** refers to the object that is created in Coin Registry, which describes the currency properties and setup.
+The Currency standard is an example of an open-loop system. It supports free-flowing, [wrappable](/develop/objects/object-ownership/wrapped), [freely transferable](/develop/objects/transfers/custom-rules) fungible assets that you can store in any application. It uses the [`sui::coin_registry`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/coin_registry.md) module and the `Currency` object for metadata. **Currency** refers to the object that you create in Coin Registry, which describes the currency properties and setup.
 
-The `Currency<T>` type represents open-loop fungible tokens. Currencies are denominated by their type parameter, `T`, which is also associated with metadata like name, symbol, and decimal precision that applies to all instances of `Currency<T>`.
+The `Currency<T>` type represents open-loop fungible tokens. A currency's type parameter, `T`, sets its denomination. `T` also links to metadata like name, symbol, and decimal precision that applies to all instances of `Currency<T>`.
 
-Fungible tokens created using the Currency standard are referred to as **coins**.
+The documentation refers to fungible tokens created using the Currency standard as **coins**.
 
 You can create coins with the Currency standard using `coin_registry::new_currency` and `coin_registry::new_currency_with_otw`:
 
-- **Standard creation** (`coin_registry::new_currency`): Recommended for most cases. You can call this method any time after the coin type is published.
+- **Standard creation** (`coin_registry::new_currency`): Recommended for most cases. You can call this method any time after you publish the coin type.
 
 - **One-Time Witness creation** (`coin_registry::new_currency_with_otw`): Uses a One-Time Witness for uniqueness proof. Requires a two-step publish and finalize process.
 
@@ -134,11 +134,11 @@ Use the Currency standard if you are:
 
 ## Permissioned assets
 
-The Permissioned Asset Standard (PAS) enables asset ownership through Account objects. Account objects can hold assets and enforce transfer controls and compliance checks. There is one Account per address, and an Account can hold any asset type. Assets can only move between Accounts through hot potato requests that must be approved and resolved in the same programmable transaction block (PTB).
+The Permissioned Asset Standard (PAS) enables asset ownership through Account objects. Account objects can hold assets and enforce transfer controls and compliance checks. There is one Account per address, and an Account can hold any asset type. Assets can only move between Accounts through hot potato requests that you must approve and resolve in the same programmable transaction block (PTB).
 
-PAS uses Sui [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances). PAS balances are managed by PAS on behalf of the wallet address. They are held in a derived Account object, however, transfers always target the Account address, not the wallet address.
+PAS uses Sui [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances). PAS manages PAS balances on behalf of the wallet address. A derived Account object holds them. However, transfers always target the Account address, not the wallet address.
 
-PAS assets are stored in Sui objects and can be queried using the same data access methods as any other address-owned data.
+Sui objects store PAS assets, and you can query them using the same data access methods as any other address-owned data.
 
 [Learn more about Permissioned Asset Standard](/onchain-finance/pas/pas-architecture).
 
@@ -150,11 +150,11 @@ The Permissioned Asset Standard (PAS) provides a new and improved alternative to
 
 :::
 
-The Closed-Loop Token standard creates a fungible token that only has the `key` ability. Closed-loop tokens cannot be wrapped, stored as a dynamic field, or freely transferred (unless a custom policy allows it). Due to this restriction, tokens created with this standard **can only be owned by an account** and cannot be stored in an application. However, [they can be spent](/onchain-finance/closed-loop-token/spending). The standard uses the [`sui::token` module](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/token.md).
+The Closed-Loop Token standard creates a fungible token that only has the `key` ability. You cannot wrap closed-loop tokens, store them as a dynamic field, or freely transfer them (unless a custom policy allows it). Due to this restriction, **only an account can own** tokens created with this standard, and you cannot store them in an application. However, [you can spend them](/onchain-finance/closed-loop-token/spending). The standard uses the [`sui::token` module](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/token.md).
 
-Fungible tokens created using the Closed-Loop Token standard are referred to as **tokens**.
+The documentation refers to fungible tokens created using the Closed-Loop Token standard as **tokens**.
 
-Using the Closed-Loop Token standard, you can limit the applications that use the token and set up custom policies for transfers, spends, and conversions. Some applications might need a token that you can only use for a specific service, or that an authorized account can only use, or a token that you can block certain accounts from using. A real-world analogy would be a bank account that is regulated, bank-controlled, and compliant with certain rules and policies.
+Using the Closed-Loop Token standard, you can limit the applications that use the token and set up custom policies for transfers, spends, and conversions. Some applications might need a token that you can only use for a specific service, or that an authorized account can only use, or a token that you can block certain accounts from using. A real-world analogy is a bank account that is regulated, bank-controlled, and compliant with certain rules and policies.
 
 Refer to [Closed-Loop Token](/onchain-finance/closed-loop-token) for more information.
 

@@ -52,6 +52,8 @@ See [Staking and Governance](/onchain-finance/deepbook/deepbookv3/contract-infor
 
 ## How do I stake, vote, and claim rebates with the SDK?
 
+The SDK provides the following staking and governance functions.
+
 ### stake
 
 Use `stake` to stake an amount you specify into a specific pool. The call returns a function that takes a `Transaction` object.
@@ -85,7 +87,7 @@ Use `submitProposal` to submit a governance proposal. The call returns a functio
 
 **Parameters**
 
-- `params`: A `ProposalParams` object that defines the proposal. It contains `poolKey` (string), `balanceManagerKey` (string), `takerFee` (number), `makerFee` (number), and `stakeRequired` (number). See the `ProposalParams` interface in the submitProposal custom function example below.
+- `params`: A `ProposalParams` object that defines the proposal. It contains `poolKey` (string), `balanceManagerKey` (string), `takerFee` (number), `makerFee` (number), and `stakeRequired` (number). See the `ProposalParams` interface in the [submitProposal custom function](#submitproposal-custom-function) example.
 
 ```tsx
 submitProposal(params: ProposalParams);
@@ -107,7 +109,7 @@ vote(poolKey: string, balanceManagerKey: string, proposal_id: string);
 
 ### `claimRebates`
 
-Use `claimRebates` to claim maker/taker rebates for a balance manager in a specific pool. The call returns a function that takes a `Transaction` object.
+Use `claimRebates` to claim maker and taker rebates for a balance manager in a specific pool. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 

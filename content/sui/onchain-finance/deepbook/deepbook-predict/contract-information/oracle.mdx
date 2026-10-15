@@ -511,7 +511,7 @@ Block Scholes staleness is fatal to live pricing: a forward outside its window a
 
 #### How do I read the current freshness values?
 
-These 4 values are mutable protocol state with no public getter, so read them rather than assuming the table above still holds. One route works: read the `ProtocolConfig` shared object directly. All 4 fields sit in its `pricing_config` field and come back in a single object query, over GraphQL or gRPC, against the `protocolConfig` object for the network you are on, which `getConfig(network).objects.protocolConfig` returns:
+These 4 values are mutable protocol state with no public getter, so read them rather than assuming the Freshness windows table still holds. One route works: read the `ProtocolConfig` shared object directly. All 4 fields sit in its `pricing_config` field and come back in a single object query, over GraphQL or gRPC, against the `protocolConfig` object for the network you are on, which `getConfig(network).objects.protocolConfig` returns:
 
 | **Network** | **`ProtocolConfig`** |
 | --- | --- |

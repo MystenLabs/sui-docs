@@ -49,8 +49,8 @@ answer: >-
   package ships a /predict subpath that carries both deployments, creates an
   account, discovers live markets, and plans and places a position. On
   Testnet, which runs Predict protocol version 4, every trade is a queued order
-  that fills at Pyth's signed price about a second after placement or is
-  refunded. Mainnet runs protocol version 3, where trades fill immediately,
+  that fills at Pyth's signed price about a second after placement or ends in a
+  refund. Mainnet runs protocol version 3, where trades fill immediately,
   until its own cutover.
 ---
 
@@ -141,7 +141,7 @@ A brand-new market also opens with zero working cash and rejects a mint until po
 
 ### 6. Plan, then queue the order
 
-On Testnet a mint is a queued order. Plan it first: `client.predict.read.planMint` quotes the order at the current price, turns a slippage in cents per contract into the limits the order carries onchain, and runs a preflight of the queue gates, the balance, and the limits, so `plan.accepting` is false, with a typed `refusal`, when the order would be refused now. A few checks run only onchain at placement, so a plan that accepts can still abort there. `client.predict.tx.enqueuePlan` then builds the enqueue. Once it executes, a keeper fills the order at Pyth's signed price for its price instant, about a second later, within those limits, or refunds it.
+On Testnet a mint is a queued order. Plan it first: `client.predict.read.planMint` quotes the order at the current price, turns a slippage in cents per contract into the limits the order carries onchain, and runs a preflight of the queue gates, the balance, and the limits, so `plan.accepting` is false, with a typed `refusal`, when the queue would refuse the order now. A few checks run only onchain at placement, so a plan that accepts can still abort there. `client.predict.tx.enqueuePlan` then builds the enqueue. Once it executes, a keeper fills the order at Pyth's signed price for its price instant, about a second later, within those limits, or refunds it.
 
 <ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-mint" />
 
@@ -150,10 +150,10 @@ A directional position is a one-sided range: `side: 'up'` pays when settlement l
 3 rules decide whether the order lands:
 
 - **A strike near the money.** Admission refuses an entry probability outside the market's band, `0.15` to `0.85` on Testnet markets created since 2026-10-13, and a window's reference strike drifts away from the money as the price moves. The sample picks the strike that prices near 50 cents and snaps it onto the admission grid.
-- **A premium of at least 1 USDC.** The premium is the quantity multiplied by the entry probability, so a budget too small to buy 1 USDC of premium is refused.
+- **A premium of at least 1 USDC.** The premium is the quantity multiplied by the entry probability, so admission refuses a budget too small to buy 1 USDC of premium.
 - **An order fee on top.** Each queued order pays a flat 0.02 USDC on Testnet. `plan.totalDebit` is the budget plus the fee, and unused budget comes back when the order fills.
 
-After the enqueue executes with events included, read the record ID with `client.predict.decode.enqueue(result).recordId` and persist it. `client.predict.read.waitForOutcome` polls the record until it is filled or refunded. A filled mint stays in the market's queue as an Open record rather than entering the account, the queue's settlement walk pays it automatically after expiry, and you can sell it earlier with another queued order. For range positions, early sells, refunds, settled results, and the liquidity provider flow, see the [end-to-end tutorial](/onchain-finance/deepbook/deepbook-predict/tutorial).
+After the enqueue executes with events included, read the record ID with `client.predict.decode.enqueue(result).recordId` and persist it. `client.predict.read.waitForOutcome` polls the record until it reaches a filled or refunded state. A filled mint stays in the market's queue as an Open record rather than entering the account, the queue's settlement walk pays it automatically after expiry, and you can sell it earlier with another queued order. For range positions, early sells, refunds, settled results, and the liquidity provider flow, see the [end-to-end tutorial](/onchain-finance/deepbook/deepbook-predict/tutorial).
 
 On Mainnet, before its cutover, a mint fills immediately through `tx.mint`, `tx.mintAmount`, or `tx.mintCost` under explicit cost caps. [Mint a position immediately](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) covers that path and its caps, which default to uncapped.
 
@@ -163,7 +163,7 @@ The samples above pass compile checks, but nothing runs them against Testnet. Co
 
 1. Fund a Testnet address with SUI, then confirm a nonzero balance with `sui client gas`.
 2. Request test USDC through the token request form, then confirm the balance with `sui client balance`, where it appears as DUSDC.
-3. Confirm the configuration block resolves: `getDeployment('testnet').deployment` is `deepbook-predict-testnet` on chain `4c78adac`.
+3. Confirm the configuration block resolves: `getDeployment('testnet').deployment` is `deepbook-predict-testnet` on the chain with identifier `4c78adac`.
 4. Confirm at least one live market exists: `client.predict.read.markets()` returns an entry whose expiry is in the future, with `mintPaused` false and a non-null `referencePrice`.
 5. Run the account step, then confirm the derived wrapper resolves with `sui client object WRAPPER_ID`.
 6. Confirm `client.predict.read.executionMode()` returns `'delayed'`, then plan an order of about 5 USDC and confirm `plan.accepting` is `true`.
@@ -175,7 +175,7 @@ DeepBook Predict provides the following capabilities:
 
 - **Per-expiry markets:** Each market settles once, at one timestamp, from one of 2 sources: the exact Pyth price at the expiry timestamp, or, when that is unavailable 30 seconds after expiry, the exact Block Scholes minute-boundary spot. Cadence slots run from 1 minute to 1 month in 6 sizes, and both deployments enable the 1-minute and 5-minute cadences. Trading closes 10 seconds before expiry, so no trade fills inside that no-trade window at a converged price.
 - **Range positions:** Every position pays its full quantity when settlement lands inside its strike range and nothing otherwise. Directional positions are ranges with one open end.
-- **Queued orders:** From protocol version 4, which Testnet runs, every mint and early sell is priced at Pyth's signed price for a fixed instant shortly after placement, so nobody can trade against a price that is already stale. Any caller can fill or refund a due order, and the queue pays filled positions at settlement with no claim step.
+- **Queued orders:** From protocol version 4, which Testnet runs, the protocol prices every mint and early sell at Pyth's signed price for a fixed instant shortly after placement, so nobody can trade against a price that is already stale. Any caller can fill or refund a due order, and the queue pays filled positions at settlement with no claim step.
 - **Oracle pricing from external feeds:** Pyth Lazer spot, plus Block Scholes forward and stochastic volatility inspired (SVI) data, drive every quote from shared objects in a separate `propbook` package.
 - **Shared account custody:** One shared account per owner holds USDC balances, positions minted before the cutover, and builder code attribution, at an address derived from the owner address.
 - **Pooled liquidity:** Liquidity providers queue USDC supply and `PLP` withdrawal requests, each with an optional floor, and a periodic flush fills them at one frozen pool value.

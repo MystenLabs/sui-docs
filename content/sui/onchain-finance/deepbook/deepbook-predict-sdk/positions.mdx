@@ -91,14 +91,14 @@ The immediate position builders default to uncapped slippage. `tx.mint` sends `U
 
 ## Queued orders {#queued-orders}
 
-From Predict protocol version 4, a mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement on Testnet, and a keeper or any other caller then fills it at that price or refunds it. Version 2.7.0 of the SDK adds the queued path to `client.predict` and records Testnet's delayed-execution deployment. Its Mainnet configuration does not record one yet, so the queued functions throw `PredictInputError` there until the Mainnet rollout is synced, unless you pass a `config` that sets `packages.predictDelayedExecution`, `packages.predictOrders`, `objects.orderDesk`, and `objects.queueRegistry`.
+From Predict protocol version 4, a mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement on Testnet, and a keeper or any other caller then fills it at that price or refunds it. Version 2.7.0 of the SDK adds the queued path to `client.predict` and records Testnet's delayed-execution deployment. Its Mainnet configuration does not record one yet, so the queued functions throw `PredictInputError` there until the SDK syncs the Mainnet rollout, unless you pass a `config` that sets `packages.predictDelayedExecution`, `packages.predictOrders`, `objects.orderDesk`, and `objects.queueRegistry`.
 
 A queued order differs from an immediate trade in 4 ways:
 
 - **Placement and fill are separate transactions.** The enqueue debits the order's budget and a flat order fee into the order's escrow and returns a record ID. The fill lands about a second later in another caller's transaction. Unused budget comes back at the fill.
-- **The slippage is cents per contract.** `slippageCents` bounds how far the all-in price per `$1` of payout may rise above the quote's price without the fee subsidy, so `slippageCents: 10` lets a contract quoted at 42 cents before the subsidy fill at up to 52 cents, fees included. It is never a percentage. `'auto'` sizes it from a model of the price's movement until τ.
+- **The slippage is cents per contract.** `slippageCents` bounds how far the all-in price per `$1` of payout might rise above the quote's price without the fee subsidy, so `slippageCents: 10` lets a contract quoted at 42 cents before the subsidy fill at up to 52 cents, fees included. It is never a percentage. `'auto'` sizes it from a model of the price's movement until τ.
 - **A filled mint is an Open record.** It stays in the market's queue rather than entering the account, so `read.positions` does not list it. Follow it by its record ID, sell it with another queued order, and let the queue's settlement walk pay it after expiry.
-- **A refund is a normal outcome.** An order that misses its limits at τ, or that the market cannot cover, is refunded with a reason code, and a refund for the order's own limits or for admission keeps the order fee.
+- **A refund is a normal outcome.** An order that misses its limits at τ, or that the market cannot cover, gets a refund with a reason code, and a refund for the order's own limits or for admission keeps the order fee.
 
 ### `read.executionMode` {#execution-mode}
 
@@ -118,17 +118,17 @@ It takes these parameters:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2459-2463" />
 
-A `MintPlan` carries `potentialPayout`, `minPayout` at the worst price, `payoutMultiple`, `pricePerContract`, `worstPricePerContract`, `orderFee`, `budget`, `totalDebit`, the account's `balance`, `maxNow`, the largest amount the market and the balance take now, a `timing` preview of τ and the deadline, and the `order` the plan builds. The limits are sized from the price without the fee subsidy, because placement checks the order without it. `planMint` throws a `PredictPreflightError` with code `entry-band` for a strike outside the band, `min-premium` for a budget that buys less than 1 USDC of premium, and `past-cutoff` for a market past its expiry, where the chain has no live price to quote. Near the cutoff, the plan's `refusal` is `past-cutoff` instead, and the preview runs on the device clock, so the chain can still refuse an order placed in the last seconds.
+A `MintPlan` carries `potentialPayout`, `minPayout` at the worst price, `payoutMultiple`, `pricePerContract`, `worstPricePerContract`, `orderFee`, `budget`, `totalDebit`, the account's `balance`, `maxNow`, the largest amount the market and the balance take now, a `timing` preview of τ and the deadline, and the `order` the plan builds. The plan sizes the limits from the price without the fee subsidy, because placement checks the order without it. `planMint` throws a `PredictPreflightError` with code `entry-band` for a strike outside the band, `min-premium` for a budget that buys less than 1 USDC of premium, and `past-cutoff` for a market past its expiry, where the chain has no live price to quote. Near the cutoff, the plan's `refusal` is `past-cutoff` instead, and the preview runs on the device clock, so the chain can still refuse an order placed in the last seconds.
 
 ### `tx.enqueuePlan` {#enqueue-plan}
 
-Use `tx.enqueuePlan` to queue the order a plan describes. It returns a `Promise<QueuedOrderPlan>`, the `transaction` and a `preview` of τ, the deadline, the escrow, the order fee, and whether a sell needs funding. Pass the descriptor the mint plan was planned with, or the coordinates a sell plan took. It reads the gates and the balance again and throws a `PredictPreflightError` for a refused plan or a balance that now escrows less than the plan's budget, and a `PredictInputError` for an order fee that rose since the plan or for another owner, market, strike, or record than the plan's target. Each enqueue it builds starts with a check that aborts the transaction if the order desk's fee rose between building and execution.
+Use `tx.enqueuePlan` to queue the order a plan describes. It returns a `Promise<QueuedOrderPlan>`, the `transaction` and a `preview` of τ, the deadline, the escrow, the order fee, and whether a sell needs funding. Pass the descriptor you planned the mint with, or the coordinates a sell plan took. It reads the gates and the balance again and throws a `PredictPreflightError` for a refused plan or a balance that now escrows less than the plan's budget, and a `PredictInputError` for an order fee that rose since the plan or for another owner, market, strike, or record than the plan's target. Each enqueue it builds starts with a check that aborts the transaction if the order desk's fee rose between building and execution.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="1934-1938" />
 
 The lower-level builders `tx.enqueueMint`, `tx.enqueueMintAmount`, `tx.enqueueMintCost`, and `tx.enqueueSell` take the limits directly, in SDK units, and run the same preflight. Every queued mint needs a finite cost cap, because the chain aborts a zero or unlimited `max_cost` with `EMintCostCapRequired`.
 
-The preflight codes are `not-live`, `no-queue`, `retired`, `paused`, `stuck`, `past-cutoff`, `queue-full`, `account-cap`, `fee`, `market-cash`, `min-premium`, `entry-band`, `cost-above-payout`, `below-min-sell`, `record-not-open`, and `not-record-owner`. `fee` means the balance cannot cover the order fee, or the plan's whole debit, so prompt a deposit. Some checks run only on chain at placement, such as the market's SVI age and room in the payout tree for a new strike, and those abort the transaction rather than raising a preflight code. `describePredictError` turns any of these aborts into readable text.
+The preflight codes are `not-live`, `no-queue`, `retired`, `paused`, `stuck`, `past-cutoff`, `queue-full`, `account-cap`, `fee`, `market-cash`, `min-premium`, `entry-band`, `cost-above-payout`, `below-min-sell`, `record-not-open`, and `not-record-owner`. `fee` means the balance cannot cover the order fee, or the plan's whole debit, so prompt a deposit. Some checks run only onchain at placement, such as the market's SVI age and room in the payout tree for a new strike, and those abort the transaction rather than raising a preflight code. `describePredictError` turns any of these aborts into readable text.
 
 ### `decode.enqueue` {#decode-enqueue}
 
@@ -138,11 +138,11 @@ Use `decode.enqueue` to read the record ID, τ, deadline, escrow, and order fee 
 
 ### `read.waitForOutcome`, `read.order`, and `read.orders` {#wait-for-outcome}
 
-Use `read.waitForOutcome` to poll a record until it is filled, refunded, or closed. It returns a `Promise<QueuedOrderOutcome>` whose `outcome` is `'filled'`, `'refunded'`, `'closed'`, `'gone'`, or `'timeout'`, with the record's `order` view. It polls every 250 ms by default for up to 30 seconds, and keeps polling a record the full node does not show yet. After expiry, `'gone'` for a filled record means the queue paid it out and deleted it, not that the order was lost.
+Use `read.waitForOutcome` to poll a record until it is filled, refunded, or closed. It returns a `Promise<QueuedOrderOutcome>` whose `outcome` is `'filled'`, `'refunded'`, `'closed'`, `'gone'`, or `'timeout'`, with the record's `order` view. It polls every 250 ms by default for up to 30 seconds, and keeps polling a record the full node does not show yet. After expiry, `'gone'` for a filled record means the queue paid it out and deleted it, not that you lost the order.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2872-2876" />
 
-`read.order(m, recordId)` and `read.orders(m, recordIds)` read records without waiting. Each record's `view.state` is `'placed'`, `'priced'`, `'refunding'`, `'filled'`, `'refunded'`, or `'closed'`. A filled record's `view.position` carries the packed `orderId` and the held quantity, and `view.sellable` reports whether it can be sold now. A keeper that commits a price and fills in one transaction moves an order from `'placed'` straight to `'filled'`, so do not count on seeing `'priced'`.
+`read.order(m, recordId)` and `read.orders(m, recordIds)` read records without waiting. Each record's `view.state` is `'placed'`, `'priced'`, `'refunding'`, `'filled'`, `'refunded'`, or `'closed'`. A filled record's `view.position` carries the packed `orderId` and the held quantity, and `view.sellable` reports whether you can sell it now. A keeper that commits a price and fills in one transaction moves an order from `'placed'` straight to `'filled'`, so do not count on seeing `'priced'`.
 
 ### `read.planSell` {#plan-sell}
 
@@ -156,7 +156,7 @@ It takes these parameters:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2762-2766" />
 
-The whole position moves into the sell's own record, so after a sell, including a partial one, the remainder lives under the sell's record ID. A sell the market cannot cover at the fill is refunded and the position returns to an Open record. When a sell's cash need is above the market's spare cash, `tx.enqueueSell` appends `rebalance_expiry_cash` after the enqueue by default, and its `fundMarket` option controls that.
+The whole position moves into the sell's own record, so after a sell, including a partial one, the remainder lives under the sell's record ID. A sell the market cannot cover at the fill gets a refund, and the position returns to an Open record. When a sell's cash need is above the market's spare cash, `tx.enqueueSell` appends `rebalance_expiry_cash` after the enqueue by default, and its `fundMarket` option controls that.
 
 ### `tx.refund`, `tx.claimParked`, and `tx.payOpen` {#refund}
 
@@ -230,7 +230,7 @@ It takes these parameters:
 - `subsidy`: The sponsor-funded part of the trading fee, which you do not pay.
 - `builder`: The builder add-on, 0 when the account carries no builder code.
 - `penalty`: The congestion surcharge.
-- `referral`: The portion of the trading fee and congestion surcharge that the protocol routes to a referrer. It is already inside those amounts, not an extra debit, and it is 0 unless the account was created with a referrer; see [Referrals](/onchain-finance/deepbook/deepbook-predict/design).
+- `referral`: The portion of the trading fee and congestion surcharge that the protocol routes to a referrer. It is already inside those amounts, not an extra debit, and it is 0 unless you created the account with a referrer; see [Referrals](/onchain-finance/deepbook/deepbook-predict/design).
 - `inventoryImpact`: The inventory-impact charge, a separate charge that `cost` includes.
 
 `cost` is `premium + (trading - subsidy) + builder + penalty + inventoryImpact`, the same total the contract withdraws, so pass `cost` plus a buffer as `maxCost`, never `premium`. `referral` has no term of its own in that sum because it is already counted inside `trading` and `penalty`. [Design](/onchain-finance/deepbook/deepbook-predict/design) explains each fee component. `raw` carries exact amounts for `premium`, `cost`, `quantity`, and `entryProbability` but no fee amounts, so read exact fees from `decode.mint(result).raw`, which carries every fee component as an exact `bigint`, after execution.
@@ -298,11 +298,11 @@ Use `tx.mintCost` to mint inside an all-in budget, the SDK form of `mint_exact_c
 
 :::info
 
-`tx.mintCost` and `read.quoteMintCost` call an entrypoint that arrived in `predict` package version 2, which Mainnet runs. The snippet below still carries the SDK's own comment saying Testnet only, which the Mainnet upgrade has since overtaken. On Testnet, version 2.7.0 of `read.quoteMintCost` reads the protocol version 4 quote instead and previews a queued fill, and `tx.mintCost` aborts there.
+`tx.mintCost` and `read.quoteMintCost` call an entrypoint that arrived in `predict` package version 2, which Mainnet runs. The `tx.mintCost` code snippet in this section still carries the SDK's own comment saying Testnet only, which the Mainnet upgrade has since overtaken. On Testnet, version 2.7.0 of `read.quoteMintCost` reads the protocol version 4 quote instead and previews a queued fill, and `tx.mintCost` aborts there.
 
 :::
 
-The difference from `tx.mintAmount` is what the budget covers. `spend` on `tx.mintAmount` is a *premium* budget, and the trading fee, builder add-on, congestion surcharge, and inventory-impact charge land on top of it, which is why that builder needs a separate `maxCost`. `spend` on `tx.mintCost` is the *whole withdrawal*. The contract caps it at the account's available USDC, then sizes the largest lot-rounded fill whose complete debit fits, probing the same cost computation it charges against fee and book state at execution. The debit therefore cannot exceed `spend`, and you need no fee estimate and no padding against fee state moving between the quote and execution.
+The difference from `tx.mintAmount` is what the budget covers. `spend` on `tx.mintAmount` is a **premium** budget, and the trading fee, builder add-on, congestion surcharge, and inventory-impact charge land on top of it, which is why that builder needs a separate `maxCost`. `spend` on `tx.mintCost` is the **whole withdrawal**. The contract caps it at the account's available USDC, then sizes the largest lot-rounded fill whose complete debit fits, probing the same cost computation it charges against fee and book state at execution. The debit therefore cannot exceed `spend`, and you need no fee estimate and no padding against fee state moving between the quote and execution.
 
 It takes these parameters:
 

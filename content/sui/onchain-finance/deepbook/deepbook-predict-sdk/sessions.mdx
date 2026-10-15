@@ -109,7 +109,7 @@ It takes this parameter:
 
 ### `SessionsConfig` {#sessions-config}
 
-`SessionsConfig` holds the IDs every builder needs: the latest `deepbook_sessions` package to call, the original `deepbook_sessions` package ID that v1 structs and dynamic-field keys still carry, the shared `SessionsConfig` object, the `account` package, and the shared `AccountRegistry`. `sessionsPackageIdV1` is optional and matters only where the package has been upgraded: on Testnet, where `sessions` is at version 2, the two IDs differ, and on Mainnet, where it is at version 1, they are the same. The account IDs are the same ones `AccountContract` takes on [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts), because sessions is an account app on the same registry.
+`SessionsConfig` holds the IDs every builder needs: the latest `deepbook_sessions` package to call, the original `deepbook_sessions` package ID that v1 structs and dynamic-field keys still carry, the shared `SessionsConfig` object, the `account` package, and the shared `AccountRegistry`. `sessionsPackageIdV1` is optional and matters only after a package upgrade: on Testnet, where `sessions` is at version 2, the 2 IDs differ, and on Mainnet, where it is at version 1, they are the same. The account IDs are the same ones `AccountContract` takes on [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts), because sessions is an account app on the same registry.
 
 <ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="27-38" />
 
@@ -345,7 +345,7 @@ It takes these parameters:
 
 ### `mintExactCost` {#mint-exact-cost}
 
-Use `mintExactCost` to mint inside an all-in budget as the session key, the session form of `mint_exact_cost`. It returns a `(tx: Transaction) => TransactionResult` function whose result is the new order ID, a `u256`. Unlike the other 2 mint builders it takes no separate cost cap, because `maxCost` is the budget the fill is sized inside rather than a ceiling checked afterward.
+Use `mintExactCost` to mint inside an all-in budget as the session key, the session form of `mint_exact_cost`. It returns a `(tx: Transaction) => TransactionResult` function whose result is the new order ID, a `u256`. Unlike the other 2 mint builders it takes no separate cost cap, because `maxCost` is the budget inside which the contract sizes the fill rather than a ceiling it checks afterward.
 
 :::info
 

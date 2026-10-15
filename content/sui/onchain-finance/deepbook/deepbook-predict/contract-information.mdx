@@ -59,7 +59,7 @@ answer: >-
   PoolVault, OracleRegistry, and AccountRegistry objects. Mainnet quotes in
   native USDC and Testnet in a mintable test USDC that displays as DUSDC. Both
   scale probabilities, prices, and rates by 1e9 and run BTC markets on the 1m
-  and 5m cadences. Every package has been upgraded at least once, so each one's
+  and 5m cadences. Every package has had at least one upgrade, so each one's
   Move call target is its latest published address while its type tags keep its
   original one. The networks now run different code. Mainnet runs predict
   protocol version 3 and sessions protocol version 2, where trades fill
@@ -82,7 +82,7 @@ Every upgrade kept its original ID, so the lineage is unchanged and every object
 
 ### Publish count is not protocol version {#version-numbers}
 
-Two different numbers get called "version", and they have come apart. Protocol version decides what a network can do; the publish count only records how often a package was published:
+Two different numbers share the name version, and they have come apart. Protocol version decides what a network can do; the publish count only records how many publishes a package has had:
 
 | **Package** | **Publishes** | **Protocol version** |
 | --- | --- | --- |
@@ -93,7 +93,7 @@ Two different numbers get called "version", and they have come apart. Protocol v
 | Testnet `predictOrders` | 1 | 1 |
 | Testnet `predictMath` | 1 | None. The library has no version gate |
 
-- **Publishes** is what `Published.toml` records: how many times that package has been published on that network. It only counts events, so a Testnet-only rehearsal of an upgrade leaves Testnet permanently a publish ahead.
+- **Publishes** is what `Published.toml` records: how many publishes that package has had on that network. It only counts events, so a Testnet-only rehearsal of an upgrade leaves Testnet permanently a publish ahead.
 - **Protocol version** is `constants::current_version!()`, compiled into the code. It gates behavior: [`assert_version`](#version-gate) aborts unless it is at or above the `ProtocolConfig` watermark, and it is what determines whether an entrypoint exists.
 
 Testnet `predict` is on its 5th publish and runs protocol version 4, because an earlier Testnet-only rehearsal left it a publish ahead. Compare protocol versions, never publish counts, when you want to know what a network can do.
@@ -109,13 +109,13 @@ A chain read on 2026-10-13 found the watermark at 1 on Mainnet, so every Mainnet
 A Move package upgrade publishes at a new address and keeps its original one. The 2 IDs are not interchangeable, and Testnet now needs both:
 
 - **Call target:** the latest published address. Every `moveCall` target, and every `Auth` or capability argument resolved against the package, uses it.
-- **Original ID:** the address the package was first published at. Every type tag keeps it forever, so struct types, event type prefixes, the PLP coin type, and dynamic-field keys are all built from the original ID, never from the call target.
+- **Original ID:** the address of the package's first publish. Every type tag keeps it forever, so struct types, event type prefixes, the PLP coin type, and dynamic-field keys all derive from the original ID, never from the call target.
 
 A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. On Testnet, the types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the Testnet version 5 address `0x0654ecbe…`, and the version numbers do not line up across networks, so check the defining ID on each one.
 
 The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and on Testnet `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. Version 2.7.0 resolves the current call target of every package on both networks. Earlier releases resolve superseded `predict` addresses, which stop working once a watermark passes them, as Testnet's has.
 
-The distinction is easy to get wrong in the direction that fails silently rather than loudly. A call sent to an original ID still *works* for every function that existed at version 1, so nothing breaks until you reach for a version 2 entrypoint, and a type tag built from a call target names a type that does not exist at all.
+The distinction is easy to get wrong in the direction that fails silently rather than loudly. A call sent to an original ID still works for every function that existed at version 1, so nothing breaks until you reach for a version 2 entrypoint, and a type tag built from a call target names a type that does not exist at all.
 
 :::caution
 
@@ -253,7 +253,7 @@ As on Mainnet, the PLP type carries `predict`'s original ID, `0x59d71119…`, no
 
 ## Shared facts across both networks
 
-Each `ExpiryMarket` is its own shared object, one per underlying and expiry. Market IDs are not deployment configuration: read them from `registry::expiry_market_id` onchain or from `read.markets()` at runtime. Each network's Predict package defines the PLP type, so it differs per network and changes with every redeployment; a package *upgrade* leaves it alone, because it stays at the original ID. The quote coin type differs per network too, so always take it from `getConfig(network).quoteCoinType` rather than from a symbol.
+Each `ExpiryMarket` is its own shared object, one per underlying and expiry. Market IDs are not deployment configuration: read them from `registry::expiry_market_id` onchain or from `read.markets()` at runtime. Each network's Predict package defines the PLP type, so it differs per network and changes with every redeployment; a package upgrade leaves it alone, because it stays at the original ID. The quote coin type differs per network too, so always take it from `getConfig(network).quoteCoinType` rather than from a symbol.
 
 The entrypoint surface differs across the networks. `expiry_market::mint_exact_cost`, `expiry_market::quote_mint_exact_cost_for_account`, and the `sessions::mint_exact_cost` wrapper arrived at protocol version 2, and `plp::add_usdc_to_plp` arrived at `predict` protocol version 3, so both networks expose them. Protocol version 4, on Testnet only, retires the immediate mints, `redeem_live`, and their session wrappers, and adds the queued-order entrypoints in `deepbook_predict_orders` and the queued session wrappers in `sessions` protocol version 3.
 
@@ -280,7 +280,7 @@ The `deepbookCoreAccount` package declares the `account_data::DeepbookCoreAccoun
 
 On both networks, the `AccountRegistry` authorizes `PredictApp`, `SessionsApp`, and `DeepbookCoreAccountApp`. That is live registry state, so read it with `account_registry::is_app_authorized<App>` rather than assuming it.
 
-The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Both deployment manifests record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`: Testnet's DeepBook registry `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d` had not authorized `DeepbookCoreAccountApp` when each deployment was verified, so treat the spot wrappers as unavailable on both networks until you have checked otherwise. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and it can be granted or revoked in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers what that authorization gates.
+The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Both deployment manifests record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`: Testnet's DeepBook registry `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d` had not authorized `DeepbookCoreAccountApp` when each deployment was verified, so treat the spot wrappers as unavailable on both networks until you have checked otherwise. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and that administrator can grant or revoke it in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers what that authorization gates.
 
 ## Units and constants
 
@@ -337,7 +337,7 @@ The only finite boundary a market admits off its admission grid is its own refer
 | Pyth spot freshness | `2000` ms | `2000` ms | Live pricing falls back to the Block Scholes forward on an older observation |
 | Block Scholes price freshness | `2000` ms | `2000` ms | Spot and forward |
 | Block Scholes SVI freshness | `60000` ms | `10000` ms | The stochastic volatility inspired (SVI) surface changes more slowly |
-| `no_trade_window_ms` | `10000` | `10000` | On Mainnet, live mints and live redeems abort with `ETradeWindowClosed` inside the last 10 seconds. On Testnet, no queued order's price instant may fall inside it |
+| `no_trade_window_ms` | `10000` | `10000` | On Mainnet, live mints and live redeems abort with `ETradeWindowClosed` inside the last 10 seconds. On Testnet, a queued order's price instant must not fall inside it |
 | `max_valuation_window_ms` | `300000` | `300000` | A pool flush must finish within 5 minutes of its snapshot, or a cap holder restarts it |
 | `max_lp_pool_value` | `500000000000` | `500000000000` | The pool accepts at most 500,000 USDC of liquidity |
 | `lp_request_limit_flush_attempts` | `1` | `1` | The first flush whose mark misses a queued request's floor cancels and refunds it |
@@ -495,7 +495,7 @@ The 2 deployments now run different protocol versions, and their configuration h
 - **Activity:** A chain read on 2026-10-13 found Mainnet's trading paused since 2026-09-30 and Testnet trading. `read.markets()` lists live-and-unsettled markets, which includes an expired market nobody has settled, so check each entry's expiry before you quote against it.
 - **Read services:** None exists for either current deployment as of 2026-09-14.
 - **DeepBook core authorization:** Both deployment manifests record the DeepBook core registry as not having authorized `DeepbookCoreAccountApp`, so treat the session spot wrappers as unavailable on either network until you have read that registry, per [App authorization](#app-authorization).
-- **Package version:** the networks have not been upgraded in lockstep and need not be. Compare protocol versions rather than publish counts, as [Publish count is not protocol version](#version-numbers) explains, and remember that an older call target keeps working only until the `ProtocolConfig` watermark passes it.
+- **Package version:** The networks have not upgraded in lockstep and need not. Compare protocol versions rather than publish counts, as [Publish count is not protocol version](#version-numbers) explains, and remember that an older call target keeps working only until the `ProtocolConfig` watermark passes it.
 
 Structure your code so none of these become assumptions:
 
@@ -519,7 +519,7 @@ Stream events directly from a full node when a client needs them as they land, a
 | `order_events::LiveOrderRedeemed` | A trader closes or reduces a live position before expiry, or on Testnet, a queued sell fills |
 | `queue_events::OrderEnqueued` | Testnet only: a trader places a queued order |
 | `queue_events::QueuedOrderFilled` | Testnet only: a queued order fills, beside the Predict order event |
-| `queue_events::QueuedOrderRefunded` | Testnet only: a queued order is refunded, with a reason code |
+| `queue_events::QueuedOrderRefunded` | Testnet only: the queue refunds a queued order, with a reason code |
 | `queue_events::OpenRecordSettled` | Testnet only: the settlement walk pays an Open record |
 | `order_events::SettledOrderRedeemed` | The owner, or a permissionless caller on the owner's behalf, claims a settled position |
 | `vault_events::SupplyRequested` | An account queues a liquidity supply request |

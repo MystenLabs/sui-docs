@@ -43,7 +43,7 @@ answer: >-
 
 Publish the asset_tokenization and template packages on Sui and interact with your tokenized asset using the CLI and TypeScript scripts.
 
-This guide covers how to publish the [asset tokenization](/onchain-finance/tokenized-assets/asset-tokenization) packages and interact with your tokenized asset.
+To interact with your tokenized asset, first publish the [asset tokenization](/onchain-finance/tokenized-assets/asset-tokenization) packages.
  
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -57,7 +57,7 @@ This guide covers how to publish the [asset tokenization](/onchain-finance/token
  
 ## How do I get the framework? {#get-the-framework}
 
-Asset tokenization ships as a template you fork rather than a package you install, because the `template` package is rewritten per asset through WASM bytecode manipulation. Start from the reference repository:
+Asset tokenization ships as a template you fork rather than a package you install, because WASM bytecode manipulation rewrites the `template` package per asset. Start from the reference repository:
 
 ```sh
 $ git clone https://github.com/MystenLabs/asset-tokenization.git
@@ -187,7 +187,7 @@ a6563740f7075626c69635f7472616e736665720673656e64657204736f6d6506737472696e
  
 Copy the output and paste it into the return statement of the `getBytecode` method in [`setup/src/utils/bytecode-template.ts`](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/bytecode-template.ts).
  
-Because the template package contains 2 modules, you also need to retrieve the bytecode for the `genesis` module. This bytecode is not edited but is required to deploy the template module. Navigate to the `template` folder and run:
+Because the template package contains 2 modules, you also need to retrieve the bytecode for the `genesis` module. The WASM library does not edit this bytecode, but you need it to deploy the template module. Navigate to the `template` folder and run:
  
 ```sh
 $ xxd -c 0 -p build/template/bytecode_modules/genesis.mv | head -n 1
@@ -267,7 +267,7 @@ const tx = new Transaction();
 ...
 ```
  
-The `modules` array contains 2 elements: the edited template module and the genesis module. The `packageId` is the address the `asset_tokenization` package was deployed to.
+The `modules` array contains 2 elements: the edited template module and the genesis module. The `packageId` is the address where you deployed the `asset_tokenization` package.
  
 ## How do I interact with my tokenized asset? {#typescript-commands}
  

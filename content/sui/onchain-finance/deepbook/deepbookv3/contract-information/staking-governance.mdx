@@ -51,7 +51,7 @@ answer: >-
 
 Stake DEEP tokens from your `balance_manager` into a DeepBook pool; the stake becomes active in the following epoch. When your active stake is greater than the pool's stake required, you get reduced taker fees and can accumulate trading fee rebates, and you can submit and vote on proposals that change the pool's taker fee rate, maker fee rate, and stake required.
 
-This page explains how to stake DEEP tokens in a DeepBook pool, how to submit and vote on the governance proposals that set the pool's fees and stake required, and how to claim trading fee rebates.
+You can stake DEEP tokens in a DeepBook pool, submit and vote on the governance proposals that set the pool's fees and stake required, and claim trading fee rebates.
 
 DeepBook's novel approach to governance allows users to update a single pool's three parameters: 
 
@@ -59,9 +59,9 @@ DeepBook's novel approach to governance allows users to update a single pool's t
 - Maker fee rate
 - Stake required
 
-Stake required is the amount of DEEP tokens a user must have staked in the pool to take advantage of taker and maker incentives. Each individual DeepBook pool has independent governance, and governance can be conducted every epoch. See [Design](/onchain-finance/deepbook/deepbookv3/design#governance) to learn more about governance.
+Stake required is the amount of DEEP tokens a user must have staked in the pool to take advantage of taker and maker incentives. Each individual DeepBook pool has independent governance, and governance can take place every epoch. See [Design](/onchain-finance/deepbook/deepbookv3/design#governance) to learn more about governance.
 
-![DeepBook Governance Timeline.png](../images/flowchart_deepbook-governance-lifecycle_v1.svg)
+![DeepBook governance timeline.png](../images/flowchart_deepbook-governance-lifecycle_v1.svg)
 
 ## How do I stake DEEP?
 
@@ -70,19 +70,19 @@ Stake required is the amount of DEEP tokens a user must have staked in the pool 
 3. In the following epoch, the first action you perform updates your account, and your stake from the previous epoch becomes active.
 4. From that epoch on, you can submit and vote on proposals for that pool.
 5. While your active stake is greater than the pool's stake required, you get reduced taker fees and can accumulate trading fee rebates during that epoch.
-6. Call `claim_rebates` to claim the rewards accumulated by your `balance_manager`.
+6. Call `claim_rebates` to claim the rewards that your `balance_manager` accumulates.
 
 For example, if you stake during epoch N, your stake becomes active with your first action in epoch N+1, and you can start submitting and voting on proposals in epoch N+1.
 
 ## What do maker and taker incentives give me?
 
-While your active stake is greater than the pool's stake required, you get reduced taker fees and can accumulate trading fee rebates during that epoch. A maker is eligible for rebates in an epoch as long as their DEEP staked is over the stake required and they have contributed maker volume. See [Claim rebates](#api) for how rebates are claimed.
+While your active stake is greater than the pool's stake required, you get reduced taker fees and can accumulate trading fee rebates during that epoch. A maker is eligible for rebates in an epoch as long as their DEEP staked is over the stake required and they have contributed maker volume. See [Claim rebates](#api) to learn how to claim rebates.
 
 ## How do I vote on a DeepBook proposal?
 
 1. Have a nonzero active stake in the pool. You can start submitting and voting on proposals the epoch following your stake.
 2. To propose a new taker fee rate, maker fee rate, and stake required, call `submit_proposal` (see [API](#api)). You automatically vote for the proposal you submit, and each `balance_manager` can only submit one proposal per epoch in a given pool.
-3. To vote on an existing proposal, call `vote`. All of your voting power is used on a single proposal; if you already voted on a different proposal during this epoch, that vote is removed and recast into the new proposal.
+3. To vote on an existing proposal, call `vote`. The call uses all of your voting power on a single proposal; if you already voted on a different proposal during this epoch, the call removes that vote and recasts it into the new proposal.
 
 ## API
 
@@ -102,9 +102,9 @@ The following is the `stake` function from `packages/deepbook/sources/pool.move`
 <details>
 <summary>Unstake</summary>
 
-All of the user's active and inactive stake are removed and added back into the `BalanceManager`. Any casted votes are removed. Maker rebates for the epoch are forfeited, and any reduced taker fees for the remaining epoch are disabled.
+The function removes all of the user's active and inactive stake and adds it back into the `BalanceManager`. It also removes any cast votes. The user forfeits maker rebates for the epoch, and the function disables any reduced taker fees for the remaining epoch.
 
-The `balance_manager` must have enough staked DEEP tokens. The `balance_manager` data is updated with the unstaked amount. Balance is transferred to the `balance_manager` immediately.
+The `balance_manager` must have enough staked DEEP tokens. The function updates the `balance_manager` data with the unstaked amount. The function transfers the balance to the `balance_manager` immediately.
 
 The following is the `unstake` function from `packages/deepbook/sources/pool.move` in the `MystenLabs/deepbookv3` repository. It removes all of the user's active and inactive stake and returns it to the `balance_manager`.
 
@@ -117,7 +117,7 @@ The following is the `unstake` function from `packages/deepbook/sources/pool.mov
 
 Users with a nonzero active stake can submit proposals. One proposal per user. The user automatically votes for the proposal they submit.
 
-Submit a proposal to change the taker fee, maker fee, and stake required. The `balance_manager` must have enough staked DEEP tokens to participate. Each `balance_manager` can only submit one proposal per epoch in a given pool, because each individual DeepBook pool has independent governance, and the proposed fees are bounded. If the maximum proposal is reached, the proposal with the lowest vote is removed. If the `balance_manager` has less voting power than the lowest voted proposal, the proposal is not added.
+Submit a proposal to change the taker fee, maker fee, and stake required. The `balance_manager` must have enough staked DEEP tokens to participate. Each `balance_manager` can only submit one proposal per epoch in a given pool, because each individual DeepBook pool has independent governance, and the proposed fees have bounds. If the pool reaches the maximum number of proposals, the function removes the proposal with the lowest vote. If the `balance_manager` has less voting power than the lowest voted proposal, the function does not add the proposal.
 
 The following is the `submit_proposal` function from `packages/deepbook/sources/pool.move` in the `MystenLabs/deepbookv3` repository. It submits a proposal for a new taker fee, maker fee, and stake required for the pool.
 
@@ -128,7 +128,7 @@ The following is the `submit_proposal` function from `packages/deepbook/sources/
 <details>
 <summary>Vote</summary>
 
-Users with nonzero voting power can vote on a proposal. All voting power is used on a single proposal. If the user has voted on a different proposal during this epoch, then that vote is removed and recasted into the new proposal. The `balance_manager` must have enough staked DEEP tokens to participate. A user's voting power is derived from the amount they have staked, with a voting power cutoff currently set to 100,000 DEEP, and quorum is equivalent to half of the total voting power.
+Users with nonzero voting power can vote on a proposal. The vote uses all voting power on a single proposal. If the user has voted on a different proposal during this epoch, then the function removes that vote and recasts it into the new proposal. The `balance_manager` must have enough staked DEEP tokens to participate. A user's voting power derives from the amount they have staked, with a current voting power cutoff of 100,000 DEEP, and quorum is equivalent to half of the total voting power.
 
 The following is the `vote` function from `packages/deepbook/sources/pool.move` in the `MystenLabs/deepbookv3` repository. It casts all of the `balance_manager`'s voting power on a single proposal.
 
@@ -139,7 +139,7 @@ The following is the `vote` function from `packages/deepbook/sources/pool.move` 
 <details>
 <summary>Claim rebates</summary>
 
-Use `claim_rebates` to claim the rewards for the `balance_manager`. The `balance_manager` must have rewards to claim: during every epoch, a maker is eligible for rebates as long as their DEEP staked is over the stake required and they have contributed maker volume, and the maximum amount of rebates for an epoch is equivalent to the total amount of DEEP collected during that epoch, with remaining DEEP burned. The `balance_manager` data is updated with the claimed rewards.
+Use `claim_rebates` to claim the rewards for the `balance_manager`. The `balance_manager` must have rewards to claim: during every epoch, a maker is eligible for rebates as long as their DEEP staked is over the stake required and they have contributed maker volume, and the maximum amount of rebates for an epoch is equivalent to the total amount of DEEP collected during that epoch, and DeepBook burns the remaining DEEP. The function updates the `balance_manager` data with the claimed rewards.
 
 The following is the `claim_rebates` function from `packages/deepbook/sources/pool.move` in the `MystenLabs/deepbookv3` repository. It claims the rebates accumulated by the `balance_manager`.
 

@@ -324,7 +324,7 @@ Predict's own trading functions settle USDC through the wrapper before they pric
 
 `withdraw_funds` lives in the `account` package, which knows nothing about Predict's `ProtocolConfig`. It therefore runs regardless of Predict's package version watermark, its `trading_paused` flag, and its emergency freeze. Pausing or freezing Predict stops trading, not the exit of idle balance.
 
-This has 2 consequences. You can always retrieve funds that are not committed to a live position. Risk tooling must not treat a Predict pause as a custody halt.
+This has 2 consequences. You can always retrieve funds that you have not committed to a live position. Risk tooling must not treat a Predict pause as a custody halt.
 
 ### How do I deposit and withdraw? {#deposit-and-withdraw}
 
@@ -405,7 +405,7 @@ public fun builder_code_id(account: &Account): Option<ID>
 
 Both return the empty answer rather than aborting when the account has no Predict slot yet, so `false` and `none` do not distinguish an unused account from a closed position.
 
-`has_position` answers one exact question and needs the market ID and order ID up front, so it cannot enumerate a portfolio. To list what an account holds, read the dynamic fields of the `positions` table, where each field key is a `PositionKey` in Binary Canonical Serialization (BCS), with the `expiry_market_id` and `order_id` fields shown in the table above. The SDK's `client.predict.read.positions(owner)` does this on either network and returns `{ marketId, orderId }` pairs, and `client.predict.read.hasPosition(owner, marketId, orderId)` wraps the single read. The public offchain read services answer the same question over HTTP for the earlier `predict-8-21` deployment only, and their account and position paths key on the canonical account ID rather than the wrapper ID; see [Wrapper ID and account ID](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
+`has_position` answers one exact question and needs the market ID and order ID up front, so it cannot enumerate a portfolio. To list what an account holds, read the dynamic fields of the `positions` table, where each field key is a `PositionKey` in Binary Canonical Serialization (BCS), with the `expiry_market_id` and `order_id` fields listed in [Where does Predict store positions?](#predict-data). The SDK's `client.predict.read.positions(owner)` does this on either network and returns `{ marketId, orderId }` pairs, and `client.predict.read.hasPosition(owner, marketId, orderId)` wraps the single read. The public offchain read services answer the same question over HTTP for the earlier `predict-8-21` deployment only, and their account and position paths key on the canonical account ID rather than the wrapper ID; see [Wrapper ID and account ID](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 
 To value a position, pass its order ID to the market: `expiry_market::live_order_value` with a market-bound pricer while the market is live, or `expiry_market::settled_order_payout` once it has settled. See [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) for both.
 
@@ -500,7 +500,7 @@ The facade builders under `client.predict.tx.*` do not compose. Each one returns
 - `client.predict.tx.deposit(owner, amount, { create: true })`: Creates the wrapper, deposits through the fresh handle, and shares last, in one block. The `owner` must be the signer, because `account_registry::new` derives from the transaction sender, and the call aborts if the account already exists.
 - `client.predict.tx.mint(owner, descriptor, opts)`: A standalone transaction containing `load_live_pricer`, `generate_auth`, and `mint_exact_quantity`, and nothing else. There is no create, share, split, or deposit in it.
 
-The example below is the second of those. It reads a quote, derives a `maxCost` cap from it, and returns an unsigned mint transaction:
+The quote and mint example is the second of those. It reads a quote, derives a `maxCost` cap from it, and returns an unsigned mint transaction:
 
 <details>
 <summary>Quote and mint with the SDK</summary>
@@ -525,7 +525,7 @@ The [tutorial](/onchain-finance/deepbook/deepbook-predict/tutorial) walks the wh
 
 ## Events {#events}
 
-Account events live in `account::account_events`. All of them carry `copy` and `drop` but not `store`, so they are readable from transaction results and no object can hold them. Field order below is declaration order, which is the order BCS decoding depends on.
+Account events live in `account::account_events`. All of them carry `copy` and `drop` but not `store`, so they are readable from transaction results and no object can hold them. Field order in each event table is declaration order, which is the order BCS decoding depends on.
 
 ### `AccountCreated` {#account-created}
 
