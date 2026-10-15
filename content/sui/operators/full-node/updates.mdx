@@ -40,11 +40,11 @@ answer: >-
   communicated through [official channels](#communication).
 ---
 
-This page explains when each Sui network releases a new version, where releases are announced, and what you need to do to keep your full node updated and in sync with the network.
+Sui releases new versions of each network on a consistent schedule and announces each release through official channels. To keep your full node in sync with the network, update it with each release.
 
 ## When does Sui release new versions? {#sui-release-process}
 
-Each Sui network is deployed on a consistent schedule. Extenuating circumstances might delay releases occasionally, but these delays are rare and communicated through [official channels](#communication).
+Sui deploys each network on a consistent schedule. Extenuating circumstances might delay releases occasionally, but these delays are rare, and Sui communicates them through [official channels](#communication).
 
 - `devnet`: Deployed every week on Mondays.
 - `testnet`: Deployed every week on Tuesdays.
@@ -58,17 +58,20 @@ For additional details, see each network's [release schedule and configuration](
 
 Whenever Sui releases a new version, you must update your full node with the release to ensure compatibility with the network it connects to. For example, if you use Sui Testnet you should install the version of Sui running on Sui Testnet.
 
-Any release that contains a protocol change needs to be applied before the protocol upgrade takes place. Protocol upgrades are enacted by validators: when enough stake within the validator set upgrades, the new protocol version is enacted in the next epoch. Full nodes do not take part in that vote, but they must run a compatible release.
+You must apply any release that contains a protocol change before the protocol upgrade takes place. Validators enact protocol upgrades: when enough stake within the validator set upgrades, the new protocol version takes effect in the next epoch. Full nodes do not take part in that vote, but they must run a compatible release.
 If you do not update your full node, it cannot connect to the network after the protocol upgrade takes place.
 
 ## Communication
 
-Releases are announced on the [Sui Discord server](https://discord.com/invite/sui) and the [node-operators](https://groups.google.com/a/groups.sui.io/g/node-operators) Google group.
+Sui announces releases on the [Sui Discord server](https://discord.com/invite/sui) and the [node-operators](https://groups.google.com/a/groups.sui.io/g/node-operators) Google group.
 
 ### Discord channels
+
+Sui posts release announcements in these Discord channels:
+
 - `devnet`: [`#devnet-updates`](https://discord.com/channels/916379725201563759/1004638487078772736)
-- `testnet`: [`#tn-validator-announcements`](https://discord.com/channels/916379725201563759/1003660994381353101), [`#testnet-updates`](https://discord.com/channels/916379725201563759/1095151359642304612), and [`#node-announcements`](https://discord.com/channels/916379725201563759/1002231298888306718) channels.
-- `mainnet`: [`#mn-validator-announcements`](https://discord.com/channels/916379725201563759/1093852827627040768), [`#mainnet-updates`](https://discord.com/channels/916379725201563759/1103082453792464906), and [`#node-announcements`](https://discord.com/channels/916379725201563759/1002231298888306718) channels.
+- `testnet`: [`#tn-validator-announcements`](https://discord.com/channels/916379725201563759/1003660994381353101), [`#testnet-updates`](https://discord.com/channels/916379725201563759/1095151359642304612), and [`#node-announcements`](https://discord.com/channels/916379725201563759/1002231298888306718) channels
+- `mainnet`: [`#mn-validator-announcements`](https://discord.com/channels/916379725201563759/1093852827627040768), [`#mainnet-updates`](https://discord.com/channels/916379725201563759/1103082453792464906), and [`#node-announcements`](https://discord.com/channels/916379725201563759/1002231298888306718) channels
 
 ## How do I update my full node? {#update-your-full-node}
 
