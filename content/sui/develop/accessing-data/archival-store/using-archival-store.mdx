@@ -55,7 +55,7 @@ Treat archival and historical data as a data-access convenience, not as proof. W
 
 :::
 
-## What are the public Archival Service endpoints?
+## Public Archival Service endpoints
 
 The Sui Foundation operates an Archival Service as a public good:
 
@@ -64,7 +64,7 @@ The Sui Foundation operates an Archival Service as a public good:
 
 These endpoints have strict rate limits.
 
-## How do I query historical data over gRPC?
+## Query historical data over gRPC
 
 The Archival Service exposes the same [`LedgerService`](/references/fullnode-protocol) gRPC API as a Sui full node. Query it using any gRPC client by pointing at an Archival Service endpoint instead of a full node. GraphQL deployments can route supported historical lookups to Archival when the operator configures it; gRPC clients must choose the Archival Service URL explicitly.
 
@@ -82,13 +82,13 @@ grpcurl -d '{
 
 Replace `BASE58_TX_DIGEST` with the Base58-encoded digest of the transaction you want to fetch.
 
-## How do I use the Archival Service as a fallback?
+## Use the Archival Service as a fallback
 
 Apps can query the Archival Service when a full node returns retention-related errors. This application-level fallback does not implicitly happen inside the full node.
 
 1. Send the request to the full node.
 2. If the full node returns `NOT_FOUND` for data that should exist, retry the same request against an Archival Service endpoint such as `archive.mainnet.sui.io:443`.
 
-## Can I run my own Archival Service instance?
+## Run your own Archival Service instance
 
 For production use or to avoid rate limits, you can run the full archival stack yourself. See the [Archival Stack Setup](/operators/data-management/archival-stack-setup) operator guide for instructions on setting up Bigtable, the indexer, and the gRPC service.
