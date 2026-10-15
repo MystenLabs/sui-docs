@@ -44,7 +44,7 @@ answer: >-
   every market's pricer in one snapshot transaction, values each market in later
   transactions, and then fills both queues at that single frozen pool NAV.
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 abb4cfd9 (Mainnet predict protocol version 3) and 29117434 (Testnet predict protocol version 4); Testnet FlushOperatorUpdated event read 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet from 2026-10-20, built from the byte-identical 98128174); Testnet FlushOperatorUpdated event read 2026-10-13
 ---
 
 The Predict pool is the counterparty to every trade. Liquidity providers deposit USDC, receive PLP shares, and collectively back the payout liability of every active expiry. All of that capital sits in one shared object, `deepbook_predict::plp::PoolVault`.
@@ -81,7 +81,7 @@ The struct declares those fields in this order:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="PoolVault"
 />
 
@@ -99,7 +99,7 @@ A queue is a paged list. Each `RequestPage` holds up to 64 entries, and each `Re
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="LpBook,RequestQueue,RequestEntry"
 />
 
@@ -117,7 +117,7 @@ A queue is a paged list. Each `RequestPage` holds up to 64 entries, and each `Re
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="Ledger,ActiveExpiry,RegisteredExpiry"
 />
 
@@ -159,7 +159,7 @@ Whether a flush is in flight is a `ProtocolConfig` read, `protocol_config::valua
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="idle_balance,protocol_reserve_balance,fee_incentive_reserve,plp_total_supply,supply_requests_pending,withdraw_requests_pending,active_expiry_markets,active_live_expiry_count,profit_basis_debits,profit_basis_credits,pending_protocol_profit"
 	noComments
 />
@@ -224,7 +224,7 @@ Minimum sizes apply per request:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="request_supply,request_withdraw,cancel_supply_request,cancel_withdraw_request"
 	noComments
 />
@@ -310,7 +310,7 @@ public fun finish_flush(
 ): u64
 ```
 
-On protocol version 3 it is permissionless, because `start_pool_valuation` committed the drain budgets at start, so a stranger who finishes a flush can only fill requests at the starter's budgets and never starve them. Protocol version 4 restricts it to flush operators: it aborts with `protocol_config::ENotFlushOperator` unless the sender is on an allowlist that `AdminCap` edits with `protocol_config::add_flush_operator` and `remove_flush_operator`, each emitting `FlushOperatorUpdated`, and that `is_flush_operator` reads. Liquidity fills move idle cash, and restricting who completes a flush keeps idle predictable for the keeper that funds markets for queued orders. The allowlist starts empty, and Testnet added its flush keeper when it passed the cutover on 2026-10-09. `remove_flush_operator` skips the version gate, so an admin can revoke an operator during the emergency freeze. Starting a flush still needs a `PoolValuationCap`, and `value_expiry` stays permissionless. It aborts with `EMissingExpiryValuation` unless `value_expiry` has valued every expected market, computes the LP-attributable pool NAV from the frozen figures, drains both queues at that mark up to the recorded cutoffs and budgets, releases the valuation flag, emits `FlushExecuted`, and returns the pool NAV as a `u64`.
+Before protocol version 4 it was permissionless, because `start_pool_valuation` committed the drain budgets at start. Protocol version 4 restricts it to flush operators: it aborts with `protocol_config::ENotFlushOperator` unless the sender is on an allowlist that `AdminCap` edits with `protocol_config::add_flush_operator` and `remove_flush_operator`, each emitting `FlushOperatorUpdated`, and that `is_flush_operator` reads. Liquidity fills move idle cash, and restricting who completes a flush keeps idle predictable for the keeper that funds markets for queued orders. The allowlist starts empty, and each network added its flush keeper when it passed the cutover, Testnet on 2026-10-09 and Mainnet on 2026-10-20. `remove_flush_operator` skips the version gate, so an admin can revoke an operator during the emergency freeze. Starting a flush still needs a `PoolValuationCap`, and `value_expiry` stays permissionless. It aborts with `EMissingExpiryValuation` unless `value_expiry` has valued every expected market, computes the LP-attributable pool NAV from the frozen figures, drains both queues at that mark up to the recorded cutoffs and budgets, releases the valuation flag, emits `FlushExecuted`, and returns the pool NAV as a `u64`.
 
 `supply_budget` and `withdraw_budget`, each an `Option<u64>`, bound how many requests that queue can process. `none` means unbounded. Neither budget depends on the other, so a supply backlog can never starve withdrawals.
 
@@ -346,7 +346,7 @@ A market created mid-flush is not in the frozen expected set and joins the next 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="PoolValuationProof,SnapshotStage,PoolValuation"
 />
 
@@ -360,7 +360,7 @@ A market created mid-flush is not in the frozen expected set and joins the next 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="start_pool_valuation,snapshot_expiry_pricer,seal_valuation_snapshot,value_expiry,finish_flush"
 	noComments
 />
@@ -480,14 +480,14 @@ sweep_threshold  = max(required_cash * (1 + 2 * band), initial_expiry_cash)
 
 `band` is `expiry_rebalance_pct`, which is `100_000_000` at 1e9 scale, or 10 percent. Below `target_cash` the pool tops the market up, and above `sweep_threshold` it pulls the excess back to idle.
 
-Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Both deployments enable the same 2 cadences with the same terms:
+Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and a chain read of Testnet on 2026-10-13 found these terms on its 2 enabled cadences:
 
 | **Cadence** | **`initial_expiry_cash` raw** | **Reads as** | **`max_expiry_allocation` raw** | **Reads as** |
 |---|---|---|---|---|
 | 1m | `2_000_000_000` | 2,000 USDC | `10_000_000_000` | 10,000 USDC |
 | 5m | `2_000_000_000` | 2,000 USDC | `10_000_000_000` | 10,000 USDC |
 
-Both deployments configure the 1h, 1d, 1w, and 1mo cadences as disabled, with every term at zero, so no market exists on them.
+The same read found the 1h, 1d, 1w, and 1mo cadences disabled, with every term at zero. Read `registry::cadence_config` for the network you target.
 
 `constants::expiry_cash_floor!()`, which is `1_000_000_000`, plays no part in the rebalance. It is the minimum admissible `initial_expiry_cash` that cadence validation enforces, so a cadence configured below 1,000 USDC aborts with `EInvalidCadenceConfig`, as does one whose `initial_expiry_cash` exceeds its `max_expiry_allocation`. A market on a cadence configured above that minimum floors its rebalance at the configured figure. Read the live figures with `registry::cadence_config`, and see the cadence table on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).
 
@@ -495,7 +495,7 @@ A top-up has 2 limits: available idle USDC, and the expiry's remaining funding r
 
 Call `expiry_market::try_settle` first in the same transaction when settlement might be due. An expired unsettled market is a no-op for the rebalance.
 
-On protocol version 4, a market also carries `waiting_cash_need`, the summed worst-case cash need of its queued orders that have not filled yet, readable through `expiry_market::order_flow_state`. The rebalance funds a live market to at least `required_cash + waiting_cash_need`, and its sweep never takes the market below that line, so the cash that waiting orders may fill against stays in the market. The protocol's keeper calls the rebalance after each new queued order, and a queued sell's enqueue builder in the SDK appends it when the sell could need more than the market's spare cash. A fill the market still cannot cover is refunded, never drawn from the pool. See [Queue limits and market cash](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queue-limits).
+A market also carries `waiting_cash_need`, the summed worst-case cash need of its queued orders that have not filled yet, readable through `expiry_market::order_flow_state`. The rebalance funds a live market to at least `required_cash + waiting_cash_need`, and its sweep never takes the market below that line, so the cash that waiting orders may fill against stays in the market. The protocol's keeper calls the rebalance after each new queued order, and a queued sell's enqueue builder in the SDK appends it when the sell could need more than the market's spare cash. A fill the market still cannot cover is refunded, never drawn from the pool. See [Queue limits and market cash](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queue-limits).
 
 <details>
 <summary>Source for `rebalance_expiry_cash`</summary>
@@ -505,7 +505,7 @@ On protocol version 4, a market also carries `waiting_cash_need`, the summed wor
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="rebalance_expiry_cash"
 	noComments
 />
@@ -557,7 +557,7 @@ public fun fee_incentive_balance(market: &ExpiryMarket): u64
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="ExpiryCash"
 />
 
@@ -575,7 +575,7 @@ PLP is the Predict pool share token, registered as a 6-decimal currency to match
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="PLP"
 />
 
@@ -613,7 +613,7 @@ Protocol version 4 makes 3 incentive rates admin-set on `ProtocolConfig`, each r
 
 :::info
 
-`add_usdc_to_plp` arrived in `predict` protocol version 3, which both networks run. Reach it through the current call target, not a superseded one: a client pinned to an older `predict` address cannot see it. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
+`add_usdc_to_plp` arrived in `predict` protocol version 3, so both networks have it. Reach it through the current call target, not a superseded one: a client pinned to an older `predict` address cannot see it. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
 
 :::
 
@@ -645,7 +645,7 @@ A flush in progress blocks the call with `EValuationInProgress`, rather than let
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="add_usdc_to_plp"
 	noComments
 />
@@ -664,7 +664,7 @@ The vault bounds capacity when a market registers, not when it trades. Registeri
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="lock_capital,sponsor_fee_incentives"
 	noComments
 />
@@ -673,7 +673,7 @@ The vault bounds capacity when a market registers, not when it trades. Registeri
 
 ## Pool events {#events}
 
-`vault_events` declares 16 events on protocol version 3, all with `copy`, `drop`, and `store`. The table lists fields in declaration order, which is also their Binary Canonical Serialization (BCS) order:
+`vault_events` declares 20 events, all with `copy`, `drop`, and `store`. The first table lists the 16 that predate protocol version 4. The table lists fields in declaration order, which is also their Binary Canonical Serialization (BCS) order:
 
 | **Event** | **Fields** |
 |---|---|
@@ -694,7 +694,7 @@ The vault bounds capacity when a market registers, not when it trades. Registeri
 | `FeeIncentivesAllocated` | `pool_vault_id`, `expiry_market_id`, `amount`, `pool_reserve_after`, `expiry_incentive_balance_after`, `expiry_incentives_allocated_after` |
 | `FeeIncentivesReturned` | `pool_vault_id`, `expiry_market_id`, `amount`, `pool_reserve_after` |
 
-Protocol version 4 adds 4 more. Their type tags carry the Testnet version 5 call target, `0x0654ecbe…`, the `predict` version that introduced them:
+Protocol version 4 adds 4 more. Their type tags carry the address of the `predict` version that introduced them: the Testnet version 5 call target, `0x0654ecbe…`, and the Mainnet version 4 call target, `0x98235c58…`:
 
 | **Event** | **Emitted when** |
 |---|---|
@@ -721,7 +721,7 @@ One `FlushExecuted` per flush carries the priced mark and its breakdown, so `poo
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="FlushExecuted,FlushRestarted"
 />
 

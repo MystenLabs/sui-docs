@@ -48,7 +48,7 @@ answer: >-
   with `client.predict.decode.plpRequest(result).index` and pass it to
   `tx.cancelSupplyPlp` or `tx.cancelWithdrawPlp`.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); predict protocol version 4 and sessions 3 on both networks (Mainnet from 2026-10-20), publication records at deepbookv3 29117434'
 ---
 
 The liquidity functions move USDC into the Predict pool for PLP shares and move PLP shares back out for USDC, through requests that wait for the next pool flush. [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) explains the pool, its request queues, and the flush that fills them.

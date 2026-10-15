@@ -52,7 +52,7 @@ answer: >-
   rejects before building anything and PredictMoveError for a Move abort during
   a simulation.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); predict protocol version 4 and sessions 3 on both networks (Mainnet from 2026-10-20), publication records at deepbookv3 29117434'
 ---
 
 The DeepBook Predict SDK builds every Predict transaction, reads live Predict state through your Sui client, and decodes the receipts that executed transactions emit. It ships as the `/predict` subpath of the `@mysten/deepbook-v3` TypeScript package, and [DeepBook Predict](/onchain-finance/deepbook/deepbook-predict) explains the markets, positions, and pool behind each call.
@@ -105,7 +105,7 @@ The Predict client exposes 3 groups of members:
 
 The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) covers, `queueIdFor(marketId)`, which derives a market's queue ID, and `cfg`, the `PredictConfig` that the client uses.
 
-The 2 recorded networks run different trade paths. Testnet runs Predict protocol version 4, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders. Mainnet runs protocol version 3, where `tx.mint` and its siblings fill immediately, until its own cutover. `client.predict.read.executionMode()` returns `'delayed'` or `'immediate'`, so branch on it rather than on the network name. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers both paths.
+Both recorded networks run Predict protocol version 4, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders, and `tx.mint` and its siblings always abort. Version 2.7.0 records Testnet's delayed-execution deployment, and Mainnet needs version `TBD-DBU-890: SDK release` or later: 2.7.0 still resolves Mainnet's retired protocol version 3 call target, so every version-gated Predict call it builds there aborts with `EPackageVersionDisabled`. `client.predict.read.executionMode()` reports `'delayed'` once the configuration records the deployment. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers the queued path.
 
 ## Configuration {#configuration}
 
@@ -128,7 +128,7 @@ The SDK records the Testnet and Mainnet deployments, so you never transcribe a p
 
 <ImportContent source="packages/deepbook-v3/src/predict/config/types.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="59-110" />
 
-Version 2.7.0's Testnet configuration records the delayed-execution fields, and its Mainnet configuration leaves them unset until the Mainnet rollout is synced, so the queued builders and reads throw `PredictInputError` on Mainnet until then. `predictDelayedExecution` is the Predict version that introduced the delayed-execution types and events, `0x0654ecbe…` on Testnet, which the decoders match those events against.
+Version 2.7.0's Testnet configuration records the delayed-execution fields, and its Mainnet configuration leaves them unset, so the queued builders and reads throw `PredictInputError` on Mainnet with that release. Version `TBD-DBU-890: SDK release` (DBU-899) records Mainnet's. `predictDelayedExecution` is the Predict version that introduced the delayed-execution types and events, `0x0654ecbe…` on Testnet and `0x98235c58…` on Mainnet, which the decoders match those events against.
 
 Resolve the configuration once at startup and pass the result down, rather than inlining an ID at a call site. Every value in it is deployment-specific, and most differ between Mainnet and Testnet. The `config.ts` sample in [Create the client](#client) keeps them in a single network-keyed record: a `NETWORK` constant selects Testnet or Mainnet, and every other value derives from it.
 

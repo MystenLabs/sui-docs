@@ -57,7 +57,7 @@ answer: >-
   client.predict.tx.withdraw sends USDC to the owner's address balance by
   default, and { toCoinObject: true } transfers a coin object instead.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and Testnet predict protocol version 4, publication records at deepbookv3 29117434; earlier recipes checked against 2.6.1 (ts-sdks 56d51645); referred-account recipe type-checked against ts-sdks 56d51645 and simulated on Testnet 2026-09-28; builder-code recipe type-checked against @mysten/deepbook-v3 2.6.6 and simulated on Testnet 2026-10-01'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); predict protocol version 4 on both networks (Mainnet from 2026-10-20), publication records at deepbookv3 29117434; earlier recipes checked against 2.6.1 (ts-sdks 56d51645); referred-account recipe type-checked against ts-sdks 56d51645 and simulated on Testnet 2026-09-28; builder-code recipe type-checked against @mysten/deepbook-v3 2.6.6 and simulated on Testnet 2026-10-01'
 ---
 
 The account functions create a trader's shared `AccountWrapper`, move USDC in and out of it, and attach a builder code, and the `/account` subpath exposes the account primitive underneath for transactions you compose yourself. [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) explains the custody mechanism: the wrapper, the `Auth` hot potato, settlement, and the account events.
@@ -217,7 +217,7 @@ Decode either result with [`decode.builderCode`](#decode-builder-code).
 
 ## How do I create a builder code and claim its fees? {#operate-builder-code}
 
-The functions above are for the account that carries a code. Nothing in `client.predict` serves the code's owner: no facade builder creates a code or claims its fees. Compose both from the generated bindings that the `/predict` subpath exports, `registryMoveCalls` and `builderCodeMoveCalls`, with `toGeneratedConfig` supplying the shared objects:
+The functions above are for the account that carries a code. On Mainnet, create codes with version `TBD-DBU-890: SDK release` or later: 2.7.0 resolves Mainnet's retired protocol version 3 call target, where the version-gated `create_and_share_builder_code` aborts with `EPackageVersionDisabled`. The setters and the fee claim take no `ProtocolConfig`, so they work through either target. Nothing in `client.predict` serves the code's owner: no facade builder creates a code or claims its fees. Compose both from the generated bindings that the `/predict` subpath exports, `registryMoveCalls` and `builderCodeMoveCalls`, with `toGeneratedConfig` supplying the shared objects:
 
 ```ts
 import {

@@ -51,7 +51,7 @@ answer: >-
   `redeemLive`, and `redeemSettled`, which require explicit mint caps and accept
   close-side floors.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); predict protocol version 4 and sessions 3 on both networks (Mainnet from 2026-10-20), publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13'
 ---
 
 The `@mysten/deepbook-v3/sessions` subpath exports `SessionsContract`, which builds the owner-signed calls that grant and revoke a time-limited session key and the session-signed calls that trade DeepBook Predict positions for the account. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) explains the contract mechanism behind each call.
@@ -273,11 +273,11 @@ The following example lists an account's grants, splits them at the current time
 
 ## How to trade as a session key {#trade}
 
-The 2 networks take different session builders. On Testnet, which runs Predict protocol version 4 and Sessions protocol version 3, use the [queued-order builders](#queue-as-session). On Mainnet, which runs protocol version 3 and Sessions protocol version 2, use the immediate builders that follow them. Version 2.7.0 marks the immediate mint and live-close builders deprecated, because protocol version 4 always aborts them.
+Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Version 2.7.0 records Testnet's Sessions v3 package, and Mainnet needs version `TBD-DBU-890: SDK release` or later. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
 
 ### Queue orders as the session key {#queue-as-session}
 
-4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3, which version 2.7.0's Testnet `getSessionsConfig` records and its Mainnet one does not yet. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
+4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3, which version 2.7.0's Testnet `getSessionsConfig` records and version `TBD-DBU-890: SDK release` records on Mainnet. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
 
 Each takes a `SessionsQueuedOrderTarget` that names the market, the owner's wrapper, the order-flow package's `orderDesk` and `queueRegistry`, the Predict `protocolConfig`, the `oracleRegistry`, and the market's 3 oracle objects. Take the order-flow IDs from `client.predict.cfg.objects` and the oracle objects from `client.predict.cfg.underlyings`. `queueId` defaults to the ID derived from `queueRegistry` and the market.
 
@@ -295,102 +295,6 @@ A session key's raw builder skips the preflight and plan binding that `client.pr
 
 <ImportContent source="examples/deepbook-predict/src/sessions-queue.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="sessions-queue" />
 
-### Immediate builders {#immediate-session-builders}
-
-The 5 immediate Predict builders mirror the `expiry_market` entrypoints of the same name, but the session key signs them instead of the owner. Compared with the owner-signed call, you pass no `Auth`, because the wrapper generates app authorization internally, and each builder adds the `accountRegistry` and `sessionsConfig` arguments from its `SessionsConfig`. Predict still runs its own validation, and the Sessions page lists [the aborts a session caller still meets](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions). If the account registry does not authorize `SessionsApp`, every trading call aborts with `EAppNotAuthorized`, as the Sessions page explains under [deauthorizing the app](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions).
-
-Every Predict builder follows these conventions:
-
-- The session address signs as the transaction sender, so it needs SUI for gas unless another address sponsors the transaction.
-- `pricer` is a programmable transaction block (PTB) result, not an object ID. Add `loadLivePricer` from `@mysten/deepbook-v3/predict` in an earlier command of the same transaction and pass its result.
-- `protocolConfig` is the Predict `ProtocolConfig` object ID, which the `getSessionsConfig` result carries.
-- `lowerTick` and `higherTick` are absolute ticks. [Predict Markets and Pricing SDK](/onchain-finance/deepbook/deepbook-predict-sdk/markets) shows how to resolve a strike to ticks.
-- Quantities, costs, and probabilities are raw onchain integers, and the builders pass them through unchanged. Convert them with `usdcToRaw` and `probabilityToRaw` from `@mysten/deepbook-v3/predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#units) describes.
-
-### `mintExactQuantity` {#mint-exact-quantity}
-
-Use `mintExactQuantity` to mint a position of an exact payout quantity as the session key. It returns a `(tx: Transaction) => TransactionResult` function whose result is the new order ID, a `u256`. The builder requires both caps and gives them no default. The contract asserts that each value is at most its cap, so a cap of `u64::MAX` never trips.
-
-It takes these parameters:
-
-- `expiryMarketId`: The expiry market object ID.
-- `wrapperId`: The owner's `AccountWrapper` ID, not an ID derived from the session address.
-- `protocolConfig`: The Predict `ProtocolConfig` object ID.
-- `pricer`: The `loadLivePricer` result from an earlier command in the same transaction.
-- `lowerTick`: The lower bound of the position's strike range, as an absolute tick.
-- `higherTick`: The upper bound of the position's strike range, as an absolute tick.
-- `quantity`: The payout quantity to mint, in raw units.
-- `maxCost`: The all-in cost ceiling, premium plus fees, in raw quote units.
-- `maxProbability`: The ceiling on the fill probability, in raw fixed point.
-
-<ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="279-289" />
-
-### `mintExactAmount` {#mint-exact-amount}
-
-Use `mintExactAmount` to mint by spending up to a premium budget and flooring the quantity received, as the session key. It returns a `(tx: Transaction) => TransactionResult` function whose result is the new order ID, a `u256`. The builder requires `maxCost`, and the contract requires it to be greater than 0.
-
-It takes these parameters:
-
-- `expiryMarketId`: The expiry market object ID.
-- `wrapperId`: The owner's `AccountWrapper` ID.
-- `protocolConfig`: The Predict `ProtocolConfig` object ID.
-- `pricer`: The `loadLivePricer` result from an earlier command in the same transaction.
-- `lowerTick`: The lower bound of the position's strike range, as an absolute tick.
-- `higherTick`: The upper bound of the position's strike range, as an absolute tick.
-- `maxPremium`: The premium budget, in raw quote units.
-- `minQuantity`: The smallest payout quantity you accept, in raw units.
-- `maxCost`: The all-in cost ceiling, premium plus fees, in raw quote units.
-
-<ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="315-325" />
-
-### `mintExactCost` {#mint-exact-cost}
-
-Use `mintExactCost` to mint inside an all-in budget as the session key, the session form of `mint_exact_cost`. It returns a `(tx: Transaction) => TransactionResult` function whose result is the new order ID, a `u256`. Unlike the other 2 mint builders it takes no separate cost cap, because `maxCost` is the budget the fill is sized inside rather than a ceiling checked afterward.
-
-:::info
-
-`mintExactCost` calls a wrapper that arrived in `sessions` package version 2, which Mainnet runs, and `@mysten/deepbook-v3` 2.7.0 resolves the current call target on both networks. On Testnet the wrapper aborts through Predict protocol version 4. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information).
-
-:::
-
-It takes these parameters:
-
-- `expiryMarketId`: The expiry market object ID.
-- `wrapperId`: The owner's `AccountWrapper` ID.
-- `protocolConfig`: The Predict `ProtocolConfig` object ID.
-- `pricer`: The `loadLivePricer` result from an earlier command in the same transaction.
-- `lowerTick`: The lower bound of the position's strike range, as an absolute tick.
-- `higherTick`: The upper bound of the position's strike range, as an absolute tick.
-- `maxCost`: The all-in budget, fees included, in raw quote units. The contract caps it at the account's available balance before sizing.
-- `minQuantity`: The smallest payout quantity you accept, in raw units. This is the builder's only slippage guard, and `0` disables it.
-
-<ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="350-359" />
-
-Set `minQuantity` deliberately here. The spend is fixed, so an adverse move between building the transaction and executing it arrives as fewer contracts, and this floor is what rejects a fill that moved too far. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) covers the sizing limits, and [Predict Cost SDK](/onchain-finance/deepbook/deepbook-predict-sdk/cost) runs the same search locally to derive a floor with no chain call.
-
-### `redeemLive` {#redeem-live}
-
-Use `redeemLive` to close part or all of a live position at the pricer's mark as the session key. It returns a `(tx: Transaction) => TransactionResult` function whose result is an `Option<u256>`, the replacement order ID when a partial close leaves quantity open. Store that replacement ID, because the next close must target it. `minProbability` and `minProceeds` are close-side floors, and the builder sends `0`, which disables a floor, for each one you omit.
-
-:::caution
-
-`redeemLive` sends `0` for an omitted `minProbability` or `minProceeds`, and a floor of 0 lets the session key close the position at whatever price the mark gives. Pass real floors on every close a session key signs.
-
-:::
-
-It takes these parameters:
-
-- `expiryMarketId`: The expiry market object ID.
-- `wrapperId`: The owner's `AccountWrapper` ID.
-- `protocolConfig`: The Predict `ProtocolConfig` object ID.
-- `pricer`: The `loadLivePricer` result from an earlier command in the same transaction.
-- `orderId`: The ID of the order to close.
-- `closeQuantity`: The payout quantity to close, in raw units.
-- `minProbability`: The lowest fill probability you accept, in raw fixed point. The builder sends `0` when you omit it.
-- `minProceeds`: The lowest proceeds you accept for the whole close, in raw quote units. The builder sends `0` when you omit it.
-
-<ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="388-397" />
-
 ### `redeemSettled` {#redeem-settled}
 
 Use `redeemSettled` to claim a settled position in full as the session key. It returns a `(tx: Transaction) => void` function. It takes no pricer, because settlement has already fixed the price, and no quantity, because a settled claim closes the order in full.
@@ -404,18 +308,13 @@ It takes these parameters:
 
 <ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="422-427" />
 
-### Slippage bounds differ from the facade {#slippage-bounds}
+### Deprecated immediate builders {#immediate-session-builders}
 
-The session builders and the `@mysten/deepbook-v3/predict` facade differ on slippage protection in both directions, and both differences make the session key holder set bounds explicitly:
+`mintExactQuantity`, `mintExactAmount`, `mintExactCost`, and `redeemLive` build the immediate session wrappers, which took a `loadLivePricer` result and filled inside the session key's transaction. Protocol version 4 always aborts them through Predict, on both networks, and version 2.7.0 deprecates the 4 builders. Use the queued-order builders above instead.
 
-- **Required mint caps:** The session mint builders require their caps. `mintExactQuantity` takes `maxCost` and `maxProbability` as required parameters, and `mintExactAmount` requires `maxCost`. The facade's `tx.mint`, on [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions), sends `U64_MAX` for a cap you omit, which is a cap that can never trip. `mintExactCost` is the one shape with nothing to forget: its budget bounds the debit by construction, and `minQuantity` is its only guard.
-- **Close-side floors on `redeemLive`:** The session builder passes `minProbability` and `minProceeds` to the contract. The facade's `tx.redeem`, on [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions), sends `0` for both and has no option to raise them. Omitting a floor on the session builder also sends `0`, so pass real floors on anything a session key can reach.
+### Slippage bounds {#slippage-bounds}
 
-### Mint and close as the session key {#trade-example}
-
-The following example quotes a mint through the owner's facade, then mints, closes, and claims as the session key with explicit caps and floors:
-
-<ImportContent source="examples/deepbook-predict/src/sessions-trade.ts" mode="code" tag="sessions-trade" />
+The queued session builders make the session key holder set bounds explicitly. `enqueueExactCost`, `enqueueExactQuantity`, and `enqueueExactAmount` refuse a `maxCost` of 0 or `u64::MAX`, because every queued mint needs a finite cap, and `enqueueRedeemOpen` requires `minProbability` and `minProceeds`, because `0` sells at any price. A session key's raw builder also skips the preflight and plan binding that `client.predict.tx.enqueuePlan` runs, so plan the order against the owner with `read.planMint` or `read.planSell`, check `accepting`, and send the plan's own strike and raw limits, as the [queued example](#queue-as-session) does.
 
 ## How to revoke a session {#revoke}
 

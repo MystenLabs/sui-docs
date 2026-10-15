@@ -77,7 +77,7 @@ public fun reference_tick_source_timestamp_ms(market: &ExpiryMarket): u64
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="tick_size,admission_tick_size,reference_tick,reference_tick_source_timestamp_ms"
 	noComments
 />
@@ -91,19 +91,19 @@ The only conversion in the other direction is `range_codec::strike_from_tick`, w
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="strike_from_tick"
 	noComments
 />
 
-Both the Mainnet and the Testnet deployment run one underlying, BTC, with 2 enabled cadences, and both cadences use the same grids:
+Both deployments run one underlying, BTC. Each network's registry enables its own cadences, so read them from `registry::cadence_configs`. A chain read of Testnet on 2026-10-13 found 2 enabled cadences, both on the same grids:
 
 | **Cadence** | **`tick_size` raw** | **Fine grid** | **`admission_tick_size` raw** | **Admission grid** |
 |---|---|---|---|---|
 | 1m | `10_000_000` | 0.01 USD | `1_000_000_000` | 1 USD |
 | 5m | `10_000_000` | 0.01 USD | `1_000_000_000` | 1 USD |
 
-The registry also holds the 1h, 1d, 1w, and 1mo cadences in a disabled state, and a disabled cadence reads back as an all-zero configuration. A chain read on 2026-09-14 confirmed those values on both networks. Read the live values with `registry::cadence_config` or `registry::cadence_configs`, or as `tickSize` and `admissionTickSize` from `read.markets()`, rather than hardcoding them, because an admin can change a cadence and each market keeps the terms it received at creation.
+The same read found the 1h, 1d, 1w, and 1mo cadences in a disabled state, and a disabled cadence reads back as an all-zero configuration. Read the live values with `registry::cadence_config` or `registry::cadence_configs`, or as `tickSize` and `admissionTickSize` from `read.markets()`, rather than hardcoding them, because an admin can change a cadence and each market keeps the terms it received at creation.
 
 ## A position is a tick pair {#range-key}
 
@@ -176,7 +176,7 @@ The `reference_tick` is the one finite strike a market admits off the admission 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="set_reference_tick"
 	noComments
 />
@@ -193,7 +193,7 @@ Grid state lives in the market's `StrikeExposure`, which has no public functions
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="StrikeExposure"
 />
 
@@ -251,7 +251,7 @@ The `sequence` counter is expiry-local, so an order ID is unique only within one
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="Order"
 />
 
@@ -289,7 +289,7 @@ public fun expiry_market_id(
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="expiry_market_id"
 	noComments
 />
@@ -306,7 +306,7 @@ The registry stores those IDs in a `Table` keyed by `market_manager::MarketKey`,
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="MarketKey"
 />
 
@@ -314,7 +314,7 @@ The registry stores those IDs in a `Table` keyed by `market_manager::MarketKey`,
 
 ## Ticks in the TypeScript SDK {#sdk}
 
-The `@mysten/deepbook-v3/predict` subpath converts USD strikes to these ticks, admission-checks each finite boundary before it builds a transaction, and exports `POS_INF_TICK` and `binaryRangeTicks`, as [Predict Markets and Pricing SDK](/onchain-finance/deepbook/deepbook-predict-sdk/markets#ticks) describes. For directional and range mints that start from a market descriptor, see [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#examples).
+The `@mysten/deepbook-v3/predict` subpath converts USD strikes to these ticks, admission-checks each finite boundary before it builds a transaction, and exports `POS_INF_TICK` and `binaryRangeTicks`, as [Predict Markets and Pricing SDK](/onchain-finance/deepbook/deepbook-predict-sdk/markets#ticks) describes. For directional and range mints that start from a market descriptor, see [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-examples).
 
 ## Error codes {#error-codes}
 
