@@ -64,7 +64,7 @@ answer: >-
   transactions.
 ---
 
-This example demonstrates a decentralized event ticketing and loyalty rewards app. Tickets are NFTs with a multi-stage lifecycle (Purchased → Attended → Collectible), minting requires a server-signed Ed25519 permit to prevent unauthorized issuance, and a loyalty points system rewards repeat attendees. Each permit carries a nonce that the onchain `KeyRegistry` consumes on first use, so the same permit cannot be submitted twice. All transactions are sponsored through Enoki so users pay no gas. The frontend uses Google OAuth through zkLogin for frictionless onboarding.
+The ticketing platform example is a decentralized event ticketing and loyalty rewards app. Tickets are NFTs with a multi-stage lifecycle (Purchased → Attended → Collectible), minting requires a server-signed Ed25519 permit to prevent unauthorized issuance, and a loyalty points system rewards repeat attendees. Each permit carries a nonce that the onchain `KeyRegistry` consumes on first use, so you cannot submit the same permit twice. Enoki sponsors all transactions, so users pay no gas. The frontend uses Google OAuth through zkLogin for frictionless onboarding.
 
 ## When should you use this pattern?
 
@@ -98,7 +98,7 @@ This example teaches:
 
 The example has 5 actors. The Next.js frontend renders event listings, ticket purchase flows, and the user's ticket wallet. The API routes handle permit signing (Ed25519), transaction sponsorship (Enoki), and user data storage (Vercel KV). Enoki provides zkLogin authentication (Google OAuth) and transaction sponsorship. The ticketing Move package manages ticket minting, stage transitions, loyalty points, and cryptographic verification. Vercel KV stores user accounts and zkLogin salt values.
 
-The diagram below traces 1 full ticket purchase from event selection to NFT ownership.
+The following diagram traces 1 full ticket purchase from event selection to NFT ownership.
 
 ```mermaid
 sequenceDiagram
@@ -139,7 +139,7 @@ The following steps walk through the flow:
 
 4. The PTB goes through the sponsored transaction flow: `/api/sponsor` → Enoki sponsorship → wallet sign → `/api/execute`.
 
-5. The Move contract verifies the Ed25519 signature against the `KeyRegistry`'s stored public key, checks the nonce has not been used, consumes the nonce, mints the `Ticket` NFT, and adds loyalty points to the user's `Loyalty` card.
+5. The Move contract verifies the Ed25519 signature against the `KeyRegistry`'s stored public key, checks that the nonce is unused, consumes the nonce, mints the `Ticket` NFT, and adds loyalty points to the user's `Loyalty` card.
 
 6. The backend sends a second transaction to create `StageTransition` objects (Purchased, Attended, Collectible) and transfer them to the ticket, enabling future lifecycle transitions.
 
@@ -155,7 +155,7 @@ The following steps walk through the flow:
 
 - [x] [Get SUI Testnet tokens](/getting-started/onboarding/get-coins).
 
-- [x] Download and install an IDE. The following are recommended, as they offer Move extensions:
+- [x] Download and install an IDE. Consider the following IDEs, which offer Move extensions:
 
     - [VSCode](https://code.visualstudio.com/), corresponding [Move extension](https://marketplace.visualstudio.com/items?itemName=mysten.move)
 
@@ -200,7 +200,7 @@ $ cd ticketing-poc/app
 $ pnpm install
 ```
 
-##### Step 2: Obtain your address's private key:
+##### Step 2: Obtain your address's private key
 
 ```bash 
 $ sui client active-address
@@ -249,7 +249,7 @@ Open `http://localhost:3000` in a browser and sign in with Google. Browse events
 
 ## Key code highlights
 
-The following snippets are the parts of the code worth reading carefully. They are pulled from the `ticketing-poc` repo you cloned during setup, so you do not need to copy them to run the example.
+The following snippets are the parts of the code worth reading carefully. They come from the `ticketing-poc` repo you cloned during setup, so you do not need to copy them to run the example.
 
 ### Signature-verified mint permit
 
@@ -257,7 +257,7 @@ The `new_mint_permit` function verifies an Ed25519 signature against the `KeyReg
 
 <ImportContent source="move/sources/ticket.move" mode="code" org="MystenLabs" repo="ticketing-poc" fun="new_mint_permit" />
 
-The function takes the `KeyRegistry` (which holds the public key), the raw signature bytes, and the BCS-encoded ticket data. It calls `assert_signature` to verify the Ed25519 signature, then `consume_nonce` to record the nonce and prevent reuse. The returned `TicketMintPermit` is consumed by the `mint` function.
+The function takes the `KeyRegistry` (which holds the public key), the raw signature bytes, and the BCS-encoded ticket data. It calls `assert_signature` to verify the Ed25519 signature, then `consume_nonce` to record the nonce and prevent reuse. The `mint` function consumes the returned `TicketMintPermit`.
 
 ### Ticket minting with loyalty integration
 
@@ -281,7 +281,7 @@ The `KeyRegistry` stores the Ed25519 public key and tracks consumed nonces.
 
 <ImportContent source="move/sources/key_registry.move" mode="code" org="MystenLabs" repo="ticketing-poc" struct="KeyRegistryInner" />
 
-The `used_nonces` table maps nonce values to the epoch they were consumed in. The `cleanup_nonces` function lets the key owner remove old entries by epoch threshold, preventing the table from growing indefinitely.
+The `used_nonces` table maps nonce values to the epoch in which the registry consumed them. The `cleanup_nonces` function lets the key owner remove old entries by epoch threshold, preventing the table from growing indefinitely.
 
 ### Full ticket purchase orchestration
 
@@ -316,7 +316,7 @@ The route reads the admin Ed25519 private key from the environment, generates a 
 The following sections address common issues with this example.
 ### Google sign-in doesn't trigger login    
 
-**Symptom:**  After authenticating with Google, nothing happens and you are prompted to sign in  again. In the browser's developer tools, you see the error `{"errors":[{"code":"invalid_client_id","message":"Invalid client ID"}]}`
+**Symptom:**  After authenticating with Google, nothing happens and the app prompts you to sign in again. In the browser's developer tools, you see the error `{"errors":[{"code":"invalid_client_id","message":"Invalid client ID"}]}`
 
 **Cause:** Enoki doesn't recognize your Google Client ID.                           
                                                                                 
@@ -330,7 +330,7 @@ The following sections address common issues with this example.
 
 **Symptom:** The Google OAuth popup closes immediately or never appears.
 
-**Cause:** The `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is misconfigured, the redirect URI does not match `http://localhost:3000/`, or third-party cookies are blocked.
+**Cause:** The `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is misconfigured, the redirect URI does not match `http://localhost:3000/`, or the browser blocks third-party cookies.
 
 **Fix:** Verify the Google Client ID and authorized redirect URIs in Google Cloud Console. Try a different browser or disable cookie-blocking extensions.
 
@@ -346,7 +346,7 @@ The following sections address common issues with this example.
 
 **Symptom:** The `consume_nonce` call aborts because the nonce is already in the `used_nonces` table.
 
-**Cause:** The same permit was submitted twice, or the nonce generation produced a collision.
+**Cause:** You submitted the same permit twice, or the nonce generation produced a collision.
 
 **Fix:** Generate a new permit by calling `/api/permit/mint-ticket` again. Each call produces a fresh nonce. If collisions happen frequently, increase the nonce size from 8 to 16 bytes.
 
@@ -362,6 +362,6 @@ The following sections address common issues with this example.
 
 **Symptom:** Clicking to advance a ticket's stage does nothing or shows an error.
 
-**Cause:** The `StageTransition` object for the target stage was not created or was not sent to the ticket's address.
+**Cause:** The backend did not create the `StageTransition` object for the target stage or did not send it to the ticket's address.
 
-**Fix:** Verify that `/api/stage/mint` ran successfully after the ticket was purchased. Check that the `StageTransition` objects are owned by the ticket's address using `sui client objects`.
+**Fix:** Verify that `/api/stage/mint` ran successfully after the user purchased the ticket. Use `sui client objects` to check that the ticket's address owns the `StageTransition` objects.

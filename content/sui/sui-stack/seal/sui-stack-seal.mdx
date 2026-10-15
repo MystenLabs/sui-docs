@@ -64,13 +64,13 @@ answer: >-
   Seal, by walking through OnlyFins.
 ---
 
-This guide continues from [Data Storage Using Walrus](/sui-stack/walrus/sui-stack-walrus) and builds on the same [OnlyFins](https://github.com/MystenLabs/onlyfins-example-app) app. The Walrus guide covers how OnlyFins stores and reads images. This guide covers how it protects them: encrypting images before upload and enforcing onchain access control so only authorized users can decrypt them.
+[OnlyFins](https://github.com/MystenLabs/onlyfins-example-app) encrypts its images with Seal before upload and enforces onchain access control so only authorized users can decrypt them. [Data Storage Using Walrus](/sui-stack/walrus/sui-stack-walrus) uses the same app and covers how OnlyFins stores and reads images.
 
 Seal is a decentralized secrets management (DSM) service that uses access control policies defined and validated on Sui. You use Seal to encrypt sensitive data before storing it on Walrus, onchain, or in any other storage, and then issue decryption keys only to users who satisfy your onchain access conditions.
 
 Seal has 3 core components:
 
-- **Onchain access policies:** Move functions you write that define who is allowed to decrypt. [Key servers](/sui-stack/seal/server-overview) evaluate your policy by running a `dry_run_transaction_block` on Sui when a user requests decryption key shares. A dry run evaluates the transaction without executing it onchain. If the policy approves, the servers return the key shares.
+- **Onchain access policies:** Move functions you write that define who can decrypt. [Key servers](/sui-stack/seal/server-overview) evaluate your policy by running a `dry_run_transaction_block` on Sui when a user requests decryption key shares. A dry run evaluates the transaction without executing it onchain. If the policy approves, the servers return the key shares.
 - **Key servers:** Offchain services that hold [IBE (identity-based encryption)](/sui-stack/seal/design) master secret keys. Each server returns derived decryption key shares only when the request satisfies the associated onchain policy. You configure a threshold, so decryption requires at least `t` out of `n` servers to agree.
 - **Client-side encryption:** The user encrypts and decrypts data locally in their environment. Key servers never see plaintext.
 
@@ -112,7 +112,7 @@ sequenceDiagram
 The numbered workflow in [How Seal fits with Walrus](#how-seal-fits-with-walrus) describes the same sequence in text.
 
 :::caution
-Seal should not be used to protect highly sensitive data such as wallet keys, personal health information, or government-level secrets. Review the [Seal Terms of Service](/sui-stack/seal/terms-of-service) and [security best practices](/sui-stack/seal/security-best-practices) before deploying to production.
+Do not use Seal to protect highly sensitive data such as wallet keys, personal health information, or government-level secrets. Review the [Seal Terms of Service](/sui-stack/seal/terms-of-service) and [security best practices](/sui-stack/seal/security-best-practices) before deploying to production.
 :::
 
 :::caution
@@ -126,12 +126,12 @@ Your `seal_approve*` access policy is only as trustworthy as the upgrade policy 
 Walrus stores all blobs publicly. Seal provides the encryption layer on top. The workflow is:
 
 1. Encrypt the image locally with Seal before upload.
-2. Store the encrypted blob on Walrus. The blob ID is stored on the `Post` Sui object.
+2. Store the encrypted blob on Walrus. The `Post` Sui object stores the blob ID.
 3. When you want to view a post, you build a transaction that proves you own a `ViewerToken`.
 4. Seal key servers verify the transaction against the onchain policy and return key shares.
 5. The user combines the key shares to derive the decryption key and decrypts the image locally.
 
-The blob on Walrus is always public. What is secret is the encryption key, and access to that key is controlled entirely by the onchain policy.
+The blob on Walrus is always public. What is secret is the encryption key, and the onchain policy entirely controls access to that key.
 
 ## Tooling
 
@@ -153,8 +153,8 @@ $ npm install --save @mysten/seal @mysten/sui
 
 The `@mysten/seal` package provides 2 primary classes:
 
-- **`SealClient`:** Handles encryption, key fetching, and decryption. Can be instantiated standalone or as a Sui client extension.
-- **`SessionKey`:** Represents a user-approved session that allows a browser app to fetch decryption keys without triggering a wallet popup on every request. A session has a time-to-live (TTL) and is scoped to a specific package ID.
+- `SealClient`: Handles encryption, key fetching, and decryption. You can instantiate it standalone or as a Sui client extension.
+- `SessionKey`: Represents a user-approved session that allows a browser app to fetch decryption keys without triggering a wallet popup on every request. A session has a time-to-live (TTL) and is scoped to a specific package ID.
 
 OnlyFins uses `SealClient` in standalone mode. The `createSealClient` factory in `seal-client.ts` initializes it with the Testnet key server object IDs:
 
@@ -167,10 +167,10 @@ OnlyFins uses `SealClient` in standalone mode. The `createSealClient` factory in
 />
 
 :::info
-Some code examples in this guide use older Sui transports: OnlyFins uses `SuiClient` from `@mysten/sui/client`, and the seal-demo standalone script uses `SuiJsonRpcClient` from `@mysten/sui/jsonRpc`, which is deprecated. `SuiGrpcClient` from `@mysten/sui/grpc` is the recommended transport for all new integrations. All `SealClient` constructor and encrypt/decrypt APIs are identical regardless of which transport you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
+Some code examples in this guide use older Sui transports: OnlyFins uses `SuiClient` from `@mysten/sui/client`, and the seal-demo standalone script uses `SuiJsonRpcClient` from `@mysten/sui/jsonRpc`, which is deprecated. `SuiGrpcClient` from `@mysten/sui/grpc` is the recommended transport for all new integrations. All `SealClient` constructor, encrypt, and decrypt APIs are identical regardless of which transport you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
 :::
 
-The key server object IDs come from `constants.ts`. These IDs point to onchain `KeyServer` objects that always hold the latest URL as the source of truth. See the [Seal documentation](/sui-stack/seal/pricing) for the full list of verified key servers and their modes (open vs. permissioned).
+The key server object IDs come from `constants.ts`. These IDs point to onchain `KeyServer` objects that always hold the latest URL as the source of truth. See the [Seal documentation](/sui-stack/seal/pricing) for the full list of verified key servers and their modes (open or permissioned).
 
 <ImportContent
   source="frontend/src/constants.ts"
@@ -183,7 +183,7 @@ The key server object IDs come from `constants.ts`. These IDs point to onchain `
 
 ## How do I enforce onchain access control over encrypted data?
 
-Access control in Seal is defined by Move functions you write in your app's package. Your Seal-integrated Move module must expose at least one `entry fun seal_approve*` function. Key servers call this function through `dry_run_transaction_block` to determine whether to issue key shares. If the function aborts, access is denied. If it completes successfully, access is granted.
+Move functions you write in your app's package define access control in Seal. Your Seal-integrated Move module must expose at least one `entry fun seal_approve*` function. Key servers call this function through `dry_run_transaction_block` to determine whether to issue key shares. If the function aborts, the key servers deny access. If it completes successfully, the key servers grant access.
 
 ### The `seal_approve` convention
 
@@ -192,9 +192,9 @@ Write a `seal_approve` function that follows these rules:
 - It must be an `entry fun`, not a public function.
 - Its first parameter must always be `id: vector<u8>`. This is the inner identity. Seal prepends the package ID to form the full namespaced identity.
 - It should abort with a meaningful error code if the caller does not satisfy the access condition.
-- It must not be called from other [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) commands during Seal evaluation. Only `seal_approve*` functions are invoked directly.
+- Other [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) commands must not call it during Seal evaluation. Invoke only `seal_approve*` functions directly.
 
-You pass the identity for each encrypted object as the `id` value at encryption time. The same `id` must be used in the `seal_approve` PTB at decryption time. In OnlyFins, this `id` is the `encryptionId` generated at encryption time, which is stored as the `encryption_id` field on the `Post` object.
+You pass the identity for each encrypted object as the `id` value at encryption time. You must use the same `id` in the `seal_approve` PTB at decryption time. In OnlyFins, this `id` is the `encryptionId` generated at encryption time, which the `Post` object stores as its `encryption_id` field.
 
 ### OnlyFins access control: `ViewerToken` gating
 
@@ -211,7 +211,7 @@ The `seal_approve_access` function in the `posts` module enforces this:
   fun="seal_approve_access"
 />
 
-This function receives the Seal ID, the `Post` object, and the user's `ViewerToken`. It checks that the `ViewerToken` is issued for the correct post and that the encryption ID matches. If either check fails, it aborts and the key server denies the request.
+This function receives the Seal ID, the `Post` object, and the user's `ViewerToken`. It checks that the `ViewerToken` matches the correct post and that the encryption ID matches. If either check fails, it aborts and the key server denies the request.
 
 ### Acquiring a `ViewerToken`
 
@@ -275,13 +275,13 @@ Encryption happens before upload, entirely on the client side. You never send th
 
 ### How Seal encryption works
 
-`SealClient.encrypt` uses identity-based encryption (IBE). Each piece of content is encrypted to a specific identity, which is a byte string composed of your package ID (prepended automatically by Seal) and the `id` you provide. The same `id` is later used in the `seal_approve` PTB to gate decryption.
+`SealClient.encrypt` uses identity-based encryption (IBE). It encrypts each piece of content to a specific identity, which is a byte string that combines your package ID (Seal prepends it automatically) and the `id` you provide. You later use the same `id` in the `seal_approve` PTB to gate decryption.
 
 The `encrypt` call returns the `encryptedObject` (the ciphertext) and a backup `key`. You can use the backup key for disaster recovery with the `seal-cli symmetric-decrypt` command. Store or discard it according to your recovery requirements.
 
 ### OnlyFins server-side encryption
 
-In OnlyFins, encryption runs in the backend `encryptImages.ts` script before images are uploaded to Walrus. The script generates a unique `encryptionId` for each post, encrypts the image bytes, and saves the ciphertext to disk for CLI upload:
+In OnlyFins, encryption runs in the backend `encryptImages.ts` script before you upload images to Walrus. The script generates a unique `encryptionId` for each post, encrypts the image bytes, and saves the ciphertext to disk for CLI upload:
 
 <ImportContent
   source="backend/src/encryptImages.ts"
@@ -294,11 +294,11 @@ In OnlyFins, encryption runs in the backend `encryptImages.ts` script before ima
 
 A few things to note about the OnlyFins encryption setup:
 
-- The `encryptionId` is a hex-encoded string derived from a timestamp and post index. This value becomes the Seal `id` parameter, which must later be passed to `seal_approve_access` during decryption.
+- The `encryptionId` is a hex-encoded string derived from a timestamp and post index. This value becomes the Seal `id` parameter, which you must later pass to `seal_approve_access` during decryption.
 - The `threshold` is 1, meaning a single key server is sufficient to issue decryption keys. In production, a higher threshold distributes trust across multiple servers.
 - The `packageId` ties the encrypted object to the specific deployed Move package. Seal prepends this to the `id` to form the full namespaced identity.
 
-The `encryptionId` is then stored as the `encryption_id` field on the `Post` Sui object when `createPosts.ts` registers the post onchain. This links the Walrus blob, the Seal encryption, and the Sui object together.
+When `createPosts.ts` registers the post onchain, it stores the `encryptionId` as the `encryption_id` field on the `Post` Sui object. This links the Walrus blob, the Seal encryption, and the Sui object together.
 
 :::tip
 Seal supports envelope encryption for large files. Generate a symmetric key, encrypt the image data with AES, then encrypt only the symmetric key with Seal. This is more efficient for large payloads and is the recommended pattern for anything larger than a few hundred KB. See the [Seal documentation](/sui-stack/seal/using-seal) for details.
@@ -370,7 +370,7 @@ The `createAndSignSessionKey` utility in `sealUtils.ts` shows the core signing f
   fun="createAndSignSessionKey"
 />
 
-In OnlyFins, the same session key lifecycle is managed through `useSessionJWT.ts` and a `SessionKeyProvider` context, which ties session creation to Enoki-based JWT authentication rather than direct wallet signing.
+In OnlyFins, `useSessionJWT.ts` and a `SessionKeyProvider` context manage the same session key lifecycle and tie session creation to Enoki-based JWT authentication rather than direct wallet signing.
 
 ### The full decryption flow
 
@@ -400,17 +400,17 @@ The flow has 4 steps:
 
 1. **Fetch the encrypted blob.** `fetchFromWalrus` retrieves the raw encrypted bytes from the Walrus aggregator using the blob ID stored on the `Post` object.
 
-2. **Build the approval transaction.** A PTB is constructed that calls `posts::seal_approve_access` with the encryption ID, the `Post` object, and the user's `ViewerToken`. This transaction is never executed onchain. It is passed as `txBytes` to `fetchKeys`, where the key server uses `dry_run_transaction_block` to evaluate the policy.
+2. **Build the approval transaction.** The hook constructs a PTB that calls `posts::seal_approve_access` with the encryption ID, the `Post` object, and the user's `ViewerToken`. The hook never executes this transaction onchain. It passes the transaction as `txBytes` to `fetchKeys`, where the key server uses `dry_run_transaction_block` to evaluate the policy.
 
-3. **Fetch key shares.** `sealClient.fetchKeys` sends the PTB bytes and the session key to the configured key servers. Each server that validates the policy returns a key share. When enough shares are gathered to meet the threshold, the decryption key can be derived.
+3. **Fetch key shares.** `sealClient.fetchKeys` sends the PTB bytes and the session key to the configured key servers. Each server that validates the policy returns a key share. When the client gathers enough shares to meet the threshold, it can derive the decryption key.
 
-4. **Decrypt locally.** `sealClient.decrypt` combines the key shares to reconstruct the decryption key and decrypts the image bytes. The decrypted bytes are converted to a blob URL and set as the image source in the component.
+4. **Decrypt locally.** `sealClient.decrypt` combines the key shares to reconstruct the decryption key and decrypts the image bytes. The hook converts the decrypted bytes to a blob URL and sets it as the image source in the component.
 
-The `checkShareConsistency` flag is set to `false` in OnlyFins. For production apps handling sensitive data, set it to `true` to verify that key shares from different servers are consistent before combining them.
+OnlyFins sets the `checkShareConsistency` flag to `false`. For production apps handling sensitive data, set it to `true` to verify that key shares from different servers are consistent before combining them.
 
 ## Failure modes
 
-| Error | Cause | Resolution |
+| **Error** | **Cause** | **Resolution** |
 |---|---|---|
 | Session key expired | TTL elapsed since wallet approval | Re-create session key; user re-approves |
 | Key server unreachable | Network issue or server offline | Check server status; retry with exponential backoff |

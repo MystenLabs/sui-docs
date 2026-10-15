@@ -92,7 +92,7 @@ This example teaches:
 
 The example has 4 actors. The Next.js frontend renders the card board with drag-and-drop, manages wallet connection through Enoki zkLogin (Google OAuth), and builds transactions for each move. Enoki handles both wallet authentication and transaction sponsorship. The solitaire Move package stores the full game state, validates every move, and consumes the Random module for shuffling and card reveals.
 
-The diagram below traces 1 game turn: the player drags a card from a column to a foundation pile.
+The following diagram traces 1 game turn: the player drags a card from a column to a foundation pile.
 
 ```mermaid
 sequenceDiagram
@@ -134,7 +134,7 @@ The following steps walk through the flow:
 
 ### How the game state works
 
-The entire game lives in a single `Game` object owned by the player. The `Game` struct contains:
+The entire game lives in a single `Game` object that the player owns. The `Game` struct contains:
 
 - `deck: Deck`: The draw pile with `hidden_cards` (count of unrevealed cards), `cards` (revealed deck cards), and a flag tracking whether all cards have been cycled.
 
@@ -142,9 +142,9 @@ The entire game lives in a single `Game` object owned by the player. The `Game` 
 
 - `columns: vector<Column>`: 7 tableau columns, each with a count of face-down `hidden_cards` and a vector of face-up `cards`.
 
-- `available_cards: vector<u64>`: The pool of undealt cards used during random reveals. Because the deck and columns store only a count of hidden cards rather than their IDs, a hidden card's identity comes from this pool at the moment it is revealed.
+- `available_cards: vector<u64>`: The pool of undealt cards used during random reveals. Because the deck and columns store only a count of hidden cards rather than their IDs, a hidden card's identity comes from this pool at the moment the game reveals it.
 
-Cards are represented as integers 0 through 51. The suit and rank derive from the card ID: `rank = id % 13` (0=Ace through 12=King), `suit = id / 13` (0=Clubs, 1=Spades, 2=Hearts, 3=Diamonds). For example, card 27 is the Two of Hearts: `27 % 13 = 1` (Two) and `27 / 13 = 2` (Hearts, using integer division). Cards 0 through 25 are black (Clubs, Spades), 26 through 51 are red (Hearts, Diamonds).
+The game represents cards as integers 0 through 51. The suit and rank derive from the card ID: `rank = id % 13` (0=Ace through 12=King), `suit = id / 13` (0=Clubs, 1=Spades, 2=Hearts, 3=Diamonds). For example, card 27 is the Two of Hearts: `27 % 13 = 1` (Two) and `27 / 13 = 2` (Hearts, using integer division). Cards 0 through 25 are black (Clubs, Spades), 26 through 51 are red (Hearts, Diamonds).
 
 ## Prerequisites
 
@@ -158,7 +158,7 @@ Cards are represented as integers 0 through 51. The suit and rank derive from th
 
 - [x] [Get SUI Testnet tokens](/getting-started/onboarding/get-coins).
 
-- [x] Download and install an IDE. The following are recommended, as they offer Move extensions:
+- [x] Download and install an IDE. Consider the following, because they offer Move extensions:
 
     - [VSCode](https://code.visualstudio.com/), corresponding [Move extension](https://marketplace.visualstudio.com/items?itemName=mysten.move)
 
@@ -206,7 +206,7 @@ $ sui move build
 $ sui client publish --gas-budget 200000000
 ```
 
-Record the package ID from the publish output. It is the `PackageID` value under `Published Objects`. The following is example output; your package ID will be different. You need this value in Step 3.
+Record the package ID from the publish output. It is the `PackageID` value under `Published Objects`. The following is example output; your package ID differs. You need this value in Step 3.
 
 ```
 │ Published Objects:                                                                               │
@@ -300,7 +300,7 @@ Each move function follows the same pattern: build a `Transaction` with the appr
 
 - **Add a timer:** Store `start_time` (already in the `Game` struct) and display elapsed time in the UI. Include the time in the victory modal alongside the move count.
 
-- **Add undo support:** Before each move, snapshot the board state in a local stack. On undo, pop the stack and call `handleFailedTransaction` to resync. Note that undo does not revert the onchain transaction, it only resets the UI.
+- **Add undo support:** Before each move, snapshot the board state in a local stack. On undo, pop the stack and call `handleFailedTransaction` to resync. Undo does not revert the onchain transaction; it only resets the UI.
 
 - **Add a leaderboard:** After `finish_game`, emit a `GameWon` event with the move count and elapsed time. Build a leaderboard page that queries these events through GraphQL.
 
@@ -311,7 +311,7 @@ Each move function follows the same pattern: build a `Transaction` with the appr
 The following sections address common issues with this example.
 ### Google sign-in doesn't trigger login    
 
-**Symptom:**  After authenticating with Google, nothing happens and you are prompted to sign in  again. In the browser's developer tools, you see the error `{"errors":[{"code":"invalid_client_id","message":"Invalid client ID"}]}`
+**Symptom:** After authenticating with Google, nothing happens and the app prompts you to sign in again. In the browser's developer tools, you see the error `{"errors":[{"code":"invalid_client_id","message":"Invalid client ID"}]}`.
 
 **Cause:** Enoki doesn't recognize your Google Client ID.                           
                                                                                 
@@ -325,7 +325,7 @@ The following sections address common issues with this example.
 
 **Symptom:** The Google OAuth popup closes immediately or never appears.
 
-**Cause:** The `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is misconfigured, the redirect URI does not match `http://localhost:3000/`, or third-party cookies are blocked.
+**Cause:** The `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is misconfigured, the redirect URI does not match `http://localhost:3000/`, or the browser blocks third-party cookies.
 
 **Fix:** Verify the Google Client ID and authorized redirect URIs in Google Cloud Console. Try a different browser or disable cookie-blocking extensions.
 
@@ -349,6 +349,6 @@ The following sections address common issues with this example.
 
 **Symptom:** After reloading the page, the board shows an old state or no game.
 
-**Cause:** The game state is fetched from the chain on load. If the previous session deleted or finished the game, no game object exists.
+**Cause:** The app fetches the game state from the chain on load. If the previous session deleted or finished the game, no game object exists.
 
 **Fix:** Start a new game. The app detects when no active game exists and shows the difficulty selection screen. If you had an active game, `getGameObjectDetails` fetches the latest state from the chain.

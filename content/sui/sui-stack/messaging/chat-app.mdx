@@ -77,9 +77,9 @@ This example teaches:
 
 - **Permissioned groups:** A `PermissionedGroup<Messaging>` shared object tracks members and their permissions onchain. The relayer caches these permissions and enforces them on every API call.
 - **Envelope encryption:** The client generates a random AES-256-GCM key (the DEK), encrypts it with Seal, and stores the encrypted DEK onchain in an `EncryptionHistory` object. The client encrypts messages with the DEK locally. Seal key servers release the DEK only to members with `MessagingReader` permission.
-- **Key rotation:** When a member is removed, the admin atomically revokes permissions and rotates the DEK in a single transaction. The removed member can no longer decrypt new messages.
+- **Key rotation:** To remove a member, the admin atomically revokes permissions and rotates the DEK in a single transaction. The removed member can no longer decrypt new messages.
 - **Relayer pattern:** An offchain Rust service accepts encrypted messages, verifies sender signatures, checks onchain permissions through a cached membership store, and batches messages to Walrus for archival.
-- **File attachments:** Each file is individually encrypted with the group DEK, uploaded to Walrus through the publisher API, and referenced by a `quiltPatchId` in the message metadata. Attachments are limited to 5MB each, 10 files, and 50MB total.
+- **File attachments:** The client encrypts each file individually with the group DEK, uploads it to Walrus through the publisher API, and references it by a `quiltPatchId` in the message metadata. The app limits attachments to 5MB each, 10 files, and 50MB total.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -99,7 +99,7 @@ For SDK installation and client setup, see [Installation](/sui-stack/messaging/i
 
 ## Architecture
 
-This example has 3 layers and 5 actors. The diagram below shows the components and the data flow between them.
+This example has 3 layers and 5 actors. The following diagram shows the components and the data flow between them.
 
 ```mermaid
 graph LR
@@ -127,7 +127,7 @@ Seal key servers hold threshold encryption keys and release DEK shares only when
 
 The app uses a 2-layer encryption scheme called envelope encryption, in which Seal threshold encryption protects the DEK and AES-256-GCM protects the message content:
 
-1. **DEK layer (Seal):** When a group is created, the SDK generates a random AES-256 key called the Data Encryption Key (DEK). The SDK encrypts the DEK with Seal and stores the encrypted DEK onchain in an `EncryptionHistory` object. Each key rotation appends a new version.
+1. **DEK layer (Seal):** When you create a group, the SDK generates a random AES-256 key called the Data Encryption Key (DEK). The SDK encrypts the DEK with Seal and stores the encrypted DEK onchain in an `EncryptionHistory` object. Each key rotation appends a new version.
 
 2. **Message layer (AES-256-GCM):** To send a message, the client fetches the current encrypted DEK from the chain, decrypts it through Seal (which verifies `MessagingReader` permission), and uses the plaintext DEK to encrypt the message content with AES-256-GCM. The relayer only ever sees the ciphertext.
 
@@ -145,9 +145,9 @@ The frontend and relayer both need to agree on the same package and key servers.
 | --- | --- |
 | `VITE_SEAL_KEY_SERVER_OBJECT_IDS` | At least 2 object IDs from the [verified key servers](https://seal-docs.wal.app/Pricing#verified-key-servers) list. A single server fails with a threshold error. |
 | `VITE_RELAYER_URL` | Address of the relayer, such as `http://localhost:3000` for a locally running relayer. |
-| `VITE_WALRUS_PUBLISHER_URL` / `VITE_WALRUS_AGGREGATOR_URL` | Where encrypted quilts are written and read. |
+| `VITE_WALRUS_PUBLISHER_URL` / `VITE_WALRUS_AGGREGATOR_URL` | Where the app writes and reads encrypted quilts. |
 | `VITE_WALRUS_EPOCHS` | Storage duration for archived messages. |
-| `GROUPS_PACKAGE_ID` (relayer) | The deployed Groups SDK package, listed below. |
+| `GROUPS_PACKAGE_ID` (relayer) | The deployed Groups SDK package, listed in the following table. |
 
 | Network | Groups SDK package ID |
 | --- | --- |
@@ -227,9 +227,9 @@ The following sections address common issues with this example.
 
 **Symptom:** The relayer returns a 403 error when sending or fetching messages.
 
-**Cause:** The relayer's membership cache does not include the caller's permissions, or the caller's permissions were revoked onchain.
+**Cause:** The relayer's membership cache does not include the caller's permissions, or an admin revoked the caller's permissions onchain.
 
-**Fix:** Verify your membership with `sui client object GROUP_ID` and check the permissions for your address. If recently added, the relayer's membership sync might have a delay. Restart the relayer to force a cache refresh.
+**Fix:** Verify your membership with `sui client object GROUP_ID` and check the permissions for your address. If an admin added you recently, the relayer's membership sync might have a delay. Restart the relayer to force a cache refresh.
 
 ### Decryption fails
 
@@ -241,11 +241,11 @@ The following sections address common issues with this example.
 
 ### Group does not appear in sidebar
 
-**Symptom:** After creating a group or being added to one, it does not show in the sidebar.
+**Symptom:** After you create a group or someone adds you to one, it does not show in the sidebar.
 
 **Cause:** The group discovery hook queries `MemberAdded` events through GraphQL. The event indexer might lag behind the chain, or the GraphQL endpoint is unreachable.
 
-**Fix:** Wait a few seconds and refresh. Verify `VITE_SUI_GRAPHQL_URL` is correct. The group is also cached in localStorage, so clearing `chat-app-groups` from localStorage and refreshing forces a fresh query.
+**Fix:** Wait a few seconds and refresh. Verify `VITE_SUI_GRAPHQL_URL` is correct. The app also caches the group in localStorage, so clearing `chat-app-groups` from localStorage and refreshing forces a fresh query.
 
 ### File attachment upload fails
 
@@ -257,13 +257,13 @@ The following sections address common issues with this example.
 
 ### Error: `Invalid key servers or threshold 2 for 1 key servers for package 0x04...`
 
-**Cause:** Configured key servers are invalid, unreachable, or only one was specified.
+**Cause:** Configured key servers are invalid, unreachable, or you specified only one.
 
 **Fix:** Check that the Seal key server object IDs in `.env` are correct, there are at least 2, and the servers are reachable.
 
 ### Error: `Invalid public key format: Unknown signature scheme flag: 0x05`
 
-**Cause:** zkLogin is not supported by this application, and the wallet connected to the app uses zkLogin.
+**Cause:** This application does not support zkLogin, and the wallet connected to the app uses zkLogin.
 
 **Fix:** Use a passphrase or imported key wallet instead.
 

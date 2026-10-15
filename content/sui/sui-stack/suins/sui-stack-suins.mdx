@@ -46,14 +46,14 @@ questions:
   - How do I resolve SuiNS domain names to Sui addresses?
   - How do I use reverse lookup and subnames in an app?
 answer: >-
-  This guide explains how to integrate SuiNS name resolution, reverse lookup,
-  subnames, and the Enoki subname API into an app.
+  You can integrate SuiNS name resolution, reverse lookup, subnames, and the
+  Enoki subname API into an app.
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This guide explains how to integrate SuiNS name resolution, reverse lookup, subnames, and the Enoki subname API into an app.
+You can integrate SuiNS name resolution, reverse lookup, subnames, and the Enoki subname API into an app.
 
 By the end of this page, you can:
 
@@ -74,7 +74,7 @@ By the end of this page, you can:
 </TabItem>
 </Tabs>
 
-This guide uses [Sui Messenger](https://github.com/MystenLabs/messaging-sdk-example) as a concrete example throughout. Sui Messenger is a demo encrypted messaging app built on Sui that assigns every user a SuiNS subname under the `sui-stack.sui` parent domain. These subnames serve as human-readable identities in the app's channel system, replacing raw wallet addresses with names like `alice.sui-stack.sui`. The [Onchain Websites with Walrus Sites](/sui-stack/walrus/sui-stack-walrus-sites) guide uses SuiNS to attach a readable URL to a deployed Walrus Site.
+[Sui Messenger](https://github.com/MystenLabs/messaging-sdk-example) serves as a concrete example throughout. Sui Messenger is a demo encrypted messaging app built on Sui that assigns every user a SuiNS subname under the `sui-stack.sui` parent domain. These subnames serve as human-readable identities in the app's channel system, replacing raw wallet addresses with names like `alice.sui-stack.sui`. The [Onchain Websites with Walrus Sites](/sui-stack/walrus/sui-stack-walrus-sites) guide uses SuiNS to attach a readable URL to a deployed Walrus Site.
 
 ## What is SuiNS?
 
@@ -141,7 +141,7 @@ Lookups work with 2 types of addresses:
 - **Target address:** The address that a SuiNS name points to. The NFT holder sets this. For example, `example.sui` might point to `0x2`, making `0x2` the target address for `example.sui`. Multiple names can point to the same target address.
 - **Default address:** The SuiNS name that the owner of a wallet address has designated to represent that address. For example, if you own `example.sui` and its target address is your wallet, you can set `example.sui` as the default name for your wallet. The owner must sign a set-default transaction to establish this connection.
 
-When you display names in your UI, use the default address (reverse lookup) rather than the target address. The default address is guaranteed onchain because the wallet owner explicitly signed a transaction to set it.
+When you display names in your UI, use the default address (reverse lookup) rather than the target address. The onchain record guarantees the default address because the wallet owner explicitly signed a transaction to set it.
 
 ### Default address reset behavior
 
@@ -233,11 +233,11 @@ The `lookup` call takes a `Domain` value constructed from the name string. `has_
 
 The 3 error constants map to real scenarios you encounter in production:
 
-- `ENameNotFound`: the name does not exist in the registry, or the domain has expired and been released. Check that the name exists at [suins.io](https://suins.io/) before calling `send_to_name`.
+- `ENameNotFound`: the name does not exist in the registry, or the domain has expired and SuiNS has released it. Check that the name exists at [suins.io](https://suins.io/) before calling `send_to_name`.
 - `ENameExpired`: the name exists in the registry but its storage epoch has passed. The holder must renew it before it resolves again.
 - `ENameNotPointingToAddress`: the name record exists and has not expired, but the holder has not set a target address. A name can exist without pointing anywhere until the NFT holder calls the set-target-address transaction.
 
-Pass the `SuiNS` [shared object](/develop/objects/object-ownership/shared) as an argument to any function that performs onchain resolution. The object IDs for Mainnet and Testnet are listed in the [SuiNS active constants](https://docs.suins.io/developer#active-constants).
+Pass the `SuiNS` [shared object](/develop/objects/object-ownership/shared) as an argument to any function that performs onchain resolution. The [SuiNS active constants](https://docs.suins.io/developer#active-constants) list the object IDs for Mainnet and Testnet.
 
 ## Offchain resolution
 
@@ -249,10 +249,10 @@ For offchain resolution in a TypeScript or JavaScript app, you have 2 options:
 ### Lookup with `@mysten/sui`
 
 
-{/* TODO: Import code from MystenLabs/sui-typescript — show resolveNameServiceAddress example */}
+{/* TODO: Import code from MystenLabs/sui-typescript to show resolveNameServiceAddress example */}
 {/* Description: Basic name-to-address resolution using client.resolveNameServiceAddress */}
 
-{/* TODO: Import code from MystenLabs/sui-typescript — show defaultNameServiceName example */}
+{/* TODO: Import code from MystenLabs/sui-typescript to show defaultNameServiceName example */}
 {/* Description: Reverse lookup (address to default name) using client.defaultNameServiceName */}
 
 :::info
@@ -279,7 +279,7 @@ Install the SuiNS SDK with:
 $ npm i @mysten/suins
 ```
 
-In Sui Messenger, the `useUserSubname` hook resolves the subname for the connected wallet by querying the Enoki subname API rather than the SuiNS registry directly. This is because subnames under `sui-stack.sui` are provisioned programmatically through Enoki rather than registered by users through the SuiNS portal:
+In Sui Messenger, the `useUserSubname` hook resolves the subname for the connected wallet by querying the Enoki subname API rather than the SuiNS registry directly. This is because Enoki provisions subnames under `sui-stack.sui` programmatically, rather than users registering them through the SuiNS portal:
 
 <ImportContent
   source="frontend/src/hooks/useUserSubname.ts"
@@ -317,8 +317,8 @@ When you resolve a SuiNS name to send assets or authorize actions, verify 4 cond
 
 Follow this sequence for every onchain resolution:
 
-1. **Verify the name exists.** Call `lookup` on the SuiNS registry. If the result is `None`, the name is not registered or has been released after expiry. Abort the transaction.
-2. **Check expiration.** Call `has_expired` with a `Clock` reference. Expired names remain in the registry but should not be trusted. Abort if expired.
+1. **Verify the name exists.** Call `lookup` on the SuiNS registry. If the result is `None`, nobody has registered the name, or SuiNS released it after expiry. Abort the transaction.
+2. **Check expiration.** Call `has_expired` with a `Clock` reference. Expired names remain in the registry, but you should not trust them. Abort if expired.
 3. **Confirm the target address is set.** Call `target_address` on the name record. A name can exist without pointing to any address until the holder sets one. Abort if `None`.
 4. **Match the expected address (optional).** If you expect the name to resolve to a specific address (for example, a counterparty in a trade), compare the resolved target address to the expected value. This prevents a time-of-check to time-of-use (TOCTOU) issue where the NFT holder changes the target address between your lookup and the actual transfer.
 
@@ -336,7 +336,7 @@ For offchain verification (for example, in a backend service), combine the SuiNS
 2. Compare `expirationTimestampMs` against the current time to confirm the name has not expired.
 3. Check that `targetAddress` is set and non-empty before using it.
 
-{/* TODO: Import code from MystenLabs/suins-contracts or a Sui example repo — show offchain verification pattern using getNameRecord with expiry and target address checks */}
+{/* TODO: Import code from MystenLabs/suins-contracts or a Sui example repo to show offchain verification pattern using getNameRecord with expiry and target address checks */}
 {/* Description: TypeScript function that resolves a SuiNS name, validates expiry, and confirms target address before use */}
 
 ### Reverse lookup verification
@@ -351,7 +351,7 @@ For queries beyond a single name or address lookup (for example, all subnames un
 
 Subnames are nested names under a parent name. For example, `alice.myapp.sui` is a subname under `myapp.sui`. Creating subnames has no cost. The maximum nesting depth is 8 subname levels below the second-level domain (SLD), or 10 levels in total when you count the SLD and the top-level domain (TLD).
 
-Parent rules control whether children can be created and whether subnames can extend their expiration to match the parent.
+Parent rules control whether you can create children and whether subnames can extend their expiration to match the parent.
 
 ### Subname types
 
@@ -396,20 +396,20 @@ Choose your creation method based on your use case:
 Configure the subname with the following parameters:
 
 - **Name:** The label for the subname (for example, `alice` for `alice.myapp.sui`). Labels follow the same character rules as SuiNS names: lowercase alphanumeric characters and hyphens, 3 to 63 characters.
-- **Target address:** The address the subname points to. Required for leaf subnames. Optional for node subnames (can be set later by the NFT holder).
+- **Target address:** The address the subname points to. Required for leaf subnames. Optional for node subnames (the NFT holder can set it later).
 - **Expiration (node subnames only):** The timestamp when the node subname expires. Must not exceed the parent domain's expiration.
 
 ##### Step 3: Set up resolution
 
-Set up resolution so the subname can be looked up. The subname is resolvable immediately after creation through onchain `lookup` and offchain `resolveNameServiceAddress`. If the target address owner wants the subname as their default name, they must sign a separate set-default transaction. Both node and leaf subnames support reverse lookup registration.
+Set up resolution so clients can look up the subname. The subname is resolvable immediately after creation through onchain `lookup` and offchain `resolveNameServiceAddress`. If the target address owner wants the subname as their default name, they must sign a separate set-default transaction. Both node and leaf subnames support reverse lookup registration.
 
 ### Subname configuration and parent rules
 
 The parent domain holder configures rules that govern child subname behavior:
 
-- **Allow child creation:** The parent can enable or disable subname creation under their domain. If disabled, no new subnames can be created.
+- **Allow child creation:** The parent can enable or disable subname creation under their domain. If disabled, nobody can create new subnames.
 - **Allow expiration extension:** For node subnames, the parent can permit the subname holder to extend the expiration up to the parent's own expiration date.
-- **Revocation:** The parent holder can revoke leaf subnames at any time. Node subnames cannot be revoked by the parent until they expire.
+- **Revocation:** The parent holder can revoke leaf subnames at any time. The parent cannot revoke node subnames until they expire.
 
 :::info
 

@@ -35,7 +35,7 @@ Use MVR to:
 
 - Depend on other packages when developing with Move.
 
-Additionally, MVR can help you manage package versioning. With MVR, you call a specific version of a package without having to resolve the addresses yourself. You also do not need to worry about the package being updated, because if you use a name without a specified version, MVR automatically defaults to the latest version available.
+Additionally, MVR can help you manage package versioning. With MVR, you call a specific version of a package without having to resolve the addresses yourself. You also do not need to worry about someone updating the package, because if you use a name without a specified version, MVR automatically defaults to the latest version available.
 
 :::info
 
@@ -59,15 +59,15 @@ The first step when publishing a package is to register its metadata object. Thi
 1. Locating the source code across different versions of the package.
 2. (Future) Providing text-based metadata (title, description, tags) for the package, which the MVR search engine can use.
 
-This metadata object can be reused when authorizing any package upgrades to supply source information for the new version. Sui indexers can index the metadata as it cannot be stored within another object.
+You can reuse this metadata object when authorizing any package upgrades to supply source information for the new version. Sui indexers can index the metadata because you cannot store it within another object.
 
-![Package Info Objects](/img/mvr/mvr-package-info.svg)
+![Package info objects](/img/mvr/mvr-package-info.svg)
 
 See [Managing Package Metadata](./managing-package-info.mdx) for examples of working with `PackageInfo` objects.
 
 ## What is an MVR name?
 
-A MVR name consists of a SuiNS name and a package name, in the format `<suins_name>/<pkg_name>`. For example, if your SuiNS name is `myname.sui`, and your package name is `mypackage`, the MVR name can be `@myname/mypackage` or `myname.sui/mypackage`.
+An MVR name consists of a SuiNS name and a package name, in the format `<suins_name>/<pkg_name>`. For example, if your SuiNS name is `myname.sui`, and your package name is `mypackage`, the MVR name can be `@myname/mypackage` or `myname.sui/mypackage`.
 
 The MVR standard supports an optional `/<version>` that allows you to specify which onchain version to resolve to. For example, if your MVR name is `@myname/mypackage` and there are multiple versions of the package, you can specify `@myname/mypackage/2` to use version 2.
 
@@ -75,7 +75,7 @@ The MVR standard supports an optional `/<version>` that allows you to specify wh
 
 MVR registration is separate from the `PackageInfo` registration process. This separation is necessary because the `PackageInfo` object acts as both the source of truth for package metadata and a proof of package ownership, whereas MVR registers applications that MVR tooling can resolve.
 
-The two processes connect in the second step below: you first register the package's `PackageInfo` object as described in the previous section, and MVR registration then links your application name to that object.
+The two processes connect in step 2 of the registration procedure: you first register the package's `PackageInfo` object as described in the section on `PackageInfo` objects, and MVR registration then links your application name to that object.
 
 To register a package:
 
@@ -100,7 +100,7 @@ MVR is currently in beta.
 
 ### Source code
 
-The open source code for MVR is located within both the [Sui](https://github.com/MystenLabs/sui) and [MVR](https://github.com/MystenLabs/mvr) repositories on GitHub.
+Both the [Sui](https://github.com/MystenLabs/sui) and [MVR](https://github.com/MystenLabs/mvr) repositories on GitHub contain the open source code for MVR.
 
 - The MVR repository houses the [MVR-CLI](https://github.com/MystenLabs/mvr/tree/main/crates/mvr-cli) and [MVR web app](https://github.com/MystenLabs/mvr/tree/main/app) code.
 - Sui repository houses the [MVR GraphQL](https://github.com/MystenLabs/sui/tree/main/crates/sui-graphql-rpc/src/types/move_registry) code.

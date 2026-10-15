@@ -13,8 +13,8 @@ keywords:
   - openid
 goal:
   description: >-
-    Reader can implement the complete zkLogin flow — ephemeral keys, JWT, user salt, and
-    zero-knowledge proof — to enable zkLogin transactions in an app
+    Reader can implement the complete zkLogin flow (ephemeral keys, JWT, user salt, and
+    zero-knowledge proof) to enable zkLogin transactions in an app
   requires:
     - has_frontmatter:
         - title
@@ -46,14 +46,14 @@ questions:
   - How do I generate a zero-knowledge proof for zkLogin?
   - How do I assemble a zkLogin signature?
 answer: >-
-  This guide walks through the complete zkLogin integration flow: installing the SDK,
+  The complete zkLogin integration flow covers installing the SDK,
   generating ephemeral keys, obtaining JWTs and zero-knowledge proofs, managing user salts,
   assembling signatures, and submitting transactions.
 ---
 
 To implement zkLogin, first read [What is zkLogin?](/sui-stack/zklogin-integration) for the underlying concepts, then [configure at least one OpenID provider](/sui-stack/zklogin-integration/developer-account).
 
-This page covers zkLogin on its own. Consumer apps usually combine it with sponsored transactions so a new user never has to fund an address before their first action. For that combination end to end, see the [Consumer App Cookbook](/sui-stack/zklogin-integration/consumer-app-zklogin).
+The following steps cover zkLogin on its own. Consumer apps usually combine it with sponsored transactions so a new user never has to fund an address before their first action. For that combination end to end, see the [Consumer App Cookbook](/sui-stack/zklogin-integration/consumer-app-zklogin).
 
 Your application generates an ephemeral key pair, then prompts the user to complete an OAuth login flow with a nonce derived from the ephemeral public key. When the provider returns the JSON Web Token (JWT), your application obtains a zero-knowledge proof and a unique user salt, then computes the zkLogin Sui address from the OAuth subject identifier and that salt. Your application signs transactions with the ephemeral private key and submits each transaction with both the ephemeral signature and the zero-knowledge proof.
 
@@ -99,7 +99,7 @@ const randomness = generateRandomness();
 const nonce = generateNonce(ephemeralKeyPair.getPublicKey(), maxEpoch, randomness);
 ```
 
-`randomness` is a random value from `generateRandomness()`, and `nonce` is derived from the ephemeral public key, `maxEpoch`, and `randomness`. You pass the `nonce` to the OAuth provider in Step 2.
+`randomness` is a random value from `generateRandomness()`, and `generateNonce` derives `nonce` from the ephemeral public key, `maxEpoch`, and `randomness`. You pass the `nonce` to the OAuth provider in Step 2.
 
 The `maxEpoch` controls how long this ephemeral key can authorize transactions. The address itself does not expire; only the session does. When the epoch passes `maxEpoch`, generate a new key pair and zero-knowledge proof. See [Does my address expire?](/sui-stack/zklogin-integration/zklogin) for details.
 
@@ -122,7 +122,7 @@ https://accounts.google.com/o/oauth2/v2/auth
   &nonce=$NONCE
 ```
 
-The JWT is returned directly in the redirect URL (`id_token` parameter). No token exchange is needed.
+Google returns the JWT directly in the redirect URL (`id_token` parameter). You do not need a token exchange.
 
 </TabItem>
 
@@ -137,7 +137,7 @@ https://www.facebook.com/v17.0/dialog/oauth
   &response_type=id_token
 ```
 
-The JWT is returned directly in the redirect URL. No token exchange is needed.
+Facebook returns the JWT directly in the redirect URL. You do not need a token exchange.
 
 </TabItem>
 
@@ -155,7 +155,7 @@ https://id.twitch.tv/oauth2/authorize
   &nonce=$NONCE
 ```
 
-The JWT is returned directly in the redirect URL. No token exchange is needed.
+Twitch returns the JWT directly in the redirect URL. You do not need a token exchange.
 
 </TabItem>
 
@@ -195,7 +195,7 @@ https://appleid.apple.com/auth/authorize
   &nonce=$NONCE
 ```
 
-The JWT is returned directly. No token exchange is needed.
+Apple returns the JWT directly. You do not need a token exchange.
 
 </TabItem>
 
@@ -234,7 +234,7 @@ https://login.microsoftonline.com/common/oauth2/v2.0/authorize
   &redirect_uri=$REDIRECT_URL
 ```
 
-The JWT is returned directly in the redirect URL. No token exchange is needed.
+Microsoft returns the JWT directly in the redirect URL. You do not need a token exchange.
 
 </TabItem>
 
@@ -270,11 +270,11 @@ Choose a salt management strategy:
 | **Strategy** | **Description** | **Trade-offs** |
 | --- | --- | --- |
 | User-provided | Ask the user to enter and remember the salt. | Basic but poor UX; users forget salts. |
-| Browser/device storage | Store in `localStorage` or mobile secure storage. | Easy but lost on device/browser change. Email the salt to the user as a backup. |
+| Browser or device storage | Store in `localStorage` or mobile secure storage. | Easy but lost on device or browser change. Email the salt to the user as a backup. |
 | Database mapping | Map user identifier (`sub`) to a salt in your backend database. | Reliable; requires a backend service. Salt is unique per user. |
-| Derived from master seed | Use `HKDF(ikm = seed, salt = iss \|\| aud, info = sub)` to derive salts deterministically from a master seed (`\|\|` denotes concatenation). | No per-user storage needed, but the master seed cannot be rotated and the client ID (`aud`) cannot change without deriving a different address. |
+| Derived from master seed | Use `HKDF(ikm = seed, salt = iss \|\| aud, info = sub)` to derive salts deterministically from a master seed (`\|\|` denotes concatenation). | No per-user storage needed, but you cannot rotate the master seed, and you cannot change the client ID (`aud`) without deriving a different address. |
 
-The Mysten Labs [Enoki](https://docs.enoki.mystenlabs.com/) platform provides a managed salt service (using derived salts). Contact Mysten Labs for access. Only JWTs authenticated with allowlisted client IDs are accepted.
+The Mysten Labs [Enoki](https://docs.enoki.mystenlabs.com/) platform provides a managed salt service (using derived salts). Contact Mysten Labs for access. The service only accepts JWTs authenticated with allowlisted client IDs.
 
 ```sh
 curl -X POST https://salt.api.mystenlabs.com/get_salt \
@@ -324,7 +324,7 @@ const extendedEphemeralPublicKey = getExtendedEphemeralPublicKey(
 );
 ```
 
-You need a new zero-knowledge proof whenever the ephemeral key pair expires or is lost. The proof can be reused for multiple transactions within the same session.
+You need a new zero-knowledge proof whenever the ephemeral key pair expires or you lose it. You can reuse the proof for multiple transactions within the same session.
 
 ### Option A: use the Mysten Labs proving service
 
@@ -483,13 +483,13 @@ Self-host the proving service when you need full control over proof generation, 
 
 1. The service exposes two endpoints:
    - `/ping`: health check (returns `pong`)
-   - `/v1`: proof generation (same request/response format as the Mysten Labs service)
+   - `/v1`: proof generation (same request and response format as the Mysten Labs service)
 
 :::info Prover resource requirements
 
-The backend service (`mysten/zklogin:prover-stable`) is compute-heavy. Use at least **16 cores and 16 GB RAM**. Weaker instances can cause timeout errors ("Call to rapidsnark service took longer than 15s"). Adjust with `PROVER_TIMEOUT=30` for a 30-second timeout.
+The backend service (`mysten/zklogin:prover-stable`) is compute-heavy. Use at least **16 cores and 16 GB RAM**. Weaker instances can cause timeout errors (`Call to rapidsnark service took longer than 15s`). Adjust with `PROVER_TIMEOUT=30` for a 30-second timeout.
 
-Set `DEBUG=zkLogin:info,jwks` in production. Using `DEBUG=*` turns on all logs, some of which contain PII.
+Set `DEBUG=zkLogin:info,jwks` in production. Using `DEBUG=*` turns on all logs, some of which contain personally identifiable information (PII).
 
 If you need better performance, compile the prover from the [rapidsnark fork](https://github.com/MystenLabs/rapidsnark#compile-prover-in-server-mode) and launch it in server mode.
 
@@ -540,7 +540,7 @@ const result = await client.executeTransaction({
 });
 ```
 
-### Alternative: use ZkLoginSigner
+### Alternative: Use `ZkLoginSigner`
 
 Instead of manually assembling signatures in Step 7, you can use the `ZkLoginSigner` class to handle proof wrapping automatically. This is useful when you want to sign multiple transactions without repeating the signature assembly code.
 
@@ -569,19 +569,19 @@ See [ZkLoginSigner](/onchain-finance/asset-custody/wallets/zk-login-wallets#zklo
 
 ## How do I cache the ephemeral key and zero-knowledge proof?
 
-Each zero-knowledge proof is tied to an ephemeral key pair. You can reuse the proof to sign any number of transactions until the current epoch crosses `maxEpoch`.
+Each zero-knowledge proof binds to an ephemeral key pair. You can reuse the proof to sign any number of transactions until the current epoch crosses `maxEpoch`.
 
 Cache the ephemeral key pair and zero-knowledge proof for the duration of the session. However, treat them as secrets:
 
 - **Use session storage, not local storage** on browsers. Session storage clears automatically when the browser session ends.
 - **Never persist them** in an insecure location on any platform.
-- If both the ephemeral private key and zero-knowledge proof are compromised, an attacker can sign transactions on the user's behalf.
+- If an attacker compromises both the ephemeral private key and the zero-knowledge proof, the attacker can sign transactions on the user's behalf.
 
 ## How much prover capacity do I need?
 
-zkLogin proofs take longer to generate than traditional signatures. The Mysten Labs prover typically returns a proof in about three seconds on a machine with 16 vCPUs and 64 GB RAM.
+zkLogin proofs take longer to generate than traditional signatures. The Mysten Labs prover typically returns a proof in about 3 seconds on a machine with 16 vCPUs and 64 GB RAM.
 
-The right capacity metric is **active user sessions**, not individual signatures, because you cache and reuse each proof across a session. For example, one million daily active sessions with evenly distributed traffic requires roughly 1–2 requests per second (RPS) from the prover.
+The right capacity metric is **active user sessions**, not individual signatures, because you cache and reuse each proof across a session. For example, 1 million daily active sessions with evenly distributed traffic requires roughly 1–2 requests per second (RPS) from the prover.
 
 The Mysten Labs prover auto-scales for traffic surges. If you expect a spike in prover requests, reach out on [Discord](https://discord.gg/sui).
 
@@ -592,6 +592,6 @@ The Mysten Labs prover auto-scales for traffic surges. If you expect a spike in 
 | CORS error when calling prover | Frontend calling prover directly | Proxy prover calls through your backend |
 | `InvalidSignature` from network | Ephemeral key expired (epoch > `maxEpoch`) | Generate a new key pair, re-authenticate, get a new zero-knowledge proof |
 | `InvalidSignature` from network | Nonce mismatch between JWT and signing key | Ensure you sign with the same ephemeral key pair used to compute the nonce |
-| Prover timeout ("took longer than 15s") | Prover machine is underpowered | Use at least 16 cores / 16 GB RAM, or increase `PROVER_TIMEOUT` |
+| Prover timeout (`took longer than 15s`) | Prover machine is underpowered | Use at least 16 cores and 16 GB RAM, or increase `PROVER_TIMEOUT` |
 | Salt service returns different address | `aud` or `iss` changed | The address depends on `sub` + `iss` + `aud` + `salt`. Any change produces a different address. |
 | User locked out of address | Salt lost | Salt loss is permanent. Ensure your salt service has backups and recovery procedures. |

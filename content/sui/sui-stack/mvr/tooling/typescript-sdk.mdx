@@ -44,8 +44,8 @@ For this reason, consider using the `@mysten/mvr-static` plugin, which staticall
 
 This approach offers a couple of benefits:
 
-- Enhanced user experience of leveraging MVR in your PTBs for names and types, for both Mainnet and Testnet.
-- Performance (no extra calls to the MVR endpoint) and security of statically resolving MVR references at build time.
+- Enhanced user experience of leveraging MVR in your PTBs for names and types, for both Mainnet and Testnet
+- Performance (no extra calls to the MVR endpoint) and security of statically resolving MVR references at build time
 
 Check the NPM page for the [`@mysten/mvr-static` plugin](https://www.npmjs.com/package/@mysten/mvr-static?activeTab=readme) to learn more.
 
@@ -57,9 +57,9 @@ The plugin is functional starting from `@mysten/sui` v1.25.0.
 
 :::
 
-The MVR plugin is exported directly from the `@mysten/sui` package. To enable the plugin, register it either globally or per PTB in your app.
+The `@mysten/sui` package exports the MVR plugin directly. To enable the plugin, register it either globally or per PTB in your app.
 
-This section covers runtime resolution with `namedPackagesPlugin`. For build-time resolution, see [Recommended usage](#recommended-usage).
+Runtime resolution uses `namedPackagesPlugin`. For build-time resolution, see [Recommended usage](#recommended-usage).
 
 ### Endpoints
 
@@ -104,7 +104,7 @@ function createTransaction(network: 'mainnet' | 'testnet') {
 
 ### Define overrides
 
-If you want to use the plugin locally (for CI), or you want to cache results yourself (without the `@mysten/mvr-static` generator), you can define overrides for the package addresses and types.
+If you want to use the plugin locally (for continuous integration), or you want to cache results yourself (without the `@mysten/mvr-static` generator), you can define overrides for the package addresses and types.
 
 ```typescript
 const overrides = {
@@ -124,7 +124,7 @@ const plugin = namedPackagesPlugin({ url: '<endpoint based on network>', overrid
 
 :::caution
 
-The examples in the tabs are simplified for clarity. Actual addresses or names might differ.
+The tabs show simplified examples for clarity. Actual addresses or names might differ.
 
 :::
 
