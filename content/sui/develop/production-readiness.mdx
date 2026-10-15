@@ -59,7 +59,7 @@ Before publishing a Move package to Mainnet, verify the following:
 - [ ] **Complete test coverage.** All public and entry functions have [unit tests](/develop/testing-debugging/testing) covering positive cases, negative cases, and edge cases. Critical paths have integration tests using `test_scenario`.
 - [ ] **Security best practices.** Review your code against the full [Security Best Practices](/develop/security/best-practices) checklist, including access control patterns, capability governance, and event emission on privileged actions.
 - [ ] **Access control.** Every privileged function requires an explicit [capability parameter](/develop/security/best-practices). Do not rely solely on `tx_context::sender()` for authorization because it does not compose safely across modules.
-- [ ] **Audit.** For packages that manage user assets, commission an independent security audit. Note that upgradeable dependencies can change behavior after an audit, so pin dependency versions or verify dependency package IDs at publish time.
+- [ ] **Audit.** For packages that manage user assets, commission an independent security audit. Upgradeable dependencies can change behavior after an audit, so pin dependency versions or verify dependency package IDs at publish time.
 - [ ] **Dry run.** Execute all critical transaction paths with [dry run](/develop/transactions/ptbs/prog-txn-blocks) against the Mainnet state (or a representative Testnet state) to verify expected behavior and gas costs before publishing.
 
 ## How do I manage keys and capabilities for Mainnet?
@@ -98,14 +98,14 @@ Decide and configure your upgrade strategy before publishing. This decision is d
 
 - [ ] **Monitoring and alerting.** Set up monitoring for transaction success rates, gas consumption, event indexer lag, and RPC endpoint availability. Define alert thresholds for each metric.
 - [ ] **Incident response plan.** Document how to respond to emergencies: capability compromise, contract vulnerability discovery, or unexpected transaction behavior. If your application supports [global pause](/onchain-finance/fungible-tokens/currency), verify the pause procedure works and that the authorized multisig can execute it within your target response time.
-- [ ] **Upgrade runbook.** Document the step-by-step process for publishing a package upgrade, including who approves, how the upgrade is tested, and how integrators are notified.
+- [ ] **Upgrade runbook.** Document the step-by-step process for publishing a package upgrade, including who approves, how you test the upgrade, and how you notify integrators.
 - [ ] **Dependency monitoring.** If your package depends on upgradeable third-party packages, monitor those packages for upgrades that might change behavior. Consider pinning dependency versions or wrapping external calls with validation.
 
 ## What is the Mainnet pre-launch sequence?
 
 After completing the checklists above, follow this sequence for the Mainnet launch:
 
-1. **Final Testnet validation.** Run the complete application flow on Testnet one final time, using the same configuration and key setup that Mainnet will use (except for the actual Mainnet keys).
+1. **Final Testnet validation.** Run the complete application flow on Testnet one final time, using the same configuration and key setup that you use on Mainnet (except for the actual Mainnet keys).
 2. **Publish to Mainnet.** [Publish the package](/develop/publish-upgrade-packages) to Mainnet. Record the package ID, all capability object IDs, and the transaction digest.
 3. **Transfer capabilities.** Move all administrative capabilities to their designated multisig addresses. Verify each transfer by querying the object ownership.
 4. **Verify deployment.** Query the published package and its objects through [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc) to confirm the onchain state matches expectations.

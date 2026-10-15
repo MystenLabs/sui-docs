@@ -379,8 +379,8 @@ query {
 
 **Key differences:**
 - GraphQL supports rich filters: `sentAddress`, `affectedAddress`, `affectedObject`, `function`, `kind`, and more.
-- Pagination uses `first`/`after` (forward) or `last`/`before` (backward) with cursors from `pageInfo`.
-- JSON-RPC's positional `[filter, cursor, limit, descending]` array is replaced by named arguments.
+- Pagination uses `first` and `after` (forward) or `last` and `before` (backward) with cursors from `pageInfo`.
+- Named arguments replace JSON-RPC's positional `[filter, cursor, limit, descending]` array.
 
 ## Query events
 
@@ -677,7 +677,7 @@ To list coins of every type, use `filter: { type: "0x2::coin::Coin" }` without a
 
 **Key differences:**
 - There is no dedicated coin-listing query. Use `Address.objects` with a `Coin<T>` type filter.
-- Pagination uses cursor-based `first`/`after` instead of positional `[cursor, limit]` parameters.
+- Pagination uses cursor-based `first` and `after` instead of positional `[cursor, limit]` parameters.
 
 ## Get coin metadata
 
@@ -762,7 +762,7 @@ query {
 
 **Key differences:**
 - GraphQL supports `filter` on `objects` to narrow by type, such as `filter: { type: "0x2::coin::Coin" }`.
-- Pagination is consistent: cursors encode the checkpoint at which the query was first executed, so later pages reflect the same state.
+- Pagination is consistent: cursors encode the checkpoint at which the query first ran, so later pages reflect the same state.
 
 ## List dynamic fields
 
@@ -1066,7 +1066,7 @@ query {
 
 ## Get validator APY
 
-JSON-RPC provided `suix_getValidatorsApy` as a convenience method. GraphQL does not have a direct APY field. Validator APY is derived from staking pool exchange rate history stored in dynamic fields on each validator's system-state object. The legacy `suix_getValidatorsApy` used a compounding calculation across up to 30 epoch samples with outlier filtering, so a simple two-epoch ratio does not reproduce the same values.
+JSON-RPC provided `suix_getValidatorsApy` as a convenience method. GraphQL does not have a direct APY field. Validator APY derives from staking pool exchange rate history stored in dynamic fields on each validator's system-state object. The legacy `suix_getValidatorsApy` used a compounding calculation across up to 30 epoch samples with outlier filtering, so a basic two-epoch ratio does not reproduce the same values.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC (deprecated)">
@@ -1116,7 +1116,7 @@ See [issue #23832](https://github.com/MystenLabs/sui/issues/23832) for the recom
 
 **Key differences:**
 - There is no direct APY field in GraphQL or gRPC. You must query exchange rate history from dynamic fields on each validator's staking pool and compute APY client-side.
-- The legacy computation used compounding across up to 30 samples with outlier filtering. A simple ratio between two epochs produces materially different results.
+- The legacy computation used compounding across up to 30 samples with outlier filtering. A basic ratio between two epochs produces materially different results.
 
 ## Get Move module information
 
@@ -1215,7 +1215,7 @@ query ($after: String!) {
 }
 ```
 
-Cursors for live object queries guarantee **consistent** pagination. They encode the checkpoint at which the query was first executed, so later pages reflect the same snapshot even as new checkpoints arrive.
+Cursors for live object queries guarantee **consistent** pagination. They encode the checkpoint at which the query first ran, so later pages reflect the same snapshot even as new checkpoints arrive.
 
 ### Time-travel queries with checkpoint scope
 

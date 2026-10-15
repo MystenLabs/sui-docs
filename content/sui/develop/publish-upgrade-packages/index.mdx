@@ -34,7 +34,7 @@ answer: >-
 ---
 
 <AgentPrompt
-  prompt={"Prepare this package for Mainnet publishing: verify tests, dependencies, addresses, upgrade policy, gas requirements, signer/custody plan, and produce a launch checklist. Verify the Move.toml uses edition = '2024' with NO Sui dependency in [dependencies] — the Sui framework is resolved automatically. Remove any Sui = { git = ... } lines."}
+  prompt={"Prepare this package for Mainnet publishing: verify tests, dependencies, addresses, upgrade policy, gas requirements, signer/custody plan, and produce a launch checklist. Verify the Move.toml uses edition = '2024' with NO Sui dependency in [dependencies]. The Sui framework is resolved automatically. Remove any Sui = { git = ... } lines."}
 />
 
 A Move package on Sui includes one or more modules that define the package's interaction with onchain objects. You develop the logic for those modules in Move, compile them into bytecode, and publish that bytecode as a package object to a Sui network.
@@ -44,7 +44,7 @@ A Move package on Sui includes one or more modules that define the package's int
 Publishing a package follows this sequence:
 
 1. **Write and test your Move code:** Create a Move project with `sui move new PROJECT_NAME`, write your modules, and run tests with `sui move test`. 
-2. **Configure your manifest:** Verify that your `Move.toml` uses `edition = "2024"` and lists all dependencies. The Sui framework is resolved automatically and does not need an explicit entry in `[dependencies]`. See the [Manifest Reference](/references/package-managers/manifest-reference) for the full syntax.
+2. **Configure your manifest:** Verify that your `Move.toml` uses `edition = "2024"` and lists all dependencies. The Sui CLI resolves the Sui framework automatically, so you do not need an explicit entry for it in `[dependencies]`. See the [Manifest Reference](/references/package-managers/manifest-reference) for the full syntax.
 3. **Build the package:** Run `sui move build` to compile. Fix any errors before publishing.
 4. **Publish to the network:** Run `sui client publish` from the package root. The command compiles, creates a package object onchain, and returns the package ID. You need sufficient gas in your active address. Run `sui client publish --dry-run` to estimate gas cost before publishing.
 5. **Verify publication:** Use `sui client verify-source` from the package directory to confirm that the onchain bytecode matches your local source.
@@ -57,7 +57,7 @@ Publishing is irreversible. Once you publish a package, you cannot delete it fro
 
 ## How do I upgrade a package?
 
-After publishing, you can deploy new versions of your package using `sui client upgrade`. Upgrades require the `UpgradeCap` object that was created during the initial publish. The upgrade policy determines which types of changes are allowed. See the upgrade-specific pages below for details on upgrade policies, compatibility rules, and multisig signing workflows.
+After publishing, you can deploy new versions of your package using `sui client upgrade`. Upgrades require the `UpgradeCap` object that the initial publish created. The upgrade policy determines which types of changes you can make. See the upgrade-specific pages below for details on upgrade policies, compatibility rules, and multisig signing workflows.
 
 ## Which network should I publish to?
 

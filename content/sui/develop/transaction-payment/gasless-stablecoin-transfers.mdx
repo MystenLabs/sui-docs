@@ -70,13 +70,13 @@ Gasless stablecoin transfers on Sui enable peer-to-peer payments of qualified st
 
 :::caution 
 
-All gasless stablecoin transfers have a minimum transfer balance of 0.01. Transfers below this minimum will not be executed.
+All gasless stablecoin transfers have a minimum transfer balance of 0.01. The network does not execute transfers below this minimum.
 
 :::
 
 ## Which stablecoins are eligible for gasless transfers?
 
-The stablecoins eligible for gasless stablecoin transfers are governed by the protocol configuration (`get_gasless_allowed_token_types` in `sui-types`) and can change across protocol versions. The current allowlist is 
+The protocol configuration (`get_gasless_allowed_token_types` in `sui-types`) governs the stablecoins eligible for gasless stablecoin transfers, and the list can change across protocol versions. The current allowlist is:
 
 {/* TABLE:GASLESS_TOKENS — validated by scripts/validate-gasless-tokens.mjs against lib.rs */}
 
@@ -95,27 +95,27 @@ The stablecoins eligible for gasless stablecoin transfers are governed by the pr
 
 Gasless stablecoin transfers are narrow by design. A transaction qualifies only when:
 
-- The programmable transaction block (PTB) consists of allowlisted `balance` or `coin` operations on an allowlisted stablecoin type. The primary one is `0x2::balance::send_funds<T>`. A few related helpers (`balance::redeem_funds`, `coin::send_funds`, `coin::into_balance`, and so on) are also allowed and might appear in resolved transactions.
+- The programmable transaction block (PTB) consists of allowlisted `balance` or `coin` operations on an allowlisted stablecoin type. The primary one is `0x2::balance::send_funds<T>`. The allowlist also includes a few related helpers (`balance::redeem_funds`, `coin::send_funds`, `coin::into_balance`, and so on), which might appear in resolved transactions.
 - `gasPayment` is empty and `gasPrice = 0`.
-- No objects are written during the transaction, and all input coins are consumed or converted to address balances.
+- The transaction writes no objects, and it consumes all input coins or converts them to address balances.
 
 If the user is sending SUI, sending a non-allowlisted token, or executing any other Move call (NFT mint, swap, app interaction), the gasless stablecoin transfer does not apply and the transaction requires a normal gas payment.
 
 ## How do I monitor gasless stablecoin transfers?
 
-Transactions for gasless stablecoin transfers can be monitored through SuiVision, [such as this example transaction](https://testnet.suivision.xyz/txblock/BptFuauZXfwQZAGX1wbQ6iz4sDnv5kJBBeVEn1ZzewPy). 
+You can monitor transactions for gasless stablecoin transfers through SuiVision, [such as this example transaction](https://testnet.suivision.xyz/txblock/BptFuauZXfwQZAGX1wbQ6iz4sDnv5kJBBeVEn1ZzewPy).
 
 ## How do I support gasless stablecoin transfers?
 
-Sui gasless stablecoin transfers are an extension of the [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances) feature, enabled by calling the Address Balances Move API `send_funds()` with `gas=0` and `gas_budget=0`.
+Sui gasless stablecoin transfers are an extension of the [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances) feature. You enable them by calling the Address Balances Move API `send_funds()` with `gas=0` and `gas_budget=0`.
 
 The TypeScript SDK automatically detects gasless stablecoin transfers when using the gRPC or GraphQL transports. [Learn more in the TypeScript SDK documentation](https://sdk.mystenlabs.com/sui/transactions/coins-and-balances#sdk-support-grpc-and-graphql).
 
-Gasless stablecoin transfers are limited to the Move functions `withdrawal_split`, `redeem_funds`, and `send_funds`. Gasless stablecoin transfers cannot be used to write any object.
+Gasless stablecoin transfers are limited to the Move functions `withdrawal_split`, `redeem_funds`, and `send_funds`. You cannot use gasless stablecoin transfers to write any object.
 
 ### How do I integrate gasless stablecoins into wallets?
 
-To integrate gasless stablecoins into wallets, wallet builders need to detect eligible transfers and construct them with `@mysten/sui`. To do this:
+To integrate gasless stablecoins into wallets, you need to detect eligible transfers and construct them with `@mysten/sui`. To do this:
 
 1. Confirm the coin type is on the eligible stablecoins allowlist and the transfer meets the 0.01 minimum.
 2. Build a PTB that calls `0x2::balance::send_funds<T>` with a `Balance<T>` from `tx.balance()`.
@@ -150,9 +150,9 @@ const result = await client.signAndExecuteTransaction({
 });
 ```
 
-This example connects to mainnet. To target a different network, change the `network` and `baseUrl` values passed to `SuiGrpcClient`.
+This example connects to Mainnet. To target a different network, change the `network` and `baseUrl` values passed to `SuiGrpcClient`.
 
-If your wallet builds transactions with gRPC but executes through a different transport, pass the gRPC client to `build` so the gas price still gets set correctly:
+If your wallet builds transactions with gRPC but executes through a different transport, pass the gRPC client to `build` so the SDK still sets the gas price correctly:
 
 ```tsx
 const bytes = await tx.build({ client: grpcClient });
@@ -184,6 +184,6 @@ If the coin type isn't allowlisted or the PTB shape isn't eligible, the transact
 
 When you integrate stablecoins into your app, be aware of issuer-specific compliance requirements:
 
-- **USDC (Circle):** Circle maintains a blacklist of addresses. If an address is blacklisted by Circle, transactions involving USDC to or from that address fail onchain. Your app should handle this gracefully by checking transaction results and displaying a clear error when a transfer is rejected. See [Circle's compliance documentation](https://www.circle.com/en/legal/usdc-user-agreement) for details.
+- **USDC (Circle):** Circle maintains a blacklist of addresses. If Circle blacklists an address, transactions involving USDC to or from that address fail onchain. Your app should handle this gracefully by checking transaction results and displaying a clear error when a transfer fails. See [Circle's compliance documentation](https://www.circle.com/en/legal/usdc-user-agreement) for details.
 - **Regulated tokens on Sui:** Some stablecoins on Sui use the [regulated token standard](/onchain-finance/fungible-tokens/regulated-tokens) with `DenyCapV2`. The issuer can block specific addresses from transacting with the token through the `DenyList` object (`0x403`). Check whether the stablecoins you integrate use deny-listing and account for denied transactions in your error handling ([Security Best Practices](/develop/security/best-practices)).
 - **Provider responsibility:** Sui documentation covers onchain primitives (coin types, transfer functions, deny-listing). Compliance obligations such as KYC verification, sanctions screening, and reporting are the responsibility of the stablecoin issuer and your app. Consult your legal team and the issuer's compliance documentation for your specific jurisdiction.

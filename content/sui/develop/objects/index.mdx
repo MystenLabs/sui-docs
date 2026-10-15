@@ -38,7 +38,7 @@ answer: >-
   ownership methods.
 ---
 
-The Sui object model is the foundation of how Sui stores and manages onchain state. Objects have unique IDs, owners, and types. Transactions consume and produce objects, and every object change is recorded onchain.
+The Sui object model is the foundation of how Sui stores and manages onchain state. Objects have unique IDs, owners, and types. Transactions consume and produce objects, and Sui records every object change onchain.
 
 ## What is a Sui object?
 
@@ -53,9 +53,9 @@ Move packages are also objects. When you publish a Move package to Sui, the pack
 
 Transactions on Sui take objects as inputs and produce objects as outputs. When a transaction runs, it can read, mutate, transfer, or delete its input objects. The resulting objects become available for future transactions.
 
-Object ownership determines how a transaction can use an object. An address-owned object can only be used by transactions signed by the owner. A shared object can be used by any transaction, but requires consensus to order concurrent access. An object can also be owned by another object, and some objects, such as published Move packages, are immutable.
+Object ownership determines how a transaction can use an object. Only transactions signed by the owner can use an address-owned object. Any transaction can use a shared object, but a shared object requires consensus to order concurrent access. Another object can also own an object, and some objects, such as published Move packages, are immutable.
 
-To see how these concepts appear in code, the following example shows a simple Move struct that defines a custom object type:
+To see how these concepts appear in code, the following example shows a basic Move struct that defines a custom object type:
 
 ```move
 public struct TodoList has key {

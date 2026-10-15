@@ -54,13 +54,13 @@ answer: Build a custom indexer using the `sui-indexer-alt-framework` module.
 
 Build a custom indexer using the `sui-indexer-alt-framework` module.
 
-This guide provides a practical example for building a custom indexer. If you are adding an indexer to a Rust service you already have, see [Integrate a Custom Indexer](/develop/accessing-data/custom-indexer/integrate) instead, which skips the project and database setup. Refer to [Custom Indexing Framework](/develop/accessing-data/custom-indexer/custom-indexers) and [Indexer Pipeline Architecture](/develop/accessing-data/custom-indexer/pipeline-architecture) for a conceptual overview of the indexer framework.
+The following example builds a custom indexer. If you are adding an indexer to a Rust service you already have, see [Integrate a Custom Indexer](/develop/accessing-data/custom-indexer/integrate) instead, which skips the project and database setup. Refer to [Custom Indexing Framework](/develop/accessing-data/custom-indexer/custom-indexers) and [Indexer Pipeline Architecture](/develop/accessing-data/custom-indexer/pipeline-architecture) for a conceptual overview of the indexer framework.
 
 To build a complete custom indexer, use the `sui-indexer-alt-framework`. The steps that follow demonstrate how to create a sequential pipeline that extracts transaction digests from Sui checkpoints and stores them in a local PostgreSQL database. PostgreSQL is the default example backend, not a requirement of the framework. You can find the [source code for the framework](https://github.com/MystenLabs/sui/tree/main/crates/sui-indexer-alt-framework) in the Sui repo on GitHub.
 
 :::tip
 
-While this example uses PostgreSQL with [Diesel](https://diesel.rs/guides/getting-started) (a popular Rust ORM and query builder) for minimalism and out-of-the-box support, the `sui-indexer-alt-framework` is designed for flexible storage. You can use different databases (such as [MongoDB](https://www.mongodb.com/), [CouchDB](https://couchdb.apache.org/), or similar) or utilize other database clients if you prefer not to use Diesel. To achieve this, implement the framework's `Store` and `Connection` traits and define your database write logic directly within your `Handler::commit()` method.
+While this example uses PostgreSQL with [Diesel](https://diesel.rs/guides/getting-started) (a popular Rust ORM and query builder) for minimalism and out-of-the-box support, the `sui-indexer-alt-framework` supports flexible storage. You can use different databases (such as [MongoDB](https://www.mongodb.com/), [CouchDB](https://couchdb.apache.org/), or similar) or utilize other database clients if you prefer not to use Diesel. To achieve this, implement the framework's `Store` and `Connection` traits and define your database write logic directly within your `Handler::commit()` method.
 
 :::
 
@@ -170,7 +170,7 @@ $ sudo -u postgres createuser --superuser username
 
 Enter the password for your pgAdmin account when prompted, then try the `createdb` command again.
 
-You can now set a variable to your database URL as it's used in following commands. Make sure to change `username` to your actual username.
+You can now set a variable to your database URL because the following commands use it. Make sure to change `username` to your actual username.
 
 ```sh
 $ PSQL_URL=postgres://username@localhost:5432/sui_indexer
@@ -193,7 +193,7 @@ If successful, your console or terminal should respond with a message similar to
 
 ##step Database setup
 
-Before you start coding, make sure you set up a local PostgreSQL database from the previous step. This is required for the indexer to store the extracted transaction data.
+Before you start coding, make sure you set up a local PostgreSQL database from the previous step. The indexer requires this database to store the extracted transaction data.
 
 The following database setup steps have you:
 
@@ -242,9 +242,9 @@ Open `up.sql` and replace its contents with the following code (using the actual
 
 This example uses the `TEXT` data type for `tx_digest`, but best practice for a production indexer is to use the `BYTEA` data type.
 
-The `TEXT` type is used to make the transaction digest easily readable and directly usable with external tools. Digests are `Base58` encoded, and because PostgreSQL cannot natively display `BYTEA` data in this format, storing it as `TEXT` allows you to copy the digest from a query and paste it into an explorer like [SuiScan](https://suiscan.xyz/testnet/home).
+The example uses the `TEXT` type to make the transaction digest easily readable and directly usable with external tools. Digests use `Base58` encoding, and because PostgreSQL cannot natively display `BYTEA` data in this format, storing it as `TEXT` allows you to copy the digest from a query and paste it into an explorer like [SuiScan](https://suiscan.xyz/testnet/home).
 
-For a production environment, however, `BYTEA` is strongly recommended. It offers superior storage and query efficiency by storing the raw byte representation, which is more compact and significantly faster for comparisons than a string. Refer to [Binary data performance in PostgreSQL](https://www.cybertec-postgresql.com/en/binary-data-performance-in-postgresql/) on the CYBERTEC website for more information.
+For a production environment, however, use `BYTEA`. It offers superior storage and query efficiency by storing the raw byte representation, which is more compact and significantly faster for comparisons than a string. Refer to [Binary data performance in PostgreSQL](https://www.cybertec-postgresql.com/en/binary-data-performance-in-postgresql/) on the CYBERTEC website for more information.
 
 :::
 
@@ -288,9 +288,9 @@ To simplify writes to Diesel, you can define a struct that represents a record o
 
 Key annotations:
 
-- `FieldCount`: Required by `sui-indexer-alt-framework` for memory optimization and batch processing efficiency. It is used to limit the max size of a batch so that we don't exceed the postgres limit on the number of bind parameters a single SQL statement can have.
-- `diesel(table_name = transaction_digests)`: Maps this Rust struct to the `transaction_digests` table, whose schema is generated in a previous step.
-- `Insertable`: Allows this struct to be inserted into the database using Diesel.
+- `FieldCount`: Required by `sui-indexer-alt-framework` for memory optimization and batch processing efficiency. It limits the maximum size of a batch so that you don't exceed the PostgreSQL limit on the number of bind parameters a single SQL statement can have.
+- `diesel(table_name = transaction_digests)`: Maps this Rust struct to the `transaction_digests` table, whose schema you generated in a previous step.
+- `Insertable`: Allows Diesel to insert this struct into the database.
 
 ##step Define the `Handler` struct in `handlers.rs`
 
@@ -308,7 +308,7 @@ Save the file but keep it open as the next steps add to its code.
 
 ##step Implement the `Processor`
 
-The `Processor` trait defines how to extract and transform data from checkpoints. The resulting data is then passed to `Handler::commit`.
+The `Processor` trait defines how to extract and transform data from checkpoints. The framework then passes the resulting data to `Handler::commit`.
 
 Add the necessary dependencies at the top of the file.
 
@@ -356,11 +356,7 @@ How sequential batching works:
 
 <ImportContent source="crates/sui-indexer-alt-framework/src/pipeline/sequential/collector.rs" mode="code" tag="batch" />
 
-:::tip
-
 You can override the default batch limits by implementing constants in your `Handler`.
-
-:::
 
 The `handlers.rs` file is now complete. Save the file.
 
@@ -466,7 +462,7 @@ $ cargo run -- \
     --streaming-url "$FULLNODE_GRPC_URL"
 ```
 
-For testing only, you can instead use the public-good Testnet endpoint `https://fullnode.testnet.sui.io:443`. The public-good Mainnet, Testnet, and Devnet fullnode endpoints are not intended for production use.
+For testing only, you can instead use the public-good Testnet endpoint `https://fullnode.testnet.sui.io:443`. Do not use the public-good Mainnet, Testnet, and Devnet fullnode endpoints for production.
 
 **Testing only: public HTTPS checkpoint store (most recent 30 days):**
 
@@ -496,7 +492,7 @@ $ psql sui_indexer
 
 After connecting, run a few queries to verify your indexer is working:
 
-Check how many transaction digests are indexed:
+Check how many transaction digests your indexer has indexed:
 
 ```sql
 $ SELECT COUNT(*) FROM transaction_digests;

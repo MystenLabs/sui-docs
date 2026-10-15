@@ -113,7 +113,7 @@ The recipes on this page rely on the following terms:
 - **Field masks:** JSON-RPC selects response fields with per-field booleans such as `showContent` and `showEffects`. gRPC instead takes a `read_mask` that lists the field paths to return (`readMask` in the TypeScript proto client). The TypeScript SDK's `include` parameter expresses the same selection, so `include: { effects: true, events: true }` corresponds to `"read_mask": { "paths": ["effects", "events"] }` in `grpcurl`. See [field masks](/develop/accessing-data/grpc/using-grpc#field-masks).
 - **Cursor:** An opaque binary token that marks a position in a stream. Pass it as `options.after` to resume ascending pagination, or `options.before` for descending.
 - **Watermark:** A progress marker in each `List*` response frame. It carries a resume `cursor` and a `checkpoint` field that tells you how much of the checkpoint range the server scanned.
-- **`QueryEnd`:** Included on the final frame of a `List*` stream with the reason the stream ended. See [List and paginate transactions](#list-and-paginate-transactions).
+- **`QueryEnd`:** Appears on the final frame of a `List*` stream with the reason the stream ended. See [List and paginate transactions](#list-and-paginate-transactions).
 
 ## Get a single object
 
@@ -342,11 +342,7 @@ The same `read_mask` rules apply as for batch objects: the service respects only
 
 Replace `suix_queryTransactionBlocks` with `LedgerService.ListTransactions` for filtered, paginated queries over a checkpoint range. Unlike `StateService` list APIs (which return a single page), `ListTransactions` returns a server-side stream. Each response frame carries a `watermark` with a resume `cursor`, and the final frame includes a `QueryEnd` with the reason the stream ended.
 
-:::info
-
-The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `client.listTransactions()` as a high-level wrapper. You can also use the proto client directly through `client.ledgerService.listTransactions()`. The `grpcurl` example below shows the raw protobuf JSON request shape.
-
-:::
+The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `client.listTransactions()` as a high-level wrapper. You can also use the proto client directly through `client.ledgerService.listTransactions()`. The gRPC (grpcurl) tab shows the raw protobuf JSON request shape.
 
 <Tabs groupId="transport">
 <TabItem value="grpcurl" label="gRPC (grpcurl)">
@@ -376,8 +372,8 @@ The List APIs differ from JSON-RPC pagination in the following ways:
 - The `watermark.checkpoint` field tells you how much of the checkpoint range the server scanned, which is useful for sparse filters that produce few results across many checkpoints.
 - The `QueryEnd.reason` tells you why the stream ended:
   - `ITEM_LIMIT`: returned the requested number of items. Use the cursor to fetch the next page.
-  - `SCAN_LIMIT`: the server's internal scan budget was exhausted before finding enough matches. Resume from the cursor to continue scanning.
-  - `LEDGER_TIP`: reached the current tip of the chain (no `end_checkpoint` was specified).
+  - `SCAN_LIMIT`: the server exhausted its internal scan budget before finding enough matches. Resume from the cursor to continue scanning.
+  - `LEDGER_TIP`: reached the current tip of the chain (the request specified no `end_checkpoint`).
   - `CHECKPOINT_BOUND`: reached the specified `end_checkpoint`.
   - `CURSOR_BOUND`: reached a cursor-derived boundary (for example, the `options.before` cursor used during backfill).
 
@@ -429,7 +425,7 @@ if (result.$kind === 'Transaction') {
 
 ### Live event streaming
 
-Replace `sui_subscribeEvent` (WebSocket) with `SubscriptionService.SubscribeEvents`. The JSON-RPC WebSocket subscription APIs have been deprecated since mid-2024, so migrate any remaining WebSocket subscriptions to gRPC streaming. The server filters events before it sends them, so your client receives only matching events.
+Replace `sui_subscribeEvent` (WebSocket) with `SubscriptionService.SubscribeEvents`. Sui deprecated the JSON-RPC WebSocket subscription APIs in mid-2024, so migrate any remaining WebSocket subscriptions to gRPC streaming. The server filters events before it sends them, so your client receives only matching events.
 
 <Tabs groupId="transport">
 <TabItem value="json-rpc" label="JSON-RPC WebSocket (deprecated)">
@@ -449,11 +445,7 @@ ws.onmessage = (msg) => console.log(JSON.parse(msg.data));
 </TabItem>
 <TabItem value="grpc-proto" label="gRPC (proto client)">
 
-:::info
-
-The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeEvents` through the proto client at `client.subscriptionService.subscribeEvents()`. The Buf CLI example below shows the raw protobuf JSON request shape.
-
-:::
+The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeEvents` through the proto client at `client.subscriptionService.subscribeEvents()`. The gRPC (Buf CLI) tab shows the raw protobuf JSON request shape.
 
 ```ts
 // Use the generated proto client directly
@@ -499,7 +491,7 @@ $ buf curl --protocol grpc \
 
 The gRPC subscription differs from the JSON-RPC subscription in the following ways:
 
-- JSON-RPC WebSocket subscriptions filtered events server-side, and have been deprecated since mid-2024. gRPC `SubscribeEvents` also filters server-side using an `EventFilter`, so your client receives only matching events.
+- JSON-RPC WebSocket subscriptions filtered events server-side, and Sui deprecated them in mid-2024. gRPC `SubscribeEvents` also filters server-side using an `EventFilter`, so your client receives only matching events.
 - Subscriptions begin at the current tip and do not accept a resume point. Filtered subscriptions start with a progress-only frame whose cursor marks the point immediately before live delivery; an unfiltered subscription can start with a payload, so never discard the first frame. Immediately consume live frames into durable, capacity-managed storage while `LedgerService.ListEvents` backfills to that boundary. If the spool fills or the stream drops, restart from the last durably processed cursor and backfill the gap. See [Subscriptions for streaming data](/develop/accessing-data/grpc/what-is-grpc#subscriptions-for-streaming-data).
 - For filtered historical event queries over a range, use `LedgerService.ListEvents` or [GraphQL `Query.events`](/develop/accessing-data/using-events#querying-events-with-graphql).
 
@@ -510,11 +502,7 @@ Use `LedgerService.ListEvents` to retrieve events matching an `EventFilter` acro
 <Tabs groupId="transport">
 <TabItem value="grpc-proto" label="gRPC (proto client)">
 
-:::info
-
 The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `client.listEvents()` as a high-level wrapper. You can also use the proto client directly through `client.ledgerService.listEvents()`. The `grpcurl` example in the next tab shows the raw protobuf JSON request shape.
-
-:::
 
 ```ts
 // Use the generated proto client directly
@@ -631,11 +619,7 @@ The gRPC stream differs from the JSON-RPC polling pattern in the following ways:
 
 Use `SubscriptionService.SubscribeTransactions` for a real-time, filtered stream of transactions. This replaces both JSON-RPC WebSocket subscriptions and polling patterns.
 
-:::info
-
-The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeTransactions` through the proto client at `client.subscriptionService.subscribeTransactions()`. The Buf CLI example below shows the raw protobuf JSON request shape.
-
-:::
+The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeTransactions` through the proto client at `client.subscriptionService.subscribeTransactions()`. The gRPC (Buf CLI) tab shows the raw protobuf JSON request shape.
 
 <Tabs groupId="transport">
 <TabItem value="buf-cli" label="gRPC (Buf CLI)">
@@ -1180,7 +1164,7 @@ $ grpcurl -d '{ "address": "<ADDRESS>" }' \
 
 ## Get validator APY
 
-JSON-RPC provided `suix_getValidatorsApy` as a convenience method. Neither gRPC nor GraphQL has a direct APY field or method. Validator APY is derived from staking pool exchange rate history stored in dynamic fields on each validator's system-state object. The legacy `suix_getValidatorsApy` used a compounding calculation across up to 30 epoch samples with outlier filtering, so a simple two-epoch ratio does not reproduce the same values.
+JSON-RPC provided `suix_getValidatorsApy` as a convenience method. Neither gRPC nor GraphQL has a direct APY field or method. Validator APY comes from staking pool exchange rate history stored in dynamic fields on each validator's system-state object. The legacy `suix_getValidatorsApy` used a compounding calculation across up to 30 epoch samples with outlier filtering, so a basic two-epoch ratio does not reproduce the same values.
 
 To compute validator APY after migration:
 
@@ -1191,6 +1175,8 @@ To compute validator APY after migration:
 See [issue #23832](https://github.com/MystenLabs/sui/issues/23832) for the recommended computation and the legacy implementation as a reference.
 
 ## Common patterns
+
+The following patterns combine gRPC calls for common migration tasks.
 
 ### Backfill and subscribe without gaps
 
@@ -1351,4 +1337,4 @@ gRPC streams can terminate for several reasons. Understanding the server's conne
 
 **Server-side timeout:** Unary requests use the general gRPC timeout, which defaults to 60 seconds. Each streaming `List*` API has its own configurable `timeout-ms`; the full node configuration examples use 5 seconds. This deadline covers the entire list stream, so a long backfill can end even after returning frames. Resume from the latest `watermark.cursor` while preserving the original upper bound. Network, proxy, and GOAWAY interruptions require the same cursor-based recovery.
 
-**Public endpoint limitations:** The public URLs at `https://fullnode.<network>.sui.io` are behind load balancers that impose their own connection timeouts and rate limits beyond what the Sui node configures. Long-running streams are more likely to be interrupted on public endpoints. For production streaming workloads, run your own [Sui full node](/operators/full-node/sui-full-node) or use a provider with a dedicated gRPC endpoint.
+**Public endpoint limitations:** The public URLs at `https://fullnode.<network>.sui.io` are behind load balancers that impose their own connection timeouts and rate limits beyond what the Sui node configures. Public endpoints are more likely to interrupt long-running streams. For production streaming workloads, run your own [Sui full node](/operators/full-node/sui-full-node) or use a provider with a dedicated gRPC endpoint.

@@ -1,7 +1,7 @@
 ---
 title: Custom Upgrade Policies
 description: >-
-  Custom upgrade policies are used to upgrade live packages while addressing the
+  Use custom upgrade policies to upgrade live packages while addressing the
   security risks of single key ownership upgrades.
 keywords:
   - upgrade policies
@@ -77,13 +77,13 @@ You can change the current policy by calling one of the functions in `sui::packa
 
 ## Upgrade overview {#upgrade-overview}
 
-Package upgrades must occur end-to-end in a single transaction and are composed of 3 commands:
+Package upgrades must occur end-to-end in a single transaction and consist of 3 commands:
 
 1. **Authorization:** Get permission from the `UpgradeCap` to perform the upgrade, creating an `UpgradeTicket`.
 1. **Execution:** Consume the `UpgradeTicket` and verify the package bytecode and compatibility against the previous version, then create the onchain object representing the upgraded package. Return an `UpgradeReceipt` as a result on success.
 1. **Commit:** Update the `UpgradeCap` with information about the newly created package.
 
-While step 2 is a built-in command, steps 1 and 3 are implemented as Move functions. The Sui framework provides their most basic implementation:
+While step 2 is a built-in command, steps 1 and 3 are Move functions. The Sui framework provides their most basic implementation:
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/package.move" mode="" fun="authorize_upgrade,commit_upgrade" noComments />
 
@@ -107,19 +107,19 @@ Publishing a package creates the `UpgradeCap` object and upgrading the package u
 
 Its API guarantees the following properties:
 
-- Only the latest version of a package can be upgraded (a linear history is guaranteed).
+- You can upgrade only the latest version of a package (the API guarantees a linear history).
 
 - Only 1 upgrade can be in-flight at any time (cannot authorize multiple concurrent upgrades).
 
-- An upgrade can only be authorized for the extent of a single transaction. No one can `store` the `UpgradeTicket` that proves authorization.
+- An upgrade authorization lasts only for the extent of a single transaction. No one can `store` the `UpgradeTicket` that proves authorization.
 
-- Compatibility requirements for a package can be made only more restrictive over time.
+- Compatibility requirements for a package can only become more restrictive over time.
 
 ## `UpgradeTicket` {#upgradeticket}
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/package.move" mode="code" struct="UpgradeTicket" noComments />
 
-An `UpgradeTicket` is proof that an upgrade has been authorized. This authorization is specific to:
+An `UpgradeTicket` is proof of authorization for an upgrade. This authorization is specific to:
 
 - A particular `package: ID` to upgrade from, which must be the latest package in the family identified by the `UpgradeCap` at `cap: ID`.
 
@@ -127,7 +127,7 @@ An `UpgradeTicket` is proof that an upgrade has been authorized. This authorizat
 
 - A particular `digest: vector<u8>` that identifies the contents of the package after the upgrade.
 
-When you attempt to run the upgrade, the validator checks that the upgrade it is about to perform matches the upgrade that was authorized, and does not perform the upgrade if any of these criteria are not met.
+When you attempt to run the upgrade, the validator checks that the upgrade it is about to perform matches the authorized upgrade, and does not perform the upgrade if it does not meet any of these criteria.
 
 After creating an `UpgradeTicket`, you must use it within that transaction or the transaction fails. You cannot store it for later, drop it, or burn it.
 
@@ -163,7 +163,7 @@ BUILDING test
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/package.move" mode="code" struct="UpgradeReceipt" noComments />
 
-The `UpgradeReceipt` is proof that the `Upgrade` command ran successfully, and Sui added the new package to the set of created objects for the transaction. It is used to update its `UpgradeCap` (identified by `cap: ID`) with the ID of the latest package in its family (`package: ID`).
+The `UpgradeReceipt` is proof that the `Upgrade` command ran successfully, and Sui added the new package to the set of created objects for the transaction. You use it to update its `UpgradeCap` (identified by `cap: ID`) with the ID of the latest package in its family (`package: ID`).
 
 After Sui creates an `UpgradeReceipt`, you must use it to update its `UpgradeCap` within the same transaction or the transaction fails. You cannot store it for later, drop it, or burn it. 
 
@@ -175,7 +175,7 @@ When writing custom upgrade policies, prefer:
 
 - Making the package immutable.
 
-- Locking in the policy of the `UpgradeCap`, so that the policy cannot be made less restrictive later.
+- Locking in the policy of the `UpgradeCap`, so that the policy cannot become less restrictive later.
 
 These best practices help uphold informed user consent and bounded risk by making it clear what a package's upgrade policy is at the moment a user locks value into it, ensuring that the policy does not evolve to be more permissive with time without the package user realizing and choosing to accept the new terms.
 
@@ -472,11 +472,11 @@ $ npm install @mysten/sui
 
 ### Publishing a package with custom policy {#publishing-custom-policy}
 
-In the root of your Node.js project, create a script file named `publish.js`. Open the file define some constants:
+In the root of your Node.js project, create a script file named `publish.js`. Open the file and define some constants:
 
 - `SUI`: the location of the `sui` CLI binary.
 
-- `POLICY_PACKAGE_ID`: the ID of our published `day_of_week` package.
+- `POLICY_PACKAGE_ID`: the ID of your published `day_of_week` package.
 
 ```js
 const SUI = 'sui';
@@ -844,7 +844,7 @@ const result = await client.signAndExecuteTransaction({
 console.log(result);
 ```
 
-If today is not Tuesday, wait until next Tuesday to run the script or edit the `week_day` function to be the current weekday. At that point, update your `example.move` so the event is emitted with a different constant and use Node.js to run the upgrade script:
+If today is not Tuesday, wait until next Tuesday to run the script or edit the `week_day` function to be the current weekday. At that point, update your `example.move` so it emits the event with a different constant and use Node.js to run the upgrade script:
 
 ```sh
 $ node upgrade.js

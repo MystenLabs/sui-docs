@@ -35,11 +35,11 @@ Consensus is the process by which the majority of nodes on a blockchain network 
 
 ## Validator nodes
 
-To participate in consensus, validators must [stake SUI tokens](/operators/validator/validator-rewards) on the network. Sui uses delegated proof-of-stake (DPoS) to determine which validators operate the network and their voting power. Validators are incentivized to participate in good faith through a share of transaction fees, [staking rewards](/operators/validator/validator-rewards), and slashing of stake and staking rewards in case of misbehavior.
+To participate in consensus, validators must [stake SUI tokens](/operators/validator/validator-rewards) on the network. Sui uses delegated proof-of-stake (DPoS) to determine which validators operate the network and their voting power. A share of transaction fees, [staking rewards](/operators/validator/validator-rewards), and slashing of stake and staking rewards in case of misbehavior incentivize validators to participate in good faith.
 
 ### Epochs
 
-An [epoch](/develop/sui-architecture/epochs) is a duration of time where the Sui validators and their stakes do not change. An epoch is about 24 hours on both [Mainnet](/develop/sui-architecture/networks) and [Testnet](/develop/sui-architecture/networks). At an epoch boundary, [reconfiguration](/develop/sui-architecture/epochs) might occur and can change the set of validators participating in the network and their voting power. Conceptually, reconfiguration starts a new instance of the Sui protocol with the previous epoch's final state as genesis and the new set of validators as the operators. Besides validator set changes, [tokenomics](/develop/sui-architecture/tokenomics-overview) operations such as staking and un-staking, and distribution of staking rewards are also processed at epoch boundaries.
+An [epoch](/develop/sui-architecture/epochs) is a duration of time where the Sui validators and their stakes do not change. An epoch is about 24 hours on both [Mainnet](/develop/sui-architecture/networks) and [Testnet](/develop/sui-architecture/networks). At an epoch boundary, [reconfiguration](/develop/sui-architecture/epochs) might occur and can change the set of validators participating in the network and their voting power. Conceptually, reconfiguration starts a new instance of the Sui protocol with the previous epoch's final state as genesis and the new set of validators as the operators. Besides validator set changes, the Sui protocol also processes [tokenomics](/develop/sui-architecture/tokenomics-overview) operations such as staking and un-staking, and distribution of staking rewards, at epoch boundaries.
 
 ### Quorums
 
@@ -51,7 +51,7 @@ The quorum size of >2/3 ensures Byzantine fault tolerance (BFT). Committing the 
 
 A validator exposes a single write entry point for user transactions. A client does not assemble a certificate and does not talk to a quorum itself.
 
-A transaction moves through the following steps, described in detail in the sections below:
+A transaction moves through the following steps, described in detail in [Submission](#submission) and [When is a transaction final?](#when-is-a-transaction-final):
 
 1. The user sends a signed transaction to a full node.
 2. Transaction Driver on the full node picks a validator and submits the transaction to it.
@@ -64,7 +64,7 @@ A transaction moves through the following steps, described in detail in the sect
 
 The user sends a signed transaction to a [full node](/operators/full-node/sui-full-node). The full node runs **Transaction Driver**, the full node component that picks a validator and submits the transaction to it. The receiving validator checks that the signature is valid, that the inputs exist and the sender is allowed to use them, and that the sender can cover the gas budget. If those checks pass, the validator includes the transaction in its next proposed consensus block.
 
-Peer validators run the same checks when they receive that block, so a transaction that fails them is not accepted no matter which validator it entered through. This is what stops a single validator from admitting a double spend.
+Peer validators run the same checks when they receive that block, so validators do not accept a transaction that fails them, no matter which validator it entered through. This is what stops a single validator from admitting a double spend.
 
 ### When is a transaction final?
 
@@ -79,9 +79,9 @@ Sui uses a [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acycl
 
 Mysticeti also allows voting and certifying blocks in parallel, which reduces median and tail latencies, and tolerates unavailable leaders without significantly increasing commit latencies.
 
-The order of transactions in the consensus output determines the relative order in which they can operate on each shared object. Executions of transactions touching different shared objects are parallelized on multiple cores.
+The order of transactions in the consensus output determines the relative order in which they can operate on each shared object. Sui parallelizes executions of transactions touching different shared objects on multiple cores.
 
-If the total execution cost of transactions in a consensus commit exceeds a threshold, transactions can be cancelled post consensus to avoid overloading the system.
+If the total execution cost of transactions in a consensus commit exceeds a threshold, Sui can cancel transactions post consensus to avoid overloading the system.
 
 ### Transaction throughput
 
@@ -104,7 +104,7 @@ Traditional consensus decision rules require explicit block validation and certi
 
 ### Finality
 
-Finality is the guarantee that a transaction or block, after confirmation, is permanently added to the network and cannot be altered or reversed. In traditional blockchain consensus, confirming transactions can take time because they rely on other transactions to reference them before they are considered final. This process slows down if network activity decreases or if there are many competing transactions.
+Finality is the guarantee that, after confirmation, a transaction or block becomes a permanent part of the network and nobody can alter or reverse it. In traditional blockchain consensus, confirming transactions can take time because they rely on other transactions to reference them before the network considers them final. This process slows down if network activity decreases or if there are many competing transactions.
 
 Mysticeti simplifies this process by finalizing transactions immediately upon inclusion in the structure. As a result, there is no need to wait for additional confirmations or network activity, which makes Mysticeti faster and more reliable for confirming transactions in less active or challenging network conditions.
 

@@ -45,7 +45,7 @@ answer: >-
 
 <ImportContent source="move-summary" mode="snippet" />
 
-You can use Move to define, create, and manage programmable Sui objects representing assets and smart contracts. Sui's [object system](/develop/sui-architecture/object-model) is implemented by adding new functionality to Move while also imposing additional restrictions.
+You can use Move to define, create, and manage programmable Sui objects representing assets and smart contracts. Sui implements its [object system](/develop/sui-architecture/object-model) by adding new functionality to Move while also imposing additional restrictions.
 
 Move on Sui contains some important differences from Move on other blockchains. Sui takes advantage of Move's security and flexibility, enhancing it with the features to vastly improve throughput, reduce delays in finality, and make Move programming more approachable. For full details, see the [Sui Smart Contracts Platform](/doc/sui.pdf) whitepaper.
 
@@ -71,25 +71,25 @@ Key differences of Move on Sui include:
 
 ### Object-centric global storage {#global-storage}
 
-In Move on Diem, global storage is part of the programming model. Resources and modules are held in global storage, owned by an account which has an address. Transactions are free to access resources from any account in global storage when they run, using special operations such as `move_to` and `move_from`.
+In Move on Diem, global storage is part of the programming model. Global storage holds resources and modules, which an account with an address owns. Transactions are free to access resources from any account in global storage when they run, using special operations such as `move_to` and `move_from`.
 
-This approach introduces a scaling issue, as it is not possible to statically determine which transactions are contending over the same resource and which are not. This is similar to the scaling issues faced by other blockchains where smart contracts typically store account information in large, internal mappings, which limit throughput.
+This approach introduces a scaling issue, as it is not possible to statically determine which transactions are contending over the same resource and which are not. This is similar to the scaling issues that other blockchains face, where smart contracts typically store account information in large, internal mappings, which limit throughput.
 
-Move on Sui addresses the scaling issue by not having global storage or its related operations. When objects (in contrast to resources) and packages (sets of modules) are stored on Sui, they are each given unique identifiers. All of a transaction's inputs are explicitly specified up front using these unique identifiers to allow the network to schedule transactions with non-overlapping inputs in parallel.
+Move on Sui addresses the scaling issue by not having global storage or its related operations. When Sui stores objects (in contrast to resources) and packages (sets of modules), it gives each of them a unique identifier. Each transaction explicitly specifies all of its inputs up front using these unique identifiers to allow the network to schedule transactions with non-overlapping inputs in parallel.
 
 ### Addresses represent object IDs {#object-ids}
 
 In Move on Diem, there is a 16 byte `address` type used to represent account addresses in global storage. A 16 byte address is sufficient for the Move on Diem security model.
 
-Sui doesn't have global storage, so `address` is repurposed as a 32 byte identifier used for both objects and accounts. Each transaction is signed by an account (the sender) that is accessible from the transaction context, and each object stores its `address` wrapped in its `id: UID` field.
+Sui doesn't have global storage, so it repurposes `address` as a 32 byte identifier used for both objects and accounts. An account (the sender) that is accessible from the transaction context signs each transaction, and each object stores its `address` wrapped in its `id: UID` field.
 
 See the [address section](https://move-book.com/reference/primitive-types/address) in The Move Book for an overview on addresses and refer to <UnsafeLink href="/references/framework/sui_sui/object">object.move</UnsafeLink> in the Sui framework for implementation details.
 
 ### Object with key ability, globally unique IDs {#global-unique}
 
-In Move on Diem, the `key` ability indicates that the type is a resource, meaning it, along with an account address, can be used as a key in global storage.
+In Move on Diem, the `key` ability indicates that the type is a resource, meaning you can use it, along with an account address, as a key in global storage.
 
-On Sui, the `key` ability indicates that a struct is an object type and comes with an additional requirement that the first field of the struct has signature `id: UID` to contain the object's unique address onchain. Sui's bytecode verifier ensures that new objects are always assigned fresh `UID`s. Identifiers are never reused.
+On Sui, the `key` ability indicates that a struct is an object type and comes with an additional requirement that the first field of the struct has signature `id: UID` to contain the object's unique address onchain. Sui's bytecode verifier ensures that Sui always assigns fresh `UID`s to new objects. Sui never reuses identifiers.
 
 ### Module initializers {#module-initializers}
 
@@ -97,7 +97,7 @@ As described in [object-centric global storage](#global-storage), you publish Mo
 
 ### Entry functions {#entry-functions}
 
-The `entry` keyword has a specific use case in Move on Sui. Use `entry` when you want some functionality to be usable by anyone on chain, but not be wrapped around other Move logic. In other words, a function can be called in [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) but not in other Sui packages. For example, this is utilized when using Sui's onchain randomness standard to prevent other smart contract engineers from creating logic to essentially front-run or back-run the randomness generation. Find more information about this in the [onchain randomness page](/sui-stack/on-chain-primitives/randomness-onchain#use-non-public-entry-functions).
+The `entry` keyword has a specific use case in Move on Sui. Use `entry` when you want some functionality to be usable by anyone onchain, but you don't want other Move logic to wrap it. In other words, you can call the function in [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) but not in other Sui packages. For example, you use this with Sui's onchain randomness standard to prevent other smart contract engineers from creating logic to essentially front-run or back-run the randomness generation. Find more information about this in the [onchain randomness page](/sui-stack/on-chain-primitives/randomness-onchain#use-non-public-entry-functions).
 
 Make your function private (don't add the `public` visibility keyword) and mark it with the `entry` keyword, as in `entry fun example_function`.
 
