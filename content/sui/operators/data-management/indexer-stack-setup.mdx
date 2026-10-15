@@ -37,7 +37,7 @@ answer: >-
   information on the stack.
 ---
 
-This page explains how to run the general-purpose indexer, the consistent store, and the GraphQL RPC server in production, including hardware and storage requirements, run commands, and recommended configurations. Set up the indexer and the consistent store before the GraphQL RPC server: start GraphQL only after all unprunable indexer pipelines have caught up to the network tip, and wait for the consistent store to report `SERVING` before routing GraphQL traffic to it.
+Production deployments of the general-purpose indexer, the consistent store, and the GraphQL RPC server each have hardware and storage requirements, run commands, and recommended configurations. Set up the indexer and the consistent store before the GraphQL RPC server: start GraphQL only after all unprunable indexer pipelines have caught up to the network tip, and wait for the consistent store to report `SERVING` before routing GraphQL traffic to it.
 
 <ImportContent source="indexer-graphql" mode="snippet" />
 
@@ -45,7 +45,7 @@ See [Sui Data Access](/develop/accessing-data/data-serving) for more information
 
 ## Production fullnode endpoints
 
-The `https://fullnode.mainnet.sui.io:443`, `https://fullnode.testnet.sui.io:443`, and `https://fullnode.devnet.sui.io:443` endpoints are public-good services for testing only. They are not intended for a production indexer or GraphQL stack. For every fullnode URL in this guide, use a production-grade gRPC endpoint from an [RPC provider](/develop/accessing-data/rpc-providers) with sufficient capacity and retention for your workload.
+The `https://fullnode.mainnet.sui.io:443`, `https://fullnode.testnet.sui.io:443`, and `https://fullnode.devnet.sui.io:443` endpoints are public-good services for testing only. Do not use them for a production indexer or GraphQL stack. For every fullnode URL in this guide, use a production-grade gRPC endpoint from an [RPC provider](/develop/accessing-data/rpc-providers) with sufficient capacity and retention for your workload.
 
 ## Requester Pays checkpoint buckets {#requester-pays}
 
@@ -60,23 +60,23 @@ Workload Identity or another supported Google credential source can replace the 
 
 ## How to set up the indexer {#indexer-setup}
 
-The indexer consists of multiple pipelines that each read, transform, and write checkpoint data to various Postgres tables. Multiple instances of the indexer can run in parallel, each configured by its own TOML file. Pipelines are either *unprunable*, which must retain all data and start from genesis, or *prunable*, which keep data for a configurable retention period (for example, 30 or 90 days) and can start from a later checkpoint based on that period.
+The indexer consists of multiple pipelines that each read, transform, and write checkpoint data to various Postgres tables. Multiple instances of the indexer can run in parallel, each with its own TOML file. Pipelines are either unprunable, which must retain all data and start from genesis, or prunable, which keep data for a configurable retention period (for example, 30 or 90 days) and can start from a later checkpoint based on that period.
 
 #### Hardware requirements
 
 - **CPU:** 2 cores per instance
 - **Memory:** 4GB per instance
 
-Internally at Mysten Labs, indexer instances use 8 CPUs and 16 GiB of memory for backfill, and scale down to 0.5 CPU and 1 GiB of memory for normal operation at network tip.
+Internally at Mysten Labs, indexer instances use 8 CPUs and 16GB of memory for backfill, and scale down to 0.5 CPU and 1GB of memory for normal operation at network tip.
 
 #### Storage requirements
-The general-purpose indexer writes to a Postgres database. The storage footprint estimations outlined below are based on the network as of early 2026, and might fluctuate in relation to network growth. These numbers should be seen as directional rather than exact figures.
+The general-purpose indexer writes to a Postgres database. The following storage footprint estimations reflect the network as of early 2026 and might fluctuate with network growth. Treat these numbers as directional rather than exact figures.
 
-The bulk of the storage is consumed by `obj_versions` at 8.2 TB. A pruning strategy is in development.
+`obj_versions` consumes the bulk of the storage at 8.2TB. A pruning strategy is in development.
 
-The unpruned `tx_balance_changes` table adds another 1.2 TB.
+The unpruned `tx_balance_changes` table adds another 1.2TB.
 
-A 30-day retention adds 1.8 TB on top, while a 90-day retention contributes up to an additional 3.1 TB.
+A 30-day retention adds 1.8TB on top, while a 90-day retention contributes up to an additional 3.1TB.
 
 30-day retention:
 
@@ -142,8 +142,8 @@ $ sui-indexer-alt indexer \
 ```
 
 For prunable pipelines, calculate the `first-checkpoint` based on your retention period:
-- **30-day retention**: Start from checkpoint `current_checkpoint - 10368000`
-- **90-day retention**: Start from checkpoint `current_checkpoint - 31104000`
+- **30-day retention:** Start from checkpoint `current_checkpoint - 10368000`
+- **90-day retention:** Start from checkpoint `current_checkpoint - 31104000`
 
 These offsets assume roughly 4 checkpoints per second (345,600 checkpoints per day). The actual rate varies, so treat the result as an approximate starting point. You can find the current checkpoint on [SuiVision](https://suivision.xyz/).
 
@@ -205,9 +205,9 @@ For checkpoint ingestion, the public `https://checkpoints.mainnet.sui.io` and `h
 
 ### Run config recommendations {#indexer-run-config}
 
-Use the TOML files below; they are grouped by pipeline speed. All pipelines in an instance are limited by the slowest pipeline in that instance so these files each contain pipelines that run at approximately the same speed.
+Use the following TOML files, which group pipelines by speed. The slowest pipeline in an instance limits all pipelines in that instance, so each file contains pipelines that run at approximately the same speed.
 
-You can include an optional `[ingestion]` section in each TOML file to tune checkpoint ingestion. The `min-cohort-boundary` setting controls how the indexer groups pipelines into ingestion cohorts based on their distance from the tip. The default is `25000` checkpoints. A higher value prevents nearly caught-up pipelines from being fragmented into many small cohorts. You do not need to set this for most deployments.
+You can include an optional `[ingestion]` section in each TOML file to tune checkpoint ingestion. The `min-cohort-boundary` setting controls how the indexer groups pipelines into ingestion cohorts based on their distance from the tip. The default is `25000` checkpoints. A higher value prevents the indexer from fragmenting nearly caught-up pipelines into many small cohorts. You do not need to set this for most deployments.
 
 ```toml
 [ingestion]
@@ -217,7 +217,7 @@ min-cohort-boundary = 25000
 :::info
 The example configurations linked below use a fixed concurrency of 20 for simplicity, but this leads to longer backfill times.
 When backfilling a pipeline, consider setting the `ingest-concurrency` to a higher initial concurrency, such as `{ kind = "adaptive", initial = 200, min = 50, max = 2000 }`. The indexer automatically adjusts concurrency based on current load and performance.
-Once caught up to network tip, you can manually set the max concurrency to a lower value. Mysten-internal indexers are capped at 20.
+Once caught up to network tip, you can manually set the max concurrency to a lower value. Mysten Labs caps its internal indexers at 20.
 :::
 
 <table>
@@ -376,7 +376,7 @@ Once caught up to network tip, you can manually set the max concurrency to a low
 
 The consistent store maintains live ownership and balance indexes in its own RocksDB database and exposes checkpoint-consistent reads over gRPC. It does not use the Postgres `DATABASE_URL` and does not replace the General-purpose Indexer. Keep its database path on persistent local SSD storage.
 
-All 4 pipelines run in 1 process. Their watermarks are independent from the Postgres indexer's watermarks, and throughput is limited by the slowest consistent-store pipeline.
+All 4 pipelines run in 1 process. Their watermarks are independent from the Postgres indexer's watermarks, and the slowest consistent-store pipeline limits throughput.
 
 #### Hardware requirements
 
@@ -387,7 +387,7 @@ All 4 pipelines run in 1 process. Their watermarks are independent from the Post
 
 Without a restore, a new consistent store must process checkpoints from genesis. For production, restore the latest formal snapshot into an empty RocksDB path before starting the service.
 
-The restore command reads from two distinct sources:
+The restore command reads from 2 distinct sources:
 
 1. Exactly 1 formal snapshot source, such as `--http`, `--gcs`, `--azure`, `--s3`, or `--local`.
 1. A required `--remote-store-url`. The restorer uses this store to map the snapshot epoch to its ending checkpoint and fetch that checkpoint; it is not the post-restore catch-up source.
@@ -413,12 +413,12 @@ $ sui-indexer-alt-consistent-store restore \
 
 | **CLI parameter** | **Description** |
 | --- | --- |
-| `--database-path` | Empty path where the RocksDB database is created. |
+| `--database-path` | Empty path where the restore command creates the RocksDB database. |
 | `--http`, `--gcs`, `--azure`, `--s3`, or `--local` | Formal snapshot source. Specify exactly one. See [managed snapshots](/operators/snapshots#mysten-labs-managed-snapshots). |
 | `--remote-store-url` | Public HTTPS checkpoint store used to read the epoch mapping and selected end-of-epoch checkpoint during restore. |
 | `--object-file-concurrency` | Number of formal-snapshot object files to download concurrently. |
 | `--pipeline` | Runtime pipeline name to restore. Repeat once for each required pipeline. |
-| `--config` | Consistent-store TOML configuration. Only its RocksDB settings are used during restore. |
+| `--config` | Consistent-store TOML configuration. Restore uses only its RocksDB settings. |
 
 Each `--pipeline` is required because restore materializes only explicitly selected pipelines. Let the command exit successfully before starting `run`.
 
@@ -471,7 +471,7 @@ The CLI runtime pipeline names use underscores, while the corresponding TOML key
 | `object_by_owner` | `object-by-owner` | Live objects indexed by owner. |
 | `object_by_type` | `object-by-type` | Live objects indexed by type. |
 
-A formal-snapshot restore of all pipelines typically takes 1–2 hours. All pipeline state must be retained.
+A formal-snapshot restore of all pipelines typically takes 1–2 hours. You must retain all pipeline state.
 
 <details>
 	<summary>`consistent-store.toml`</summary>
@@ -502,7 +502,7 @@ Scale the number of nodes based on the desired read throughput requirements of y
 The GraphQL RPC server relies on multiple backend services to fulfill different types of queries:
 - Archival service (`--ledger-grpc-url`) provides historical data for most queries involving checkpoints, objects, and transactions.
 - Consistent store (`--consistent-store-url`) serves live data for queries related to current object and balance ownership.
-- Postgres database (`--database-url`) is the primary store for most queries, except for direct object and transaction lookups handled by the Archival service.
+- Postgres database (`--database-url`) is the primary store for most queries, except for direct object and transaction lookups that the Archival service handles.
 - Fullnode gRPC (`--fullnode-rpc-url`) powers transaction simulation and execution.
 
 Set the appropriate service URLs in your run command based on the query types your GraphQL RPC server needs to support.
@@ -531,7 +531,7 @@ $ sui-indexer-alt-graphql rpc \
     --metrics-address <METRICS_ADDRESS>
 ```
 
-Multiple `--indexer-config` parameters can be provided, one for each general-purpose indexer instance.
+You can provide multiple `--indexer-config` parameters, one for each general-purpose indexer instance.
 
 | **CLI parameter** | **Description** |
 | --- | --- |
@@ -589,7 +589,7 @@ This produces output similar to the following:
 
 Both the indexer and GraphQL server require a Postgres-compatible database shared between them.
 
-These GraphQL request throughputs were tested against the following recommended specs:
+Testing against the following recommended specs produced these GraphQL request throughputs:
 - 500 requests per second when the indexer is backfilling from genesis or running a restore
 - 1000 requests per second when the indexer is indexing from the network tip (~4.25 checkpoints per second)
 
@@ -631,7 +631,7 @@ If you also run the GraphQL RPC server, its health endpoint (for example, `http:
 
 ### Diagnose a stalled pipeline
 
-A stalled watermark is the starting point for most indexer investigations. Narrow the cause to one of three categories before taking action:
+A stalled watermark is the starting point for most indexer investigations. Narrow the cause to one of 3 categories before taking action:
 
 **Checkpoints not being downloaded (upstream):** The ingestion layer cannot fetch new checkpoints from the data source. Check network connectivity to your gRPC endpoint or GCS bucket. Verify the fullnode or checkpoint store is healthy and serving the expected checkpoint range. The `ingested_checkpoint_timestamp_lag` Prometheus metric shows how far behind the ingestion layer is.
 
@@ -646,7 +646,7 @@ The `cp_sequence_numbers` pipeline maps checkpoint sequence numbers to their tra
 - GraphQL queries that filter by checkpoint range return incomplete or empty results.
 - The GraphQL server logs warnings about missing checkpoint data.
 
-To fix, ensure `cp_sequence_numbers` is included in your indexer's pipeline list. If you did not include it during initial setup, follow the [adding a new pipeline](#adding-a-new-pipeline) procedure to add it.
+To fix, include `cp_sequence_numbers` in your indexer's pipeline list. If you did not include it during initial setup, follow the [adding a new pipeline](#adding-a-new-pipeline) procedure to add it.
 
 ### Indexer troubleshooting
 
@@ -665,7 +665,7 @@ The following table lists common starting points for investigation. Most symptom
 Adding a new pipeline to an existing indexer currently requires these steps:
 
 1. Start a new pipeline in its own indexer instance, optionally with the `--first-checkpoint <checkpoint>` flag set if you want to start from a checkpoint after genesis.
-   * The `--first-checkpoint` flag is only respected if no watermark record exists for the pipeline (the pipeline has not run before). You must manually remove the watermark record if you want to run the pipeline with a different value of `--first-checkpoint`, or it is ignored.
+   * The indexer only respects the `--first-checkpoint` flag if no watermark record exists for the pipeline (the pipeline has not run before). You must manually remove the watermark record if you want to run the pipeline with a different value of `--first-checkpoint`, or the indexer ignores it.
 2. After the new pipeline catches up to the tip of the network, you can optionally merge it into another indexer instance.
 
 ## Re-indexing from a different checkpoint
@@ -697,12 +697,12 @@ COMMIT;
 
 ## Reducing indexer pipeline table and index bloat
 
-Bloat occurs when dead rows from deletes accumulate faster than autovacuum can reclaim them. This happens in two cases:
+Bloat occurs when dead rows from deletes accumulate faster than autovacuum can reclaim them. This happens in 2 cases:
 
 - You enable pruning on a previously unpruned pipeline.
 - You reduce the retention period on an already-pruned pipeline.
 
-Mysten Labs uses the following autovacuum settings for a 32-vCPU, 256 GiB Postgres instance. Adjust these proportionally for your setup:
+Mysten Labs uses the following autovacuum settings for a 32-vCPU, 256GB Postgres instance. Adjust these proportionally for your setup:
 
 | Parameter | Value |
 |-----------|-------|

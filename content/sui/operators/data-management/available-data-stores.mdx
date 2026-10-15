@@ -50,7 +50,7 @@ answer: >-
 
 Sui Foundation manages several categories of data stores for Sui operators and builders. Each store serves a specific purpose, has its own retention policy, and might require credentials for access.
 
-Checkpoint stores hold protobuf-encoded checkpoint blobs used by indexers, remote stores, and archival fallback. Snapshot stores hold point-in-time database state for bootstrapping full nodes and consistent stores. Stores marked Requester Pays are not free to read: egress charges are billed to the cloud billing project you configure.
+Checkpoint stores hold protobuf-encoded checkpoint blobs that indexers, remote stores, and archival fallback use. Snapshot stores hold point-in-time database state for bootstrapping full nodes and consistent stores. Stores marked Requester Pays are not free to read: egress charges go to the cloud billing project you configure.
 
 ## Which data store should I use? {#choosing-a-store}
 
@@ -67,7 +67,7 @@ Checkpoint stores hold protobuf-encoded checkpoint blobs used by indexers, remot
 
 ## What checkpoint stores are available? {#checkpoint-remote-stores}
 
-Checkpoint stores contain protobuf-encoded checkpoint blobs (`.binpb.zst`). They are used by [indexers](/operators/data-management/indexer-stack-setup), [remote store operators](/operators/data-management/remote-store-setup), the [archival service](/operators/data-management/archival-stack-setup), and [full node archival fallback](/operators/data-management/archives).
+Checkpoint stores contain protobuf-encoded checkpoint blobs (`.binpb.zst`). [Indexers](/operators/data-management/indexer-stack-setup), [remote store operators](/operators/data-management/remote-store-setup), the [archival service](/operators/data-management/archival-stack-setup), and [full node archival fallback](/operators/data-management/archives) use them.
 
 ### GCS buckets (full retention, Requester Pays) {#checkpoint-gcs}
 
@@ -80,7 +80,7 @@ These buckets contain the complete checkpoint history from genesis. Use them for
 
 **Retention:** Full history from genesis.
 
-**Credentials:** GCS Requester Pays. You are charged for egress. Configure Google credentials and a billing project:
+**Credentials:** GCS Requester Pays. You pay for egress. Configure Google credentials and a billing project:
 
 ```sh
 $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/gcp-credentials.json
@@ -95,7 +95,7 @@ Workload Identity or another supported Google credential source can replace the 
 | --- | --- | --- |
 | Mainnet | `https://s3.us-west-2.amazonaws.com/mysten-mainnet-checkpoints` | Use as `ingestion-url` in `fullnode.yaml` |
 
-This page lists an S3 checkpoint endpoint for Mainnet only. For Testnet archival fallback, use the [HTTPS checkpoint endpoint](#checkpoint-https). For Testnet backfill, use the [GCS bucket](#checkpoint-gcs).
+The S3 checkpoint endpoint covers Mainnet only. For Testnet archival fallback, use the [HTTPS checkpoint endpoint](#checkpoint-https). For Testnet backfill, use the [GCS bucket](#checkpoint-gcs).
 
 **Retention:** Full history from genesis.
 
@@ -171,6 +171,6 @@ Use these buckets for:
 
 ### Formal snapshot free bucket (Cloudflare R2) {#formal-free}
 
-Mysten Labs hosts free formal snapshots on Cloudflare R2 (currently in North America only). No credentials are required. Access through `sui-tool download-formal-snapshot --no-sign-request`.
+Mysten Labs hosts free formal snapshots on Cloudflare R2 (currently in North America only). You do not need credentials. Access through `sui-tool download-formal-snapshot --no-sign-request`.
 
 

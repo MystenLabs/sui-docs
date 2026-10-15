@@ -64,7 +64,7 @@ graph LR
 
 ## Pipelines
 
-The indexer runs three pipelines. Only the first two should be enabled:
+The indexer runs three pipelines. Enable only the first two:
 
 | Pipeline | Output | Description |
 |----------|--------|-------------|
@@ -76,15 +76,15 @@ The indexer runs three pipelines. Only the first two should be enabled:
 
 The easiest way to populate your own remote store on Mainnet or Testnet is to backfill from Mysten's requester-pays GCS buckets. Use `--remote-store-gcs` as the source and a destination flag (`--s3` or `--gcs`) to write to your store.
 
-The destination credentials are read from environment variables, so set them before running the command: `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION` for `--s3`, or `GOOGLE_SERVICE_ACCOUNT_PATH` for `--gcs`. See [Destination flags](#destination-flags-mutually-exclusive-one-required).
+The indexer reads the destination credentials from environment variables, so set them before running the command: `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION` for `--s3`, or `GOOGLE_SERVICE_ACCOUNT_PATH` for `--gcs`. See [Destination flags](#destination-flags-mutually-exclusive-one-required).
 
 :::warning
 
-Always pass `--compression-level`. Without it, files are written as `.binpb` instead of `.binpb.zst`, and downstream consumers cannot find them because the indexer framework expects `.binpb.zst` when reading from a remote store.
+Always pass `--compression-level`. Without it, the indexer writes files as `.binpb` instead of `.binpb.zst`, and downstream consumers cannot find them because the indexer framework expects `.binpb.zst` when reading from a remote store.
 
 :::
 
-#### Example: Backfill an S3 bucket from Mysten's GCS bucket (Mainnet)
+#### Example: backfill an S3 bucket from Mysten's GCS bucket (Mainnet)
 
 ```sh
 sui-checkpoint-blob-indexer \
@@ -94,7 +94,7 @@ sui-checkpoint-blob-indexer \
     --compression-level 3
 ```
 
-For Testnet, use `--remote-store-gcs mysten-testnet-checkpoints-use4`. Both buckets are [GCS Requester Pays](/operators/data-management/available-data-stores). Do not use the public HTTPS endpoints (`checkpoints.mainnet.sui.io` / `checkpoints.testnet.sui.io`) for full-retention backfill because they retain only the most recent 30 days.
+For Testnet, use `--remote-store-gcs mysten-testnet-checkpoints-use4`. Both buckets are [GCS Requester Pays](/operators/data-management/available-data-stores). Do not use the public HTTPS endpoints (`checkpoints.mainnet.sui.io` and `checkpoints.testnet.sui.io`) for full-retention backfill because they retain only the most recent 30 days.
 
 ## How to backfill from a full node
 
@@ -123,7 +123,7 @@ sui-checkpoint-blob-indexer \
     --compression-level 3
 ```
 
-The full node only needs gRPC enabled. JSON-RPC is not required.
+The full node only needs gRPC enabled. It does not need JSON-RPC.
 
 ### Running multiple instances
 
@@ -135,8 +135,8 @@ Writes are idempotent, so multiple indexer instances can safely write to the sam
 
 | Flag | Description |
 |------|-------------|
-| `--s3 <BUCKET>` | Write to AWS S3. Env: `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`. |
-| `--gcs <BUCKET>` | Write to Google Cloud Storage. Env: `GOOGLE_SERVICE_ACCOUNT_PATH`. |
+| `--s3 <BUCKET>` | Write to AWS S3. Environment variables: `AWS_ENDPOINT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`. |
+| `--gcs <BUCKET>` | Write to Google Cloud Storage. Environment variables: `GOOGLE_SERVICE_ACCOUNT_PATH`. |
 | `--http <URL>` | Write to an HTTP endpoint. |
 
 ### Source flags (mutually exclusive, one required)
@@ -152,12 +152,12 @@ Writes are idempotent, so multiple indexer instances can safely write to the sam
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--config <PATH>` | — | Path to optional TOML configuration file. The framework defaults are sufficient for most deployments. See [Configuration](#configuration-toml). |
-| `--compression-level <LEVEL>` | None (uncompressed) | Zstd compression level. **Strongly recommended.** Without this flag, files are written as `.binpb` instead of `.binpb.zst`. The indexer framework expects `.binpb.zst` when reading from a remote store, so downstream consumers cannot find uncompressed files. A value of `3` is a good default. |
-| `--streaming-url <URL>` | — | Full node gRPC URL for streaming live checkpoints. Used alongside `--rpc-api-url` for lowest latency at the network tip. |
+| `--config <PATH>` | None | Path to optional TOML configuration file. The framework defaults are sufficient for most deployments. See [Configuration](#configuration-toml). |
+| `--compression-level <LEVEL>` | None (uncompressed) | Zstd compression level. **Strongly recommended.** Without this flag, the indexer writes files as `.binpb` instead of `.binpb.zst`. The indexer framework expects `.binpb.zst` when reading from a remote store, so downstream consumers cannot find uncompressed files. A value of `3` is a good default. |
+| `--streaming-url <URL>` | None | Full node gRPC URL for streaming live checkpoints. Use alongside `--rpc-api-url` for lowest latency at the network tip. |
 | `--first-checkpoint <N>` | 0 | Checkpoint to start indexing from. |
-| `--last-checkpoint <N>` | — | Checkpoint to stop indexing at (inclusive). Useful for bounded backfill jobs. |
-| `--pipeline <NAME>` | All pipelines | Only run the specified pipeline(s). Can be repeated. |
+| `--last-checkpoint <N>` | None | Checkpoint to stop indexing at (inclusive). Useful for bounded backfill jobs. |
+| `--pipeline <NAME>` | All pipelines | Only run the specified pipelines. You can repeat this flag. |
 | `--request-timeout <DURATION>` | `30s` | HTTP request timeout for object store operations. |
 | `--metrics-address <ADDR>` | `0.0.0.0:9184` | Prometheus metrics bind address. |
 
@@ -178,9 +178,9 @@ watermark-interval-ms = 120000
 watermark-interval-jitter-ms = 120000
 ```
 
-- **`write-concurrency`**: Allows up to 500 concurrent writes to the object store. Decrease this if you observe heavy throttling from your storage provider.
-- **`watermark-interval-ms`**: Reduces the frequency of watermark updates (writes to the watermark files under `_metadata/watermarks/` that the indexer uses to track progress) from the framework default to avoid hot-key issues on the watermark file in the object store.
-- **`watermark-interval-jitter-ms`**: Adds random jitter to the watermark interval, staggering writes when running multiple indexer instances so they don't write to the same key simultaneously.
+- `write-concurrency`: Allows up to 500 concurrent writes to the object store. Decrease this if you observe heavy throttling from your storage provider.
+- `watermark-interval-ms`: Reduces the frequency of watermark updates (writes to the watermark files under `_metadata/watermarks/` that the indexer uses to track progress) from the framework default to avoid hot-key issues on the watermark file in the object store.
+- `watermark-interval-jitter-ms`: Adds random jitter to the watermark interval, staggering writes when running multiple indexer instances so they don't write to the same key simultaneously.
 
 The configuration options (`[ingestion]`, `[committer]`, `[pipeline.<name>]`) are the same as the indexer framework's standard settings. See [Pipeline architecture: Performance tuning](/develop/accessing-data/custom-indexer/pipeline-architecture#performance-tuning) for the full reference.
 
@@ -193,7 +193,7 @@ The indexer writes the following files to the destination object store:
 | `{seq}.binpb.zst` | Zstd-compressed protobuf checkpoint blob (when `--compression-level` is set). **This is the expected format.** |
 | `{seq}.binpb` | Uncompressed protobuf checkpoint blob (without `--compression-level`). **Not recommended.** The indexer framework looks for `.binpb.zst` when ingesting from a remote store. |
 | `epochs.json` | JSON array of epoch-boundary checkpoint sequence numbers, sorted. |
-| `_metadata/watermarks/` | Internal watermark files used by the indexer to track progress. |
+| `_metadata/watermarks/` | Internal watermark files that the indexer uses to track progress. |
 
 ## Monitoring
 

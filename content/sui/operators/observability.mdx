@@ -51,12 +51,12 @@ Sui operators, administrators, and developers primarily consume this output. The
 
 ## Contexts, scopes, and tracing transaction flow {#context-scope-trace}
 
-In a distributed and asynchronous system like Sui, one cannot rely on looking at individual logs over time in a single thread. To solve this problem, use the approach of structured logging. Structured logging offers a way to tie together logs, events, and blocks of functionality across threads and process boundaries.
+In a distributed and asynchronous system like Sui, you cannot rely on looking at individual logs over time in a single thread. To solve this problem, use the approach of structured logging. Structured logging offers a way to tie together logs, events, and blocks of functionality across threads and process boundaries.
 
 ### Spans and events {#spans-and-events}
 
-In the [Tokio tracing](https://tokio.rs/blog/2019-08-tracing) library, structured logging is implemented using [spans and events](https://docs.rs/tracing/0.1.31/tracing/index#core-concepts).
-Spans cover a whole block of functionality, like one function call, a future or asynchronous task, and so on. They can be nested, and key-value pairs in spans give context to events or logs inside the function.
+The [Tokio tracing](https://tokio.rs/blog/2019-08-tracing) library implements structured logging using [spans and events](https://docs.rs/tracing/0.1.31/tracing/index#core-concepts).
+Spans cover a whole block of functionality, like one function call, a future or asynchronous task, and so on. You can nest them, and key-value pairs in spans give context to events or logs inside the function.
 
 - Spans and their key-value pairs add essential context to enclosed logs, such as a transaction ID.
 - Spans also track time spent in different sections of code, enabling distributed tracing functionality.
@@ -64,25 +64,25 @@ Spans cover a whole block of functionality, like one function call, a future or 
 
 Here is a list of context information of interest:
 
-- TX Digest
+- TX digest
 - Object references/ID, when applicable
 - Address
 - Certificate digest, if applicable
-- For Client HTTP endpoint: route, method, status
+- For client HTTP endpoint: route, method, status
 - Epoch
 - Host information, for both clients and validators
 
 In the digest, `process_tx` is a span that covers handling the initial transaction request, and `Checked locks` is a single log message within the transaction handling method in the validator.
 
-Every log message that occurs within the span inherits the key-value properties defined in the span, including the `tx_digest` and any other fields that are added. Log messages can set their own keys and values. The fact that logs inherit the span properties allows you to trace, for example, the flow of a transaction across thread and process boundaries.
+Every log message that occurs within the span inherits the key-value properties defined in the span, including the `tx_digest` and any other fields you add. Log messages can set their own keys and values. The fact that logs inherit the span properties allows you to trace, for example, the flow of a transaction across thread and process boundaries.
 
 ## Key-value pairs schema {#key-value-pairs-schema}
 
-Spans capture not a single event but an entire block of time, so start, end, duration, and similar values can be captured and analyzed for tracing, performance analysis, and so on.
+Spans capture not a single event but an entire block of time, so you can capture and analyze start, end, duration, and similar values for tracing, performance analysis, and so on.
 
 ### Tags - keys {#tags-keys}
 
-Every event and span gets tagged with key-value pairs. Events that log within any context or nested contexts also inherit the context-level tags.
+Sui tags every event and span with key-value pairs. Events that log within any context or nested contexts also inherit the context-level tags.
 
 These tags represent fields that you can analyze and filter by. For example, you can filter out broadcasts and see the errors for all instances where the bad stake exceeded a certain amount, but not enough for an error.
 
@@ -90,9 +90,9 @@ These tags represent fields that you can analyze and filter by. For example, you
 
 Balancing the right amount of verbosity, especially by default, is always tricky while keeping in mind this is a high performance system.
 
-| Level | Type of Messages                                                                                           |
+| Level | Type of messages                                                                                           |
 | ----- | ---------------------------------------------------------------------------------------------------------- |
-| Error | Process-level faults (not transaction-level errors, there could be a ton of those)                         |
+| Error | Process-level faults (not transaction-level errors, there could be many of those)                          |
 | Warn  | Unusual or byzantine activity                                                                              |
 | Info  | High level aggregate stats, major events related to data sync, epoch changes.                              |
 | Debug | High level tracing for individual transactions, for example Gateway/client side -> validator -> Move execution. |
@@ -130,11 +130,11 @@ You can configure `RUST_LOG` for custom logging output, including filtering. See
 
 ### Tracing and span output {#tracing-and-span-output}
 
-To generate detailed span start and end logs, define the `SUI_JSON_SPAN_LOGS` environment variable. This causes all output to be in JSON format, which is not as human-readable, so it is not enabled by default.
+To generate detailed span start and end logs, define the `SUI_JSON_SPAN_LOGS` environment variable. This causes all output to be in JSON format, which is not as human-readable, so Sui does not enable it by default.
 
 You can send this output to a tool or service for indexing, alerts, aggregation, and analysis.
 
-The following example output shows certificate processing in the authority with span logging. The `START` and `END` annotations show how `DB_UPDATE_STATE`, which is nested, is embedded within `PROCESS_CERT`. The `elapsed_milliseconds` field logs the duration of each span.
+The following example output shows certificate processing in the authority with span logging. The `START` and `END` annotations show how `PROCESS_CERT` embeds the nested `DB_UPDATE_STATE`. The `elapsed_milliseconds` field logs the duration of each span.
 
 ```sh
 {"v":0,"name":"sui","msg":"[PROCESS_CERT - START]","level":20,"hostname":"Evan-MLbook.lan","pid":51425,"time":"2022-03-08T22:48:11.241421Z","target":"sui_core::authority_server","line":67,"file":"sui_core/src/authority_server.rs","tx_digest":"t#d1385064287c2ad67e4019dd118d487a39ca91a40e0fd8e678dbc32e112a1493"}
@@ -166,11 +166,11 @@ $ SUI_TRACING_ENABLE=1 RUST_LOG="info,sui_core=trace" ./sui start
 
 :::info
 
-Separate spans (that are not nested) are not connected as a single trace for now.
+Sui does not connect separate spans (that are not nested) as a single trace for now.
 
 :::
 
-### Live async inspection / Tokio Console {#tokio-console}
+### Live async inspection with Tokio Console {#tokio-console}
 
 [Tokio-console](https://github.com/tokio-rs/console) is a CLI tool designed to analyze and help debug Rust apps using Tokio, in real time. It relies on a special subscriber.
 
@@ -186,14 +186,14 @@ Adding Tokio-console support might significantly slow down Sui validators and ga
 
 ### How do I profile memory usage? {#memory-profiling}
 
-Sui uses the [jemalloc memory allocator](https://jemalloc.net/) by default on most platforms, and there is code that enables automatic memory profiling using jemalloc's sampling profiler, which is very lightweight and designed for production use. The profiling code spits out profiles at most every 5 minutes, and only when total memory has increased by a default 20%. Profiling files are named `jeprof.<TIMESTAMP>.<memorysize>MB.prof` so that it is easy to
+Sui uses the [jemalloc memory allocator](https://jemalloc.net/) by default on most platforms, and there is code that enables automatic memory profiling using jemalloc's sampling profiler, which is very lightweight and designed for production use. The profiling code spits out profiles at most every 5 minutes, and only when total memory has increased by a default 20%. Sui names profiling files `jeprof.<TIMESTAMP>.<memorysize>MB.prof` so that it is easy to
 correlate to metrics and incidents, for ease of debugging.
 
-For the memory profiling to work, you need to set the environment variable `_RJEM_MALLOC_CONF=prof:true`. If you use the [Docker image](https://hub.docker.com/r/mysten/sui-node) they are set automatically.
+For the memory profiling to work, you need to set the environment variable `_RJEM_MALLOC_CONF=prof:true`. If you use the [Docker image](https://hub.docker.com/r/mysten/sui-node), it sets this variable automatically.
 
-Running some allocator-based heap profilers such as [Bytehound](https://github.com/koute/bytehound) will essentially disable automatic jemalloc profiling, because they interfere with or don't implement `jemalloc_ctl` stats APIs.
+Running some allocator-based heap profilers such as [Bytehound](https://github.com/koute/bytehound) essentially disables automatic jemalloc profiling, because they interfere with or don't implement `jemalloc_ctl` stats APIs.
 
-To view the profile files on the same platform where the profiles were gathered, complete the following steps:
+To view the profile files on the same platform where you gathered the profiles, complete the following steps:
 
 1.  Install `libunwind`, the `dot` utility from graphviz, and jeprof. On Debian: `apt-get install libjemalloc-dev libunwind-dev graphviz`.
 1.  Build with debug symbols: `cargo build --profile bench-profiling`
@@ -211,6 +211,6 @@ With automatic memory profiling, it is no longer necessary to configure environm
 For example, set `_RJEM_MALLOC_CONF` to:
 `prof:true,lg_prof_interval:24,lg_prof_sample:19`
 
-The preceding setting means: turn on profiling, sample every 2^19 or 512KB bytes allocated, and dump out the profile every 2^24 or 16MB of memory allocated. However, the automatic profiling is designed to produce files that are better named and at less intervals, so overriding the default configuration is not usually recommended.
+The preceding setting means: turn on profiling, sample every 2^19 or 512KB bytes allocated, and dump out the profile every 2^24 or 16MB of memory allocated. However, the automatic profiling aims to produce files that are better named and at less intervals, so you usually should not override the default configuration.
 
 :::
