@@ -33,11 +33,13 @@ answer: There are some best practices to consider when developing for SuiPlay0X1
 
 <ImportContent source="suiplay" mode="snippet" />
 
+When developing for SuiPlay0X1, minimize player signing prompts during gameplay by batching operations into programmable transaction blocks (PTBs), use gas sponsorship so players don't need to hold SUI, store onchain only data that must be player-owned or tradeable, and check wallet state fresh at the start of every session.
+
 Developing for SuiPlay0X1 requires careful decisions around transaction frequency, gas management, and data storage. Apply these practices to keep gameplay smooth, reduce costs, and protect players.
 
 ## Handling transactions
 
-Avoid frequent micro-transactions: If players are using their self-custody wallets and transactions require explicit player signatures, then you should avoid frequent micro-transactions, particularly during gameplay. Signing a transaction requires popping up an on-device visual element or an off-device browser dialog to approve, breaking the gameplay flow. This is not a concern if you are managing custodial wallets on behalf of the player. See [Wallet Integration Options](/sui-stack/suiplay0x1/wallet-integration) for more information on available wallet integrations.
+Avoid frequent micro-transactions: If players are using their self-custody wallets and transactions require explicit player signatures, then you should avoid frequent micro-transactions, particularly during gameplay. Signing a transaction requires popping up an on-device visual element or an off-device browser dialog to approve, breaking the gameplay flow. This is not a concern if you are managing custodial wallets (wallets your game operates on behalf of the player). See [Wallet Integration Options](/sui-stack/suiplay0x1/wallet-integration) for more information on available wallet integrations.
 
 Many onchain actions do not require explicit user approval. For example, dropping rewards to a user, incrementing their currency, and so on. The game can handle these whenever appropriate, even silently in the background during gameplay.
 
@@ -52,7 +54,7 @@ If using a third-party wallet service ([Beamable](https://beamable.com/), [Shina
 
 ### How does gas sponsorship work for SuiPlay0X1 games?
 
-[Gas sponsorship](/develop/transaction-payment/sponsor-txn) lets your game pay transaction fees on behalf of players. The player signs the transaction but a sponsor address covers the gas. Services like Shinami provide sponsorship APIs that integrate directly into your transaction flow. When you enable sponsorship, players interact with onchain features without needing to hold SUI in their wallets.
+[Gas sponsorship](/develop/transaction-payment/sponsor-txn) lets your game pay transaction fees on behalf of players. The player still signs the transaction, but does not pay for it: a sponsor address covers the gas. Services like Shinami provide sponsorship APIs that integrate directly into your transaction flow. When you enable sponsorship, players interact with onchain features without needing to hold SUI in their wallets.
 
 Batch transactions whenever possible regardless of whether you use sponsorship. Fewer transactions mean lower cumulative gas costs and a faster experience for players.
 
@@ -87,10 +89,22 @@ For hybrid scenarios, store a commitment or proof onchain and keep the full data
 
 ### Session start protocol
 
-Always check wallet state at session beginning and don't cache wallet data between sessions as assets can change externally.
+At the beginning of each session:
+
+1. Check the player's current wallet state.
+2. Don't use wallet data cached from a previous session, as assets can change externally.
+3. Enforce session expiry rather than holding long-lived sessions.
 
 :::caution
 
-Follow wallet and session security practices to protect players. Do not cache wallet state between sessions, because assets and balances can change externally and stale state can mislead the player. Avoid blind signing: present clear, human-readable transaction details so players know what they are approving. Enforce session expiry rather than holding long-lived sessions, and rate-limit and authorize sponsored transactions so an attacker cannot drain your gas budget through abuse. When you operate custodial wallets on a player's behalf, clearly disclose the associated custodial risk to users. See the [Security Best Practices](/develop/security/best-practices) guide.
+Follow wallet and session security practices to protect players. Confirm that your game meets each of these requirements:
+
+- Wallet state is not cached between sessions, because assets and balances can change externally and stale state can mislead the player.
+- There is no blind signing: every signing prompt presents clear, human-readable transaction details so players know what they are approving.
+- Sessions expire rather than being held long-lived.
+- Sponsored transactions are rate-limited and authorized so an attacker cannot drain your gas budget through abuse.
+- When you operate custodial wallets on a player's behalf, the associated custodial risk is clearly disclosed to users.
+
+See the [Security Best Practices](/develop/security/best-practices) guide.
 
 :::
