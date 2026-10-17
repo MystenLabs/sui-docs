@@ -69,7 +69,7 @@ Two guarantees do the work in every composition:
 
 ## Fund and order atomically
 
-Deposit into a `BalanceManager` and place an order in the same block, so both settle together. The [cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook#deepbook-deposit-and-place-an-order-in-one-ptb) has the CLI form; the compile-checked SDK version:
+Deposit into a `BalanceManager` and place an order in the same block, so both settle together. The [cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook#how-do-i-deposit-and-place-a-deepbook-order-in-one-ptb) has the CLI form; the compile-checked SDK version:
 
 <ImportContent source="examples/deepbook-spot/src/compose.ts" mode="code" tag="fund-order" />
 
@@ -77,7 +77,7 @@ Deposit into a `BalanceManager` and place an order in the same block, so both se
 
 ## Flash loan round trip
 
-Borrow, use, and repay in one block. `borrowBaseAsset` returns the borrowed coin and the `FlashLoan` hot potato; `returnBaseAsset` consumes it. The [cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook#deepbook-flash-loan-borrow-and-repay) and [Flash Loans SDK](/onchain-finance/deepbook/deepbookv3-sdk/flash-loans) cover the quote variants.
+Borrow, use, and repay in one block. `borrowBaseAsset` returns the borrowed coin and the `FlashLoan` hot potato; `returnBaseAsset` consumes it. The [cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook#how-do-i-write-a-deepbook-flash-loan-ptb) and [Flash Loans SDK](/onchain-finance/deepbook/deepbookv3-sdk/flash-loans) cover the quote variants.
 
 The sample calls `borrowBaseAsset`, passes the borrowed coin through a no-op use step, and repays with `returnBaseAsset`, which consumes the `FlashLoan`:
 
