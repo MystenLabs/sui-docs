@@ -273,7 +273,7 @@ The following example lists an account's grants, splits them at the current time
 
 ## How to trade as a session key {#trade}
 
-Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Version 2.7.0 records Testnet's Sessions v3 package, and Mainnet needs version `TBD-DBU-890: SDK release` or later. On Mainnet, 2.7.0 resolves Sessions version 2, `0xec678aee…`. Mainnet's `SessionsConfig` watermark is 1, so that package still authorizes sessions and runs the DeepBook spot calls, but its Predict wrappers abort with `EPackageVersionDisabled` because they call a Predict version below 4. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
+Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Version 2.7.0 records Testnet's Sessions v3 package, and Mainnet needs version `TBD-DBU-890: SDK release` or later. On Mainnet, 2.7.0 resolves Sessions version 2, `0xec678aee…`, which Mainnet's cutover retired, so every session call it builds there aborts with `EPackageVersionDisabled`, DeepBook spot calls included. Only `revokeSession` still works through it, because revocation has no version gate. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
 
 ### Queue orders as the session key {#queue-as-session}
 
@@ -349,7 +349,7 @@ The following example builds an owner-signed revocation, reads a session's expir
 - `cancelLiveOrders`: Cancels several DeepBook spot orders.
 - `withdrawSettledAmounts`: Sweeps settled DeepBook spot proceeds into account custody.
 
-Whether these calls succeed depends on a DeepBook registry authorization. A chain read on 2026-10-15 found it on both networks, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
+They need Sessions version 3 on both networks, so on Mainnet use version `TBD-DBU-890: SDK release` of the SDK or later. Whether they succeed also depends on a DeepBook registry authorization. A chain read on 2026-10-15 found it on both networks, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
 
 Each generated function takes an options object with these fields:
 

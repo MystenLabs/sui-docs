@@ -734,9 +734,9 @@ The order fee is per order, not per contract. A fill moves it into market cash, 
 | --- | --- | --- | --- | --- |
 | `deepbook_predict` | `ProtocolConfig.version_watermark` | `protocol_config::bump_version_watermark` | `4` | `4` |
 | `deepbook_predict_orders` | `OrderDesk.version_watermark` | `desk::bump_version_watermark` | `1` | `1` |
-| `sessions` | `SessionsConfig.version_watermark` | `session_config::bump_version_watermark` | `3` | `1` |
+| `sessions` | `SessionsConfig.version_watermark` | `session_config::bump_version_watermark` | `3` | `3` |
 
-A package runs the dependency versions it linked when it was published, so the order-flow package and Sessions must be relinked to each new Predict version before Predict's watermark retires the old one. An order-flow package still linked to a retired Predict version aborts on every call into Predict. A Sessions package linked to one aborts its Predict wrappers, while placing orders directly keeps working. Mainnet's Sessions floor stayed at 1 through its cutover, so its Sessions versions 1 and 2 still run their DeepBook spot wrappers, but their Predict wrappers abort with `EPackageVersionDisabled`, and queued orders through a session need Sessions version 3.
+A package runs the dependency versions it linked when it was published, so the order-flow package and Sessions must be relinked to each new Predict version before Predict's watermark retires the old one. An order-flow package still linked to a retired Predict version aborts on every call into Predict. A Sessions package linked to one aborts its Predict wrappers, while placing orders directly keeps working.
 
 ### Queue reads {#queue-reads}
 

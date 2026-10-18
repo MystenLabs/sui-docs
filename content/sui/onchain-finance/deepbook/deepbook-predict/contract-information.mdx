@@ -23,7 +23,7 @@ keywords:
   - order desk
   - delayed execution
 last_verified: 2026-10-13
-verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict publish 4 at 0x98235c58, upgrade GRE9hRtF at checkpoint 334077809, recorded by deepbookv3 #1363; Mainnet predict_orders publish 1 at 0x7cd41de3 with OrderDesk 0x87b0a872 and QueueRegistry 0x8d4f0c67, publish 91f5tZpY at checkpoint 334309297; both read on chain 2026-10-15; Mainnet sessions v3 record still to land, see TBD-DBU-890) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13, both SessionsConfig watermarks (Testnet 3, Mainnet 1) and both DeepBook registries re-read 2026-10-15; '@mysten/deepbook-v3' 2.7.0
+verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict publish 4 at 0x98235c58, upgrade GRE9hRtF at checkpoint 334077809, recorded by deepbookv3 #1363; Mainnet predict_orders publish 1 at 0x7cd41de3 with OrderDesk 0x87b0a872 and QueueRegistry 0x8d4f0c67, publish 91f5tZpY at checkpoint 334309297; both read on chain 2026-10-15; Mainnet sessions publish 3 at 0xfd9ef53c, upgrade QY4eHW1u at checkpoint 334455961, read on chain 2026-10-18, record not yet on deepbookv3 main) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13, both SessionsConfig watermarks re-read 2026-10-18 (Testnet 3, Mainnet 1 until the cutover transaction raises it to 3) and both DeepBook registries re-read 2026-10-15; '@mysten/deepbook-v3' 2.7.0
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -99,7 +99,7 @@ Testnet `predict` is on its 5th publish and Mainnet's on its 4th, yet both run p
 
 Every version-gated call runs `assert_version`, which aborts with `EPackageVersionDisabled` unless `constants::current_version!() >= ProtocolConfig.version_watermark`. An older package therefore keeps working until an admin raises the watermark past it, at which point every call through it stops. That is what makes a stale call target in a client library a deferred failure rather than an immediate one.
 
-Each network's delayed-execution cutover raised its watermark to 4, so only protocol version 4 runs on either. `SessionsConfig` has a watermark of its own. Testnet's is 3, which retires the earlier Sessions packages there. Mainnet's is 1, and its cutover left it there, so every Mainnet Sessions package still authorizes sessions and runs the DeepBook spot wrappers. The Predict wrappers in Mainnet's Sessions versions 1 and 2 call Predict versions below 4, so they abort with `protocol_config::EPackageVersionDisabled`, and queued Predict orders through a session go through Sessions version 3. `deepbook_predict_orders` has a floor of its own on each `OrderDesk`, at 1.
+Each network's delayed-execution cutover raised its watermark to 4, so only protocol version 4 runs on either. `SessionsConfig` has a watermark of its own, and each network's cutover raised it to 3. Only Sessions version 3 runs on either network, so a call through Sessions version 1 or 2 aborts with `session_config::EPackageVersionDisabled`, and that includes the DeepBook spot wrappers. `deepbook_predict_orders` has a floor of its own on each `OrderDesk`, at 1.
 
 ## Upgraded packages carry 2 IDs {#two-ids}
 
@@ -152,7 +152,7 @@ Predict is 9 packages rather than one. Move call targets, event type prefixes, a
 | `account` | `0x4e1dd01465713c9d832313fed5f45c222a4d5c62a533d6da96764c8b2a245d58` | Same | Account custody, balances, and the `Auth` authorization type |
 | `fixedMath` | `0x52ec2d263bb9ad545d1be1c00f6779cc577ed7c0408cdea8d589c2664adc22db` | Same | Fixed-point arithmetic used by the pricing math |
 | `deepbookCoreAccount` | `0xd71b5a341dc8dc7e187517849edf61e54670b60fe496e07186c09a65fa7afdb7` | Same | DeepBook core account app type |
-| `sessions` | `TBD-DBU-890: Mainnet sessions v3 call target` | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | Session support, including the queued-order wrappers |
+| `sessions` | `0xfd9ef53ca443517d6a3a4d8742e00eaa1e7f35b0997697caab8c3e62870c0ce5` | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | Session support, including the queued-order wrappers |
 | `usdc` | `0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7` | Same | Circle native USDC, linked as an existing dependency |
 
 Every upgrade kept its original ID, so every object, position, account, and session grant created before them stays valid, and the PLP coin type below is unchanged. The delayed-execution types and events that `predict` protocol version 4 introduced carry the version 4 call target as their defining ID.
@@ -503,7 +503,6 @@ The 2 deployments run the same protocol versions, but they are separate deployme
 - **Read services:** None exists for either current deployment as of 2026-09-14.
 - **DeepBook core authorization:** Both deployment manifests record the DeepBook core registry as not having authorized `DeepbookCoreAccountApp`, but both registries have authorized it since, as a chain read on 2026-10-15 found. Read the registry rather than the manifest before relying on the session spot wrappers, per [App authorization](#app-authorization).
 - **Package version:** the networks have not been upgraded in lockstep and need not be. Compare protocol versions rather than publish counts, as [Publish count is not protocol version](#version-numbers) explains, and remember that an older call target keeps working only until the `ProtocolConfig` watermark passes it.
-- **Sessions version floor:** Testnet's `SessionsConfig` watermark is 3 and Mainnet's is 1, so Mainnet's earlier Sessions packages still authorize sessions and run the DeepBook spot wrappers, and Testnet's do not. On both networks, queued Predict orders through a session need Sessions version 3, as [The version gate](#version-gate) explains.
 
 Structure your code so none of these become assumptions:
 
