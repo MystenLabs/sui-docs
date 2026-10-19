@@ -75,7 +75,7 @@ answer: >-
   held in the account on both networks, and settlement is the permissionless
   try_settle.
 last_verified: 2026-10-13
-verified_against: deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet built from 98128174, byte-identical); Testnet ProtocolConfig and OrderDesk read 2026-10-13 and 2026-10-14, Mainnet OrderDesk read 2026-10-15, other Mainnet values from its 2026-10-20 reopening; '@mysten/deepbook-v3' 2.7.0; queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet built from 98128174, byte-identical); Testnet ProtocolConfig and OrderDesk read 2026-10-13 and 2026-10-14, Mainnet OrderDesk read 2026-10-15, other Mainnet values from its 2026-10-20 reopening; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
 ---
 
 Trading on DeepBook Predict runs through the `deepbook_predict::expiry_market` module and, from protocol version 4, through the `queue` module of the `deepbook_predict_orders` package. One shared `ExpiryMarket` object exists per underlying and expiry, and it owns that expiry's USDC custody, strike exposure index, congestion estimator, mint pause flag, and flush stamp. Every call on this page is a `public fun` that you invoke from a programmable transaction block with a `moveCall`. Several of them take values only another command in the same block can produce, a transaction-local `Pricer` and a single-use account `Auth`, so plan the whole flow as one block.
@@ -762,7 +762,7 @@ Every read below is permissionless and non-mutating:
 
 ### Queue orders from TypeScript {#queued-orders-sdk}
 
-Version 2.7.0 of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) adds the queued-order flow to `client.predict` and records the Testnet deployment, and version `TBD-DBU-890: SDK release` records Mainnet's: `read.planMint` quotes an order and turns a slippage in cents per contract into its limits, `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits, `decode.enqueue` reads the record ID from the result, and `read.waitForOutcome` polls the record until it fills or refunds. [Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers each method.
+Version 2.7.0 of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) adds the queued-order flow to `client.predict` and records the Testnet deployment, and version 2.8.0 records Mainnet's: `read.planMint` quotes an order and turns a slippage in cents per contract into its limits, `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits, `decode.enqueue` reads the record ID from the result, and `read.waitForOutcome` polls the record until it fills or refunds. [Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers each method.
 
 <details>
 <summary>Queue a mint and follow it</summary>

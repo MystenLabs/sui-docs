@@ -53,7 +53,7 @@ answer: >-
   read.planMint and read.planSell plans remain the pre-trade check against real
   account and market state.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); predict protocol version 4 and sessions 3 on both networks (Mainnet from 2026-10-20), publication records at deepbookv3 29117434'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet from 2026-10-20), publication records at deepbookv3 29117434'
 ---
 
 The `cost` namespace on `@mysten/deepbook-v3/predict` prices a Predict trade without touching the chain. It is an exact integer port of the deployed fee path, not an estimate: feed it the same inputs the execution sees and it returns the same raw amounts the contract charges. That makes it the right tool for an order ticket that has to re-price on every keystroke, for a board of candidate strikes, and for sizing a spend before a transaction exists.

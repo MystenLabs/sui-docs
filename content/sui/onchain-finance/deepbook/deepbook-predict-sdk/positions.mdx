@@ -60,18 +60,18 @@ answer: >-
   deprecated and abort on both networks, and `tx.claimSettled` pays a position
   held in the account from before the cutover.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); predict protocol version 4 on both networks at deepbookv3 29117434 (Mainnet from 2026-10-20); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 on both networks at deepbookv3 29117434 (Mainnet from 2026-10-20); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13'
 ---
 
 The position functions in the DeepBook Predict SDK place and follow queued orders, quote a mint, claim a position held in the account, list the positions an account holds, and decode the receipt of each trade. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) explains the mechanics that these builders wrap.
 
-Both networks run Predict protocol version 4, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders). Version 2.7.0 records the Testnet deployment, and Mainnet needs version `TBD-DBU-890: SDK release` or later. `read.executionMode()` confirms which path a network is on.
+Both networks run Predict protocol version 4, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders). Version 2.7.0 records the Testnet deployment, and Mainnet needs version 2.8.0 or later. `read.executionMode()` confirms which path a network is on.
 
 Every function is a member of `client.predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) shows how to register. Each builder and quote that targets a market takes the market as a [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets): an object that names the market by its `underlying`, `expiryMs`, and optional `marketId`, plus the strike, as a binary or range position, where the call needs one. The function then reads the chain to resolve the market object and caches it per client, so those functions are asynchronous. The SDK takes and returns amounts as decimal USDC values and converts them to 6-decimal base units; see [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units).
 
 ## Queued orders {#queued-orders}
 
-From Predict protocol version 4, a mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement, and a keeper or any other caller then fills it at that price or refunds it. Version 2.7.0 of the SDK adds the queued path to `client.predict` and records Testnet's delayed-execution deployment, and version `TBD-DBU-890: SDK release` records Mainnet's. With an older release on Mainnet, the queued functions throw `PredictInputError` unless you pass a `config` that sets `packages.predictDelayedExecution`, `packages.predictOrders`, `objects.orderDesk`, and `objects.queueRegistry`.
+From Predict protocol version 4, a mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement, and a keeper or any other caller then fills it at that price or refunds it. Version 2.7.0 of the SDK adds the queued path to `client.predict` and records Testnet's delayed-execution deployment, and version 2.8.0 records Mainnet's. With an older release on Mainnet, the queued functions throw `PredictInputError` unless you pass a `config` that sets `packages.predictDelayedExecution`, `packages.predictOrders`, `objects.orderDesk`, and `objects.queueRegistry`.
 
 A queued order differs from an immediate trade in 4 ways:
 

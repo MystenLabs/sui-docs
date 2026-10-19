@@ -22,7 +22,7 @@ keywords:
   - queued order
   - delayed execution
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434, Mainnet from 2026-10-20 at 98128174); '@mysten/deepbook-v3' 2.7.0; queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434, Mainnet from 2026-10-20 at 98128174); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
 goal:
   description: >-
     Reader can complete a full DeepBook Predict flow against the selected
@@ -69,7 +69,7 @@ import TabItem from '@theme/TabItem';
 
 This page walks through a complete DeepBook Predict flow on Testnet with the TypeScript SDK: pricing a market board, creating an account, queuing directional and two-sided range mints, selling or settling the positions, and running the queued liquidity provider flow. It continues from the [DeepBook Predict quickstart](/onchain-finance/deepbook/deepbook-predict), which covers install, funding, and a first mint.
 
-The walkthrough sends every transaction and every read through the `/predict` subpath of `@mysten/deepbook-v3`, version 2.7.0 or later. The SDK carries both the `deepbook-predict-mainnet` and `deepbook-predict-testnet` deployments, and the samples select one with a single `NETWORK` constant that defaults to `'testnet'`. The walkthrough runs on Testnet, where the quote coin is a mintable test coin. Both networks run Predict protocol version 4, where every trade is a queued order, so the same code runs on Mainnet, where the quote coin is native USDC, with version `TBD-DBU-890: SDK release` or later of the SDK, the first that records the Mainnet deployment. The SDK builds transactions and never signs them, and every read it exposes runs against the Sui client core API, so no indexer or server sits on the critical path. The samples live in the `examples/deepbook-predict` package, which type-checks with `npm run build` (`tsc --noEmit`). This document does not execute them, so run the [manual verification steps](#verify-on-testnet) before you rely on the write paths.
+The walkthrough sends every transaction and every read through the `/predict` subpath of `@mysten/deepbook-v3`, version 2.7.0 or later. The SDK carries both the `deepbook-predict-mainnet` and `deepbook-predict-testnet` deployments, and the samples select one with a single `NETWORK` constant that defaults to `'testnet'`. The walkthrough runs on Testnet, where the quote coin is a mintable test coin. Both networks run Predict protocol version 4, where every trade is a queued order, so the same code runs on Mainnet, where the quote coin is native USDC, with version 2.8.0 or later of the SDK, the first that records the Mainnet deployment. The SDK builds transactions and never signs them, and every read it exposes runs against the Sui client core API, so no indexer or server sits on the critical path. The samples live in the `examples/deepbook-predict` package, which type-checks with `npm run build` (`tsc --noEmit`). This document does not execute them, so run the [manual verification steps](#verify-on-testnet) before you rely on the write paths.
 
 :::caution
 
