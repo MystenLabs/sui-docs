@@ -75,7 +75,7 @@ answer: >-
   held in the account on both networks, and settlement is the permissionless
   try_settle.
 last_verified: 2026-10-13
-verified_against: deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet built from 98128174, byte-identical); Testnet ProtocolConfig and OrderDesk read 2026-10-13 and 2026-10-14, Mainnet OrderDesk read 2026-10-15, other Mainnet values from its 2026-10-20 reopening; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet built from 98128174, byte-identical); Testnet ProtocolConfig and OrderDesk read 2026-10-13 and 2026-10-14, Mainnet OrderDesk read 2026-10-15, other Mainnet values from its reopening plan; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
 ---
 
 Trading on DeepBook Predict runs through the `deepbook_predict::expiry_market` module and, from protocol version 4, through the `queue` module of the `deepbook_predict_orders` package. One shared `ExpiryMarket` object exists per underlying and expiry, and it owns that expiry's USDC custody, strike exposure index, congestion estimator, mint pause flag, and flush stamp. Every call on this page is a `public fun` that you invoke from a programmable transaction block with a `moveCall`. Several of them take values only another command in the same block can produce, a transaction-local `Pricer` and a single-use account `Auth`, so plan the whole flow as one block.
@@ -84,7 +84,7 @@ The module lives at [`packages/predict/sources/expiry_market.move`](https://gith
 
 :::info
 
-Both networks run Predict protocol version 4, Testnet since 2026-10-09 and Mainnet since 2026-10-20. Every trade is a queued order placed through the `deepbook_predict_orders` package, which [Queued orders](#queued-orders) covers. The immediate mint and live-redeem functions keep their signatures and always abort with `EDelayedExecutionRequired`, as [Retired immediate trades](#mint-a-position) describes.
+Both networks run Predict protocol version 4. Every trade is a queued order placed through the `deepbook_predict_orders` package, which [Queued orders](#queued-orders) covers. The immediate mint and live-redeem functions keep their signatures and always abort with `EDelayedExecutionRequired`, as [Retired immediate trades](#mint-a-position) describes.
 
 :::
 
@@ -318,7 +318,7 @@ From protocol version 4, a mint or an early sell no longer fills inside the trad
 
 :::info
 
-Both networks passed the delayed-execution cutover, Testnet on 2026-10-09 and Mainnet on 2026-10-20, so every trade on either is a queued order. Read `protocol_config::version_watermark`, or call the SDK's `client.predict.read.executionMode()`, to confirm a network's path.
+Both networks passed the delayed-execution cutover, so every trade on either is a queued order. Read `protocol_config::version_watermark`, or call the SDK's `client.predict.read.executionMode()`, to confirm a network's path.
 
 :::
 
@@ -356,7 +356,7 @@ Each market has one `MarketQueue`, a shared object at an ID derived from the `Qu
 Predict protocol version 4 compiles `constants::current_version!()` as `4`, and `ProtocolConfig.version_watermark` reaching 4 is the delayed-execution cutover:
 
 - **Admission waits for the cutover.** Predict refuses every queued order with `protocol_config::ECutoverNotReached` until the watermark reaches 4. The bump also retires every older Predict version, so no package that knows nothing about the queue can run while an order waits. The watermark only moves up, so the cutover cannot be undone.
-- **Predict serves only an allowlisted order flow.** An admin runs `protocol_config::set_order_flow<OrderFlow>(true)`, where `OrderFlow` is the order-flow package's witness type. Until then, every admission, commit, and fill aborts with `EOrderFlowNotAllowed`. The allowlisting landed with each network's cutover, on 2026-10-09 on Testnet and 2026-10-20 on Mainnet, and emitted `OrderFlowUpdated`.
+- **Predict serves only an allowlisted order flow.** An admin runs `protocol_config::set_order_flow<OrderFlow>(true)`, where `OrderFlow` is the order-flow package's witness type. Until then, every admission, commit, and fill aborts with `EOrderFlowNotAllowed`. The allowlisting landed with each network's cutover and emitted `OrderFlowUpdated`.
 - **The immediate trades always abort.** `mint_exact_quantity`, `mint_exact_amount`, `mint_exact_cost`, and `redeem_live` keep their signatures and abort with `EDelayedExecutionRequired`, at any watermark. Their Sessions wrappers abort through them. [Mint a position immediately](#mint-a-position) documents them for networks before the cutover.
 - **The mint quotes price a queued fill.** `quote_mint`, `quote_mint_for_account`, and `quote_mint_exact_cost_for_account` keep their signatures and now price the order like a queued fill at the current clock. See [Quotes from protocol version 4](#quotes-v4).
 - **The congestion surcharge is gone.** `set_ewma_params` and `set_ewma_enabled` abort with `EEwmaRetired`, and every fill and quote reports `penalty_fee` as 0.
@@ -1094,7 +1094,7 @@ The 2 ordinary reasons a first order fails are admission rules that live in `dee
 | `2` | `EInvalidFeeProbability` | A probability above `1.0` reached the Bernoulli fee curve. |
 | `3` | `EPremiumBelowMinimum` | The premium is below the `min_premium` floor of `1_000_000` base units, which is 1 USDC. |
 
-The minimum premium is the size floor, and it is the one an integrator meets first. Premium is `quantity * entry_probability`, so the smallest admissible quantity is `1 / max_entry_probability` USDC of payout at best, and it rises as the strike moves away from the money. Each market snapshots its band at creation, and the template band is `0.15` to `0.85` on both networks, on Testnet since 2026-10-13 and on Mainnet since its 2026-10-20 reopening. With a `0.85` maximum, the smallest admissible quantity is about `1.18` USDC of payout. At an entry probability of `0.25`, the smallest admissible quantity is `4` USDC of payout, rounded up to the lot size.
+The minimum premium is the size floor, and it is the one an integrator meets first. Premium is `quantity * entry_probability`, so the smallest admissible quantity is `1 / max_entry_probability` USDC of payout at best, and it rises as the strike moves away from the money. Each market snapshots its band at creation, and the template band is `0.15` to `0.85` on both networks, on Testnet since 2026-10-13 and on Mainnet since it reopened on delayed execution. With a `0.85` maximum, the smallest admissible quantity is about `1.18` USDC of payout. At an entry probability of `0.25`, the smallest admissible quantity is `4` USDC of payout, rounded up to the lot size.
 
 The entry-probability band is the other rule. A strike far enough out of the money prices below `min_entry_probability`, and admission rejects it before computing the premium. The band is narrow on both networks, so a strike far from the money, including a window's reference strike once the price has moved away from it, can fall outside it. Read the market's band with the SDK's `read.feePolicy` rather than assuming one.
 

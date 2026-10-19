@@ -15,7 +15,7 @@ keywords:
   - deepbook
   - sui
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434 on Testnet, 98128174 on Mainnet from 2026-10-20); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434 on Testnet, 98128174 on Mainnet after its cutover); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
 goal:
   description: >-
     Reader understands what DeepBook Predict is, knows which network to run
@@ -55,7 +55,7 @@ answer: >-
 
 DeepBook Predict is an expiry-based prediction market protocol on Sui. Each market covers one underlying and one expiry timestamp, and every position is a range contract: it pays a fixed amount when the settlement price lands inside a chosen strike range, and nothing otherwise. Liquidity providers supply USDC to a shared pool, receive `PLP` shares, and take the other side of every trade.
 
-Predict runs on Sui Mainnet as `deepbook-predict-mainnet` and on Sui Testnet as `deepbook-predict-testnet`. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict) and Testnet from `4d752fb8`. Both have since moved to protocol version 4, which adds delayed execution, Testnet on 2026-10-09 and Mainnet on 2026-10-20: every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders), placed now and filled at Pyth's signed price for an instant about 800 ms later, or refunded. The [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) package ships a `/predict` subpath that builds every transaction and answers every read, so trading needs no indexer. Version 2.7.0 carries the Testnet deployment, and Mainnet needs version 2.8.0 or later. The examples on these pages select a network with one constant and default to Testnet.
+Predict runs on Sui Mainnet as `deepbook-predict-mainnet` and on Sui Testnet as `deepbook-predict-testnet`. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict) and Testnet from `4d752fb8`. Both have since moved to protocol version 4, which adds delayed execution: every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders), placed now and filled at Pyth's signed price for an instant about 800 ms later, or refunded. The [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) package ships a `/predict` subpath that builds every transaction and answers every read, so trading needs no indexer. Version 2.7.0 carries the Testnet deployment, and Mainnet needs version 2.8.0 or later. The examples on these pages select a network with one constant and default to Testnet.
 
 :::caution
 

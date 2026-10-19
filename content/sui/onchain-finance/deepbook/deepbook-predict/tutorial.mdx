@@ -22,7 +22,7 @@ keywords:
   - queued order
   - delayed execution
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434, Mainnet from 2026-10-20 at 98128174); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434, Mainnet after its cutover at 98128174); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
 goal:
   description: >-
     Reader can complete a full DeepBook Predict flow against the selected
@@ -291,7 +291,7 @@ A directional position pays `$1` per contract when settlement lands inside its r
 
 5 things decide whether the order lands and fills:
 
-- **Pick a strike near the money.** Admission refuses an entry probability outside the market's band, and each market snapshots its band at creation: `0.15` to `0.85` on markets created since each network widened it, 2026-10-13 on Testnet and 2026-10-20 on Mainnet. A window's reference strike drifts away from the money as the price moves, so the sample takes the strike that prices near 50 cents with `pricer.strikeAtProbability(0.5)` and snaps it onto the admission grid with `snapStrike`. `planMint` throws `entry-band` for a strike outside the band.
+- **Pick a strike near the money.** Admission refuses an entry probability outside the market's band, and each market snapshots its band at creation: `0.15` to `0.85` on markets created since each network widened it, 2026-10-13 on Testnet and at the delayed-execution reopening on Mainnet. A window's reference strike drifts away from the money as the price moves, so the sample takes the strike that prices near 50 cents with `pricer.strikeAtProbability(0.5)` and snaps it onto the admission grid with `snapStrike`. `planMint` throws `entry-band` for a strike outside the band.
 - **Clear the minimum premium.** Admission also requires a premium of at least 1 USDC, and the premium is the quantity multiplied by the entry probability. A budget plan whose budget buys less throws `min-premium`.
 - **Slippage is cents per contract.** It bounds how far the all-in price per `$1` of payout may rise above the quote's price without the fee subsidy, so `slippageCents: 10` lets a contract quoted at 42 cents before the subsidy fill at up to 52 cents, fees included. It is never a percentage. The limits leave the subsidy out because placement checks the order without it. A slippage of a few cents leaves the price little room between the quote and τ, so the order is often refused at placement with `EOrderFailsLimits`, or refunded at the fill, and a refund for the order's own limits keeps the order fee.
 - **The order fee is per order.** Each queued order escrows a flat fee, 0.02 USDC on both networks, on top of its budget. `plan.totalDebit` is the budget plus that fee, and the plan's `amount` includes the fee by default. A fill, or a refund for the order's own limits or for failing admission, keeps the fee, and every other refund returns it.

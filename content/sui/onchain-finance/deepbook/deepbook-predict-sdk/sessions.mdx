@@ -51,7 +51,7 @@ answer: >-
   `redeemLive`, and `redeemSettled`, which require explicit mint caps and accept
   close-side floors.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet from 2026-10-20), publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13'
 ---
 
 The `@mysten/deepbook-v3/sessions` subpath exports `SessionsContract`, which builds the owner-signed calls that grant and revoke a time-limited session key and the session-signed calls that trade DeepBook Predict positions for the account. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) explains the contract mechanism behind each call.
