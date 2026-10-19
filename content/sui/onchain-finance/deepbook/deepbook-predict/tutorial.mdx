@@ -22,7 +22,7 @@ keywords:
   - queued order
   - delayed execution
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434, Mainnet after its cutover at 98128174); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434, Mainnet after its cutover at 98128174); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover
 goal:
   description: >-
     Reader can complete a full DeepBook Predict flow against the selected
@@ -114,7 +114,7 @@ Predict owns no oracle. Pricing inputs live in the separate `propbook` package a
 
 Every priced call rebuilds a transaction-local `Pricer` from those objects through `expiry_market::load_live_pricer`. `Pricer` has `copy` and `drop` but not `store`, so it never persists between transactions, and it binds to exactly one `ExpiryMarket`. The SDK resolves the oracle objects from the deployment configuration for every call it builds, so on those paths you pass no oracle object ID yourself. A call the SDK does not build takes them explicitly: `expiry_market::try_settle` is the one this page asks you to make, and it takes the `OracleRegistry`, the `PythFeed`, and the `BlockScholesValueStore`.
 
-Freshness bounds are protocol configuration, and pricing aborts on a stale Block Scholes input. Testnet requires the Block Scholes spot and forward within 2 seconds and the SVI surface within 10 seconds, and Mainnet allows the SVI surface 60 seconds. Read the live values from the `ProtocolConfig` shared object rather than assuming them, because the deployment manifest records only an initial snapshot.
+Freshness bounds are protocol configuration, and pricing aborts on a stale Block Scholes input. Both networks require the Block Scholes spot and forward within 2 seconds and the SVI surface within 10 seconds. Read the live values from the `ProtocolConfig` shared object rather than assuming them, because the deployment manifest records only an initial snapshot.
 
 A queued order uses the oracles twice. Placement snapshots the Block Scholes spot, forward, and SVI surface into the order. The spot it fills at comes later, from Pyth Lazer's signed update for the order's τ, which the keeper verifies and commits to the queue. The SDK resolves the oracle objects for placement, and you never handle a Lazer update unless you run a filler yourself.
 

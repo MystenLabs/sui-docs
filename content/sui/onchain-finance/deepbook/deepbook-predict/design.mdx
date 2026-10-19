@@ -23,7 +23,7 @@ keywords:
   - queued order
   - order fee
 last_verified: 2026-10-13
-verified_against: deepbookv3 29117434 and 98128174 (predict protocol version 4 on both networks; Mainnet after its cutover); deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; live referral_fee_rate read from both ProtocolConfig objects on 2026-09-28 and 2026-10-13; builder-code ID derivation checked against existing Mainnet and Testnet codes on 2026-10-01; Testnet OrderDesk and no_trade_window_ms read 2026-10-13
+verified_against: deepbookv3 29117434 and 98128174 (predict protocol version 4 on both networks; Mainnet after its cutover); deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; live referral_fee_rate read from both ProtocolConfig objects on 2026-09-28 and 2026-10-13; builder-code ID derivation checked against existing Mainnet and Testnet codes on 2026-10-01; Testnet OrderDesk and no_trade_window_ms read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover
 goal:
   description: >-
     Reader can explain how DeepBook Predict splits state across the Registry,
@@ -127,7 +127,7 @@ Updates to all 3 are permissionless, because a verified Pyth Lazer payload, or a
 
 Propbook's `OracleRegistry` records which feed objects are canonical for an underlying. Market creation asserts those bindings exist, and every priced call revalidates the objects it receives against the current binding, so passing a feed that is not canonical aborts. Predict also rejects an observation whose writer digest matches the current transaction, which stops a caller from pushing an oracle update and trading against it, or snapshotting a flush against it, in the same transaction.
 
-Freshness is a read-time check rather than a writer promise. Live pricing runs under 3 admin-tunable windows: one for the Pyth spot, one for the Block Scholes spot and forward, and a looser one for the SVI parameters, which change more slowly. Both deployments ship the first 2 at 2 seconds and the SVI window at 60 seconds. An observation is fresh only when its source timestamp is positive, not in the future, and inside its window. For Block Scholes data the source timestamp is the provider's per-update timestamp, and the SVI roll-down keys on it.
+Freshness is a read-time check rather than a writer promise. Live pricing runs under 3 admin-tunable windows: one for the Pyth spot, one for the Block Scholes spot and forward, and a looser one for the SVI parameters, which change more slowly. Both deployments run the first 2 at 2 seconds and the SVI window at 10 seconds. An observation is fresh only when its source timestamp is positive, not in the future, and inside its window. For Block Scholes data the source timestamp is the provider's per-update timestamp, and the SVI roll-down keys on it.
 
 ## Strikes, ticks, and positions {#positions-and-ranges}
 

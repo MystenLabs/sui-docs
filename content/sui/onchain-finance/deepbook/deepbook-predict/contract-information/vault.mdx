@@ -44,7 +44,7 @@ answer: >-
   every market's pricer in one snapshot transaction, values each market in later
   transactions, and then fills both queues at that single frozen pool NAV.
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet after its cutover, built from the byte-identical 98128174); Testnet FlushOperatorUpdated event read 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet after its cutover, built from the byte-identical 98128174); Testnet FlushOperatorUpdated event read 2026-10-13; Testnet cadence terms re-read 2026-10-19, Mainnet max_lp_pool_value read after its cutover
 ---
 
 The Predict pool is the counterparty to every trade. Liquidity providers deposit USDC, receive PLP shares, and collectively back the payout liability of every active expiry. All of that capital sits in one shared object, `deepbook_predict::plp::PoolVault`.
@@ -463,7 +463,7 @@ A queued 1,000 USDC supply and a queued 10,000 PLP withdrawal then fill at that 
 - **Withdrawal fee:** `ceil(10_275_000_000 * 2_000_000 / 1_000_000_000) = 20_550_000`, which is 20.55 USDC.
 - **Withdraw payout:** `10_275_000_000 - 20_550_000 = 10_254_450_000`, which is 10,254.45 USDC.
 
-The pool NAV sits under the deployed 500,000 USDC `max_lp_pool_value`, so the supply has headroom to fill in full.
+With `max_lp_pool_value` at Testnet's 500,000 USDC, the pool NAV sits under the cap, so the supply has headroom to fill in full. Mainnet's cap is 20,000 USDC.
 
 ## Why is a new market not mintable? {#rebalance}
 
@@ -490,12 +490,12 @@ sweep_threshold  = max(required_cash * (1 + 2 * band), initial_expiry_cash)
 
 `band` is `expiry_rebalance_pct`, which is `100_000_000` at 1e9 scale, or 10 percent. Below `target_cash` the pool tops the market up, and above `sweep_threshold` it pulls the excess back to idle. `payout_liability` and `inventory_impact_reserve` are the market's backing terms, which [Per-expiry backing](#max-payout) defines.
 
-Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and a chain read of Testnet on 2026-10-13 found these terms on its 2 enabled cadences:
+Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and a chain read of Testnet on 2026-10-19 found these terms on its 2 enabled cadences:
 
 | **Cadence** | **`initial_expiry_cash` raw** | **Reads as** | **`max_expiry_allocation` raw** | **Reads as** |
 |---|---|---|---|---|
-| 1m | `2_000_000_000` | 2,000 USDC | `10_000_000_000` | 10,000 USDC |
-| 5m | `2_000_000_000` | 2,000 USDC | `10_000_000_000` | 10,000 USDC |
+| 1m | `2_000_000_000` | 2,000 USDC | `2_000_000_000` | 2,000 USDC |
+| 5m | `2_000_000_000` | 2,000 USDC | `2_000_000_000` | 2,000 USDC |
 
 The same read found the 1h, 1d, 1w, and 1mo cadences disabled, with every term at zero. Read `registry::cadence_config` for the network you target.
 
