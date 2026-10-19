@@ -54,7 +54,7 @@ Address balances provide a canonical balance for each coin type tied directly to
 
 Use `send_funds` to deposit directly into a recipient address balance. The recipient balance increases without creating new objects, and multiple deposits from different senders all merge into one balance.
 
-SUI amounts on this page are given in MIST, where 1 SUI is 1,000,000,000 MIST.
+The examples express SUI amounts in MIST, where 1 SUI is 1,000,000,000 MIST.
 
 ### TypeScript SDK
 
@@ -70,7 +70,7 @@ tx.moveCall({
 });
 ```
 
-Transactions built using only `tx.balance()` and eligible Move calls like `send_funds` and `redeem_funds` might qualify for zero gas fees when the network supports it.
+Transactions that use only `tx.balance()` and eligible Move calls like `send_funds` and `redeem_funds` might qualify for zero gas fees when the network supports it.
 
 ### CLI
 
@@ -90,7 +90,7 @@ sui client ptb \
     --move-call 0x2::coin::send_funds '<COIN_TYPE>' coin @<RECIPIENT_ADDRESS>
 ```
 
-The CLI also provides a dedicated `sui client send-funds` command that does this without building a PTB:
+The CLI also provides a dedicated `sui client send-funds` command that does this without building a programmable transaction block (PTB):
 
 ```bash
 # Send 0.005 SUI to a recipient's address balance
@@ -184,7 +184,7 @@ tx.transferObjects([tx.coin({ balance: requiredAmount })], recipient);
 
 ### TypeScript SDK: Manual withdrawals
 
-For explicit control over address balance withdrawals, use [`tx.withdrawal()`](https://sdk.mystenlabs.com/sui/transactions/reference#address-balance-withdrawals). The withdrawal must be redeemed through `redeem_funds` to produce a usable `Coin<T>` or `Balance<T>`:
+For explicit control over address balance withdrawals, use [`tx.withdrawal()`](https://sdk.mystenlabs.com/sui/transactions/reference#address-balance-withdrawals). You must redeem the withdrawal through `redeem_funds` to produce a usable `Coin<T>` or `Balance<T>`:
 
 ```typescript
 import { Transaction } from '@mysten/sui/transactions';
@@ -212,7 +212,7 @@ tx.transferObjects([coin], recipient);
 
 :::info
 
-`tx.withdrawal()` creates a `Withdrawal<Balance<T>>` capability that must be redeemed to create a coin or balance. Use `0x2::coin::redeem_funds()` or `0x2::balance::redeem_funds()` to do this. The `coinWithBalance` intent does this automatically.
+`tx.withdrawal()` creates a `Withdrawal<Balance<T>>` capability that you must redeem to create a coin or balance. Use `0x2::coin::redeem_funds()` or `0x2::balance::redeem_funds()` to do this. The `coinWithBalance` intent does this automatically.
 
 :::
 
@@ -311,10 +311,10 @@ Requirements for address balance gas payments:
 - `gas_data.payment` must be empty.
 - `expiration` must be `ValidDuring` with both `min_epoch` and `max_epoch` specified.
 - `max_epoch` must be at most `min_epoch + 1` (single epoch or 1-epoch range).
-- Timestamp-based expiration is not currently supported.
+- Sui does not currently support timestamp-based expiration.
 - The transaction kind must be `ProgrammableTransaction`.
 
-The `nonce` field differentiates otherwise identical transactions. Unlike EVM chains, the nonce has no semantic requirements. It does not need to be sequential, and there is no nonce gap problem. It simply allows you to submit two transactions that would otherwise have the same digest. For most use cases, generate the nonce randomly or use an incrementing counter in your application:
+The `nonce` field differentiates otherwise identical transactions. Unlike Ethereum Virtual Machine (EVM) chains, the nonce has no semantic requirements. It does not need to be sequential, and there is no nonce gap problem. It allows you to submit two transactions that would otherwise have the same digest. For most use cases, generate the nonce randomly or use an incrementing counter in your application:
 
 ```rust
 // Random nonce
@@ -359,15 +359,15 @@ console.log(`enable_address_balance_gas_payments on ${network}:`, enabled);
 
 ## Sponsored transactions
 
-Address balances simplify sponsored transactions compared to coin-based sponsorship.
+Address balances simplify sponsored transactions compared to coin-based sponsorship:
 
-- No gas coin locking risk.
+- There is no gas coin locking risk.
 - The sponsor needs to manage address balance inventory.
 - The user can sign before the sponsor, enabling simpler async flows.
-- Enables permissionless public gas stations.
+- Address balances enable permissionless public gas stations.
 
 :::caution 
-The `GasCoin` argument is still valid here, and usage should still be monitored in sponsored transactions even when using address balance gas payment.
+The `GasCoin` argument is still valid here, and you should still monitor its usage in sponsored transactions even when using address balance gas payment.
 :::
 
 With address balances, the user signs first and the sponsor signs afterward:
@@ -397,9 +397,11 @@ const result = await client.executeTransaction({
 });
 ```
 
-Both sender and sponsor must sign. Storage rebates are credited to the sponsor address balance.
+Both sender and sponsor must sign. The network credits storage rebates to the sponsor address balance.
 
 ## How do I query address balances?
+
+Query address balances with the TypeScript SDK, gRPC, or GraphQL.
 
 ### TypeScript SDK
 
@@ -416,7 +418,7 @@ console.log(balance.addressBalance); // balance from address balance only
 console.log(balance.coinType); // e.g. "0x2::sui::SUI"
 ```
 
-All balance values are returned as strings. Use `BigInt(balance.balance)` for numerical types.
+`getBalance` returns all balance values as strings. Use `BigInt(balance.balance)` for numerical types.
 
 ### gRPC
 
@@ -436,7 +438,7 @@ buf curl --protocol grpc https://fullnode.testnet.sui.io/sui.rpc.v2.StateService
 
 ### GraphQL
 
-Copy the examples below into [GraphQL IDE (Testnet)](https://graphql.testnet.sui.io/graphql) to try them out:
+Copy the following examples into [GraphQL IDE (Testnet)](https://graphql.testnet.sui.io/graphql) to try them out:
 
 ```graphql
 # Single balance
@@ -474,7 +476,7 @@ For more details, see the GraphQL reference for `IAddressable.balance`.
 
 ## Computing balance changes from checkpoint data
 
-Deposits to and withdrawals from address balances do not show up as coin objects in a transaction's inputs and outputs. Instead, they are recorded as accumulator events: a `Merge` operation records funds deposited to an address balance, and a `Split` operation records funds withdrawn from it.
+Deposits to and withdrawals from address balances do not show up as coin objects in a transaction's inputs and outputs. Instead, they appear as accumulator events: a `Merge` operation records funds deposited to an address balance, and a `Split` operation records funds withdrawn from it.
 
 With address balances, you must also process accumulator events from `TransactionEffects` when computing balance changes:
 
@@ -500,7 +502,7 @@ See the [reference implementation](https://github.com/MystenLabs/sui/blob/e23cc4
 
 ### Accessing accumulator events
 
-Accumulator events are embedded in [`TransactionEffects`](https://github.com/MystenLabs/sui/blob/main/crates/sui-types/src/effects/mod.rs):
+[`TransactionEffects`](https://github.com/MystenLabs/sui/blob/main/crates/sui-types/src/effects/mod.rs) contains accumulator events:
 
 ```rust
 use sui_types::effects::TransactionEffectsAPI;

@@ -46,9 +46,9 @@ answer: >-
   these actions, use an `ActionRequest`.
 ---
 
-The main difference between tokens and coins is that tokens do not allow transfers, conversions, or spends by default. There is an authorization mechanism, however, that allows these actions. This mechanism is called an `ActionRequest`. You can choose to allow or disallow any of the actions independently (see the [Request confirmation](#request-confirmation) section).
+The main difference between tokens and coins is that tokens do not allow transfers, conversions, or spends by default. There is an authorization mechanism, however, that allows these actions. This mechanism is an `ActionRequest`. You can choose to allow or disallow any of the actions independently (see the [Request confirmation](#request-confirmation) section).
 
-## Protected actions
+## Which actions are protected? {#protected-actions}
 
 Tokens have four protected actions that create an `ActionRequest`:
 
@@ -59,17 +59,19 @@ Tokens have four protected actions that create an `ActionRequest`:
 | `token::transfer`  | `transfer`  | Transfer a token to a recipient | Contains `recipient` field        |
 | `token::spend`     | `spend`     | Spend a token                   | Contains `spent_balance` field    |
 
-## ActionRequest structure
+## What does an ActionRequest contain? {#actionrequest-structure}
 
-`ActionRequest` is defined in the `sui::token` module and contains the following fields:
+The `sui::token` module defines `ActionRequest`, which contains the following fields:
 
-- `name`: Name of the performed action, standard ones are `transfer`, `spend`, `to_coin` and `from_coin`, and you can create custom actions.
-- `amount`: The amount of the token that is being transferred, spent, converted, and so on.
+- `name`: Name of the performed action. Standard ones are `transfer`, `spend`, `to_coin`, and `from_coin`, and you can create custom actions.
+- `amount`: The amount of the token that the action transfers, spends, converts, and so on.
 - `sender`: The account that initiated the action.
 - `recipient`: The account that receives the token in `transfer` action (use for custom actions).
 - `spent_balance`: The balance of a spent token in the [`spend` action](/onchain-finance/closed-loop-token/spending) (use in custom actions).
 
-Rules can use these fields to determine whether the action should be allowed or not. Rules are custom modules that implement restriction logic. See [Rules](/onchain-finance/closed-loop-token/rules) for more details.
+Not every action sets the `recipient` and `spent_balance` fields: of the standard actions, only `transfer` sets `recipient` and only `spend` sets `spent_balance` (see [Which actions are protected?](#protected-actions)). This is why `token::new_request` takes them as `Option` values (see [Creating a custom request](#creating-a-custom-request)).
+
+Rules can use these fields to determine whether to allow the action. Rules are custom modules that implement restriction logic. See [Rules](/onchain-finance/closed-loop-token/rules) for more details.
 
 An example of a function creating an `ActionRequest`:
 
@@ -80,12 +82,12 @@ public fun transfer<T>(
 ): ActionRequest<T>;
 ```
 
-## Request confirmation {#request-confirmation}
+## How do I confirm a request? {#request-confirmation}
 
 There are three ways to confirm an `ActionRequest` using a:
 
 1. `TreasuryCap` - you (or an application storing the `TreasuryCap`) can call the `token::confirm_with_treasury_cap` function to confirm any request. This method is useful for applications that store the `TreasuryCap` and implement custom logic; it also allows you to `mint` and `transfer` tokens, bypassing the restrictions.
-2. [`TokenPolicy`](/onchain-finance/closed-loop-token/token-policy) - create a shared `TokenPolicy` and set up allowed actions and requirements for each action. This way, applications or wallets know which actions are considered `public` and so they are able to perform them.
+2. [`TokenPolicy`](/onchain-finance/closed-loop-token/token-policy) - create a shared `TokenPolicy` and set up allowed actions and requirements for each action. This way, applications or wallets know which actions count as `public` and so they are able to perform them.
 3. `TokenPolicyCap` - use the capability managing the `TokenPolicy` to confirm requests. This can be useful for applications that have the `TreasuryCap` wrapped and inaccessible; and you need to authorize some administrator action.
 
 :::info
@@ -94,7 +96,7 @@ You can't use `TokenPolicyCap` to confirm `spend` requests.
 
 :::
 
-### Confirming with TreasuryCap
+### How do I confirm with TreasuryCap? {#confirming-with-treasurycap}
 
 Use the `TreasuryCap` to confirm any action request for the token. It's useful for administrator actions (like `mint` and `transfer`), as well as for straightforward applications that don't require a token policy and wrap the `TreasuryCap` into the main object.
 
@@ -109,7 +111,7 @@ public fun confirm_with_treasury_cap<T>(
 ): (String, u64, address, Option<address>);
 ```
 
-An example of a transaction implemented in TypeScript with `@mysten/sui`, confirming an action request with a `TreasuryCap`. Here the admin account owns the `TreasuryCap`, which is used to mint and confirm the transfer request for the token:
+An example of a transaction implemented in TypeScript with `@mysten/sui`, confirming an action request with a `TreasuryCap`. Here the admin account owns the `TreasuryCap`, which the transaction uses to mint and confirm the transfer request for the token. In this and the following examples, replace the `0x...` placeholders with your own package ID, object IDs, and addresses:
 
 ```js
 let tx = new Transaction();
@@ -141,7 +143,7 @@ tx.moveCall({
 // ...
 ```
 
-### Confirming with TokenPolicy
+### How do I confirm with TokenPolicy? {#confirming-with-tokenpolicy}
 
 `TokenPolicy` is a way of enabling certain actions network-wide. After sharing, the `TokenPolicy` is available to everyone. Hence, wallets or other clients can use it to confirm allowed operations.
 
@@ -188,9 +190,9 @@ tx.moveCall({
 // ...
 ```
 
-### Confirming with TokenPolicyCap
+### How do I confirm with TokenPolicyCap? {#confirming-with-tokenpolicycap}
 
-Use `TokenPolicyCap` to confirm action requests. A convenient approach when the `TreasuryCap` is wrapped in another object, and `TokenPolicy` does not allow certain action or has rules that make the default way of confirming impossible.
+Use `TokenPolicyCap` to confirm action requests. A convenient approach when another object wraps the `TreasuryCap`, and `TokenPolicy` does not allow certain action or has rules that make the default way of confirming impossible.
 
 :::info
 
@@ -234,9 +236,9 @@ tx.moveCall({
 // ...
 ```
 
-## Approving actions
+## How do I approve actions? {#approving-actions}
 
-`ActionRequest`s can collect approvals - witness stamps from applications or rules. They carry the confirmation that a certain module or a rule has approved the action. This mechanic allows gating actions behind certain requirements.
+`ActionRequest`s can collect approvals. An approval is a stamp that a module adds to a request by calling `token::add_approval` with its own witness type (the `W` type parameter of `token::add_approval`). It carries the confirmation that a certain module or a rule has approved the action. This mechanic allows gating actions behind certain requirements.
 
 The signature for the `token::add_approval` function is:
 
@@ -247,9 +249,9 @@ public fun add_approval<T, W: drop>(
 );
 ```
 
-Approvals are mostly used for rules, but they can carry confirmations from any module.
+Rules mostly use approvals, but approvals can carry confirmations from any module. See [Rules](/onchain-finance/closed-loop-token/rules) for how rules implement restriction logic.
 
-## Creating a custom request
+## How do I create a custom request? {#creating-a-custom-request}
 
 Anyone can create a new `ActionRequest` using the `token::new_request` function. You can use it to create custom actions and rules, not necessarily related to the token itself.
 

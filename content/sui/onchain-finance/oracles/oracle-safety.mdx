@@ -57,13 +57,13 @@ builder_paths:
     stage: Oracles
 ---
 
-Reading a price is a few lines. Reading it safely means naming the ways a price can be wrong and guarding each one, because a lending pool or a settlement pays for the ones you skip. The [Move adapter](/onchain-finance/oracles/move-adapter) centralizes these guards; the sections below are when and why to apply each.
+Reading a price is a few lines. Reading it safely means naming the ways a price can be wrong and guarding each one, because a lending pool or a settlement pays for the ones you skip. The [Move adapter](/onchain-finance/oracles/move-adapter) centralizes these guards; the [Failure modes](#failure-modes) and [What each consumer additionally needs](#what-each-consumer-additionally-needs) sections explain when and why to apply each.
 
 Two consumer models appear throughout: a pull consumer updates the price and reads it in its own transaction, while a push consumer reads a stored price that a separate service, a keeper, keeps current (see [Keep push feeds fresh with a keeper](#keep-push-feeds-fresh-with-a-keeper)).
 
 ## Failure modes
 
-- **Stale price.** The onchain price has not been refreshed and no longer reflects the market. This is the most common and most dangerous failure, and it is guarded by a staleness bound: [`get_price_no_older_than`](/onchain-finance/oracles/consuming-price-feeds#the-stale-price-rejection) aborts rather than returning an old value. Observed: reading a Testnet feed nobody just updated with a one-second bound aborts with `pyth::check_price_is_fresh` error code `3`.
+- **Stale price.** The onchain price has not been refreshed and no longer reflects the market. This is the most common and most dangerous failure, and a staleness bound guards it: [`get_price_no_older_than`](/onchain-finance/oracles/consuming-price-feeds#what-happens-when-a-price-feed-is-stale) aborts rather than returning an old value. Observed: reading a Testnet feed nobody just updated with a one-second bound aborts with `pyth::check_price_is_fresh` error code `3`.
 - **Confidence blowout.** Pyth reports a price with a confidence interval, Pyth's own measure of how uncertain that price is. When sources disagree, the interval widens. Acting on the midpoint of a wide interval is acting on a guess. Sourced to provider behavior: the confidence is part of every Pyth price; the adapter's `assert_confidence` rejects a price whose interval exceeds a fraction of the price you choose.
 - **Depeg or deviation.** These are two different events: a single feed can spike away from the market, or a pegged asset can depeg from its peg. A deviation check against a second source or a time-averaged reference catches the spike before it drives an action. The adapter's `assert_within_deviation` does this.
 - **Manipulation window.** Design consideration: a price read in a single transaction reflects a single instant, which a well-capitalized actor can move for one block. Averaging over recent values, requiring two independent sources to agree, or using a confidence and deviation bound together raises the cost of moving the price you act on.
@@ -71,7 +71,7 @@ Two consumer models appear throughout: a pull consumer updates the price and rea
 
 ## What each consumer additionally needs
 
-The guards are shared, but the emphasis differs by what the price drives.
+All consumers share the guards, but the emphasis differs by what the price drives.
 
 - **Liquidations.** The tightest freshness bound, because a liquidation acts on the price now. Act only on the checked price, never on `get_price_unsafe`, and reject on a wide confidence interval rather than liquidate on a guess. [DeepBook Margin](/onchain-finance/deepbook/deepbook-margin/margin-risks#oracle-risk) is a worked consumer: it values positions through Pyth with a maximum price age and treats a stale price as a hard failure.
 - **Collateral valuation.** Value conservatively. When you value collateral to decide how much a user can borrow, use the low end of the confidence interval (the reported price minus the reported confidence), which is the conservative end for collateral, so a wide interval lends less rather than over-lends. A generous max-age is acceptable for a display, but the borrowing decision uses the same tight, checked read a liquidation does.
@@ -79,7 +79,7 @@ The guards are shared, but the emphasis differs by what the price drives.
 
 ## Keep push feeds fresh with a keeper
 
-A pull consumer updates and reads in its own transaction, so freshness is automatic. A push consumer reads a stored price that a separate service, a keeper, keeps current. The code below is that keeper: it fetches from Hermes and applies the update on an interval.
+A pull consumer updates and reads in its own transaction, so freshness is automatic. A push consumer reads a stored price that a separate service, a keeper, keeps current. The `keeper.ts` example implements that keeper: it fetches from Hermes and applies the update on an interval.
 
 <ImportContent source="examples/oracle-adapter/ts/src/keeper.ts" mode="code" tag="keeper" />
 
@@ -88,5 +88,5 @@ Each push is a transaction that costs gas plus the Pyth base update fee, so the 
 ## Troubleshooting
 
 - **`MoveAbort` in `check_price_is_fresh` (code 3):** observed. The feed is older than your bound. In a pull flow, confirm the update command runs before the read in the same transaction. For a push feed, the keeper has fallen behind.
-- **`getFullnodeUrl('testnet')` calls return 404:** observed. The Mysten Testnet fullnode serves gRPC; the Pyth SDK needs JSON-RPC. Point the client at a JSON-RPC endpoint.
-- **A price passes the staleness check but looks wrong:** hypothesized. A single feed can be manipulated or briefly diverge. Add a deviation check against a second source, and reject rather than act when they disagree.
+- **`getFullnodeUrl('testnet')` calls return 404:** observed. The Mysten Testnet full node serves gRPC; the Pyth SDK needs JSON-RPC. Point the client at a JSON-RPC endpoint.
+- **A price passes the staleness check but looks wrong:** hypothesized. An actor can manipulate a single feed, or the feed can briefly diverge. Add a deviation check against a second source, and reject rather than act when they disagree.

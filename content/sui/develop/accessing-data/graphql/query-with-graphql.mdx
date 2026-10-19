@@ -65,7 +65,7 @@ answer: >-
   prompt={"Convert this Sui JSON-RPC query to GraphQL. Include the query, variables, pagination handling, and TypeScript caller code."}
 />
 
-This guide provides practical examples for querying the Sui network using GraphQL, including reads, transaction submission, and transaction simulation. For core concepts like headers, variables, fragments, pagination, scope, and limits, see the [corresponding concepts page](/develop/accessing-data/graphql/graphql-rpc).
+You can use GraphQL to query the Sui network, submit transactions, and simulate transactions. The following sections provide practical examples of each. For core concepts like headers, variables, fragments, pagination, scope, and limits, see the [corresponding concepts page](/develop/accessing-data/graphql/graphql-rpc).
 
 Access the GraphQL service for Sui RPC through an online IDE that provides a complete toolbox for fetching data and executing transactions on the network:
 
@@ -75,7 +75,7 @@ Access the GraphQL service for Sui RPC through an online IDE that provides a com
 
 :::info
 
-The public Mainnet and Testnet GraphQL services are rate-limited to keep network throughput optimized. They are useful for development and public-good access, but production apps should use a provider endpoint or operate their own GraphQL stack. Refer to the [list of RPC or data providers](https://www.notion.so/mystenlabs/RPC-providers-offering-future-Sui-data-primitives-2466d9dcb4e980a99a36e9aafd8c17e0?source=copy_link) that support GraphQL RPC or gRPC.
+The public Mainnet and Testnet GraphQL services apply rate limits to keep network throughput optimized. They are useful for development and public-good access, but production apps should use a provider endpoint or operate their own GraphQL stack. Refer to the [list of RPC or data providers](https://www.notion.so/mystenlabs/RPC-providers-offering-future-Sui-data-primitives-2466d9dcb4e980a99a36e9aafd8c17e0?source=copy_link) that support GraphQL RPC or gRPC.
 
 :::
 
@@ -91,7 +91,7 @@ Consult the [GraphQL reference](/references/sui-graphql) for full documentation 
 
 The service accepts the following optional HTTP request headers:
 
-- `x-sui-rpc-version`: Specifies which RPC version to use. Currently only one version is supported.
+- `x-sui-rpc-version`: Specifies which RPC version to use. The service currently supports only one version.
 - `x-sui-rpc-show-usage`: Returns the response with extra query complexity information.
 
 By default, each response contains the following HTTP response headers:
@@ -151,11 +151,11 @@ alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 
 ## Variables
 
-Variables offer a way to introduce dynamic inputs to a re-usable or static query. Declare variables in the parameters to a `query` or `mutation`, using the `$` symbol and its type (in this example `Int`), which must be a `scalar`, `enum`, or `input` type. In the query body, refer to it by its name prefixed with the `$` symbol.
+Variables offer a way to introduce dynamic inputs to a reusable or static query. Declare variables in the parameters to a `query` or `mutation`, using the `$` symbol and its type (in this example `Int`), which must be a `scalar`, `enum`, or `input` type. In the query body, refer to it by its name prefixed with the `$` symbol.
 
 If you declare a variable but don't use it, or define it in the query, the query fails to execute. To learn more, read the GraphQL documentation on [variables](https://graphql.org/learn/queries/#variables).
 
-In the following example, a variable supplies the ID of the epoch being queried:
+In the following example, a variable supplies the ID of the epoch to query:
 
 ```graphql
 query ($epochID: Int) {
@@ -280,9 +280,9 @@ If there are too many transactions to return in a single response, the service a
 
 Fields that return a paginated response accept the following optional parameters:
 
-- `first`: Limit on page size that is met by dropping excess results from the end.
+- `first`: Limits page size by dropping excess results from the end.
 - `after`: Cursor that bounds the results from below, exclusively.
-- `last`: Limit on page size that is met by dropping excess results from the start.
+- `last`: Limits page size by dropping excess results from the start.
 - `before`: Cursor that bounds the results from above, exclusively.
 
 They also return a type that conforms to the [GraphQL Cursor Connections Specification](https://relay.dev/graphql/connections.htm), meaning its name ends in `Connection`, and it contains at minimum the following fields:
@@ -293,50 +293,46 @@ They also return a type that conforms to the [GraphQL Cursor Connections Specifi
 
 ### Cursors
 
-Cursors are opaque identifiers for paginated results. The only valid source for a cursor parameter (like `after` and `before`) is a cursor field from a previous paginated response (like `PageInfo.startCursor`, `PageInfo.endCursor`, or `Edge.cursor`). The underlying format of the cursor is an implementation detail, and is not guaranteed to remain fixed across versions of the GraphQL service, so do not rely on it. Generating cursors out of thin air is not expected or supported.
+Cursors are opaque identifiers for paginated results. The only valid source for a cursor parameter (like `after` and `before`) is a cursor field from a previous paginated response (like `PageInfo.startCursor`, `PageInfo.endCursor`, or `Edge.cursor`). The underlying format of the cursor is an implementation detail that might change across versions of the GraphQL service, so do not rely on it. The service does not support cursors from any other source.
 
-Cursors are used to bound results from below (with `after`) and above (with `before`). In both cases, the bound is exclusive, meaning it does not include the result that the cursor points to in the bounded region.
+Cursors bound results from below (with `after`) and above (with `before`). In both cases, the bound is exclusive, meaning it does not include the result that the cursor points to in the bounded region.
 
 #### Consistency
 
-Cursors for queries that paginate live objects also guarantee **consistent** pagination. They encode the checkpoint at which the query was first executed so that later pages are [scoped](#scope) by the same checkpoint, even if newer checkpoints are available. If both an `after` and a `before` cursor are provided, they must both be from the same checkpoint, otherwise the query produces an error.
+Cursors for queries that paginate live objects also guarantee **consistent** pagination. They encode the checkpoint at which the query first ran so that the same checkpoint [scopes](#scope) later pages, even if newer checkpoints are available. If you provide both an `after` and a `before` cursor, they must both come from the same checkpoint, otherwise the query produces an error.
 
 By default, RPCs offer roughly 1 hour of [retention](#retention) for consistent pagination.
 
 ### What are the page limits?
 
-After results are bounded using cursors, a page size limit is applied using the `first` and `last` parameters. The service requires these parameters to be less than or equal to the max page size [limit](#limits), and if you provide neither, it selects a default. In addition to setting a limit, `first` and `last` control where excess elements are discarded from. For example, if there are 10 potential results (R0, R1, through R9) after cursor bounds have been applied, then:
+After cursors bound the results, the `first` and `last` parameters apply a page size limit. The service requires these parameters to be less than or equal to the max page size [limit](#limits), and if you provide neither, it selects a default. In addition to setting a limit, `first` and `last` control which end the service discards excess elements from. For example, if 10 potential results (R0, R1, through R9) remain after the service applies cursor bounds, then:
 
-- A limit of `first: 3` would select `R0`, `R1`, `R2`.
-- A limit of `last: 3` would select `R7`, `R8`, `R9`.
-
-:::info
+- A limit of `first: 3` selects `R0`, `R1`, `R2`.
+- A limit of `last: 3` selects `R7`, `R8`, `R9`.
 
 It is an error to apply both a `first` and a `last` limit.
-
-:::
 
 ## Scope
 
 Most queries run in the default scope, which views the latest checkpoint. You only need the details in this section when you query historical data, read dynamic fields as they existed at an earlier version, or read results attached to an executed or simulated transaction.
 
-GraphQL requests are evaluated in a **scope** that controls the checkpoint being viewed. The GraphQL service responds to queries as if this is the last checkpoint to have been executed. By default, this is set to the latest checkpoint that the service has all data for. To avoid returning partial responses, the service does not allow queries to specify a later checkpoint than this, but it can be set to an earlier checkpoint to perform historical queries.
+The GraphQL service evaluates requests in a **scope** that controls which checkpoint the request views. The GraphQL service responds to queries as if this is the last checkpoint to execute. By default, the scope uses the latest checkpoint that the service has all data for. To avoid returning partial responses, the service does not allow queries to specify a later checkpoint than this, but you can set the scope to an earlier checkpoint to perform historical queries.
 
-Optionally, the scope provides a **root object** bound that applies only to queries that fetch dynamic fields. The query fetches dynamic fields as they existed at the end of a specific checkpoint or when their root object reached a given version. For any wrapped or child (object-owned) object, the root object is defined recursively as:
+Optionally, the scope provides a **root object** bound that applies only to queries that fetch dynamic fields. The query fetches dynamic fields as they existed at the end of a specific checkpoint or when their root object reached a given version. For any wrapped or child (object-owned) object, the root object has the following recursive definition:
 
-- The root object of the object it is wrapped in, if it is wrapped
-- The root object of its owner, if it is owned by another object
+- The root object of the object that wraps it, if it is wrapped
+- The root object of its owner, if another object owns it
 - The object itself
 
 If a dynamic field's root object has version `v`, its own version, `w` is the latest version such that `w <= v` meaning the latest version of the dynamic field that existed when its root object was at version `v`.
 
-If a root object bound is not provided, dynamic fields are fetched at the checkpoint being viewed, while if a checkpoint-based root object bound exists, it does not impact the checkpoint being viewed.
+If you do not provide a root object bound, the query fetches dynamic fields at the checkpoint in view, while a checkpoint-based root object bound, if one exists, does not impact the checkpoint in view.
 
-Finally, the GraphQL service treats queries nested under executed `Mutation.executeTransaction` and simulated `Query.simulateTransaction` transactions as being in a special scope that exists just after the transaction that was executed or simulated, without having indexed that transaction. This means execution-attached or simulation-attached queries can often provide consistent read-after-write results immediately, as long as the requested fields do not require indexed history.
+Finally, the GraphQL service treats queries nested under executed `Mutation.executeTransaction` and simulated `Query.simulateTransaction` transactions as being in a special scope that exists just after the transaction that the service executed or simulated, without having indexed that transaction. This means execution-attached or simulation-attached queries can often provide consistent read-after-write results immediately, as long as the requested fields do not require indexed history.
 
-The scope a query is evaluated in impacts which fields are available. In particular:
+The scope that the service evaluates a query in impacts which fields are available. In particular:
 
-- Live object set queries are not available under executed transaction scopes or when a root object binding specifies a particular version. These queries rely on data that is indexed at the checkpoint level.
+- Live object set queries are not available under executed transaction scopes or when a root object binding specifies a particular version. These queries rely on data that the service indexes at the checkpoint level.
 - Queries that paginate through history are not available under executed transaction scopes. Before indexing occurs, the system cannot determine where in the history the transaction falls.
 - If you only need data returned by transaction execution or simulation effects, prefer selecting it in the same GraphQL request instead of submitting the transaction and then waiting for a separately indexed follow-up query.
 
@@ -373,7 +369,7 @@ query NextBalancesPage($address: SuiAddress!, $after: String!) {
 }
 ```
 
-`AtCheckpoint` returns the last 5 transactions to execute as of the end of the checkpoint with sequence number `$cp`, while `NextBalancesPage` fetches the next 10 balances for `$address` after the page that ended at cursor `$after`. You can also combine both approaches, to ensure that the first page of a live object query is fetched from a specific checkpoint:
+`AtCheckpoint` returns the last 5 transactions to execute as of the end of the checkpoint with sequence number `$cp`, while `NextBalancesPage` fetches the next 10 balances for `$address` after the page that ended at cursor `$after`. You can also combine both approaches, to ensure that the first page of a live object query comes from a specific checkpoint:
 
 ```graphql
 query FirstBalancesPageAtCheckpoint($address: SuiAddress!, $cp: UInt53) {
@@ -400,7 +396,7 @@ Responses to these queries are subject to [retention](#retention). If `$cp` is o
 
 ### Setting root version scope
 
-Queries nested under the fetch of an object at a specific version are scoped by a root object bound at its version. For example, in the following query, the dynamic field with name `42u64` is fetched as it existed when its owning object was at version `$v`:
+A root object bound at the object's version scopes queries nested under the fetch of an object at a specific version. For example, the following query fetches the dynamic field with name `42u64` as it existed when its owning object was at version `$v`:
 
 ```graphql
 query ObjectsDynamicFields($id: SuiAddress!, $v: UInt53!) {
@@ -416,9 +412,9 @@ query ObjectsDynamicFields($id: SuiAddress!, $v: UInt53!) {
 }
 ```
 
-This property applies recursively to nested dynamic field queries. It also applies if the root object is fetched at a specific checkpoint using the `atCheckpoint` parameter or at the latest checkpoint (by omitting all parameters). In these cases, the root object bound is checkpoint-based.
+This property applies recursively to nested dynamic field queries. It also applies if you fetch the root object at a specific checkpoint using the `atCheckpoint` parameter or at the latest checkpoint (by omitting all parameters). In these cases, the root object bound is checkpoint-based.
 
-The `rootVersion` parameter overrides this implicit bound. It fetches the object as if it was subject to a root version bound governed by the parameter, which also applies to queries nested underneath it. This is necessary when fetching a dynamic field directly (as an object), because an object's version is not updated when its children are updated unless it is a root object.
+The `rootVersion` parameter overrides this implicit bound. It fetches the object as if the parameter sets a root version bound on it, which also applies to queries nested underneath it. This is necessary when fetching a dynamic field directly (as an object), because the system does not update an object's version when its children change, unless it is a root object.
 
 In the following query, `$id` is the address of a dynamic field fetched as it existed when its root object was at version `$r`. The nested query fetches a nested dynamic field with name `42u64` owned by a wrapped object stored in field `foo` of the dynamic field. The nested fetch is subject to the same root object version bound, `$r`.
 
@@ -440,7 +436,7 @@ query NestedDynamicFields($id: SuiAddress!, $r: UInt53!) {
 }
 ```
 
-Queries that return an `Address` can be used to make nested dynamic field queries on wrapped objects. An `Address` does not have an associated version, but `Query.address` can accept `rootVersion` or `atCheckpoint` parameters to set root object bounds for nested dynamic field queries. The following query fetches a dynamic field with name `42u64` owned by an object with address `$id` (which can belong to a wrapped object) as it existed when its root object was at version `$r`:
+You can use queries that return an `Address` to make nested dynamic field queries on wrapped objects. An `Address` does not have an associated version, but `Query.address` can accept `rootVersion` or `atCheckpoint` parameters to set root object bounds for nested dynamic field queries. The following query fetches a dynamic field with name `42u64` owned by an object with address `$id` (which can belong to a wrapped object) as it existed when its root object was at version `$r`:
 
 ```graphql
 query WrappedDynamicField($id: SuiAddress!, $r: UInt53!) {
@@ -456,7 +452,7 @@ query WrappedDynamicField($id: SuiAddress!, $r: UInt53!) {
 }
 ```
 
-While nested within a scope that has a root object bound, you can reset or override the bound using the `objectAt` or `addressAt` queries. These fields query the same entity but at a different position in its history. If these fields are not provided any parameters, they fetch the state of the object at the latest known checkpoint to the GraphQL service. The following query fetches the latest version of an object that was previously fetched at version `$v`:
+While nested within a scope that has a root object bound, you can reset or override the bound using the `objectAt` or `addressAt` queries. These fields query the same entity but at a different position in its history. If you do not provide any parameters to these fields, they fetch the state of the object at the latest known checkpoint to the GraphQL service. The following query fetches the latest version of an object that the query previously fetched at version `$v`:
 
 ```graphql
 query LatestDynamicField($id: SuiAddress!, $v: UInt53!) {
@@ -470,15 +466,15 @@ query LatestDynamicField($id: SuiAddress!, $v: UInt53!) {
 
 ## Limits
 
-The GraphQL service for Sui RPC is rate-limited on all available instances to keep network throughput optimized and to protect against excessive or abusive calls to the service.
+The GraphQL service for Sui RPC applies rate limits on all available instances to keep network throughput optimized and to protect against excessive or abusive calls to the service.
 
 ### Rate limits
 
-Queries are rate-limited at the number of attempts per minute to ensure high availability of the service to all users.
+The service rate-limits queries by the number of attempts per minute to ensure high availability of the service to all users.
 
 ### Query limits
 
-In addition to rate limits, queries are also validated against a number of rules on their complexity, such as the number of nodes, the depth of the query, or their payload size. Query the `serviceConfig` field to retrieve these limits. An example of how to query for some of the available limits follows:
+In addition to rate limits, the service also validates queries against a number of rules on their complexity, such as the number of nodes, the depth of the query, or their payload size. Query the `serviceConfig` field to retrieve these limits. An example of how to query for some of the available limits follows:
 
 ```graphql
 {
@@ -500,7 +496,7 @@ In addition to rate limits, queries are also validated against a number of rules
 
 ### Rich queries
 
-A rich query is a query that requires a dedicated request to a backing store, such as paginating owned objects, paginating history, or paginating through versions (the full list follows). There is a limit on the number of rich queries you can perform in a single GraphQL request, which can also be queries from the `serviceConfig`:
+A rich query is a query that requires a dedicated request to a backing store, such as paginating owned objects, paginating history, or paginating through versions (the full list follows). There is a limit on the number of rich queries you can perform in a single GraphQL request, which you can also query from the `serviceConfig`:
 
 ```graphql
 {
@@ -510,7 +506,7 @@ A rich query is a query that requires a dedicated request to a backing store, su
 }
 ```
 
-If a request performs more rich queries than the allowed limit, excess rich queries are arbitrarily replaced by a `"RESOURCE_EXHAUSTED"` error. Rich queries include:
+If a request performs more rich queries than the allowed limit, the service arbitrarily replaces excess rich queries with a `"RESOURCE_EXHAUSTED"` error. Rich queries include:
 
 - Paginating owned object queries, such as `IAddressable.objects`, `IAddressable.balances`, and `IMoveObject.dynamicFields`.
 - Paginating historical queries, such as `Query.transactions`, and `Query.events`.
@@ -518,7 +514,7 @@ If a request performs more rich queries than the allowed limit, excess rich quer
 
 ## Retention
 
-Different queries are subject to their own retention policies. In the vanilla, general purpose setup, live object set queries work only for recent checkpoints (measured in minutes or hours), while transaction pagination might be available only back to certain checkpoints (measured in weeks or months), depending on the filters applied. Data outside these ranges is pruned.
+Different queries are subject to their own retention policies. In the default, general purpose setup, live object set queries work only for recent checkpoints (measured in minutes or hours), while transaction pagination might be available only back to certain checkpoints (measured in weeks or months), depending on the filters applied. The service prunes data outside these ranges.
 
 ### Data source retention
 
@@ -528,11 +524,11 @@ GraphQL queries rely on different data sources with different retention ranges. 
 | -------------------- | --------------------------------------------------------- | -------------------------- |
 | **Consistent store** | `Query.objects`, `Address.balance`, objects by owner or type | ~1 hour                    |
 | **Database store**   | `Query.transactions`, `Query.events`, `Query.checkpoints` | ~(30-90) days              |
-| **Archival service** | Point lookups (transaction by digest, object by ID and version)        | Indefinite (if configured) |
+| **Archival Service** | Point lookups (transaction by digest, object by ID and version)        | Indefinite (if configured) |
 
 :::tip Operators
 
-Retention is dependent on the pruning policies of datasource pipelines configured by the stack operator. For production configuration examples, see [Indexer Stack Setup](/operators/data-management/indexer-stack-setup).
+Retention depends on the pruning policies of datasource pipelines that the stack operator configures. For production configuration examples, see [Indexer Stack Setup](/operators/data-management/indexer-stack-setup).
 
 :::
 
@@ -544,15 +540,15 @@ Query the available checkpoint range using `serviceConfig.availableRange`:
 availableRange(type: String!, field: String, filters: [String!]): AvailableRange!
 ```
 
-- **`type`**: The GraphQL type name, such as `"Query"` or `"Address"`.
-- **`field`**: The field on that type, such as `"transactions"` or `"events"`.
-- **`filters`**: Filter field names from the filter input type, such as `["affectedAddress"]` for `TransactionFilter`, `["module"]` for `EventFilter`, or direct query parameter names like `["version"]`.
+- `type`: The GraphQL type name, such as `"Query"` or `"Address"`.
+- `field`: The field on that type, such as `"transactions"` or `"events"`.
+- `filters`: Filter field names from the filter input type, such as `["affectedAddress"]` for `TransactionFilter`, `["module"]` for `EventFilter`, or direct query parameter names like `["version"]`.
 
 Match your query parameters to filter names: if your query uses `filter: { affectedAddress: "0x..." }`, pass `filters: ["affectedAddress"]`.
 
-:::info Strictest retention is returned by the available range query.
-Datasource pipelines can be configured with different retention ranges based on pruning configurations.
-When multiple filters are passed to the available range query, the strictest retention range of the pipelines that support the filters is returned.
+:::info The available range query returns the strictest retention.
+Operators can configure datasource pipelines with different retention ranges based on pruning configurations.
+When you pass multiple filters to the available range query, it returns the strictest retention range of the pipelines that support the filters.
 :::
 
 ### Examples
@@ -617,13 +613,13 @@ Use `serviceConfig.availableRange` to check retention for each field separately.
 
 :::
 
-### How do I handle "Outside available range" errors?
+### How do I handle `Outside available range` errors?
 
-If you encounter an error indicating data is outside the available range, it means your query is requesting data that has been pruned. To resolve this:
+If you encounter an error indicating data is outside the available range, it means your query is requesting data that the service has pruned. To resolve this:
 
 1. **Check the available range first** using `serviceConfig.availableRange` before starting long pagination runs.
-2. **Use fresh cursors**. Old cursors might reference checkpoints that have since been pruned.
-3. **Adjust your query bounds**. Ensure `afterCheckpoint`/`beforeCheckpoint` filters fall within the available range.
+2. **Use fresh cursors**. Old cursors might reference checkpoints that the service has since pruned.
+3. **Adjust your query bounds**. Ensure `afterCheckpoint` and `beforeCheckpoint` filters fall within the available range.
 
 ## Example queries
 
@@ -709,11 +705,7 @@ query {
 
 Find all the transactions that touched (modified, transferred, or deleted) a given object. This might be useful when you want to trace the flow of a `Coin`, `StakeSui`, `NFT`, or similar object.
 
-:::info
-
 This example uses GraphQL [variables](#variables) and [pagination](#pagination).
-
-:::
 
 ```graphql
 query ($objectID: SuiAddress!) {
@@ -747,7 +739,7 @@ When using the online IDE, copy the following JSON to the **Variables** window, 
 
 ### Fetch typed object changes from a transaction
 
-Use `effects.objectChanges` to inspect the before and after state for objects changed by a transaction. The `inputState` field represents the object before the transaction, while `outputState` represents the object after the transaction. To read the typed Move object contents, select `asMoveObject { contents { json } }` from either state.
+Use `effects.objectChanges` to inspect the before and after state for objects that a transaction changed. The `inputState` field represents the object before the transaction, while `outputState` represents the object after the transaction. To read the typed Move object contents, select `asMoveObject { contents { json } }` from either state.
 
 ```graphql
 query ($digest: String!) {
@@ -819,11 +811,7 @@ Look for changes where `outputState.asMoveObject.contents.type.repr` is `0x00000
 
 Find the last 10 transactions that called the `public_transfer` function as a Move call transaction command.
 
-:::info
-
 This example makes use of the `last` filter. In this case, it returns only the last 10 transactions known to the service.
-
-:::
 
 ```graphql
 {
@@ -877,11 +865,7 @@ When using the online IDE, copy the following JSON to the **Variables** window, 
 
 ### Fetch a dynamic field on an object
 
-:::info
-
 This example uses aliases and [fragments](#fragments).
-
-:::
 
 ```graphql
 query DynamicField {
@@ -932,13 +916,9 @@ fragment MoveValueFields on MoveValue {
 
 ### Fetch all dynamic fields on an object
 
-Paginate over the dynamic fields of an object. It can be used for iterating over the elements of onchain data structures, like tables and bags. See [The Move Book](https://move-book.com/programmability/dynamic-collections) to learn more about dynamic collections available in Move.
-
-:::info
+Paginate over the dynamic fields of an object. You can use it to iterate over the elements of onchain data structures, like tables and bags. See [The Move Book](https://move-book.com/programmability/dynamic-collections) to learn more about dynamic collections available in Move.
 
 This example uses [fragments](#fragments) and [variables](#variables).
-
-:::
 
 ```graphql
 query ($id: SuiAddress!) {
@@ -972,13 +952,9 @@ fragment Value on MoveValue {
 
 ### Paginate checkpoints forward 
 
-Set up a paginated query starting at the genesis checkpoint, reading 5 checkpoints at a time in increasing order of sequence number. The value of `pageInfo.hasNextPage` determines whether there is another page to read. The value of `pageInfo.endCursor` is used as the cursor to read `$after`.
-
-:::info
+Set up a paginated query starting at the genesis checkpoint, reading 5 checkpoints at a time in increasing order of sequence number. The value of `pageInfo.hasNextPage` determines whether there is another page to read. Use the value of `pageInfo.endCursor` as the cursor to read `$after`.
 
 This example uses GraphQL [variables](#variables) and [pagination](#pagination).
-
-:::
 
 ```graphql
 query ($after: String) {
@@ -997,13 +973,9 @@ query ($after: String) {
 
 ### Paginate checkpoints backward
 
-Set up a paginated query starting at the latest indexed checkpoint, reading 5 checkpoints at a time in decreasing order of sequence number. The value of `pageInfo.hasPreviousPage` determines whether there is another page to read. The value of `pageInfo.startCursor` is used as the cursor to read `$before`.
-
-:::info
+Set up a paginated query starting at the latest indexed checkpoint, reading 5 checkpoints at a time in decreasing order of sequence number. The value of `pageInfo.hasPreviousPage` determines whether there is another page to read. Use the value of `pageInfo.startCursor` as the cursor to read `$before`.
 
 This example uses GraphQL [variables](#variables) and [pagination](#pagination).
-
-:::
 
 ```graphql
 query ($before: String) {
@@ -1093,11 +1065,11 @@ To simulate a BCS-encoded transaction, pass it in the `bcs` form:
 }
 ```
 
-Like execution-attached queries, fields selected under simulation are evaluated in a scope immediately after the simulated transaction, without waiting for indexing.
+Like execution-attached queries, the service evaluates fields selected under simulation in a scope immediately after the simulated transaction, without waiting for indexing.
 
 ## Migrating to GraphQL from JSON-RPC
 
-The examples in the following sections are tabbed to show both the JSON-RPC call and the equivalent GraphQL structure. For the broader migration, including a decision between gRPC and GraphQL, a JSON-RPC method mapping, and common migration gotchas, see the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration). For a comprehensive list of all available GraphQL features, consult the [reference](/references/sui-graphql).
+The examples in the following sections use tabs to show both the JSON-RPC call and the equivalent GraphQL structure. For the broader migration, including a decision between gRPC and GraphQL, a JSON-RPC method mapping, and common migration gotchas, see the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration). For a comprehensive list of all available GraphQL features, consult the [reference](/references/sui-graphql).
 
 #### Example 1: Get total transactions
 
@@ -1228,16 +1200,12 @@ query {
 }
 ```
 
-:::info
-
-The cursor is now passed in the `after` (or `before`) fields on the connection, and the limit in the `first` or `last` fields.
-
-:::
+You now pass the cursor in the `after` (or `before`) fields on the connection, and the limit in the `first` or `last` fields.
 
 </TabItem>
 </Tabs>
 
-There is functionality available to GraphQL that can't be replicated with JSON-RPC, such as: 
+GraphQL offers functionality that JSON-RPC can't replicate, such as: 
 
 - Time travel queries with checkpoint `{ query { ... } }`.
 

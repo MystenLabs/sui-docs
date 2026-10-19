@@ -46,19 +46,21 @@ answer: >-
 
 <ImportContent source="suiplay" mode="snippet" />
 
+SuiPlay0X1 games can support on-device to off-device and off-device to on-device migration flows, including Playtron wallet linking, read-only asset access, and full asset transfer.
+
 The SuiPlay0X1 is one part of a larger ecosystem of Sui gaming. Users might play your game for the first time on the device, and later decide to continue playing your game on PC. Or, they might have already played your game before on PC with their own mnemonic wallet and want to continue playing on the device.
 
 As a result, it's important to consider the different possible migration flows for your game both for new users and existing ones.
 
 ## On-device ⇒ off-device
 
-If a user starts playing your game on-device first, and you have added support using dApp Kit, then their Playtron wallet is their primary wallet. Off-device play is automatically supported with the same wallet.
+If a user starts playing your game on-device first, and you have added support using dApp Kit, then their Playtron wallet is their primary wallet. Off-device play works automatically with the same wallet.
 
 **Automatic transition**
 
-- Integrate Sui dApp Kit in your off-device version.
-- Enable Playtron wallet as connection option.
-- Users can seamlessly continue with same wallet across platforms.
+1. Integrate Sui dApp Kit in your off-device version.
+2. Enable Playtron wallet as connection option.
+3. Users can seamlessly continue with same wallet across platforms.
 
 :::info
 
@@ -107,7 +109,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );
 ```
 
-This follows the [Enoki Connect demo app](https://github.com/MystenLabs/ts-sdks/tree/main/packages/enoki-connect/demo-dapp), with `playtron` in place of the demo slugs. For the registration flow and what a public app slug is, see [Wallet registration by other dApps](https://docs.enoki.mystenlabs.com/enoki-connect#wallet-registration-by-other-dapps). For the rest of the dApp Kit setup, including the package to install and which networks to configure, see [SDK Integrations](/sui-stack/suiplay0x1/integration#off-device-example-add-wallet-connection-with-sui-dapp-kit).
+This follows the [Enoki Connect demo app](https://github.com/MystenLabs/ts-sdks/tree/main/packages/enoki-connect/demo-dapp), with `playtron` in place of the demo slugs. For the registration flow and what a public app slug is, see [Wallet registration by other apps](https://docs.enoki.mystenlabs.com/enoki-connect#wallet-registration-by-other-dapps). For the rest of the dApp Kit setup, including the package to install and which networks to configure, see [SDK Integrations](/sui-stack/suiplay0x1/integration#off-device-example-add-wallet-connection-with-sui-dapp-kit).
 
 :::info
 
@@ -127,9 +129,9 @@ Examples where read-only is adequate:
 
 - Soulbound assets, such as a proof of attendance protocol (POAP).
 - An NFT representing membership access. 
-- An NFT representing an unlocked skin that can't be transacted on while playing the game (but can be traded separately on a third-party NFT marketplace).
+- An NFT representing an unlocked skin that players can't transact on while playing the game (but can trade separately on a third-party NFT marketplace).
 
-Users login to the Playtron wallet through the companion web site ([https://wallet.playtron.one](https://wallet.playtron.one)) to link their Playtron wallet to their existing wallet. This works for tying the Playtron wallet to self-custody wallets. This doesn't work for tying to custodial wallets, but that shouldn't be necessary as your game's backend can track users' assets across devices (such as through a user ID or Steam/EGS login).
+Users login to the Playtron wallet through the companion web site ([https://wallet.playtron.one](https://wallet.playtron.one)) to link their Playtron wallet to their existing wallet. This works for tying the Playtron wallet to self-custody wallets. This doesn't work for tying to custodial wallets, but that shouldn't be necessary as your game's backend can track users' assets across devices (such as through a user ID or Steam or EGS login).
 
 If you are using a game-specific zkLogin wallet, a properly configured [Enoki Connect](https://docs.enoki.mystenlabs.com/enoki-connect) can link your game-specific zkLogin wallet with the Playtron wallet.  
 
@@ -152,6 +154,7 @@ Start with the `listAllOwnedObjects` and `getLinkedAddresses` helpers from [SuiL
 Then check the player's Playtron wallet and each linked address for the asset your game gates on:
 
 ```ts
+// Replace 0xPACKAGE_ID with your own package ID
 const MEMBERSHIP_TYPE = '0xPACKAGE_ID::membership::Membership';
 
 async function hasMembership(playtronAddress: string) {
@@ -176,14 +179,14 @@ This pattern works for any read-only asset check: membership NFTs, POAPs, soulbo
 If your game requires the user to sign or approve transactions to act on assets in their wallet during gameplay, users need to transfer their assets from their existing self-custody wallet to their Playtron zkLogin wallet. Examples where you might need full asset access include:
 
 - Tokens that represent game currency and users can spend during the course of gameplay.
-- NFTs that can be traded from inside your game that require signed transactions.
+- NFTs that players can trade from inside your game that require signed transactions.
 
-For self-custody and game-specific zkLogin wallets, users must transfer assets from original self-custody wallets to Playtron wallets. For custodial wallets, there is no need as your game backend can track the user's assets across devices (such as through a user ID or Steam/EGS login).
+For self-custody and game-specific zkLogin wallets, users must transfer assets from original self-custody wallets to Playtron wallets. For custodial wallets, there is no need as your game backend can track the user's assets across devices (such as through a user ID or Steam or EGS login).
 
-Transfer enables full transaction capabilities on-device. The companion web app provides user-friendly transfer flows  
+Transfer enables full transaction capabilities on-device. The companion web app ([https://wallet.playtron.one](https://wallet.playtron.one)) provides user-friendly transfer flows.
 
 :::tip
 
-If you are using a game-specific zkLogin wallet, to use the companion web app requires Enoki Connect support.
+If you are using a game-specific zkLogin wallet, using the companion web app requires [Enoki Connect](https://docs.enoki.mystenlabs.com/enoki-connect) support. See [Read-only asset access](#read-only-asset-access) for how a properly configured Enoki Connect links a game-specific zkLogin wallet with the Playtron wallet.
 
 :::

@@ -39,13 +39,13 @@ answer: '![image](./images/nautilus-overview_nautilus-design_v1.png).'
 
 When the enclave starts, it exposes 3 HTTP endpoints:
 
-1. `/health_check`: Checks that the enclave can reach the allowed external domains. It is used for debugging.
+1. `/health_check`: Checks that the enclave can reach the allowed external domains. Use it for debugging.
 
-1. `/get_attestation`: Returns the signed attestation document. It is used during onchain registration.
+1. `/get_attestation`: Returns the signed attestation document. Use it during onchain registration.
 
-1. `/process_data`: Contains your custom logic. You will write the code for this yourself. This is the endpoint that your app frontend will hit.
+1. `/process_data`: Contains your custom logic. You write the code for this yourself. This is the endpoint that your app frontend calls.
 
-## Platform Configuration Registers (PCR)
+## Platform configuration registers (PCR)
 
 Three SHA-384 hashes that describe the enclave's code and configuration.
 
@@ -61,7 +61,7 @@ If a single byte changes, then the PCR changes. This is how Sui confirms that th
 
 ### Step 1: Enclave starts
 
-It generates a new ephemeral keypair inside its isolated memory. The private key never leaves the enclave while the public key is returned through `/get_attestation`.
+It generates a new ephemeral key pair inside its isolated memory. The private key never leaves the enclave, while the enclave returns the public key through `/get_attestation`.
 
 ### Step 2: Enclave signs data
 
@@ -69,7 +69,7 @@ When `process_data` returns `{ response, signature }`, then the enclave signs th
 
 ### Step 3: Move contract verifies signature
 
-An onchain Move contract checks that the signature matches public key of registered enclave, the PCRs are correct, and the timestamp is recent. If all checks pass, the computation is accepted.
+An onchain Move contract checks that the signature matches public key of registered enclave, the PCRs are correct, and the timestamp is recent. If all checks pass, the contract accepts the computation.
 
 ## The role of smart contracts
 
@@ -79,7 +79,7 @@ Move smart contracts do two things in this process:
 
 Example object types created by Move smart contracts include the `EnclaveConfig` object for the PCRs and the `Enclave` object for the public key and metadata.
 
-2. They verify signed responses. The Move app logic calls `verify_signature()` inside the Nautilus Move library. If the call is valid, data is accepted and logic continues. This guarantees that the app only accepts data from a real, authenticated enclave.
+2. They verify signed responses. The Move app logic calls `verify_signature()` inside the Nautilus Move library. If the call is valid, the app accepts the data and logic continues. This guarantees that the app only accepts data from a real, authenticated enclave.
 
 ## Nautilus workflows
 
@@ -143,9 +143,9 @@ This approach provides the following benefits:
 
 ### TEE security considerations
 
-Nautilus uses cloud-based enclaves designed to protect against software-level attacks. Focusing on cloud-hosted TEEs, like AWS Nitro Enclaves, is intentional because cloud providers respond quickly to vulnerabilities. They receive early signals about security issues and can patch them efficiently. They also maintain strong physical security. Access to cloud data centers is tightly controlled, reducing the risk of physical hardware attacks. Lastly, they operate under strict compliance standards. Providers like AWS and GCP are regularly audited against frameworks like SOC 2, ISO 27001, CSA STAR, and others, ensuring operational integrity.
+Nautilus uses cloud-based enclaves designed to protect against software-level attacks. Focusing on cloud-hosted TEEs, like AWS Nitro Enclaves, is intentional because cloud providers respond quickly to vulnerabilities. They receive early signals about security issues and can patch them efficiently. They also maintain strong physical security. Cloud providers tightly control access to their data centers, reducing the risk of physical hardware attacks. Lastly, they operate under strict compliance standards. Providers like AWS and GCP undergo regular audits against frameworks like SOC 2, ISO 27001, CSA STAR, and others, ensuring operational integrity.
 
-You are encouraged to evaluate whether this trust model aligns with the threat profile and security needs of your application.
+Evaluate whether this trust model aligns with the threat profile and security needs of your application.
 
 :::tip
 

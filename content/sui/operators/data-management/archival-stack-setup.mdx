@@ -38,15 +38,17 @@ answer: >-
   See [Archival Store and Service](/develop/accessing-data/archival-store) for
   more information on the stack.
 ---
+Running the Sui archival stack in production requires a Google Cloud Bigtable store, the `sui-kvstore-alt` indexer that writes chain history to it, and the `sui-kv-rpc` gRPC service that serves it.
+
 <ImportContent source="indexer-archival" mode="snippet" />
 
 See [Archival Store and Service](/develop/accessing-data/archival-store) for more information on the stack.
 
-## Architecture overview
+## What are the components of the archival stack? {#architecture-overview}
 
-1. **Google Cloud Bigtable**: The backing store that holds all historical chain data across 14 tables.
-2. **`sui-kvstore-alt`** (Indexer): Reads checkpoints from the remote checkpoint store and writes processed data to Bigtable.
-3. **`sui-kv-rpc`** (Archival Service): A gRPC server that reads from Bigtable and exposes the [`LedgerService`](/references/fullnode-protocol) API to clients.
+1. **Google Cloud Bigtable:** The backing store that holds all historical chain data across 14 tables.
+2. `sui-kvstore-alt` (indexer): Reads checkpoints from the remote checkpoint store and writes processed data to Bigtable.
+3. `sui-kv-rpc` (Archival Service): A gRPC server that reads from Bigtable and exposes the [`LedgerService`](/references/fullnode-protocol) API to clients.
 
 ```mermaid
 graph LR
@@ -61,7 +63,7 @@ graph LR
 
 - A Google Cloud Platform (GCP) project with the [Bigtable API](https://cloud.google.com/bigtable/docs/quickstart) enabled.
 - Two GCP service accounts:
-  - **Read/write account** for the indexer; requires `roles/bigtable.user`.
+  - **Read-write account** for the indexer; requires `roles/bigtable.user`.
   - **Read-only account** for the gRPC service; requires `roles/bigtable.reader`.
 - A checkpoint bucket for your network, for history:
   - **Mainnet:** `--remote-store-gcs mysten-mainnet-checkpoints-use4` (Requester Pays).
@@ -83,9 +85,11 @@ Both binaries authenticate to GCP using [Application Default Credentials (ADC)](
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 ```
 
-The public HTTPS endpoints (`https://checkpoints.mainnet.sui.io`, `https://checkpoints.testnet.sui.io`) keep only the latest 30 days. Use the GCS buckets above for backfill.
+The public HTTPS endpoints (`https://checkpoints.mainnet.sui.io`, `https://checkpoints.testnet.sui.io`) keep only the latest 30 days. Use the GCS buckets listed in the prerequisites for backfill.
 
-## Bigtable setup
+## How do I set up Bigtable? {#bigtable-setup}
+
+To set up Bigtable, create an instance and its tables, then configure scaling and backups.
 
 ### Create a Bigtable instance
 
@@ -93,7 +97,7 @@ Create a Bigtable instance in your GCP project. See the [Bigtable documentation]
 
 | Setting | Recommendation |
 |---------|---------------|
-| Storage type | SSD. HDD is untested and not recommended. |
+| Storage type | SSD. Avoid HDD, which is untested. |
 | Node count | Enable autoscaling. See [Scaling](#scaling). |
 
 **Do not use Bigtable replication for this deployment.** Run a separate Bigtable instance, `sui-kvstore-alt` indexer, and `sui-kv-rpc` service in each region.
@@ -132,7 +136,7 @@ done
 
 ### Storage requirements
 
-Measured 2026-07-27. Grows with network activity.
+Sizes as of 2026-07-27. Storage grows with network activity.
 
 | Table | Mainnet | Testnet |
 |-------|---------|---------|
@@ -168,7 +172,7 @@ Each SSD node holds up to 5 TB; stay under 70% (3.5 TB per node).
 
 Configure automated backups. Daily with 7-day retention is a reasonable default. See the [Bigtable backup documentation](https://cloud.google.com/bigtable/docs/backups).
 
-## Indexer setup
+## How do I run the archival indexer? {#indexer-setup}
 
 `sui-kvstore-alt` reads checkpoints and writes to Bigtable through 14 pipelines.
 
@@ -196,9 +200,9 @@ That one command backfills from genesis and then indexes at the tip. There is no
 | `<INSTANCE_ID>` | Yes | Bigtable instance ID. Positional. |
 | `--chain` | Yes | `mainnet`, `testnet`, or `unknown`. |
 | `--remote-store-gcs` | Yes | GCS bucket to read checkpoint history from. |
-| `--streaming-url` | No | Fullnode gRPC URL for live checkpoints. Use it. |
+| `--streaming-url` | No | Full node gRPC URL for live checkpoints. Use it. |
 | `--config` | No | TOML config path. Omit it. See [Indexer configuration](#indexer-configuration). |
-| `--rpc-api-url` | No | Read history from a fullnode instead of a bucket. Alternative to `--remote-store-gcs`, not an addition. |
+| `--rpc-api-url` | No | Read history from a full node instead of a bucket. Alternative to `--remote-store-gcs`, not an addition. |
 | `--remote-store-url` | No | HTTPS checkpoint store. Alternative to `--remote-store-gcs`. |
 | `--remote-store-header` | No | Repeatable `Name:Value` header for remote-store requests. |
 | `--rpc-username` / `--rpc-password` | No | Credentials for `--rpc-api-url`. |
@@ -213,7 +217,14 @@ That one command backfills from genesis and then indexes at the tip. There is no
 | `--metrics-address` | No | Prometheus bind address. Default `0.0.0.0:9184`. |
 | `--write-legacy-data` | No | Do not set this. |
 
-Exactly one checkpoint source is allowed (`--remote-store-gcs`, `--remote-store-url`, `--rpc-api-url`, and so on); passing two is a startup error. `--streaming-url` is not one of them and runs alongside whichever you pick.
+The indexer allows exactly one checkpoint source (`--remote-store-gcs`, `--remote-store-url`, `--rpc-api-url`, and so on); passing two is a startup error. `--streaming-url` is not one of them and runs alongside whichever you pick.
+
+To choose the checkpoint source:
+
+- **Backfilling from genesis (the standard setup):** use `--remote-store-gcs` with your network's bucket.
+- **Reading from an HTTPS checkpoint store:** use `--remote-store-url`. The public HTTPS endpoints keep only the latest 30 days, so use the GCS buckets for backfill.
+- **Reading history from a full node instead of a bucket:** use `--rpc-api-url`, with `--rpc-username` and `--rpc-password` if it needs credentials. Do not set it for the standard setup.
+- **In every case:** add `--streaming-url` for live checkpoints.
 
 :::info
 
@@ -223,7 +234,7 @@ Mysten Labs plans to enable requester-pays on the public checkpoint buckets in t
 
 ### Indexer configuration {#indexer-configuration}
 
-`--config` takes an optional TOML file. **You do not need one.** The tables below are reference only.
+`--config` takes an optional TOML file. **You do not need one.** The tables in this section are reference only. The only change to consider is disabling adaptive write rate limiting if you cannot provide a single-cluster-routing app profile; see [Adaptive write rate limiting](#adaptive-write-rate-limiting).
 
 #### Adaptive write rate limiting {#adaptive-write-rate-limiting}
 
@@ -233,6 +244,8 @@ The indexer paces its own Bigtable writes from the `RateLimitInfo` directives Bi
 - It starts at 10 requests per second.
 - It grows only when the directive is positive, latency is healthy, and the indexer is driving at least 80% of the current limit.
 - It cuts to 0.7x on a severe latency observation or a `DeadlineExceeded`, `Unavailable`, or `ResourceExhausted` response.
+
+The manual alternative is the static `total-max-rows-per-second` and `max-rows-per-second` limits, measured in rows per second. Leave them unset; a static limit starves the adaptive controller.
 
 It requires a **single-cluster-routing app profile**. Disable it only if you cannot provide one:
 
@@ -245,8 +258,8 @@ batch-write-flow-control = false
 | Option | Default | Description |
 |--------|---------|-------------|
 | `batch-write-flow-control` | `true` | Adaptive write rate limiting. |
-| `total-max-rows-per-second` | unlimited | Static global rate limit, rows/sec. Leave unset; it starves the adaptive controller. |
-| `max-rows-per-second` | unlimited | Static per-pipeline rate limit, rows/sec. Leave unset. |
+| `total-max-rows-per-second` | unlimited | Static global rate limit, rows per second. Leave unset; it starves the adaptive controller. |
+| `max-rows-per-second` | unlimited | Static per-pipeline rate limit, rows per second. Leave unset. |
 | `bigtable-channel-timeout-ms` | 60000 | Channel-level Bigtable gRPC timeout. |
 | `bigtable-connection-pool-size` | N/A | **Deprecated.** Use `[bigtable-pool]`. |
 
@@ -288,7 +301,7 @@ See [Pipeline architecture: Performance tuning](/develop/accessing-data/custom-i
 
 ### Pipelines
 
-All 14 are required for full archival service functionality.
+The archival service needs all 14 for full functionality.
 
 | Pipeline | Target table | Type |
 |----------|-------------|------|
@@ -315,7 +328,7 @@ Use one indexer instance. One instance can drive a 30-node cluster, the largest 
 
 Bigtable writes are idempotent, so you can run several instances at the tip for rolling deployments.
 
-## Archival service setup
+## How do I run the archival service? {#archival-service-setup}
 
 `sui-kv-rpc` is a gRPC server that reads from Bigtable and exposes the [`LedgerService`](/references/fullnode-protocol) API.
 
@@ -350,22 +363,22 @@ Run `sui-kv-rpc --config-schema` to print the full JSON Schema with per-field do
 | `credentials` | ADC | Service account JSON key path. |
 | `bigtable-project` | credentials' project | GCP project ID. |
 | `app-profile-id` | none | Bigtable app profile ID. |
-| `tls-cert` / `tls-key` | none | PEM cert and key. TLS activates only when both are set. |
-| `plaintext-address` | none | Second, unencrypted gRPC listener serving the same API as `address`, for trusted internal callers that shouldn't need to negotiate TLS. Disabled unless set. Bind it to a private network interface only. |
+| `tls-cert` / `tls-key` | none | PEM cert and key. TLS activates only when you set both. |
+| `plaintext-address` | none | Second, unencrypted gRPC listener serving the same API as `address`, for trusted internal callers that shouldn't need to negotiate TLS. Off unless you set it. Bind it to a private network interface only. |
 | `bigtable-channel-timeout-ms` | 60000 | Channel-level Bigtable gRPC timeout. |
 | `bigtable-initial-pool-size` | 10 | Channels created at startup. |
 | `bigtable-min-pool-size` | 1 | Minimum channels. |
 | `bigtable-max-pool-size` | 200 | Maximum channels. |
 | `enable-list-apis` | `false` | Serve the three List APIs. Requires the `tx_seq_digest` and both bitmap pipelines. |
 | `request-bigtable-concurrency` | 50 | Per-request cap on concurrent Bigtable operations. |
-| `ledger-history` | see below | List API tuning. |
-| `stages` | see below | Read concurrency tuning. |
+| `ledger-history` | See List API tuning | List API tuning. |
+| `stages` | See Read stages | Read concurrency tuning. |
 
 The old positional and flag form (`<INSTANCE_ID>`, `<ADDRESS>`, `--credentials`, `--tls-cert`, and so on) still works, takes precedence over the config file, and logs a deprecation warning. Use the config file.
 
 #### List API tuning (`[ledger-history]`)
 
-Only used when `enable-list-apis = true`. The `[ledger-history.list-transactions]`, `[ledger-history.list-events]`, and `[ledger-history.list-checkpoints]` tables each take `timeout-ms` (default 30000), `default-limit-items`, `max-limit-items`, and `render-ahead` (default 4).
+Applies only when `enable-list-apis = true`. The `[ledger-history.list-transactions]`, `[ledger-history.list-events]`, and `[ledger-history.list-checkpoints]` tables each take `timeout-ms` (default 30000), `default-limit-items`, `max-limit-items`, and `render-ahead` (default 4).
 
 | Method | `default-limit-items` | `max-limit-items` |
 |--------|----------------------|-------------------|
@@ -388,7 +401,7 @@ The `[stages.tx-seq-digest]`, `[stages.transactions]`, `[stages.objects]`, and `
 
 ### gRPC API
 
-Same [`LedgerService`](/references/fullnode-protocol) API as a Sui full node, so existing gRPC clients work by changing the endpoint URL. Server reflection is enabled.
+Same [`LedgerService`](/references/fullnode-protocol) API as a Sui full node, so existing gRPC clients work by changing the endpoint URL. The service enables server reflection.
 
 | Method | Description | Limit |
 |--------|-------------|-------|
@@ -407,7 +420,7 @@ The three List methods return `Unimplemented` unless `enable-list-apis = true`. 
 
 ### Health check
 
-`GET /health` on port 8081.
+`GET /health` on **port 8081**.
 
 :::tip
 
@@ -416,16 +429,16 @@ Production hardening checklist:
 - **Least-privilege service accounts.** `roles/bigtable.user` for the indexer, `roles/bigtable.reader` for the service. Do not share one account.
 - **Credentials in a secret manager.** Prefer [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) on GKE over key files.
 - **Test backup and restore.** Configure [Bigtable backups](#backup-policy) and verify you can restore, not just that backups exist.
-- **TLS.** Set `tls-cert` and `tls-key`, and restrict the gRPC and health endpoints to trusted networks. If `plaintext-address` is also set for internal callers, it has no TLS or authentication of its own, so bind it to a private network interface, exactly as if it were the health endpoint.
+- **TLS.** Set `tls-cert` and `tls-key`, and restrict the gRPC and health endpoints to trusted networks. If you also set `plaintext-address` for internal callers, it has no TLS or authentication of its own, so bind it to a private network interface, exactly as if it were the health endpoint.
 - **Single-cluster-routing app profile for the indexer.** Nothing validates this at runtime.
 
 See [Security Best Practices](/develop/security/best-practices).
 
 :::
 
-## Monitoring
+## How do I monitor the archival stack? {#monitoring}
 
-Both binaries export Prometheus metrics on port 9184 at `/metrics`.
+Both binaries export Prometheus metrics on **port 9184** at `/metrics`.
 
 The indexer exports the standard [indexer framework metrics](/develop/accessing-data/custom-indexer/indexer-runtime-perf) with a `kvstore_alt_` prefix, so existing Postgres indexer dashboards apply.
 
@@ -480,7 +493,7 @@ The bitmap pipelines export `bitmap_watermark_lag_ms_*`, `bitmap_write_chunk_lat
 | `bt_pool_rpcs_completed` | counter | RPCs completed through the pool. |
 | `thread_stall_duration_sec` | histogram | Tokio thread stall duration. |
 
-The `kv_*` read metrics are labeled `client` and `table`.
+The `kv_*` read metrics carry `client` and `table` labels.
 
 ### Recommended log levels
 

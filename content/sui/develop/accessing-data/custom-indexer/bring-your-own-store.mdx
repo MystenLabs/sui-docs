@@ -191,7 +191,7 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-The public-good fullnode URL in this example is for testing only. For production, replace it with a production-grade fullnode gRPC endpoint from an [RPC provider](/develop/accessing-data/rpc-providers).
+The public-good full node URL in this example is for testing only. For production, replace it with a production-grade full node gRPC endpoint from an [RPC provider](/develop/accessing-data/rpc-providers).
 
 ### Example: ClickHouse implementation
 
@@ -245,7 +245,7 @@ Whichever store you choose, the checkpoint data your pipelines process includes 
 
 Decoding BCS yourself makes dependency currency a requirement rather than a preference. See [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers).
 
-When Move smart contracts execute on Sui, they can emit events using the `sui::event` module. These events are stored in checkpoints as **BCS-serialized bytes** that your indexer needs to deserialize to extract meaningful data.
+When Move smart contracts execute on Sui, they can emit events using the `sui::event` module. Checkpoints store these events as **BCS-serialized bytes** that your indexer needs to deserialize to extract meaningful data.
 
 ### Why deserialization is needed
 
@@ -265,11 +265,11 @@ public fun transfer_balance(...) {
 }
 ```
 
-In checkpoint data, these events arrive as **raw BCS bytes** that need to be converted back to Rust structs for processing.
+In checkpoint data, these events arrive as **raw BCS bytes** that your indexer needs to convert back to Rust structs for processing.
 
 ### Step-by-step deserialization
 
-1. Add BCS dependency. Because BCS cannot skip a value it does not recognize, keep this dependency and the framework dependency current rather than pinning an old version — see [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers), which applies to any code that performs BCS deserialization.
+1. Add BCS dependency. Because BCS cannot skip a value it does not recognize, keep this dependency and the framework dependency current rather than pinning an old version. See [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers), which applies to any code that performs BCS deserialization.
 
     ```rust
     [dependencies]

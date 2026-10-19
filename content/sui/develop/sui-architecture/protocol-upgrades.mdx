@@ -41,7 +41,7 @@ As [consensus](/develop/sui-architecture/consensus) requires that all validators
 
 To solve this, Sui uses a process called protocol upgrades.
 
-## Protocol upgrade process
+## How does Sui roll out a protocol upgrade?
 
 The process for protocol upgrades includes the following steps:
 
@@ -65,7 +65,7 @@ Full node operators follow a similar process but do not participate in voting. T
 
 When validators switch to a new protocol version, they record the new version number in the special end-of-epoch transaction. Full nodes execute this transaction as they replay the chain history, allowing them to switch to the new protocol version at the correct time.
 
-## Framework upgrades
+## How are framework packages upgraded?
 
 Not all new Sui functionality comes from validator code changes. Developers also extend the Sui framework. For example, they might add new native functions to expose functionality to smart contracts. The process for framework updates is similar to protocol upgrades.
 

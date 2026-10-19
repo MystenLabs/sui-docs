@@ -1,7 +1,7 @@
 ---
 title: Develop
 description: >-
-  Learn the developer essentials, including info about Sui's architecture, how
+  Learn the developer essentials, including information about Sui's architecture, how
   to write Move packages, and how to build transactions.
 keywords:
   - sui development
@@ -9,12 +9,12 @@ keywords:
   - smart contracts
   - transactions
   - Sui architecture
-  - dApp development
+  - app development
   - blockchain programming
 goal:
   description: >-
-    Reader can orient in the developer essentials — architecture, writing Move
-    packages, and building transactions — and pick where to start
+    Reader can orient in the developer essentials (architecture, writing Move
+    packages, and building transactions) and pick where to start
   requires:
     - has_frontmatter:
         - title
@@ -34,7 +34,7 @@ answer: >-
 
 Sui development centers on three areas: understanding the Sui architecture, writing Move packages, and building transactions. Each area builds on the previous one. You write Move packages to define onchain logic, then construct transactions to call that logic, and the Sui architecture determines how those transactions execute and reach finality.
 
-A Move package contains one or more modules. Each module defines types, functions, and the rules that govern how objects are created, transferred, and destroyed. Sui uses an object model: each asset is an individual object with defined ownership, rather than an entry in a shared ledger.
+A Move package contains one or more modules. Each module defines types, functions, and the rules that govern how you create, transfer, and destroy objects. Sui uses an object model: each asset is an individual object with defined ownership, rather than an entry in a shared ledger.
 
 Transactions on Sui are programmable transaction blocks (PTBs). A single PTB can call multiple Move functions, transfer objects, and split or merge coins, all in one atomic operation. This composability reduces the number of round trips between your app and the network.
 

@@ -55,7 +55,7 @@ answer: >-
   and get a derived Sui address, with no seed phrase to manage.
 ---
 
-This example demonstrates how to integrate [zkLogin](/sui-stack/zklogin-integration/zklogin) into a React application so users can authenticate with familiar OAuth providers (Google, Apple) and interact with the Sui blockchain without managing private keys.
+Integrate [zkLogin](/sui-stack/zklogin-integration/zklogin) into a React application so users can authenticate with familiar OAuth providers (Google, Apple) and interact with the Sui blockchain without managing private keys.
 
 :::caution
 
@@ -70,7 +70,7 @@ See [Security Best Practices](/develop/security/best-practices).
 
 :::
 
-## When to use this pattern
+## When should I use this pattern?
 
 Use this pattern when you need to:
 
@@ -78,7 +78,7 @@ Use this pattern when you need to:
 
 - Derive a deterministic Sui address from a JWT token and a salt so users always get the same address.
 
-- Generate and manage ephemeral key pairs that sign transactions on behalf of the authenticated user.
+- Generate and manage ephemeral key pairs that sign transactions authorized by the authenticated user's OAuth identity.
 
 - Fetch a zero-knowledge proof from a prover service and attach it to a transaction as a zkLogin signature.
 
@@ -92,9 +92,9 @@ This example teaches:
 
 - **OAuth popup flow:** The application opens an OAuth provider in a popup window, extracts the `id_token` from the URL hash, and sends it to the parent window through `postMessage`. This keeps the main application state intact during authentication.
 
-- **ZK proof generation:** The prover service takes the JWT, extended ephemeral public key, max epoch, randomness, and salt, and returns a zero-knowledge proof. This proof lets the network verify the transaction was authorized by the OAuth identity holder without seeing the JWT.
+- **ZK proof generation:** The prover service takes the JWT, extended ephemeral public key (the public key encoded together with its key type), max epoch, randomness, and salt, and returns a zero-knowledge proof. This proof lets the network verify that the OAuth identity holder authorized the transaction without seeing the JWT.
 
-- **Address derivation:** `jwtToAddress(jwt, salt, false)` deterministically maps an OAuth identity to a Sui address. The third argument (`legacyAddress`) is required; pass `false` for new integrations. Consumer apps usually combine it with sponsored transactions so a new user never has to fund an address before their first action.
+- **Address derivation:** `jwtToAddress(jwt, salt, false)` deterministically maps an OAuth identity to a Sui address. The function requires the third argument (`legacyAddress`); pass `false` for new integrations. Consumer apps usually combine it with sponsored transactions so a new user never has to fund an address before their first action.
 
 - **zkLogin transaction signing:** The ephemeral key pair signs the transaction bytes, then `getZkLoginSignature` combines the ephemeral signature with the ZK proof and address seed to produce a composite signature the network accepts.
 
@@ -102,7 +102,7 @@ This example teaches:
 
 The example has 4 actors: a React frontend, an OAuth provider, a ZK prover service, and the Sui network. There are no Move contracts; the application sends native SUI transfer transactions. The React frontend orchestrates the entire flow. It generates an ephemeral key pair, redirects the user to the OAuth provider (Google or Apple) in a popup, receives the JWT, sends proof inputs to the ZK prover service hosted by Mysten Labs, and uses the resulting proof to sign and execute transactions on the Sui network through gRPC.
 
-The diagram below traces 1 full zkLogin flow from key pair generation to transaction execution.
+The following sequence diagram traces 1 full zkLogin flow from key pair generation to transaction execution.
 
 ```mermaid
 sequenceDiagram
@@ -136,7 +136,7 @@ sequenceDiagram
   Frontend-->>User: Display confirmation
 ```
 
-The following steps walk through the flow:
+The following steps walk through the flow. Each number matches the Step label in the diagram:
 
 1. The user clicks **Generate Key Pair**. The frontend fetches the current epoch from the Sui network, creates an Ed25519 ephemeral key pair, generates randomness, and computes a nonce. The key pair is valid for the configured number of epochs past the current one.
 
@@ -148,7 +148,7 @@ The following steps walk through the flow:
 
 ### How zkLogin works
 
-The zkLogin system maps an OAuth identity (like a Google account) to a Sui address using zero-knowledge proofs. The key insight is that the user's Sui address is derived deterministically from 2 inputs: their OAuth `sub` claim (a unique user identifier from the provider) and an application-specific salt. The same user with the same salt always gets the same address.
+The zkLogin system maps an OAuth identity (like a Google account) to a Sui address using zero-knowledge proofs. The key insight is that zkLogin derives the user's Sui address deterministically from 2 inputs: their OAuth `sub` claim (a unique user identifier from the provider) and an application-specific salt. The same user with the same salt always gets the same address.
 
 To authorize a transaction, the user does not sign with a long-lived private key. Instead, the application generates a short-lived ephemeral key pair, embeds the key pair's nonce in the OAuth login request, and receives a JWT that binds the user's identity to that ephemeral key. A ZK prover service then generates a proof that the JWT is valid and corresponds to the claimed address, without revealing the JWT itself to the network. The ephemeral key signs the transaction bytes, and the ZK proof wraps the signature so the network can verify authorization without seeing the user's OAuth credentials.
 
@@ -169,15 +169,22 @@ For more details, see the [zkLogin documentation](/sui-stack/zklogin-integration
 </TabItem>
 </Tabs>
 
-## Reference app
+## How do I add zkLogin to my own app?
 
-A complete React implementation lives in [`sui-move-bootcamp/K2`](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/K2). Clone it to see the hooks below wired together, or read on for the pieces you need to port into your own app.
+A complete React implementation lives in [`sui-move-bootcamp/K2`](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/K2). Clone it to see the hooks from [Key code highlights](#key-code-highlights) wired together, or read on for the pieces you need to port into your own app.
+
+To port the integration, work in this order:
+
+1. Complete the prerequisites.
+2. Set the environment variables listed in the following table.
+3. Port the hooks in [Key code highlights](#key-code-highlights) in flow order: `useEphemeral`, `useOauthPopup`, `useZkProof`, `useWallet`, then `suiWriteClient` with `useLiveTransaction`.
+4. Run the 4 steps described in [Architecture](#architecture), and use [Troubleshooting](#troubleshooting) if a step fails.
 
 The app reads its configuration from environment variables, and the same values are what your integration needs:
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_SUI_GRPC_URL` | Fullnode gRPC endpoint used to fetch the current epoch and execute transactions. |
+| `VITE_SUI_GRPC_URL` | Full node gRPC endpoint used to fetch the current epoch and execute transactions. |
 | `VITE_SALT` | The per-user salt. A fixed value is fine for a demo, but production needs a real salt service. |
 | `VITE_EPHEMERAL_KEY_DURATION_EPOCHS` | How many epochs past the current one the ephemeral key stays valid. |
 | `VITE_OAUTH_CLIENT_ID` | Your OAuth client ID. Determines which identities map to which addresses. |
@@ -194,7 +201,7 @@ The `useEphemeral` hook generates a short-lived Ed25519 key pair and computes th
 
 <ImportContent source="K2/src/hooks/useEphemeral.ts" mode="code" org="MystenLabs" repo="sui-move-bootcamp" branch="solution" fun="useEphemeral" />
 
-The hook creates an `Ed25519Keypair`, extracts its public key, generates cryptographic randomness, fetches the current epoch to compute `maxEpoch`, and derives the nonce using `generateNonce`. The nonce is embedded in the OAuth URL so the JWT is bound to this specific ephemeral key. After `maxEpoch` passes, the key pair can no longer authorize transactions.
+The hook creates an `Ed25519Keypair`, extracts its public key, generates cryptographic randomness, fetches the current epoch to compute `maxEpoch`, and derives the nonce using `generateNonce`. The app embeds the nonce in the OAuth URL so the JWT binds to this specific ephemeral key. After `maxEpoch` passes, the key pair can no longer authorize transactions.
 
 ### OAuth popup token extraction
 
@@ -236,9 +243,9 @@ The `fetchZkProof` utility calls the Mysten Labs prover endpoint.
 
 The function POSTs the proof payload to `https://prover-dev.mystenlabs.com/v1`. The error handling distinguishes network failures (which might indicate CORS issues) from prover errors. For production applications, consider proxying prover requests through a backend to avoid CORS restrictions.
 
-## Common modifications
+## How can I extend this example?
 
-- **Add session persistence:** Store the ephemeral key pair, JWT, and ZK proof in `localStorage` so users do not need to re-authenticate on page reload. Check `maxEpoch` against the current epoch to determine if the session is still valid.
+- **Add session persistence:** Store the ephemeral key pair, JWT, and ZK proof in `localStorage` so users do not need to re-authenticate on page reload. Check `maxEpoch` against the current epoch to determine if the session is still valid: before reusing a stored session, fetch the current epoch from the Sui network, and if it exceeds `maxEpoch`, discard the stored session and restart the flow from Step 1, because the ephemeral key can no longer authorize transactions.
 
 - **Support multiple OAuth providers:** The `getOauthUrl` utility already handles Google and Apple. Add cases for Facebook, Twitch, or other OpenID Connect providers by constructing the appropriate authorization URL with the nonce.
 
@@ -259,7 +266,7 @@ The following sections address common issues with this example.
 
 **Symptom:** The Google OAuth popup closes immediately or never appears.
 
-**Cause:** The `VITE_OAUTH_CLIENT_ID` is misconfigured, the redirect URI does not match `http://localhost:5173/`, or third-party cookies are blocked.
+**Cause:** The `VITE_OAUTH_CLIENT_ID` is misconfigured, the redirect URI does not match `http://localhost:5173/`, or the browser blocks third-party cookies.
 
 **Fix:** Verify the Google Client ID and authorized redirect URIs in Google Cloud Console. Try a different browser or disable cookie-blocking extensions.
 
@@ -267,7 +274,7 @@ The following sections address common issues with this example.
 
 **Symptom:** The OAuth popup opens and authenticates, but the parent window never receives the JWT token.
 
-**Cause:** The OAuth redirect URI in the Google Cloud console does not match the application's URL, or the response type is not set to `id_token`.
+**Cause:** The OAuth redirect URI in the Google Cloud console does not match the application's URL, or the OAuth URL does not set the response type to `id_token`.
 
 **Fix:** Verify the authorized redirect URI in the Google Cloud console matches `http://localhost:5173` exactly. Ensure the OAuth URL includes `response_type=id_token` and `scope=openid`.
 
@@ -281,7 +288,7 @@ The following sections address common issues with this example.
 
 ### Derived address has no balance
 
-**Symptom:** The wallet address is derived successfully but shows a 0 SUI balance.
+**Symptom:** The app derives the wallet address successfully, but the address shows a 0 SUI balance.
 
 **Cause:** The derived address has not received any SUI. The address is deterministic but starts with no funds.
 
@@ -289,7 +296,7 @@ The following sections address common issues with this example.
 
 ### Transaction fails with `InvalidSignature`
 
-**Symptom:** The transaction is submitted but the network rejects it with a signature error.
+**Symptom:** You submit the transaction, but the network rejects it with a signature error.
 
 **Cause:** The ephemeral key pair has expired (current epoch exceeds `maxEpoch`), or the nonce in the JWT does not match the ephemeral key used for signing.
 

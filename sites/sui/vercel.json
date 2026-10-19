@@ -3454,6 +3454,31 @@
       "source": "/concepts/sui-move-concepts/testing",
       "destination": "/develop/testing-debugging/testing",
       "permanent": true
+    },
+    {
+      "source": "/guides/operator/validator-config",
+      "destination": "/operators/validator/validator-config",
+      "permanent": true
+    },
+    {
+      "source": "/reference/sui-json-rpc",
+      "destination": "/references/sui-api",
+      "permanent": true
+    },
+    {
+      "source": "/learn/move",
+      "destination": "/develop/write-move",
+      "permanent": true
+    },
+    {
+      "source": "/reference/rpc",
+      "destination": "/references/sui-api",
+      "permanent": true
+    },
+    {
+      "source": "/build/publish",
+      "destination": "/develop/publish-upgrade-packages/deploy",
+      "permanent": true
     }
   ],
   "rewrites": [

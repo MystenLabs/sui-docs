@@ -89,7 +89,7 @@ For SUI gas specifically, passing an empty array to `setGasPayment` tells the ne
 tx.setGasPayment([]); // Gas paid from address balance — no coin lookup required
 ```
 
-`setGasPayment([])` alone is not enough for fully offline transaction building. You also need to set `gasPrice`, `gasBudget`, and `ValidDuring` expiration, and all transaction inputs must be resolvable without network queries (no unresolved `coinWithBalance` or `tx.coin()` intents that require balance lookups). See [Paying for gas from address balances](/onchain-finance/asset-custody/address-balances/using-address-balances#paying-for-gas-from-address-balances) for the full set of requirements.
+`setGasPayment([])` alone is not enough for fully offline transaction building. You also need to set `gasPrice`, `gasBudget`, and `ValidDuring` expiration, and all transaction inputs must be resolvable without network queries (no unresolved `coinWithBalance` or `tx.coin()` intents that require balance lookups). See [Paying for gas from address balances](/onchain-finance/asset-custody/address-balances/using-address-balances#how-do-i-pay-for-gas-from-an-address-balance) for the full set of requirements.
 
 See [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances) for the full API (TypeScript, Rust, CLI, and Move) and [Gas Smashing](/develop/transaction-payment/gas-smashing) for the legacy coin-merge approach.
 
@@ -101,7 +101,7 @@ Sui offers 4 ways to pay for gas, each suited to different use cases:
 |----------|----------|-----------------|----------|
 | **Standard gas** | User | Yes | General transactions |
 | **Address balance gas** | User | Yes (in address balance) | Offline-built transactions, no coin lookup |
-| **Sponsored gas** | App / relayer | No | Onboarding, free-to-play, enterprise |
+| **Sponsored gas** | App or relayer | No | Onboarding, free-to-play, enterprise |
 | **Gasless stablecoin** | Nobody (zero fee) | No | Peer-to-peer stablecoin transfers |
 
 ### Standard gas
@@ -110,7 +110,7 @@ The sender provides one or more `Coin<SUI>` objects to cover execution and stora
 
 ### Address balance gas
 
-Instead of selecting coin objects, the network withdraws gas from the sender's SUI address balance. This removes the need for coin lookups at gas-selection time. To use it, set `tx.setGasPayment([])` along with `gasPrice`, `gasBudget`, and `ValidDuring` expiration. When all other transaction inputs are also known at build time (no unresolved `coinWithBalance` intents), the transaction can be built fully offline. See [Paying for gas from address balances](/onchain-finance/asset-custody/address-balances/using-address-balances#paying-for-gas-from-address-balances) for requirements.
+Instead of selecting coin objects, the network withdraws gas from the sender's SUI address balance. This removes the need for coin lookups at gas-selection time. To use it, set `tx.setGasPayment([])` along with `gasPrice`, `gasBudget`, and `ValidDuring` expiration. When all other transaction inputs are also known at build time (no unresolved `coinWithBalance` intents), you can build the transaction fully offline. See [Paying for gas from address balances](/onchain-finance/asset-custody/address-balances/using-address-balances#how-do-i-pay-for-gas-from-an-address-balance) for requirements.
 
 ### Sponsored transactions
 
@@ -120,11 +120,11 @@ With address balances, sponsored transactions become simpler: no gas coin lockin
 
 ### Gasless stablecoin transfers {#gasless}
 
-Peer-to-peer transfers of [allowlisted stablecoins](/develop/transaction-payment/gasless-stablecoin-transfers#eligible-stablecoins) (USDC, USDSUI, and others) execute at zero gas cost. Eligibility requires:
+Peer-to-peer transfers of [allowlisted stablecoins](/develop/transaction-payment/gasless-stablecoin-transfers#which-stablecoins-are-eligible-for-gasless-transfers) (USDC, USDSUI, and others) execute at zero gas cost. Eligibility requires:
 
 - The PTB calls only allowlisted `balance` or `coin` operations (primarily `balance::send_funds`).
 - `gasPayment` is empty and `gasPrice = 0`.
-- No objects are written.
+- The transaction writes no objects.
 
 The gRPC and GraphQL transports detect eligibility automatically during simulation and set `gasBudget = 0`. See [Gasless Stablecoin Transfers](/develop/transaction-payment/gasless-stablecoin-transfers) for the full allowlist and integration guide.
 
@@ -153,7 +153,7 @@ const result = await client.signAndExecuteTransaction({ transaction: tx, signer:
 
 [Programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) let you chain multiple operations into a single atomic transaction. Outputs from earlier commands feed directly into later ones, with no intermediate state and no partial execution risk.
 
-The examples below use placeholder package and object IDs (`0xDEX_PACKAGE`, `0xPOOL_ID`, `0xYIELD`, `0xVAULT`). Replace them with the real IDs of the protocols you integrate with before running the code.
+The examples in this section use placeholder package and object IDs (`0xDEX_PACKAGE`, `0xPOOL_ID`, `0xYIELD`, `0xVAULT`). Replace them with the real IDs of the protocols you integrate with before running the code.
 
 ### Swap and transfer
 
@@ -223,7 +223,7 @@ If any step fails (slippage breach, paused pool, invalid address), the entire tr
 
 ### Key composition rules
 
-- **Outputs chain forward:** The result of `splitCoins` or a `moveCall` can be passed as input to the next command.
+- **Outputs chain forward:** You can pass the result of `splitCoins` or a `moveCall` as input to the next command.
 - **All-or-nothing:** If any command fails, the entire PTB reverts.
 - **One gas payment:** The whole batch shares a gas budget, and the sponsor (user, app, or relayer) pays once.
 - **Up to 1,024 commands:** A single PTB can contain up to 1,024 commands.

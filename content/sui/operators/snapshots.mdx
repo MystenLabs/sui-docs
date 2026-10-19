@@ -74,24 +74,32 @@ Formal snapshots provide a mechanism for a node to restore to a canonical state 
 
 Because these snapshots do not contain indexes, they are most immediately useful for validators and state sync Full nodes (SSFNs). You can upload snapshots to remote object stores like S3, Google Cloud Storage, Azure Blob Storage, and similar services. These services typically run the export process in the background so there is no degradation in performance for your full node. With snapshots stored in the cloud, you can recover from catastrophic failures in your system or hardware more efficiently.
 
-## Restoring a full node using snapshots
+## How to restore a full node from a snapshot
 
 You can restore a full node using either RocksDB snapshots or formal snapshots.
 
-### Restoring using RocksDB snapshots
+Before you restore, make sure you have:
+
+- For RocksDB snapshots: cloud object store tooling (the AWS CLI for S3 buckets or `gsutil` for GCS buckets) and valid AWS or GCP credentials. The Mysten Labs managed DB snapshot buckets are Requester Pays, which means you are charged for the egress costs of pulling the snapshot data.
+- For formal snapshots: the `sui-tool` binary (see [Install Sui](/getting-started/onboarding/sui-install)) and the network's `genesis.blob`. You need cloud credentials only if you do not use the free bucket through `--no-sign-request`.
+
+### How to restore from a RocksDB snapshot
 
 To restore from a RocksDB snapshot, follow these steps:
 
 1. Choose the snapshot source for the epoch you want to restore. Mysten Labs managed DB snapshots are available in GCS for Testnet and in GCS or S3 for Mainnet, with one snapshot per epoch.
-1. Download the snapshot to a temporary directory using cloud object store tooling. For example, if the `db-path` value points to `/opt/sui/db/authorities_db/full_node_db` and you want to restore from epoch 10, use one of these commands:
+1. Download the snapshot to a temporary directory using cloud object store tooling. For example, if the `db-path` value points to `/opt/sui/db/authorities_db/full_node_db` and you want to restore from epoch 10, use the command for your bucket type:
 
-   Use the AWS CLI for S3 buckets (provided you have credentials to associate with the download):
-   `aws s3 cp s3://<BUCKET_NAME>/epoch_10 /tmp/epoch_10 --recursive --request-payer requester`.
+   - **S3 buckets:** Use the AWS CLI (provided you have credentials to associate with the download):
+     ```
+     aws s3 cp s3://<BUCKET-NAME>/epoch_10 /tmp/epoch_10 --recursive --request-payer requester
+     ```
+   - **GCS buckets:** Use `gsutil` (provided you have a billing project for Requester Pays):
+     ```
+     gsutil -u <BILLING-PROJECT> -m cp -r gs://<BUCKET-NAME>/epoch_10 /tmp/epoch_10
+     ```
 
-   Use `gsutil` for GCS buckets (provided you have a billing project for Requester Pays):
-   `gsutil -u <BILLING_PROJECT> -m cp -r gs://<BUCKET_NAME>/epoch_10 /tmp/epoch_10`.
-
-1. Place the downloaded `epoch_[NUM]` directory at `live/` under your node's `db_path`, for example `cp -r /tmp/epoch_[NUM] /opt/sui/db/authorities_db/full_node_db/live`.
+1. Place the downloaded `epoch_10` directory at `live/` under your node's `db_path`, for example `cp -r /tmp/epoch_10 /opt/sui/db/authorities_db/full_node_db/live`.
 1. Make sure you update the ownership of the downloaded directory to the sui user (whichever linux user you run `sui-node` as)
    `sudo chown -R sui:sui  /opt/sui/db/authorities_db/full_node_db/live`.
 1. Start the Sui node.
@@ -102,7 +110,7 @@ When you restore a full node from a snapshot, write it to the path `/opt/sui/db/
 
 :::
 
-### Restoring using formal snapshots
+### How to restore from a formal snapshot
 
 To restore using a formal snapshot, use the `sui-tool` binary. You can download `sui-tool` along with other `sui` binaries.
 See [Install Sui](/getting-started/onboarding/sui-install) for more details.
@@ -116,6 +124,7 @@ To restore a node from a formal snapshot, complete the following steps:
         --network <NETWORK> --snapshot-bucket <BUCKET-NAME> --snapshot-bucket-type <TYPE> \
         --path <PATH-TO-NODE-DB> --num-parallel-downloads 50 --no-sign-request
    ```
+   The template lists every option. To download a specific epoch instead of the latest one, replace `--latest` with `--epoch <EPOCH>`. To choose the snapshot source, keep either `--no-sign-request` (free Cloudflare R2 bucket, no credentials) or `--snapshot-bucket` and `--snapshot-bucket-type` (credentials from the environment variables below), and remove the other; they are mutually exclusive.
    - `--epoch`: The epoch that you want to download. Mysten Labs hosted buckets keep only the last 90 epochs. You can check the most recent epoch on Sui explorers like [suivision](https://suivision.xyz/) or [suiscan](https://suiscan.xyz/).
    - `--latest`: Rather than explicitly passing an epoch through `--epoch`, you can pass the `--latest` flag, which automatically selects the latest snapshot.
    - `--genesis`: The path to the location of the network's `genesis.blob`.
@@ -148,11 +157,11 @@ Mysten Labs hosts two tiers of snapshot storage access: high throughput, Request
 
 ### Bucket names
 
-For the full list of snapshot bucket names, checkpoint store endpoints, and credential requirements, see [Available Data Stores](/operators/data-management/available-data-stores). The snapshot-specific stores are listed under [formal snapshot buckets](/operators/data-management/available-data-stores#formal-buckets).
+For the full list of snapshot bucket names, checkpoint store endpoints, and credential requirements, see [Available Data Stores](/operators/data-management/available-data-stores). The snapshot-specific stores are listed under [formal snapshot buckets](/operators/data-management/available-data-stores).
 
 ![Mysten Managed Snapshots](./images/managed-snapshots_opreator-guides_v1.png "A diagram that shows the current architecture of Mysten snapshot availability")
 
-## Enabling snapshots
+## How to enable snapshots
 
 Full nodes do not take snapshots by default. To enable this feature you must apply specific configs to your full node.
 
@@ -171,8 +180,8 @@ Add an entry to the config file for `db-checkpoint-config`. Using Amazon's S3 se
      object-store-config:
        object-store: "S3"
        bucket: "<BUCKET-NAME>"
-       aws-access-key-id: “<ACCESS-KEY>”
-       aws-secret-access-key: “<SHARED-KEY>”
+       aws-access-key-id: "<ACCESS-KEY>"
+       aws-secret-access-key: "<SHARED-KEY>"
        aws-region: "<BUCKET-REGION>"
        object-store-connection-limit: 20
    ```
@@ -190,8 +199,8 @@ Add an entry to the config file for `db-checkpoint-config`. Using Amazon's S3 se
      object-store-config:
        object-store: "S3"
        bucket: "<BUCKET-NAME>"
-       aws-access-key-id: “<ACCESS-KEY>”
-       aws-secret-access-key: “<SHARED-KEY>”
+       aws-access-key-id: "<ACCESS-KEY>"
+       aws-secret-access-key: "<SHARED-KEY>"
        aws-region: "<BUCKET-REGION>"
        object-store-connection-limit: 200
    ```

@@ -54,7 +54,7 @@ answer: >-
   the Move contract mints an NFT only after verifying.
 ---
 
-This example demonstrates a verified oracle system that fetches real-world weather data inside a Trusted Execution Environment (TEE), signs the result cryptographically, and submits it to a Move contract that mints a `WeatherNFT` only after verifying the signature. 
+A verified oracle system fetches real-world weather data inside a Trusted Execution Environment (TEE), signs the result cryptographically, and submits it to a Move contract that mints a `WeatherNFT` only after verifying the signature.
 
 ## When to use this pattern
 
@@ -72,17 +72,17 @@ Use this pattern when you need to:
 
 This example teaches:
 
-- **Trusted Execution Environments:** AWS Nitro Enclaves provide isolated compute where the host OS cannot read memory or tamper with execution. The enclave generates an ephemeral key pair that never leaves the enclave.
+- **Trusted Execution Environments:** AWS Nitro Enclaves provide isolated compute where the host OS cannot read memory or tamper with execution. The enclave generates an ephemeral key pair (a temporary key pair created when the enclave starts and replaced whenever it restarts) that never leaves the enclave.
 
 - **Cryptographic verification:** The Move contract stores the enclave's public key and verifies signatures on every data submission. Forged or tampered data fails verification.
 
 - **Oracle pattern:** The enclave acts as a trusted bridge between an external API (weatherapi.com) and onchain state. The contract trusts the data because it trusts the enclave that signed it.
 
-- **Intent scoping:** A `WEATHER_INTENT` constant (value `0`) is included in every signed message as a domain separator, preventing signatures from 1 intent from being replayed in another.
+- **Intent scoping:** Every signed message includes a `WEATHER_INTENT` constant (value `0`) as a domain separator, which prevents replay of signatures from one intent in another. The contract checks that the intent scope matches `WEATHER_INTENT`, so the contract cannot accept a signature the enclave produced for a different message type as valid weather data.
 
 ## Architecture
 
-The example has 3 actors and 1 onchain package. The diagram below traces 1 full interaction from a weather request to a minted NFT.
+The example has 3 actors and 1 onchain package. The sequence diagram traces 1 full interaction from a weather request to a minted NFT.
 
 ```mermaid
 sequenceDiagram
@@ -138,7 +138,7 @@ The trust chain works through Platform Configuration Registers (PCRs), which are
 
 - **PCR2:** Identifies runtime configuration files.
 
-The Move contract stores the expected PCR values at deployment. When the enclave registers, the contract verifies the attestation document against these values. After registration, you can verify every signed response from the enclave onchain using the stored public key.
+The Move contract stores the expected PCR values at deployment. When the enclave registers, the contract verifies the attestation document against these values. Because the PCRs are fingerprints of the enclave software, any change to the OS, application code, or configuration changes them, and the attestation no longer matches the stored values. This is what lets the contract trust that the registered public key belongs to the exact code you expect. After registration, you can verify every signed response from the enclave onchain using the stored public key.
 
 The enclave exposes 3 endpoints:
 
@@ -186,12 +186,12 @@ enclave = { git = "https://github.com/MystenLabs/nautilus.git", subdir = "move/e
 
 Adapting this to a different data source takes 4 changes:
 
-1. **Match the structs.** The Rust response struct and the Move struct must have identical field names, in the same order, with compatible types. BCS serialization is order-sensitive, so a mismatch fails signature verification even when the signature is valid.
+1. **Match the structs.** The Rust response struct and the Move struct must have identical field names, in the same order, with compatible types. BCS, the encoding the enclave signs and the contract reconstructs before verifying, is order-sensitive, so a mismatch fails signature verification even when the signature is valid.
 2. **Allowlist the domain.** Add your API host to `allowed_endpoints.yaml`, or the enclave cannot reach it.
 3. **Set an intent constant.** The reference app uses `WEATHER_INTENT` with value `0` as a domain separator. Give each distinct message type its own value so a signature for one cannot be replayed as another.
 4. **Register the enclave.** Publish your package, then call `GET /get_attestation` on the running enclave and submit the attestation to `register_enclave`. This stores the enclave public key onchain. The `init` function ships with placeholder PCR values; replace them with the real hashes from your built enclave image before Mainnet.
 
-Once registered, call the enclave and submit its signed output:
+Once registered, call the enclave and submit its signed output. Replace `ENCLAVE_URL` with your enclave's address and `London` with the location you want to query:
 
 ```bash
 $ curl -X POST http://ENCLAVE_URL/process_data \
@@ -205,7 +205,7 @@ The enclave returns the signed payload. Pass it to `update_weather` along with a
 
 <CodeWalkthrough source="K4/example/move/weather.move" org="MystenLabs" repo="sui-move-bootcamp" branch="solution" language="move">
   <Step lines="16-21" title="`WeatherNFT` data struct">
-    The `WeatherNFT` struct stores verified weather data as a transferable Sui object. It has `key` and `store` abilities. The `location`, `temperature`, and `timestamp_ms` fields are all verified by the enclave signature before the contract creates the object.
+    The `WeatherNFT` struct stores verified weather data as a transferable Sui object. It has `key` and `store` abilities. The contract verifies the enclave signature over the `location`, `temperature`, and `timestamp_ms` fields before it creates the object.
   </Step>
   <Step lines="45-67" title="Verified minting with `update_weather`">
     The `update_weather` function takes the weather data (location, temperature, timestamp), the enclave signature, and a reference to the `Enclave` object that holds the public key. It reconstructs the expected signed payload, calls `enclave::verify` to check the signature, and mints the NFT only if verification succeeds. The `WEATHER_INTENT` constant scopes the signature to prevent cross-intent replay.
@@ -253,6 +253,6 @@ The following sections address common issues with this example.
 
 **Symptom:** The `/process_data` endpoint returns a network error.
 
-**Cause:** The domain is not listed in `allowed_endpoints.yaml`, or the enclave has no outbound network access.
+**Cause:** `allowed_endpoints.yaml` does not list the domain, or the enclave has no outbound network access.
 
-**Fix:** Verify `api.weatherapi.com` appears in `allowed_endpoints.yaml`. Check the enclave's network configuration allows outbound HTTPS on port 443.
+**Fix:** Verify `api.weatherapi.com` appears in `allowed_endpoints.yaml`. Check the enclave's network configuration allows outbound HTTPS on **port 443**.

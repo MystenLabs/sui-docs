@@ -23,6 +23,8 @@ answer: >-
 ---
 
 
+Wiring zkLogin authentication and Enoki-sponsored transactions into a DeepBook swap flow on Sui lets users swap tokens without managing wallets or paying gas.
+
 DeFi applications on Sui can use zkLogin to onboard users who do not have a Sui wallet. Combined with Enoki's sponsored transactions, this creates a trading experience where the user signs in with Google, swaps tokens, and the application covers gas fees, eliminating the cold-start problem of needing SUI before you can trade.
 
 The flow uses Enoki end-to-end: `createSponsoredTransaction` builds and sponsors the transaction server-side, the wallet signs the returned bytes client-side, and `executeSponsoredTransaction` submits the signed result.
@@ -184,4 +186,5 @@ The server calls `enoki.executeSponsoredTransaction({ digest, signature })` to s
 - **Gas budget:** Enoki sets the gas budget for sponsored transactions. Monitor costs and configure per-transaction or per-user caps in the Enoki Developer Portal.
 - **Price slippage:** DeFi transactions can fail if prices move between building and execution. Set appropriate `minOut` values in the swap parameters.
 - **Funding the address:** The zkLogin address starts with no tokens. Users need to receive tokens before they can trade (through a fiat on-ramp, transfer from another address, or an airdrop).
+
 

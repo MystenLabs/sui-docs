@@ -1,7 +1,7 @@
 ---
 title: 'Create Fungible Tokens: Currency Standard'
 description: >-
-  Learn how to create currencies using the Currency standard on Sui, including
+  Learn how to create currencies using the Currency Standard on Sui, including
   standard and One-Time Witness creation flows, supply model configuration, and
   regulated token setup.
 keywords:
@@ -10,10 +10,10 @@ keywords:
   - use tokens
   - publish token
   - custom tokens
-  - sui CLI
+  - Sui CLI
   - denylist
   - regulated coins
-  - coin registry
+  - Coin Registry
   - currency registry
 goal:
   description: Reader can create currencies and mint coins and tokens on the Sui network
@@ -42,25 +42,27 @@ questions:
   - 'What is Create Fungible Tokens: Currency Standard in Sui?'
   - 'Why should I use create fungible tokens: currency standard?'
 answer: >-
-  Learn how to create currencies using the Currency standard on Sui, including
+  Learn how to create currencies using the Currency Standard on Sui, including
   standard and One-Time Witness creation flows, supply model configuration, and
   regulated token setup.
 ---
 
 Assets created using the Currency Standard are free-flowing, [wrappable](/develop/objects/object-ownership/wrapped), [freely transferable](/develop/objects/transfers/custom-rules) fungible assets that you can store in any app. The Currency Standard uses the [`sui::coin_registry`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/coin_registry.md) module and the `Currency` object for metadata.
 
-The `Currency<T>` type represents open-loop fungible tokens. Currencies are denominated by their type parameter `T`, which is also associated with metadata (like name, symbol, and decimal precision) that applies to all instances of `Currency<T>`. The `sui::coin_registry` module exposes an interface over `Currency<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Currency<T>` is interchangeable with any other unit of `T`, similar to how traditional fiat currencies operate.
+The `Currency<T>` type represents open-loop fungible tokens. The type parameter `T` denominates a currency and has associated metadata (like name, symbol, and decimal precision) that applies to all instances of `Currency<T>`. The `sui::coin_registry` module exposes an interface over `Currency<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Currency<T>` is interchangeable with any other unit of `T`, similar to how traditional fiat currencies operate.
 
-## Coin Registry
+In short: the `Currency<T>` object holds the metadata for coin type `T`, and the `TreasuryCap` mints and burns `Coin<T>` objects unless the supply model locks the `TreasuryCap` inside the `Currency` (see [Configure supply model](#configure-supply-model)).
+
+## What is the Coin Registry?
 
 The Coin Registry system provides a centralized approach to currency management through the `sui::coin_registry` module. The registry is a shared object located at address `0xc` that stores metadata, supply information, and regulatory status for all registered coin types.
 
-## Creation options
+## Which creation option should I use?
 
 The registry supports two different coin creation flows:
 
-- **Standard creation** (`coin_registry::new_currency`): Recommended for most cases. You can call this method any time after the coin type is published.
-- **One-Time Witness creation** (`coin_registry::new_currency_with_otw`): Uses a One-Time Witness for uniqueness proof. Requires a two-step publish and finalize process.
+- **Standard creation** (`coin_registry::new_currency`): Recommended for most cases. You can call this method any time after you publish the coin type.
+- **One-Time Witness creation** (`coin_registry::new_currency_with_otw`): Uses a One-Time Witness (OTW) for uniqueness proof. Requires a two-step publish and finalize process.
 
 Both creation methods return a `CurrencyInitializer<T>` that allows for additional configuration:
 
@@ -72,7 +74,7 @@ Both creation methods return a `CurrencyInitializer<T>` that allows for addition
 
 ## Standard creation (recommended)
 
-Use the `new_currency` function at any time after the coin type is published. It creates a shared `Currency<T>` object, where type `T` must be a key-only type (`public struct MyCoin has key { id: UID }`):
+Use the `new_currency` function at any time after you publish the coin type. It creates a shared `Currency<T>` object, where type `T` must be a key-only type, meaning a struct that has only the `key` ability (`public struct MyCoin has key { id: UID }`):
 
 <ImportContent source="examples/move/coin/sources/non_otw_currency.move" mode="code" fun="new_currency" noComments />
 
@@ -126,7 +128,7 @@ public fun burn(currency: &mut Currency<BURN_ONLY_SUPPLY>, coin: Coin<BURN_ONLY_
 
 ### Uncontrolled supply (default)
 
-If you do not call `make_supply_fixed` or `make_supply_burn_only`, the supply remains uncontrolled. The `TreasuryCap` holder can mint and burn freely. This is the default behavior shown in the [OTW creation](#one-time-witness-creation) example above. (The [standard creation](#standard-creation-recommended) example calls `make_supply_burn_only`, so it is not uncontrolled.)
+If you do not call `make_supply_fixed` or `make_supply_burn_only`, the supply remains uncontrolled. The `TreasuryCap` holder can mint and burn freely. The [OTW creation](#one-time-witness-creation) example shows this default behavior. (The [standard creation](#standard-creation-recommended) example calls `make_supply_burn_only`, so it is not uncontrolled.)
 
 ## Create a regulated currency
 
@@ -134,7 +136,7 @@ To create a currency with deny-list support, call `make_regulated` on the `Curre
 
 <ImportContent source="examples/move/coin/sources/regcoin_new.move" mode="code" fun="init" noComments />
 
-The `make_regulated` function takes a `bool` parameter controlling whether global pause is allowed. When `true`, the `DenyCapV2` holder can freeze all transfers of the token across the network. See [Regulated Tokens](/onchain-finance/fungible-tokens/regulated-tokens) for details on managing the deny list.
+The `make_regulated` function takes a `bool` parameter controlling whether the currency allows global pause. When `true`, the `DenyCapV2` holder can freeze all transfers of the token across the network. See [Regulated Tokens](/onchain-finance/fungible-tokens/regulated-tokens) for details on managing the deny list.
 
 ## Mint and burn coins
 
@@ -158,7 +160,7 @@ currency.burn(coin);
 
 **Fixed supply:** Neither minting nor burning is possible. The `Currency` locks the `TreasuryCap` and freezes the supply.
 
-## Manage metadata
+## How do I manage currency metadata?
 
 The `MetadataCap<T>` controls who can update the currency's name, description, and icon URL. The `finalize` function returns it.
 
@@ -184,10 +186,12 @@ To make metadata permanently immutable, delete the `MetadataCap`:
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/registries/coin_registry.move" mode="code" fun="delete_metadata_cap" signatureOnly />
 
-Once deleted, no one can update the currency's name, description, or icon URL.
+After you delete the `MetadataCap`, no one can update the currency's name, description, or icon URL.
 
 ## Complete example
 
 The following example creates a non-OTW currency with a burn-only supply, mints the total supply, and transfers both the minted coins and the `MetadataCap` to the publisher:
 
 <ImportContent source="examples/move/coin/sources/non_otw_currency.move" mode="code" fun="new_currency" noComments />
+
+This example covers creation only. To mint or burn coins after creation, see [Mint and burn coins](#mint-and-burn-coins).

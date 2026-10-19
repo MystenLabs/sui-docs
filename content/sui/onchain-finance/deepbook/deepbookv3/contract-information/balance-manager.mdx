@@ -48,9 +48,9 @@ answer: Learn about the balance manager and how it works.
 
 ## What is a BalanceManager?
 
-The `BalanceManager` shared object holds all balances for different assets. To perform trades, pass a combination of `BalanceManager` and `TradeProof` into a [pool](/onchain-finance/deepbook/deepbookv3/design#pool). You must provide a `TradeProof` along with your `BalanceManager` to call any function that requires a balance check or transfer. `TradeProof`s are generated in one of two ways, either by the `BalanceManager` owner directly (`generate_proof_as_owner`), or by any `TradeCap` owner (`generate_proof_as_trader`). The owner can generate a `TradeProof` without the risk of equivocation. The `TradeCap` owner, because it's an owned object, risks equivocation when generating a `TradeProof`. Generally, a high frequency trading engine trades as the default owner.
+The `BalanceManager` shared object holds all balances for different assets. To perform trades, pass a combination of `BalanceManager` and `TradeProof` into a [pool](/onchain-finance/deepbook/deepbookv3/design#pool). You must provide a `TradeProof` along with your `BalanceManager` to call any function that requires a balance check or transfer. One of two parties generates a `TradeProof`: either the `BalanceManager` owner directly (`generate_proof_as_owner`), or any `TradeCap` owner (`generate_proof_as_trader`). The owner can generate a `TradeProof` without the risk of equivocation. The `TradeCap` owner, because it's an owned object, risks equivocation when generating a `TradeProof`. Generally, a high frequency trading engine trades as the default owner.
 
-With exception to swaps, all interactions with DeepBookV3 require a `BalanceManager` as one of its inputs. When orders are matched, funds are transferred to or from the `BalanceManager`. You can use a single `BalanceManager` between all pools.
+With exception to swaps, all interactions with DeepBookV3 require a `BalanceManager` as one of its inputs. When the pool matches orders, it transfers funds to or from the `BalanceManager`. You can use a single `BalanceManager` between all pools.
 
 ## How do I use a BalanceManager?
 
@@ -121,7 +121,7 @@ The `new_with_custom_owner_caps<App>()` function creates a `BalanceManager` with
 <details>
 <summary>Mint a `TradeCap`</summary>
 
-The owner of a `BalanceManager` can mint a `TradeCap` and send it to another address. Upon receipt, that address will have the capability to place orders with this `BalanceManager`. The address owner cannot deposit or withdraw funds, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that can be assigned for a `BalanceManager` is `1000`. If this limit is reached, one or more existing caps must be revoked before minting new ones. You can also use `revoke_trade_cap` to revoke `DepositCap` and `WithdrawCap`.
+The owner of a `BalanceManager` can mint a `TradeCap` and send it to another address. Upon receipt, that address has the capability to place orders with this `BalanceManager`. The address owner cannot deposit or withdraw funds, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that you can assign for a `BalanceManager` is `1000`. If you reach this limit, you must revoke one or more existing caps before minting new ones. You can also use `revoke_trade_cap` to revoke `DepositCap` and `WithdrawCap`.
 
 <ImportContent
 	source="packages/deepbook/sources/balance_manager.move"
@@ -136,7 +136,7 @@ The owner of a `BalanceManager` can mint a `TradeCap` and send it to another add
 <details>
 <summary>Mint a `DepositCap` or `WithdrawCap`</summary>
 
-The owner of a `BalanceManager` can mint a `DepositCap` or `WithdrawCap` and send it to another address. Upon receipt, that address will have the capability to deposit in or withdraw from `BalanceManager`. The address owner cannot execute trades, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that can be assigned for a `BalanceManager` is `1000`. If this limit is reached, one or more existing caps must be revoked before minting new ones.
+The owner of a `BalanceManager` can mint a `DepositCap` or `WithdrawCap` and send it to another address. Upon receipt, that address has the capability to deposit in or withdraw from `BalanceManager`. The address owner cannot execute trades, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that you can assign for a `BalanceManager` is `1000`. If you reach this limit, you must revoke one or more existing caps before minting new ones.
 
 <ImportContent
 	source="packages/deepbook/sources/balance_manager.move"
@@ -151,7 +151,7 @@ The owner of a `BalanceManager` can mint a `DepositCap` or `WithdrawCap` and sen
 <details>
 <summary>Generate a `TradeProof`</summary>
 
-To call any function that requires a balance check or transfer, the user must provide their `BalanceManager` as well as a `TradeProof`. There are two ways to generate a trade proof, one used by the owner and another used by a `TradeCap` owner.
+To call any function that requires a balance check or transfer, you must provide your `BalanceManager` as well as a `TradeProof`. There are two ways to generate a trade proof, one used by the owner and another used by a `TradeCap` owner.
 
 <ImportContent
 	source="packages/deepbook/sources/balance_manager.move"
@@ -209,7 +209,7 @@ Only holders of a `DepositCap` for the `BalanceManager` can call this function t
 </details>
 
 <details>
-<summary>Withdraw funds using WithdrawCap</summary>
+<summary>Withdraw funds using `WithdrawCap`</summary>
 
 Only holders of a `WithdrawCap` for the `BalanceManager` can call this function to withdraw funds from the `BalanceManager`.
 
@@ -226,7 +226,7 @@ Only holders of a `WithdrawCap` for the `BalanceManager` can call this function 
 <details>
 <summary>Set and unset referral</summary>
 
-The owner of a `TradeCap` can set or unset a pool-specific referral for the balance manager. Setting a referral allows the balance manager to be associated with a `DeepBookPoolReferral` for that pool, which can track and earn referral fees. Each balance manager can have different referrals for different pools.
+The owner of a `TradeCap` can set or unset a pool-specific referral for the balance manager. Setting a referral associates the balance manager with a `DeepBookPoolReferral` for that pool, which can track and earn referral fees. Each balance manager can have different referrals for different pools.
 
 <ImportContent
 	source="packages/deepbook/sources/balance_manager.move"
@@ -286,7 +286,7 @@ The system emits this event when you create a new balance manager.
 </details>
 
 <details>
-<summary>BalanceEvent</summary>
+<summary>`BalanceEvent`</summary>
 
 The system emits this event when a deposit or withdrawal occurs.
 

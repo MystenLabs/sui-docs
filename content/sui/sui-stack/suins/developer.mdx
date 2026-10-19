@@ -29,7 +29,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This guide explains how to integrate Sui Name Service (SuiNS) into your application using offchain or onchain resolution, lists the active SuiNS package and object IDs on Mainnet and Testnet, and describes how subnames work.
+You can integrate Sui Name Service (SuiNS) into your application using offchain or onchain resolution. The following sections list the active SuiNS package and object IDs on Mainnet and Testnet and describe how subnames work.
 
 Sui Name Service (SuiNS) is a decentralized naming service on the Sui blockchain that enables users to replace complex wallet addresses with human-readable names. You can integrate SuiNS into your application using either onchain or offchain resolution.
 
@@ -116,15 +116,15 @@ Use the target address when you start from a name and need an address, for examp
 
 ### SuiNS NFT ownership
 
-Do not use ownership of a SuiNS NFT as a resolution method. An NFT is used as the key (capability) to change the target address, but should not be used to identify any name with an address.
+Do not use ownership of a SuiNS NFT as a resolution method. An NFT acts as the key (capability) to change the target address, but do not use it to identify any name with an address.
 
-SuiNS NFT ownership allows any address to be set as the target address. So, the `example.sui` address used in the previous section can point to any address, not just `0x2`. Consequently, when you want to display default addresses, you should trust the default address over target address because it is guaranteed onchain.
+With SuiNS NFT ownership, you can set any address as the target address. So, the `example.sui` address used in the previous section can point to any address, not just `0x2`. Consequently, when you want to display default addresses, you should trust the default address over target address because Sui guarantees it onchain.
 
 ### How do I resolve a name offchain? {#offchain-resolution}
 
 For offchain resolution, pass the name to the [`address`](/references/sui-api/sui-graphql/beta/reference/operations/queries/address) GraphQL query. To fetch the full name record instead of just the target address, use the [`nameRecord`](/references/sui-api/sui-graphql/beta/reference/operations/queries/name-record) query.
 
-The JSON-RPC `suix_resolveNameServiceAddress` method previously served this lookup. JSON-RPC is disabled on Sui Foundation Mainnet full nodes, so migrate any code still calling it. See the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration).
+The JSON-RPC `suix_resolveNameServiceAddress` method previously served this lookup. Sui Foundation has disabled JSON-RPC on its Mainnet full nodes, so migrate any code still calling it. See the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration).
 
 :::info
 
@@ -196,7 +196,7 @@ If the name does not exist, has expired, or has no target address set, `send_to_
 
 :::caution
 
-You should integrate SuiNS onchain using the core package only. The utility packages are likely to be replaced, rendering your logic non-functional unless you update your code with each change.
+You should integrate SuiNS onchain using the core package only. SuiNS is likely to replace the utility packages, rendering your logic non-functional unless you update your code with each change.
 
 :::
 
@@ -210,7 +210,7 @@ This allows for complex queries such as:
 
 - **Get all names pointing to a specified address:** Identify all domain names associated with a specific wallet address to track ownership and usage.
 
-You can find the indexer in the [`suins-indexer` GitHub repository](https://github.com/MystenLabs/sui/tree/main/crates/suins-indexer). Feel free to spin up your own service if you are looking to index data tailored to your needs.
+You can find the indexer in the [`suins-indexer` GitHub repository](https://github.com/MystenLabs/sui/tree/main/crates/suins-indexer). You can run your own service if you want to index data tailored to your needs.
 
 For a deeper understanding of how the indexer works and how to integrate it into your projects, refer to [Sui's custom indexer documentation](/develop/accessing-data/custom-indexer).
 
@@ -226,13 +226,13 @@ Parent rules control whether you can create nested names or not and can also all
 
 Subnames can be one of 2 types:
 
-1. **Node subnames**: Similar to regular names, they have an NFT associated with them that gives access to all extra features (personalization, avatars, and so on).
+1. **Node subnames:** Similar to regular names, they have an NFT associated with them that gives access to all extra features (personalization, avatars, and so on).
 
-1. **Leaf subnames**: These subnames exist under a node subname. They do not have an NFT associated with them, so the parent controls their configuration. Consequently, the typical use case for leaf subnames is to use them programmatically.
+1. **Leaf subnames:** These subnames exist under a node subname. They do not have an NFT associated with them, so the parent controls their configuration. Consequently, the typical use case for leaf subnames is to use them programmatically.
 
 The following table provides more details on the differences between the types of names:
 
-| Capabilities/Category | Node subnames | Leaf subnames |
+| Capabilities or category | Node subnames | Leaf subnames |
 | --- | --- | --- |
 | Has NFT | ✅ Yes, <ul style={{listStyle: 'disc', paddingLeft: 1 + 'rem'}}><li>`SuinsRegistration` for SLD*</li><li>`SubDomainRegistration` for nested names</li></ul> | ❌ No, parent's NFT acts as the capability |
 | Can create children (node or leaf) | ✅ Yes, provided the name is an SLD or the parent allows it | ❌ No |
@@ -244,4 +244,4 @@ The following table provides more details on the differences between the types o
 | Burn | ✅ Yes, post-expiration only | ✅ Yes, burn and revoking is the same for leaf names |
 | Transfer ownership | ✅ Yes, the NFT determines node name ownership | ❌ No, SuiNS preserves ownership for the active parent name holder |
 
-*SLD - Second-level domain (for example, example in example.sui)*
+SLD: Second-level domain (for example, example in example.sui)

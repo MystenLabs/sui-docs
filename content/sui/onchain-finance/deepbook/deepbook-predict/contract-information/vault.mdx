@@ -53,7 +53,7 @@ Liquidity is asynchronous. Nothing mints or burns PLP at the moment a provider a
 
 :::info
 
-Collateral is the Move type `usdc::usdc::USDC`. On Mainnet that resolves to native USDC. On Testnet it is a mintable test coin at the same module path that displays as DUSDC and has no market value. Read the exact coin type from `getConfig(network).quoteCoinType` rather than assuming a symbol. The Move snippets on this page pin DeepBookV3 `main` at `76b11922`, whose sources match both deployments; see [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information) for the package and object IDs of each network.
+Collateral is the Move type `usdc::usdc::USDC`. On Mainnet that resolves to native USDC. On Testnet it is a mintable test coin at the same module path that displays as DUSDC and has no market value. Read the exact coin type from `getConfig(network).quoteCoinType` rather than assuming a symbol. The Move snippets on this page pin DeepBookV3 at `29117434`, the protocol version 4 source that both networks run. [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information) lists the package and object IDs of each network.
 
 :::
 
@@ -109,6 +109,8 @@ A queue is a paged list. Each `RequestPage` holds up to 64 entries, and each `Re
 
 `pool_accounting` holds idle USDC and the per-expiry books. It is also entirely `public(package)`. The `Ledger` custodies the idle balance, tracks which expiries are active, and records for each registered expiry its allocation cap, initial cash target, cumulative cash sent and received, and fee-incentive allocation.
 
+USDC the pool holds directly is its idle balance. USDC that `rebalance_expiry_cash` has moved out of idle and into a market is deployed expiry cash, which `pool_accounting::deployed_expiry_cash` sums as sent minus received, floored at zero per expiry. Withdrawals pay only out of idle, so deployed cash is not directly redeemable until it returns through a rebalance or settlement; see [Filling the queues](#redemption-value).
+
 <details>
 <summary>Source for the ledger structs</summary>
 
@@ -123,7 +125,7 @@ A queue is a paged list. Each `RequestPage` holds up to 64 entries, and each `Re
 
 </details>
 
-## Reading pool state {#reading-vault-state}
+## How do I read pool state? {#reading-vault-state}
 
 `PoolVault` exposes 11 permissionless read accessors plus its ID. Copy these signatures as written when you generate calls or bindings:
 
@@ -166,7 +168,7 @@ Whether a flush is in flight is a `ProtocolConfig` read, `protocol_config::valua
 
 </details>
 
-## Asynchronous liquidity {#async-liquidity}
+## How do I supply or withdraw liquidity? {#async-liquidity}
 
 Liquidity moves in and out through 4 calls, and all 4 need nothing but account `Auth`. None of them is capability-gated, and none of them touches an oracle:
 
@@ -203,7 +205,7 @@ public fun request_withdraw(
 ): u64
 ```
 
-Both requests route through the account rather than the transaction signer, so a composing vault's own account receives the fill. The recipient recorded at request time is the account's `receive_address`, and the balance accumulator delivers fills and refunds to it.
+Both requests route through the account rather than the transaction signer, so a composing vault's own account receives the fill. The recipient recorded at request time is the account's `receive_address`, and the balance accumulator delivers fills and refunds to it. For the accounts these requests route through, see [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager).
 
 The flush measures both limits after the pool's supply or withdraw fee, so they bound what the account actually receives. Each is a price floor rather than a promise of a quantity: if the flush has room for only part of the request, the fill is proportionally smaller at the same price and the remainder stays queued with its limit rescaled. At the deployed `lp_request_limit_flush_attempts` of `1`, the first flush whose mark quotes below the limit cancels and refunds the request immediately rather than holding the queue head. An admin can raise the attempt count to at most `3`, in which case a request rests through that many misses before the flush refunds it, and while it rests at the head of its queue that queue stops draining for the flush, so requests behind it wait too.
 
@@ -231,7 +233,7 @@ Minimum sizes apply per request:
 
 </details>
 
-## The flush {#the-flush}
+## How does a flush work? {#the-flush}
 
 A flush freezes the entire pool at one instant, values it against that frozen state, and then drains both queues at the resulting mark. It runs in 3 stages, and only the first stage has to be a single transaction:
 
@@ -241,9 +243,17 @@ A flush freezes the entire pool at one instant, values it against that frozen st
 | Valuation | `value_expiry` once per snapshotted live market | One market per transaction, any number of transactions | Anyone |
 | Finish | `finish_flush` | One | Anyone |
 
+### How to run a complete flush {#flush-checklist}
+
+1. **Snapshot transaction.** In one programmable transaction block, call `registry::generate_pool_valuation_proof` with an allowlisted `PoolValuationCap`, pass the proof and both drain budgets to `start_pool_valuation`, call `expiry_market::try_settle` ahead of the snapshot for any market whose settlement might be due, call `snapshot_expiry_pricer` once for each market that `active_expiry_markets` returns, and end with `seal_valuation_snapshot`. Refresh oracles in an earlier transaction, because the pricer load refuses an observation written in the same transaction.
+2. **Valuation transactions.** Call `value_expiry` once for each snapshotted live market, one market per transaction.
+3. **Finish transaction.** Call `finish_flush` before `started_at_ms + max_valuation_window_ms`. On protocol version 4 the sender must be on the flush-operator allowlist.
+
+The subsections below describe each stage.
+
 ### Snapshot {#snapshot-stage}
 
-The snapshot stage is atomic because it uses 2 hot potatoes. `registry::generate_pool_valuation_proof` checks that a `PoolValuationCap` is still allowlisted and returns a `PoolValuationProof` that has no abilities. `start_pool_valuation` consumes it and returns a `SnapshotStage`, which also has no abilities. Every `snapshot_expiry_pricer` borrows the stage, and `seal_valuation_snapshot` consumes it. No transaction can store, transfer, or drop either potato, so the transaction that starts a flush is the transaction that snapshots and seals it, and only the starter's programmable transaction block can add a market to the snapshot:
+The snapshot stage is atomic because it uses 2 hot potatoes, values with no abilities that the transaction cannot store, transfer, or drop. `registry::generate_pool_valuation_proof` checks that a `PoolValuationCap` is still allowlisted and returns a `PoolValuationProof` that has no abilities. `start_pool_valuation` consumes it and returns a `SnapshotStage`, which also has no abilities. Every `snapshot_expiry_pricer` borrows the stage, and `seal_valuation_snapshot` consumes it. No transaction can store, transfer, or drop either potato, so the transaction that starts a flush is the transaction that snapshots and seals it, and only the starter's programmable transaction block can add a market to the snapshot:
 
 ```move title='packages/predict/sources/plp/plp.move'
 public fun start_pool_valuation(
@@ -367,7 +377,7 @@ A market created mid-flush is not in the frozen expected set and joins the next 
 
 </details>
 
-## One mark for both sides {#share-price}
+## How does a flush price PLP? {#share-price}
 
 `finish_flush` computes the LP-attributable pool NAV purely from frozen figures, then snapshots it once against the PLP supply:
 
@@ -428,7 +438,7 @@ Cash already funded into an expiry is not directly redeemable until it returns t
 
 ## Worked example {#worked-example}
 
-Assume these frozen values when `finish_flush` runs, with `plp_supply_fee_rate` at `0` and `plp_withdraw_fee_rate` at `2_000_000`, which is 0.2 percent:
+Assume these frozen values when `finish_flush` runs, with `protocol_reserve_profit_share` at `100_000_000`, which is 10 percent at 1e9 scale, `plp_supply_fee_rate` at `0`, and `plp_withdraw_fee_rate` at `2_000_000`, which is 0.2 percent:
 
 | **Input** | **Raw value** | **Reads as** |
 |---|---|---|
@@ -455,7 +465,7 @@ A queued 1,000 USDC supply and a queued 10,000 PLP withdrawal then fill at that 
 
 The pool NAV sits under the deployed 500,000 USDC `max_lp_pool_value`, so the supply has headroom to fill in full.
 
-## Funding a market {#rebalance}
+## Why is a new market not mintable? {#rebalance}
 
 A freshly created `ExpiryMarket` holds zero USDC and is not mintable. Minting asserts backing but never pulls pool cash, so the call that makes a market tradable is:
 
@@ -478,7 +488,7 @@ target_cash      = max(required_cash * (1 + band), initial_expiry_cash)
 sweep_threshold  = max(required_cash * (1 + 2 * band), initial_expiry_cash)
 ```
 
-`band` is `expiry_rebalance_pct`, which is `100_000_000` at 1e9 scale, or 10 percent. Below `target_cash` the pool tops the market up, and above `sweep_threshold` it pulls the excess back to idle.
+`band` is `expiry_rebalance_pct`, which is `100_000_000` at 1e9 scale, or 10 percent. Below `target_cash` the pool tops the market up, and above `sweep_threshold` it pulls the excess back to idle. `payout_liability` and `inventory_impact_reserve` are the market's backing terms, which [Per-expiry backing](#max-payout) defines.
 
 Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and a chain read of Testnet on 2026-10-13 found these terms on its 2 enabled cadences:
 
@@ -495,7 +505,7 @@ A top-up has 2 limits: available idle USDC, and the expiry's remaining funding r
 
 Call `expiry_market::try_settle` first in the same transaction when settlement might be due. An expired unsettled market is a no-op for the rebalance.
 
-A market also carries `waiting_cash_need`, the summed worst-case cash need of its queued orders that have not filled yet, readable through `expiry_market::order_flow_state`. The rebalance funds a live market to at least `required_cash + waiting_cash_need`, and its sweep never takes the market below that line, so the cash that waiting orders may fill against stays in the market. The protocol's keeper calls the rebalance after each new queued order, and a queued sell's enqueue builder in the SDK appends it when the sell could need more than the market's spare cash. A fill the market still cannot cover is refunded, never drawn from the pool. See [Queue limits and market cash](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queue-limits).
+A market also carries `waiting_cash_need`, the summed worst-case cash need of its queued orders that have not filled yet, readable through `expiry_market::order_flow_state`. The rebalance funds a live market to at least `required_cash + waiting_cash_need`, and its sweep never takes the market below that line, so the cash that waiting orders might fill against stays in the market. The protocol's keeper calls the rebalance after each new queued order, and a queued sell's enqueue builder in the SDK appends it when the sell could need more than the market's spare cash. The protocol refunds a fill that the market still cannot cover and never draws it from the pool. See [Queue limits and market cash](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queue-limits).
 
 <details>
 <summary>Source for `rebalance_expiry_cash`</summary>
@@ -609,7 +619,7 @@ Protocol version 4 makes 3 incentive rates admin-set on `ProtocolConfig`, each r
 
 ### Add USDC without minting shares {#add-usdc}
 
-`add_usdc_to_plp` donates USDC into the pool's idle balance and mints nothing. Supply is unchanged and the payer receives no claim, so the whole amount accrues to existing holders as a rise in the mark. That is the difference from `sponsor_fee_incentives`, whose USDC sits in the fee incentive reserve and is excluded from NAV: a contribution here *is* NAV.
+`add_usdc_to_plp` donates USDC into the pool's idle balance and mints nothing. Supply is unchanged and the payer receives no claim, so the whole amount accrues to existing holders as a rise in the mark. That is the difference from `sponsor_fee_incentives`, whose USDC sits in the fee incentive reserve and is excluded from NAV: a contribution here is NAV.
 
 :::info
 
@@ -625,7 +635,7 @@ Three admission rules apply, in this order:
 
 #### Why the bound counts deployed cash {#contribution-cash}
 
-A flush marks every dollar the pool owns, including the cash `rebalance_expiry_cash` has moved out of idle and into a market. A bound that read idle alone could therefore be walked around: rebalancing is permissionless, so a contributor could fill the idle ceiling, park the cash in a market, and contribute again — or simply contribute into the idle headroom of a pool whose markets are already funded.
+A flush marks every dollar the pool owns, including the cash `rebalance_expiry_cash` has moved out of idle and into a market. A contributor could therefore walk around a bound that read idle alone: rebalancing is permissionless, so a contributor could fill the idle ceiling, park the cash in a market, and contribute again. A contributor could also contribute into the idle headroom of a pool whose markets the pool has already funded.
 
 So the guard tests pool cash: idle, plus `pool_accounting::deployed_expiry_cash`, which sums the net USDC funded into each active expiry, sent minus received and floored at zero per expiry. Moving idle into a market leaves that sum unchanged, so parking reopens no headroom. Cash is an upper bound on the pool's own contribution to the mark, because a market's marked liabilities only pull its NAV below its cash.
 

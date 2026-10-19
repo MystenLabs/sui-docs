@@ -67,7 +67,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This page walks through a complete DeepBook Predict flow on Testnet with the TypeScript SDK: pricing a market board, creating an account, queuing directional and two-sided range mints, selling or settling the positions, and running the queued liquidity provider flow. It continues from the [DeepBook Predict quickstart](/onchain-finance/deepbook/deepbook-predict), which covers install, funding, and a first mint.
+A complete DeepBook Predict flow on Testnet with the TypeScript SDK covers pricing a market board, creating an account, queuing directional and two-sided range mints, selling or settling the positions, and running the queued liquidity provider flow. The walkthrough continues from the [DeepBook Predict quickstart](/onchain-finance/deepbook/deepbook-predict), which covers install, funding, and a first mint.
 
 The walkthrough sends every transaction and every read through the `/predict` subpath of `@mysten/deepbook-v3`, version 2.7.0 or later. The SDK carries both the `deepbook-predict-mainnet` and `deepbook-predict-testnet` deployments, and the samples select one with a single `NETWORK` constant that defaults to `'testnet'`. The walkthrough runs on Testnet, where the quote coin is a mintable test coin. Both networks run Predict protocol version 4, where every trade is a queued order, so the same code runs on Mainnet, where the quote coin is native USDC, with version 2.8.0 or later of the SDK, the first that records the Mainnet deployment. The SDK builds transactions and never signs them, and every read it exposes runs against the Sui client core API, so no indexer or server sits on the critical path. The samples live in the `examples/deepbook-predict` package, which type-checks with `npm run build` (`tsc --noEmit`). This document does not execute them, so run the [manual verification steps](#verify-on-testnet) before you rely on the write paths.
 
@@ -92,7 +92,7 @@ Keep every deployment-specific identifier in one configuration block, select the
 
 <ImportContent source="examples/deepbook-predict/src/config.ts" mode="code" tag="config" />
 
-`getDeployment('testnet')` returns the deployment name `deepbook-predict-testnet`, the chain ID `4c78adac`, and the source commit the SDK generated its configuration from. `getDeployment('mainnet')` returns `deepbook-predict-mainnet` on chain `35834a8a`. Any other network name throws a plain `Error`. `getUnits(network)` returns the unit constants, which are identical on both networks: a fixed-point scale of `1000000000` for probabilities, prices, and rates, 6 decimals for both the quote coin and position quantities, and a position lot size of `10000` raw units, which is `$0.01` of payout.
+`getDeployment('testnet')` returns the deployment name `deepbook-predict-testnet`, the chain ID `4c78adac`, and the source commit the SDK generated its configuration from. `getDeployment('mainnet')` returns `deepbook-predict-mainnet` with chain ID `35834a8a`. Any other network name throws a plain `Error`. `getUnits(network)` returns the unit constants, which are identical on both networks: a fixed-point scale of `1000000000` for probabilities, prices, and rates, 6 decimals for both the quote coin and position quantities, and a position lot size of `10000` raw units, which is `$0.01` of payout.
 
 `getConfig(network).quoteCoinType` is the one value to read rather than assume. Both networks use the `usdc::USDC` module path, but the Mainnet type lives in Circle's native USDC package and the Testnet type in a test coin package that Predict publishes.
 
@@ -102,11 +102,7 @@ Register the Predict extension on any client that exposes the core API. The foll
 
 `predict({ network })` lands the extension on `client.predict`, which exposes 3 groups. `tx` builds ready-to-sign transactions, `read` runs simulations and object reads, and `decode` parses receipts out of an executed transaction's events with no network call at all. [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk) documents every function in these 3 groups.
 
-:::info
-
-Every write below asks the account owner to sign. An application that would rather not prompt a wallet for each trade can delegate to a session key instead. A session key carries authority over everything the account holds, including its whole quote balance and every open position, so decide its scope and lifetime before you ship it. See [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions).
-
-:::
+Every write in this walkthrough asks the account owner to sign. An application that would rather not prompt a wallet for each trade can delegate to a session key instead. A session key carries authority over everything the account holds, including its whole quote balance and every open position, so decide its scope and lifetime before you ship it. See [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions).
 
 ### Errors the SDK raises
 
@@ -293,17 +289,17 @@ A directional position pays `$1` per contract when settlement lands inside its r
 
 - **Pick a strike near the money.** Admission refuses an entry probability outside the market's band, and each market snapshots its band at creation: `0.15` to `0.85` on markets created since each network widened it, 2026-10-13 on Testnet and at the delayed-execution reopening on Mainnet. A window's reference strike drifts away from the money as the price moves, so the sample takes the strike that prices near 50 cents with `pricer.strikeAtProbability(0.5)` and snaps it onto the admission grid with `snapStrike`. `planMint` throws `entry-band` for a strike outside the band.
 - **Clear the minimum premium.** Admission also requires a premium of at least 1 USDC, and the premium is the quantity multiplied by the entry probability. A budget plan whose budget buys less throws `min-premium`.
-- **Slippage is cents per contract.** It bounds how far the all-in price per `$1` of payout may rise above the quote's price without the fee subsidy, so `slippageCents: 10` lets a contract quoted at 42 cents before the subsidy fill at up to 52 cents, fees included. It is never a percentage. The limits leave the subsidy out because placement checks the order without it. A slippage of a few cents leaves the price little room between the quote and τ, so the order is often refused at placement with `EOrderFailsLimits`, or refunded at the fill, and a refund for the order's own limits keeps the order fee.
+- **Slippage is cents per contract.** It bounds how far the all-in price per `$1` of payout might rise above the quote's price without the fee subsidy, so `slippageCents: 10` lets a contract quoted at 42 cents before the subsidy fill at up to 52 cents, fees included. It is never a percentage. The limits leave the subsidy out because placement checks the order without it. A slippage of a few cents leaves the price little room between the quote and τ, so placement often refuses the order with `EOrderFailsLimits`, or the keeper refunds it at the fill, and a refund for the order's own limits keeps the order fee.
 - **The order fee is per order.** Each queued order escrows a flat fee, 0.02 USDC on both networks, on top of its budget. `plan.totalDebit` is the budget plus that fee, and the plan's `amount` includes the fee by default. A fill, or a refund for the order's own limits or for failing admission, keeps the fee, and every other refund returns it.
 - **New orders stop before expiry.** An order whose τ would fall within 10 seconds of expiry aborts with `EPastCutoff`, so new orders stop about 11 seconds before expiry. `tradeableMarket` keeps a 30-second margin.
 
-After the enqueue executes with events included, `decode.enqueue(result)` returns the record ID. Persist it: it is the handle for following the order, selling the position, and showing the result, and nothing onchain lists an account's queue records for you. `read.waitForOutcome(descriptor, recordId)` polls the record until it is filled or refunded. A filled order's `view.position` carries the packed order ID and quantity, and a refunded one's `view.reason` carries the [refund reason](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-refunds).
+After the enqueue executes with events included, `decode.enqueue(result)` returns the record ID. Persist it: it is the handle for following the order, selling the position, and showing the result, and nothing onchain lists an account's queue records for you. `read.waitForOutcome(descriptor, recordId)` polls the record until the keeper fills or refunds it. A filled order's `view.position` carries the packed order ID and quantity, and a refunded one's `view.reason` carries the [refund reason](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-refunds).
 
 ### Queue a two-sided range
 
 A two-sided range pays out when settlement lands in the half-open band `(lower, upper]`. Plan it with the same builders, passing the range arm of the [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets), `{ underlying, expiryMs, side: 'range', lower, upper }`, to `read.planMint` and `tx.enqueuePlan`. Both bounds are finite USD numbers on the market's admission grid, snapped with `snapStrike`, and `lower` must sit below `upper`.
 
-The chain treats each finite boundary of a two-sided range as its own leg. It charges a trading fee on each leg, so a range pays 2 boundary fees where a directional position pays 1, and it applies the entry-probability band to each leg as well as to the range. A wide range whose probability of settling above its lower bound exceeds the band's maximum is refused at placement, or refunded with reason 2 at the fill, even when its range probability sits inside the band. `pricer.range(lower, upper)` returns only the range probability, which sets the premium, so take the fee from the plan's quote. [Design](/onchain-finance/deepbook/deepbook-predict/design) works through the fee on an example range.
+The chain treats each finite boundary of a two-sided range as its own leg. It charges a trading fee on each leg, so a range pays 2 boundary fees where a directional position pays 1, and it applies the entry-probability band to each leg as well as to the range. Placement refuses a wide range whose probability of settling above its lower bound exceeds the band's maximum, or the keeper refunds it with reason 2 at the fill, even when its range probability sits inside the band. `pricer.range(lower, upper)` returns only the range probability, which sets the premium, so take the fee from the plan's quote. [Design](/onchain-finance/deepbook/deepbook-predict/design) works through the fee on an example range.
 
 ## How do I sell, refund, and settle a position? {#sell-and-settle}
 
@@ -313,7 +309,7 @@ A filled mint does not enter your account. It stays in the market's queue as an 
 
 ### Sell before expiry
 
-`read.planSell(owner, market, { recordId, quantity, slippageCents })` quotes the sell and returns its proceeds, its `net` after the order fee, and the floors the order carries. The sell is a queued order too: it fills at the price for its own τ, within `minProbability` and `minProceeds`, or it is refunded and the position returns to an Open record. The whole position moves into the sell's own record, so after a sell, including a partial one, the remainder lives under the sell's record ID. Store that ID. A sell pays the order fee whatever it returns, so selling a position worth less than the fee nets a loss. When the sell could need more cash than the market holds spare, the builder appends `plp::rebalance_expiry_cash` so the market is funded before the fill.
+`read.planSell(owner, market, { recordId, quantity, slippageCents })` quotes the sell and returns its proceeds, its `net` after the order fee, and the floors the order carries. The sell is a queued order too: it fills at the price for its own τ, within `minProbability` and `minProceeds`, or the keeper refunds it and the position returns to an Open record. The whole position moves into the sell's own record, so after a sell, including a partial one, the remainder lives under the sell's record ID. Store that ID. A sell pays the order fee whatever it returns, so selling a position worth less than the fee nets a loss. When the sell could need more cash than the market holds spare, the builder appends `plp::rebalance_expiry_cash` so that call funds the market before the fill.
 
 ### Refunds
 
@@ -401,11 +397,11 @@ For the accounting model behind these limits, see [Design](/onchain-finance/deep
 
 ## How do I verify the flow on Testnet? {#verify-on-testnet}
 
-The write paths above type-check but this document does not execute them. To confirm the flow end to end, with `NETWORK` set to `'testnet'`:
+The write paths in this walkthrough type-check but this document does not execute them. To confirm the flow end to end, with `NETWORK` set to `'testnet'`:
 
 1. Fund a Testnet address with SUI, then confirm the balance with `sui client gas`.
 1. Request test USDC, then confirm the balance with `sui client balance`, where it appears as DUSDC.
-1. Confirm the configuration block resolves: `getDeployment('testnet').deployment` is `deepbook-predict-testnet` on chain `4c78adac`, and `getConfig('testnet').quoteCoinType` names the `usdc::USDC` type under package `0xc028557a…`.
+1. Confirm the configuration block resolves: `getDeployment('testnet').deployment` is `deepbook-predict-testnet` with chain ID `4c78adac`, and `getConfig('testnet').quoteCoinType` names the `usdc::USDC` type under package `0xc028557a…`.
 1. Call `read.markets()`. Confirm at least one market returns with `mintPaused` false, a non-null `referencePrice`, and at least 30 seconds left before its expiry.
 1. Create the account, then confirm `client.predict.wrapperIdFor(owner)` resolves with `sui client object WRAPPER_ID`.
 1. Deposit test USDC, then confirm `read.balance(owner)` reports the deposit.

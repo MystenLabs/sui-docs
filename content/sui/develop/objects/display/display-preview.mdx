@@ -41,7 +41,7 @@ answer: >-
 
 Object Display templates define how your Sui objects appear in wallets, explorers, and other clients. Each template maps a display property (for example, `name`, `description`, `image_url`) to a format string that references fields on your object using `{field_name}` syntax.
 
-The interactive tool below lets you experiment with Object Display V2 templates. You can modify template values and see how different field references and formatting options affect the rendered output.
+The interactive tool in [Try the preview tool](#try-the-preview-tool) lets you experiment with Object Display V2 templates. You can modify template values and see how different field references and formatting options affect the rendered output.
 
 ### How to use the preview tool
 
@@ -64,9 +64,9 @@ Display templates typically include the following properties:
 
 ### Field references and static values
 
-Each `{field_name}` reference in a template is replaced with the value of that field on the object being displayed. For example, for a hypothetical object whose `collection_name` field is `Example` and whose `number` field is `42`, the `name` template `{collection_name} #{number}` renders as `Example #42`, and the `description` template renders as `A collectible from the Example series`.
+Each `{field_name}` reference in a template renders as the value of that field on the displayed object. For example, for a hypothetical object whose `collection_name` field is `Example` and whose `number` field is `42`, the `name` template `{collection_name} #{number}` renders as `Example #42`, and the `description` template renders as `A collectible from the Example series`.
 
-Template values in the table above fall into two groups:
+Template values in the [Common template properties](#common-template-properties) table fall into two groups:
 
 - **Dynamic values** contain one or more field references, so the rendered output differs from object to object. In the table, `name`, `description`, `image_url`, and `link` are dynamic. A dynamic value can combine fixed text with field references, as in `https://example.com/images/{image_id}.png`.
 - **Static values** contain no field references, so every object shows the same text. In the table, `project_url` (`https://example.com`) and `creator` (`Example Studio`) are static.
@@ -77,7 +77,7 @@ To use a template you tried in the preview tool on your own objects, create a di
 
 ### Try the preview tool
 
-The interactive preview tool is embedded below. Follow the steps in [How to use the preview tool](#how-to-use-the-preview-tool) to edit template values and see the rendered output.
+The interactive preview tool appears below. Follow the steps in [How to use the preview tool](#how-to-use-the-preview-tool) to edit template values and see the rendered output.
 
 <div className="full-width-iframe">
   <iframe src="/display-preview/index.html" />

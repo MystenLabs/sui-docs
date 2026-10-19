@@ -43,23 +43,29 @@ my_package/
     └── my_module.move
 ```
 
-Create a new package with the Sui CLI:
+To create a package:
 
-```bash
-sui move new my_package
-```
+1. Create a new package with the Sui CLI:
 
-A minimal `Move.toml` is all you need to get started:
+   ```bash
+   sui move new my_package
+   ```
 
-```toml
-[package]
-name = "my_package"
-edition = "2024"
-```
+2. Set the package name and edition in `Move.toml`. A minimal `Move.toml` is all you need to get started:
+
+   ```toml
+   [package]
+   name = "my_package"
+   edition = "2024"
+   ```
+
+   The `edition` field selects the Move language edition. `"2024"` enables the Move 2024 syntax used in the example on this page.
+
+3. Add your modules as `.move` files in the `sources/` folder.
 
 ## What does a Move module look like?
 
-A Move module declares a module name, imports dependencies, defines types, and implements functions. The following example defines a simple counter object:
+A Move module declares a module name, imports dependencies, defines types, and implements functions. The following example defines a basic counter object:
 
 ```move
 module my_package::counter;
@@ -89,7 +95,7 @@ public fun increment(counter: &mut Counter) {
 }
 ```
 
-This module uses Move 2024 syntax: the module label declaration (`module my_package::counter;`), method-style calls (`ctx.sender()` instead of `tx_context::sender(ctx)`), and direct field access. The `Counter` type has the `key` ability, which makes it a Sui object. The `init` function runs once at package publication and creates the initial counter.
+This module uses Move 2024 syntax: the module label declaration (`module my_package::counter;`), method-style calls (`ctx.sender()` instead of `tx_context::sender(ctx)`), and direct field access. The `Counter` type has the `key` ability, which makes it a Sui object. The `init` function runs once at package publication, creates the initial counter with a `value` of `0`, and transfers it to the transaction sender (`ctx.sender()`). The `increment` function adds one to the counter's `value` and emits a `CounterIncremented` event containing the new value.
 
 import DocCardList from '@theme/DocCardList';
 

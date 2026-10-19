@@ -55,7 +55,7 @@ A payment intent collapses the same flow into one signed transaction with the fo
 
 - **One gas payment:** The whole batch shares a gas budget. The transaction sponsor pays once. The sponsor can be your app, a relayer, or the user.
 
-- **Parallel reads:** Resolution steps that do not depend on each other run concurrently before the payment intent is built. These include balance lookups, route quotes, and contact resolution.
+- **Parallel reads:** Resolution steps that do not depend on each other run concurrently before the app builds the payment intent. These include balance lookups, route quotes, and contact resolution.
 
 The underlying PTB gives a payment intent the following guarantees:
 
@@ -63,7 +63,7 @@ The underlying PTB gives a payment intent the following guarantees:
 
 - **Composability:** Outputs of earlier commands feed into later ones without leaving the transaction. You do not need to wait for one transaction to confirm before building the next.
 
-- **Sponsored gas:** Apps can pay gas on behalf of users. A three-operation payment intent that costs around 0.005 USD in the example below is sponsorable at scale, which removes the need for users to hold SUI just to pay fees.
+- **Sponsored gas:** Apps can pay gas on behalf of users. A three-operation payment intent that costs around 0.005 USD in the swap, save, and send example is sponsorable at scale, which removes the need for users to hold SUI just to pay fees.
 
 - **Fast finality:** Sui consensus commits transactions in under a second, so a multi-step intent feels like a single action to the user.
 
@@ -131,7 +131,7 @@ A payment intent removes that class of bug from the application. The transaction
 
 ## What else can a payment intent do?
 
-The pattern generalizes to any chain of payment operations. The intents below each compile to a single payment intent.
+The pattern generalizes to any chain of payment operations. The following intents each compile to a single payment intent.
 
 ### Deposit autosplit
 

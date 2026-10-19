@@ -52,27 +52,26 @@ questions:
   - What happens if one command in a PTB fails?
   - What is checked before a PTB runs?
 answer: >-
-  If you connect to Localnet, verify your local node is running first. See
-  [Connecting to a local network](/getting-started/onboarding/local-network).
+  A programmable transaction block (PTB) is a group of commands that complete a
+  transaction on Sui. The commands execute in order, results from one command
+  can be used in any subsequent command, and the effects are applied atomically
+  at the end of the transaction. If one command fails, the entire block fails
+  and no effects are applied.
 ---
 
-:::tip Local network prerequisite
+A programmable transaction block (PTB) is a group of commands that complete a transaction on Sui.
 
-If you connect to Localnet, verify your local node is running first. See [Connecting to a local network](/getting-started/onboarding/local-network).
+Transactions on Sui consist of groups of commands that execute on inputs to define the result of the transaction. Referred to as **programmable transaction blocks (PTBs)**, these groups of commands define all user transactions on Sui. PTBs allow you to call multiple Move functions, manage your objects, and manage your coins in a single transaction without publishing a new Move package. Designed with automation and transaction builders in mind, PTBs are a lightweight and flexible way of generating transactions. 
 
-:::
+However, PTBs do not support more intricate programming patterns, such as loops. In such cases, you must publish a new Move package.
 
-Transactions on Sui are composed of groups of commands that execute on inputs to define the result of the transaction. Referred to as **programmable transaction blocks (PTBs)**, these groups of commands define all user transactions on Sui. PTBs allow a user to call multiple Move functions, manage their objects, and manage their coins in a single transaction without publishing a new Move package. Designed with automation and transaction builders in mind, PTBs are a lightweight and flexible way of generating transactions. 
-
-However, more intricate programming patterns, such as loops, are not supported. In such cases, you must publish a new Move package.
-
-The individual transaction commands within a PTB execute in order. You can use the results from one transaction command in any subsequent transaction command within the PTB. The effects of each transaction command in the block, such as object modifications or transfers, are applied atomically at the end of the transaction. If one transaction command fails, the entire block fails and no effects from the commands are applied.
+The individual transaction commands within a PTB execute in order. You can use the results from one transaction command in any subsequent transaction command within the PTB. The runtime applies the effects of each transaction command in the block, such as object modifications or transfers, atomically at the end of the transaction. If one transaction command fails, the entire block fails and none of the effects from the commands apply.
 
 A PTB can perform up to 1,024 unique operations in a single execution, whereas transactions on traditional blockchains would require 1,024 individual executions to accomplish the same result. This structure also results in cheaper gas fees. The cost of facilitating individual transactions is always more than the cost of those same transactions blocked together in a PTB, resulting in cheaper gas fees.
 
-## Transaction components
+## What are the components of a PTB? {#transaction-components}
 
-There are two parts of a PTB that are relevant to execution semantics. Other transaction information, such as the transaction sender or the gas limit, might be referenced but are out of scope. The structure of a PTB is:
+There are two parts of a PTB that are relevant to execution semantics. Execution might reference other transaction information, such as the transaction sender or the gas limit, but that information is out of scope. The structure of a PTB is:
 
 ```rust
 {
@@ -83,11 +82,11 @@ There are two parts of a PTB that are relevant to execution semantics. Other tra
 
 Looking closer at the two main components:
 
-- The `inputs` value is a vector of arguments, `[Input]`. These arguments are either objects or pure values that you can use in the commands. The objects are either owned by the sender or are shared or immutable objects. The pure values represent basic Move values, such as `u64` or `String` values, which you can construct purely from their bytes. For historical reasons, `Input` is `CallArg` in the Rust implementation.
+- The `inputs` value is a vector of arguments, `[Input]`. These arguments are either objects or pure values that you can use in the commands. The sender either owns the objects, or the objects are shared or immutable objects. The pure values represent basic Move values, such as `u64` or `String` values, which you can construct purely from their bytes. For historical reasons, `Input` is `CallArg` in the Rust implementation.
 
-- The `commands` value is a vector of commands, `[Command]`. The possible commands are:
+- The `commands` value is a vector of commands, `[Command]`. The following list shows the possible commands as TypeScript SDK builder methods (`tx.splitCoins` and so on). The execution sections later on this page refer to the same commands by their underlying names (`SplitCoins`, `MergeCoins`, `TransferObjects`, `MoveCall`, `MakeMoveVec`, `Publish`, `Upgrade`). The possible commands are:
 
-- `tx.splitCoins(coin, amounts)`: Creates new coins with the defined amounts, split from the provided coin. Returns the coins so that it can be used in subsequent transactions.
+- `tx.splitCoins(coin, amounts)`: Creates new coins with the defined amounts, split from the provided coin. Returns the coins so that you can use them in subsequent transactions.
 
   - Example: `tx.splitCoins(tx.gas, [tx.pure.u64(100), tx.pure.u64(200)])`
 
@@ -102,21 +101,21 @@ Looking closer at the two main components:
 - `tx.moveCall({ target, arguments, typeArguments })`: Executes a Move call. Returns whatever the Sui Move call returns.
 
   - Example: `tx.moveCall({ target: '0x2::devnet_nft::mint', arguments: [tx.pure.string(name), tx.pure.string(description), tx.pure.string(image)] })`
-- `tx.makeMoveVec({ type, elements })`: Constructs a vector of objects that can be passed into a moveCall. This is required as there's no other way to define a vector as an input.
+- `tx.makeMoveVec({ type, elements })`: Constructs a vector of objects that you can pass into a moveCall. You need this command because there is no other way to define a vector as an input.
 
   - Example: `tx.makeMoveVec({ elements: [tx.object(id1), tx.object(id2)] })`
 
 - `tx.publish(modules, dependencies)`: Publishes a Move package. Returns the upgrade capability object.
 
-- `tx.upgrade(modules, dependencies, packageId: EXAMPLE_PACKAGE_ID, ticket)`: Upgrades an existing package. No `init` functions are called for upgraded modules.
+- `tx.upgrade(modules, dependencies, packageId: EXAMPLE_PACKAGE_ID, ticket)`: Upgrades an existing package. The runtime does not call `init` functions for upgraded modules.
 
 Learn more about each [PTB command](/references/ptb-commands).
 
 ## Inputs and results
 
-Inputs are the values that are provided to the PTB, and results are the values that are produced by the PTB commands. The inputs are either objects or basic Move values, and the results are arbitrary Move values, including objects. Inputs and results form the data flow through a PTB's execution.
+Inputs are the values that you provide to the PTB, and results are the values that the PTB commands produce. The inputs are either objects or basic Move values, and the results are arbitrary Move values, including objects. Inputs and results form the data flow through a PTB's execution.
 
-They can be seen as populating an array of values. For inputs, there is a single array, but for results, there is an array for each individual transaction command, creating a 2D-array of result values. You can access these values by borrowing, mutably or immutably, by copying, if the type permits, or by moving, which takes the value out of the array without re-indexing.
+You can think of them as populating an array of values. For inputs, there is a single array, but for results, there is an array for each individual transaction command, creating a 2D-array of result values. You can access these values by borrowing, mutably or immutably, by copying, if the type permits, or by moving, which takes the value out of the array without re-indexing.
 
 Learn more about [inputs and results](/develop/transactions/ptbs/inputs-and-results).
 
@@ -124,7 +123,7 @@ Learn more about [inputs and results](/develop/transactions/ptbs/inputs-and-resu
 
 Commands take `Argument` values that specify which input or result to use. The runtime infers whether to pass the argument by reference or by value based on the command's expected type.
 
-The `Argument` enum has 4 variants:
+The `Argument` enum has 4 variants, shown here in the notation of the Rust implementation (the same notation the execution examples on this page use) rather than as TypeScript SDK calls:
 
 - `Input(u16)`: References an input by its index. For example, with inputs `[Object1, Object2, Pure1, Object3]`, use `Input(0)` for `Object1` and `Input(2)` for `Pure1`.
 
@@ -136,47 +135,47 @@ The `Argument` enum has 4 variants:
 
 - `NestedResult(u16, u16)`: References a result from a previous command. The first index specifies the command, the second specifies which result from that command. For example, if command 1 returns `[Value1, Value2]`, use `NestedResult(1, 0)` for `Value1` and `NestedResult(1, 1)` for `Value2`.
 
-- `Result(u16)`: Shorthand for `NestedResult(i, 0)`, but only valid when the command at index `i` returns exactly 1 result. Use `NestedResult` for commands that return 0 or multiple results.
+- `Result(u16)`: For a command at index `i`, `Result(i)` is shorthand for `NestedResult(i, 0)`, but only valid when the command at index `i` returns exactly 1 result. Use `NestedResult` for commands that return 0 or multiple results.
 
-## Execution {#execution}
+## How does a PTB execute? {#execution}
 
-For the execution of PTBs, the input vector is populated by the input objects or pure value bytes. The transaction commands are then executed in order, and the results are stored in the result vector. Finally, the effects of the transaction are applied atomically.
+When a PTB executes, the runtime populates the input vector with the input objects or pure value bytes. The runtime then executes the transaction commands in order and stores the results in the result vector. Finally, the runtime applies the effects of the transaction atomically.
 
 ### Start of execution
 
-At the beginning of execution, the PTB runtime loads the input objects into the input array. The network already verifies the objects, checking rules like existence and valid ownership. The pure value bytes are also loaded into the array but not validated until usage.
+At the beginning of execution, the PTB runtime loads the input objects into the input array. The network already verifies the objects, checking rules like existence and valid ownership. The runtime also loads the pure value bytes into the array but does not validate them until usage.
 
 The most important consideration at this stage is the effects on the gas coin. At the beginning of execution, the system withdraws the maximum gas budget (in terms of SUI) from the gas coin. The system returns any unused gas to the gas coin at the end of execution, even if the coin has changed owners.
 
 ### Object consumption 
 
-All objects created or returned by Move commands must either be consumed (destroyed, transferred, or used by another command) or explicitly dropped if the type has the `drop` ability. 
+You must either consume all objects that Move commands create or return (destroy them, transfer them, or use them in another command) or explicitly drop them if the type has the `drop` ability. 
 
 In a PTB, if you create an object through a Move command and do not destroy, transfer, or use it in a subsequent command, the transaction fails with an error. 
 
-### Pre-execution validation
+### What is checked before a PTB runs? {#pre-execution-validation}
 
-When a transaction is signed, the network performs the following validations on specific commands:
+When you sign a transaction, the network performs the following validations on specific commands:
 
 - [`SplitCoins`](/references/ptb-commands) and [`MergeCoins`](/references/ptb-commands): Verifies that the argument arrays (`AmountArgs` and `ToMergeArgs`) are non-empty.
 
-- [`MakeMoveVec`](/references/ptb-commands): Verifies that the type must be specified for an empty vector of `Args`.
+- [`MakeMoveVec`](/references/ptb-commands): Verifies that the command specifies the type for an empty vector of `Args`.
 
 - [`Publish`](/references/ptb-commands): Verifies that the `ModuleBytes` are not empty.
 
 ### Argument usage rules {#arguments}
 
-Each argument can be used by reference or by value. The usage is based on the type of the argument and the type signature of the command:
+You can use each argument by reference or by value. The usage depends on the type of the argument and the type signature of the command:
 
-- If the signature expects an `&mut T`, the runtime checks the argument has type `T` and it is then mutably borrowed.
+- If the signature expects an `&mut T`, the runtime checks the argument has type `T` and then mutably borrows it.
 
-- If the signature expects an `&T`, the runtime checks the argument has type `T` and it is then immutably borrowed.
+- If the signature expects an `&T`, the runtime checks the argument has type `T` and then immutably borrows it.
 
-- If the signature expects a `T`, the runtime verifies the argument has type `T`, then copies the value if `T: copy` or moves it otherwise. Objects are always moved because `sui::object::UID` does not have the `copy` ability.
+- If the signature expects a `T`, the runtime verifies the argument has type `T`, then copies the value if `T: copy` or moves it otherwise. The runtime always moves objects because `sui::object::UID` does not have the `copy` ability.
 
-The transaction fails if an argument is used in any form after being moved. There is no way to restore an argument to its position (its input or result index) after it is moved.
+The transaction fails if you use an argument in any form after the runtime moves it. There is no way to restore an argument to its position (its input or result index) after the runtime moves it.
 
-If an argument is copied but does not have the `drop` ability, then the last usage is inferred to be a move. As a result, if an argument has `copy` and does not have `drop`, the last usage must be by value. Otherwise, the transaction fails because a value without `drop` has not been used.
+If the runtime copies an argument that does not have the `drop` ability, it infers the last usage to be a move. As a result, if an argument has `copy` and does not have `drop`, the last usage must be by value. Otherwise, the transaction fails because a value without `drop` remains unused.
 
 #### Borrowing rules
 
@@ -184,7 +183,7 @@ Borrowing follows additional rules to ensure safe reference usage:
 
 - **Mutable borrow:** No other borrows can be outstanding. An overlapping mutable borrow could create dangling references.
 
-- **Immutable borrow:** No mutable borrows can be outstanding. Multiple immutable borrows are allowed.
+- **Immutable borrow:** No mutable borrows can be outstanding. Multiple immutable borrows can coexist.
 
 - **Move:** No borrows can be outstanding. Moving a borrowed value invalidates existing references.
 
@@ -192,23 +191,23 @@ Borrowing follows additional rules to ensure safe reference usage:
 
 #### Special object handling
 
-Object inputs have the type `T` of the underlying object. `ObjectArg::Receiving` inputs are the exception and have type `sui::transfer::Receiving<T>`. This wrapper indicates the object is owned by another object, not the sender. Call `sui::transfer::receive` with the parent object to unwrap it and prove ownership.
+Object inputs have the type `T` of the underlying object. `ObjectArg::Receiving` inputs are the exception and have type `sui::transfer::Receiving<T>`. This wrapper indicates that another object, not the sender, owns the object. Call `sui::transfer::receive` with the parent object to unwrap it and prove ownership.
 
 Shared objects have restrictions on by value usage to ensure they remain shared or are deleted by the end of the transaction:
 
-- Read-only shared objects (marked as not `mutable`) cannot be used by value.
+- You cannot use read-only shared objects (marked as not `mutable`) by value.
 
-- Shared objects cannot be transferred or frozen. These operations succeed during execution but cause the transaction to fail at the end.
+- You cannot transfer or freeze shared objects. These operations succeed during execution but cause the transaction to fail at the end.
 
-- Shared objects can be wrapped or converted to dynamic fields during execution, but must be re-shared or deleted before the transaction completes.
+- You can wrap shared objects or convert them to dynamic fields during execution, but you must re-share or delete them before the transaction completes.
 
 #### Move call rules
 
-PTBs can call any `public` function and any `entry` function, whether private (`entry fun f()`), or `public(package)` (`public(package) entry fun f()`). Non-entry private and `public(package)` functions cannot be called from PTBs. Note that in this way, there is no reason to add `entry` to a `public` function.
+PTBs can call any `public` function and any `entry` function, whether private (`entry fun f()`), or `public(package)` (`public(package) entry fun f()`). PTBs cannot call non-entry private and `public(package)` functions. In this way, there is no reason to add `entry` to a `public` function.
 
 :::info
 
-Previously, `entry` functions had signature restrictions that limited their parameter and return types compared to `public` functions. These restrictions have been removed. `entry` functions can now have the same signature as any `public` function.
+Previously, `entry` functions had signature restrictions that limited their parameter and return types compared to `public` functions. These restrictions no longer apply. `entry` functions can now have the same signature as any `public` function.
 
 :::
 
@@ -216,36 +215,36 @@ Previously, `entry` functions had signature restrictions that limited their para
 Move calls cannot return references (`&T` or `&mut T`).
 
 **Private generics:**
-Some framework functions have type parameters that can only be instantiated with types defined in the same module. Since PTBs are not modules, they cannot supply these types and therefore cannot call these functions directly. For example, certain `sui::transfer` functions like `transfer` and `share_object` require a type defined in the calling module, and as such cannot be called from a PTB. Instead, use the `public_transfer` and `public_share_object` variants.
+Some framework functions have type parameters that you can only instantiate with types defined in the same module. Because PTBs are not modules, they cannot supply these types and therefore cannot call these functions directly. For example, certain `sui::transfer` functions like `transfer` and `share_object` require a type defined in the calling module, so a PTB cannot call them. Instead, use the `public_transfer` and `public_share_object` variants.
 
 **`TxContext` handling:**
-`TxContext` parameters (`&TxContext` or `&mut TxContext`) are automatically injected by the runtime; callers do not supply them. `TxContext` can appear at any position in the parameter list, and a function can have multiple `TxContext` parameters as long as they are immutable (`&TxContext`). These parameters are not counted toward the user-supplied argument count for indexing purposes.
+The runtime automatically injects `TxContext` parameters (`&TxContext` or `&mut TxContext`); callers do not supply them. `TxContext` can appear at any position in the parameter list, and a function can have multiple `TxContext` parameters as long as they are immutable (`&TxContext`). These parameters do not count toward the user-supplied argument count for indexing purposes.
 
 #### Non-public entry function restrictions
 
-A non-public `entry` function is a function declared with `entry` that is **not** `public`. It is either private (`entry fun f()`) or `public(package)` (`public(package) entry fun f()`). These functions can be called directly in PTBs but not from other packages.
+A non-public `entry` function is a function declared with `entry` that is **not** `public`. It is either private (`entry fun f()`) or `public(package)` (`public(package) entry fun f()`). PTBs can call these functions directly, but other packages cannot.
 
-Non-public `entry` functions have a single restriction: their arguments cannot be in a "hot" clique (see below) when the function is called. This restriction ensures that arguments to non-public `entry` functions are not entangled with outstanding [hot potato](https://move-book.com/programmability/hot-potato-pattern) values that could force behavior after the function executes.
+Non-public `entry` functions have a single restriction: their arguments cannot be in a hot clique (see below) when the PTB calls the function. In short, a clique is a group of values that commands have used together, and it is hot while it is entangled with hot potato values that the PTB has not yet consumed. This restriction ensures that arguments to non-public `entry` functions are not entangled with outstanding [hot potato](https://move-book.com/programmability/hot-potato-pattern) values that could force behavior after the function executes.
 
 **Hot potato values**
 
-A value is a hot potato if its type has neither the `drop` nor the `store` ability. Hot potato values must be consumed (moved by value) before the transaction completes; they cannot be silently dropped or stored.
+A value is a hot potato if its type has neither the `drop` nor the `store` ability. You must consume (move by value) hot potato values before the transaction completes; you cannot silently drop or store them.
 
 **Cliques**
 
-The system tracks which values are entangled using cliques. As described above, the goal is to prevent hot potato values from forcing behavior outside of the call to the non-public `entry` function. The cliques provide a modeling of this "entanglement" by keeping a count of how many hot potato values are live and which values they have interacted with:
+The system tracks which values are entangled using cliques. As described above, the goal is to prevent hot potato values from forcing behavior outside of the call to the non-public `entry` function. The cliques provide a modeling of this entanglement by keeping a count of how many hot potato values are live and which values they have interacted with:
 
 - Each PTB input starts in its own clique with a hot count of 0.
-- When values are used together as arguments in a command, their cliques merge. The hot counts add together.
+- When a command uses values together as arguments, their cliques merge. The hot counts add together.
 - Hot potato return values from a command increment the merged clique's hot count.
 - Moving (consuming) a hot potato decrements its clique's hot count.
 - Before a non-public `entry` call, the merged clique of its arguments must have a hot count of 0.
 
-A non-public `entry` function can consume hot potato values, but they must be the last hot values in their clique. The hot count check happens after arguments are consumed but before the function is verified.
+A non-public `entry` function can consume hot potato values, but they must be the last hot values in their clique. The hot count check happens after argument consumption but before function verification.
 
 **Shared objects consumed by value**
 
-Consuming a shared object by value permanently marks its clique as "always hot." Since shared objects cannot be wrapped (they must be re-shared or deleted) consuming one by value is treated similarly to a hot potato that can never be resolved. A non-public `entry` function can receive a shared object by value directly, but it cannot receive a value whose clique previously interacted with a shared object consumed by value.
+Consuming a shared object by value permanently marks its clique as always hot. Because you cannot wrap shared objects (you must re-share or delete them), the system treats consuming one by value similarly to a hot potato that you can never resolve. A non-public `entry` function can receive a shared object by value directly, but it cannot receive a value whose clique previously interacted with a shared object consumed by value.
 
 **Examples**
 
@@ -263,7 +262,7 @@ entry fun spend<T>(x: &mut Coin<T>) { ... }
 public fun cool(h: HotPotato) { ... }
 ```
 
-In this invalid PTB, the `HotPotato` from command 0 is still alive in the same clique as `Input(0)` when `spend` is called:
+In this invalid PTB, the `HotPotato` from command 0 is still alive in the same clique as `Input(0)` when command 1 calls `spend`:
 
 ```rust
 // Invalid PTB
@@ -275,7 +274,7 @@ In this invalid PTB, the `HotPotato` from command 0 is still alive in the same c
 2: ex::m::cool(Result(0));
 ```
 
-However, if the hot potato is consumed before calling `spend`, the clique's count drops to 0 and the call succeeds:
+However, if you consume the hot potato before calling `spend`, the clique's count drops to 0 and the call succeeds:
 
 ```rust
 // Valid PTB
@@ -295,9 +294,9 @@ module flash::loan;
 
 public struct Loan { amount: u64 }
 
-public fun issue(bank: &mut Bank, amount: u64): (Balance<SUI>, Loan) { ERROR }
+public fun issue(bank: &mut Bank, amount: u64): (Balance<SUI>, Loan) { ... }
 
-public fun repay(bank: &mut Bank, loan: Loan, repayment: Balance<SUI>) { ERROR }
+public fun repay(bank: &mut Bank, loan: Loan, repayment: Balance<SUI>) { ... }
 ```
 
 ```rust
@@ -317,7 +316,7 @@ Even though the `Coin` created in command 1 was not directly involved in the fla
 
 #### Pure value type checking
 
-Pure values are not type checked until they are used. The first time a pure value appears as an argument expecting type `T`, the system checks that `T` is a valid pure type (see the [Inputs section](/develop/transactions/ptbs/inputs-and-results)) and that the bytes deserialize to `T`. Each distinct type creates a separate typed copy of the bytes, so the same pure input can be used at multiple types as long as the bytes are valid for each. For example, you can use the same bytes as an ASCII string `std::ascii::String` and as a UTF-8 string `std::string::String`. Each typed copy is treated as its own input, so mutations affect only that type's value, not all values created from the same bytes.
+The system does not type check pure values until you use them. The first time a pure value appears as an argument expecting type `T`, the system checks that `T` is a valid pure type (see the [Inputs section](/develop/transactions/ptbs/inputs-and-results)) and that the bytes deserialize to `T`. Each distinct type creates a separate typed copy of the bytes, so you can use the same pure input at multiple types as long as the bytes are valid for each. For example, you can use the same bytes as an ASCII string `std::ascii::String` and as a UTF-8 string `std::string::String`. The system treats each typed copy as its own input, so mutations affect only that type's value, not all values created from the same bytes.
 
 #### Publish and upgrade rules
 
@@ -326,8 +325,8 @@ Both commands embed their module bytes and dependency IDs directly in the comman
 **Publish:**
 
 - Returns a single `sui::package::UpgradeCap`.
-- After the package is staged, the runtime calls each module's `init` function (if present) in the order the modules are provided (in the vector of serialized bytes). `init` receives `&mut TxContext` and optionally a one-time witness. Additional `init` arguments are not yet supported but are planned.
-- The package is available to `init` functions during execution. It is staged before they run.
+- After the runtime stages the package, it calls each module's `init` function (if present) in the order you provide the modules (in the vector of serialized bytes). `init` receives `&mut TxContext` and optionally a one-time witness. Additional `init` arguments are not yet supported but are planned.
+- The package is available to `init` functions during execution. The runtime stages it before they run.
 
 **Upgrade:**
 
@@ -335,35 +334,35 @@ Both commands embed their module bytes and dependency IDs directly in the comman
 - Returns a single `sui::package::UpgradeReceipt`.
 - Does not call `init` functions. Newly added modules in an upgrade cannot have `init` functions.
 - The module digest and package ID in the ticket must match exactly.
-- The upgrade policy (compatible, additive, dep-only) is enforced from the ticket.
+- The runtime enforces the upgrade policy (compatible, additive, dep-only) from the ticket.
 
 ### End of execution
 
-At the end of execution, the remaining values are checked and effects for the transaction are calculated.
+At the end of execution, the runtime checks the remaining values and calculates the effects for the transaction.
 
 **For inputs:**
 
-- Remaining immutable or read only input objects are skipped (no modifications made).
+- The runtime skips remaining immutable or read only input objects (no modifications made).
 
-- Remaining mutable input objects are returned to their original owners (shared remain shared, owned remain owned).
+- The runtime returns remaining mutable input objects to their original owners (shared remain shared, owned remain owned).
 
-- Remaining pure input values are dropped (all permissible types have `copy` and `drop`).
+- The runtime drops remaining pure input values (all permissible types have `copy` and `drop`).
 
-- Shared objects are only deleted or re-shared. Any other operation (wrap, transfer, freezing) results in an error.
+- The transaction can only delete or re-share shared objects. Any other operation (wrap, transfer, freezing) results in an error.
 
 **For results:**
 
-- Remaining results with the `drop` ability are dropped.
+- The runtime drops remaining results with the `drop` ability.
 
 - If a value has `copy` but not `drop`, its last usage must have been by-value (treated as a move).
 
-- Otherwise, an error is given for unused values without `drop`.
+- Otherwise, the runtime returns an error for unused values without `drop`.
 
 **For gas:**
 
-Any remaining SUI deducted from the gas coin at the beginning of execution is returned to the coin, even if the owner has changed. The maximum possible gas is deducted at the beginning of execution, and unused gas is returned at the end (all in SUI). Because the gas coin can only be taken by value with `TransferObjects`, it has not been wrapped or deleted.
+The runtime returns any remaining SUI deducted from the gas coin at the beginning of execution to the coin, even if the owner has changed. The runtime deducts the maximum possible gas at the beginning of execution and returns unused gas at the end (all in SUI). Because you can only take the gas coin by value with `TransferObjects`, no command can wrap or delete it.
 
-The total effects (created, mutated, and deleted objects) are then passed out of the execution layer and applied by the Sui network.
+The execution layer then passes out the total effects (created, mutated, and deleted objects), and the Sui network applies them.
 
 ## Execution example 
 
@@ -410,7 +409,7 @@ Calls `buy_two(marketplace: &mut Marketplace, coin: Coin<SUI>, ctx: &mut TxConte
 
 **Command 2: `TransferObjects([GasCoin, NestedResult(1, 0)], Input(0))`**
 
-Transfers the gas coin and first item to `0x808`. Both objects are taken by value (moved).
+Transfers the gas coin and first item to `0x808`. The command takes both objects by value (moves them).
 
 | State | Value |
 | :---- | :---- |
@@ -428,7 +427,7 @@ Calls `sender(ctx: &TxContext): address`. Returns the sender's address.
 
 **Command 4: `TransferObjects([NestedResult(1, 1)], NestedResult(3, 0))`**
 
-Transfers the second item to the sender. The item is moved by value; the address is copied by value.
+Transfers the second item to the sender. The command moves the item by value and copies the address by value.
 
 | State | Value |
 | :---- | :---- |
@@ -443,7 +442,7 @@ Inputs: [Pure(@0x808), Marketplace { id: market_id }, Pure(100u64)]
 Results: []
 ```
 
-After maximum gas budget of `500_000` is deducted:
+After the runtime deducts the maximum gas budget of `500_000`:
 
 ```rust
 Gas Coin: Coin<SUI> { id: gas_coin, balance: 500_000u64 }

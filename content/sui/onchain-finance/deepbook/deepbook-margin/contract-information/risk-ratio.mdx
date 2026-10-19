@@ -45,13 +45,15 @@ Risk ratios are the core mechanism that governs leverage limits and position saf
 
 ## What is a risk ratio?
 
-The **risk ratio** is defined as:
+DeepBook Margin defines the **risk ratio** as:
 
 ```
 risk_ratio = total_assets / total_debts
 ```
 
-Where assets and debts are valued in a common denomination using oracle prices. A higher risk ratio indicates a safer position with more collateral relative to debt.
+Where DeepBook Margin values assets and debts in a common denomination using oracle prices. A higher risk ratio indicates a safer position with more collateral relative to debt.
+
+The following examples also show the equivalent LTV (loan-to-value): your debt as a percentage of your assets, which is the inverse of the risk ratio.
 
 - **Risk ratio = 2.0**: You have 2 units of assets for every 1 unit of debt (50% LTV)
 - **Risk ratio = 1.25**: You have 1.25 units of assets for every 1 unit of debt (80% LTV)
@@ -59,34 +61,34 @@ Where assets and debts are valued in a common denomination using oracle prices. 
 
 ## Risk ratio thresholds
 
-Each trading pair has four risk ratio thresholds that control different operations:
+Each trading pair has four risk ratio thresholds that control different operations. Typical values in this section are common settings, not fixed system values. Each trading pair has its own actual thresholds.
 
-### Min Withdraw Risk Ratio
+### Min withdraw risk ratio
 
 The minimum risk ratio required **after** withdrawing collateral.
 
-- If a withdrawal would cause your position's risk ratio to fall below this threshold, the withdrawal is rejected
-- This prevents users from extracting too much collateral and leaving an unsafe position
-- Typically set to 2.0 (50% LTV), meaning you must maintain at least 2 units of assets per 1 unit of debt to withdraw
+- If a withdrawal would cause your position's risk ratio to fall below this threshold, DeepBook Margin rejects the withdrawal
+- This prevents you from extracting too much collateral and leaving an unsafe position
+- Typically 2.0 (50% LTV), meaning you must maintain at least 2 units of assets per 1 unit of debt to withdraw
 
-### Min Borrow Risk Ratio
+### Min borrow risk ratio
 
 The minimum risk ratio required **after** borrowing additional funds.
 
-- If a borrow would cause your position's risk ratio to fall below this threshold, the borrow is rejected
+- If a borrow would cause your position's risk ratio to fall below this threshold, DeepBook Margin rejects the borrow
 - This determines the maximum leverage available for the trading pair
 - A min borrow ratio of 1.25 allows approximately 5x leverage
 - A min borrow ratio of 1.5 allows approximately 3x leverage
 
-### Liquidation Risk Ratio
+### Liquidation risk ratio
 
 The risk ratio threshold at which a position becomes **eligible for liquidation**.
 
 - When a position's risk ratio falls to or below this value, anyone can liquidate the position
-- This is the danger zone - if price moves against you and your ratio hits this level, you can be liquidated
-- Typically set between 1.1 and 1.2 depending on asset volatility
+- This is the danger zone: if price moves against you and your ratio hits this level, anyone can liquidate your position
+- Typically between 1.1 and 1.2 depending on asset volatility
 
-### Target Liquidation Risk Ratio
+### Target liquidation risk ratio
 
 The target risk ratio that liquidation aims to restore the position to.
 
@@ -94,11 +96,31 @@ The target risk ratio that liquidation aims to restore the position to.
 - This ensures the position is safe after liquidation, not just barely above the liquidation threshold
 - Typically equals the Min Borrow Risk Ratio
 
+### Summary of threshold checks
+
+The four thresholds translate into the following rules:
+
+```
+withdraw allowed      IF (new_total_assets / new_total_debts) >= min_withdraw_risk_ratio
+borrow allowed        IF (new_total_assets / new_total_debts) >= min_borrow_risk_ratio
+liquidation eligible  IF risk_ratio <= liquidation_risk_ratio
+```
+
+Here `new_total_assets` and `new_total_debts` are the position's values after the withdrawal or borrow.
+
 ## How leverage is determined
 
-The maximum leverage for a trading pair is determined by the Min Borrow Risk Ratio:
+The Min Borrow Risk Ratio determines the maximum leverage for a trading pair:
 
 $$\text{Max Leverage} \approx \frac{1}{1 - \frac{1}{\text{Min Borrow Risk Ratio}}}$$
+
+In code form:
+
+```
+max_leverage = 1 / (1 - 1 / min_borrow_risk_ratio)
+```
+
+In plain terms, leverage is your total assets divided by your own equity (assets minus debt). At the Min Borrow Risk Ratio, debt makes up `1 / min_borrow_risk_ratio` of your assets, so the lower the ratio, the smaller your equity share and the higher your leverage.
 
 | Min Borrow Risk Ratio | Approximate Max Leverage |
 |-----------------------|--------------------------|
@@ -133,22 +155,22 @@ Consider a SUI/USDC position with the following risk parameters:
 2. Total assets = 100 + 360 = 460 USDC, debt is still 400 USDC
 3. Risk ratio = 460/400 = 1.15 (approaching liquidation)
 4. If SUI drops further to 340 USDC worth, ratio = (100 + 340)/400 = 1.1 (liquidation threshold)
-5. Your position can now be liquidated by anyone
+5. Anyone can now liquidate your position
 6. Liquidator repays part of your debt and receives collateral plus a reward
 7. After liquidation, your remaining position has a risk ratio of 1.25
 
 ## Liquidation rewards
 
-When a position is liquidated:
+When someone liquidates a position:
 
 - **User Liquidation Reward**: A percentage of the liquidated amount paid to the liquidator as incentive (typically 2%)
 - **Pool Liquidation Reward**: A percentage paid to the margin pool to cover potential bad debt (typically 3%)
 
-These rewards ensure liquidators are incentivized to maintain system health and the protocol has reserves against defaults.
+These rewards give liquidators an incentive to maintain system health and ensure the protocol has reserves against defaults.
 
 ## Risk management best practices
 
 1. **Monitor your risk ratio**: Keep track of your position's health, especially during volatile markets
-2. **Maintain a buffer**: Don't borrow up to the maximum - leave room for price fluctuations
+2. **Maintain a buffer**: Don't borrow up to the maximum; leave room for price fluctuations
 3. **Set stop losses**: Use [TPSL orders](/onchain-finance/deepbook/deepbook-margin/contract-information/tpsl) to automatically close positions before liquidation
 4. **Understand the assets**: Higher volatility assets typically have stricter risk parameters (lower leverage)

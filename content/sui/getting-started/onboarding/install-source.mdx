@@ -8,6 +8,13 @@ keywords:
   - sui command line interface
   - install from source
   - source install
+  - install from github
+  - local source install
+  - rust
+  - cargo
+  - tracing feature
+  - verify sui installation
+  - sui binaries
 hide_table_of_contents: true
 goal:
   description: >-
@@ -37,14 +44,16 @@ questions:
   - When should I install from source instead of using prebuilt binaries?
 answer: >-
   You can install Sui from source, either locally or directly from GitHub. At
-  minimum, you need Rust and Cargo installed for the Sui framework:.
+  minimum, you need Rust and Cargo installed for the Sui framework.
 ---
+
+You can install Sui from source, either locally or directly from GitHub.
 
 <ImportContent source="info-easy-install" mode="snippet" /> 
 
-You can install Sui from source, either locally or directly from GitHub. At minimum, you need Rust and Cargo installed for the Sui framework: 
+At minimum, you need Rust and Cargo installed for the Sui framework. Cargo comes bundled with Rust, so installing Rust also installs Cargo: 
 
-- [x] Download and install Rust: 
+- [x] Download and install Rust and Cargo: 
   <div className="pl-8">
     ```sh
     $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -56,14 +65,8 @@ You can install Sui from source, either locally or directly from GitHub. At mini
     $ rustup update stable
     ```
   </div>
-- [x] Download and install Cargo:
-  <div className="pl-8">
-    ```sh
-    $ curl https://sh.rustup.rs -sSf | sh
-    ```
-  </div>
   
-  Depending on your operating system, you might require additional prerequisites.
+  Depending on your operating system, you might require additional prerequisites. Expand **Additional prerequisites** to check the requirements for your operating system.
 
 <details>
 <summary>
@@ -85,6 +88,8 @@ Use Cargo to install Sui directly from the GitHub repo:
 ```sh
 $ cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui --features tracing
 ```
+
+The `--features tracing` flag enables the tracing feature described in the following note.
 
 :::info
 
@@ -143,7 +148,7 @@ The tracing feature enables trace-based debugging, profiling, and Move test cove
 
 </Tabs>
 
-## Verify the installation
+## How do I verify the installation?
 
 After installing, open a new terminal and run:
 

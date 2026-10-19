@@ -36,11 +36,11 @@ answer: >-
 
 Sui provides two standards for creating fungible tokens. Both produce `Coin<T>` objects that are fully interoperable with wallets, DeFi protocols, and address balances. The difference is in how you create, configure, and manage the token's metadata and supply.
 
-## Coin standard vs currency standard
+## What is the difference between the Coin Standard and the Currency Standard?
 
 | Feature | Coin Standard | Currency Standard |
 |---------|--------------|-------------------|
-| Creation function | `coin::create_currency` | `coin_registry::new_currency` or `new_currency_with_otw` |
+| Creation function | `coin::create_currency` | `coin_registry::new_currency` or `coin_registry::new_currency_with_otw` |
 | Metadata storage | Standalone `CoinMetadata` object | Centralized in `CoinRegistry` at `0xc` |
 | Supply models | Uncontrolled only | Fixed, burn-only, or uncontrolled |
 | Regulatory support | `create_regulated_currency_v2` | `make_regulated()` during initialization |
@@ -48,7 +48,7 @@ Sui provides two standards for creating fungible tokens. Both produce `Coin<T>` 
 | RPC discovery | Requires knowing `CoinMetadata` object ID | Queryable from the central registry |
 | Status | Active | **Recommended for new projects** |
 
-## Choosing a standard
+## Which standard should I choose?
 
 Use the following guidance to pick the right standard for your project:
 
@@ -58,17 +58,17 @@ For new tokens, use the [Currency Standard](/onchain-finance/fungible-tokens/cur
 
 :::
 
-### Creating a new token
+### How do I create a new token?
 
 - **Most projects:** Use `coin_registry::new_currency`. You can call this at any time after publishing your package. See [Create Fungible Tokens: Currency Standard](/onchain-finance/fungible-tokens/create-a-fungible-token).
 
-- **Need a One-Time Witness proof:** Use `coin_registry::new_currency_with_otw` in your module's `init` function. This requires a two-step publish-then-finalize process.
+- **Need a One-Time Witness (OTW) proof:** Use `coin_registry::new_currency_with_otw` in your module's `init` function. This requires a two-step publish-then-finalize process.
 
 - **Need the legacy Coin Standard:** Use `coin::create_currency` in your module's `init` function. See [Create Fungible Tokens: Coin Standard](/onchain-finance/fungible-tokens/create-a-fungible-token-coin).
 
 ### Configuring supply
 
-Only the Currency Standard supports supply model configuration:
+Only the Currency Standard supports supply model configuration. Coin Standard tokens always use uncontrolled supply, where the `TreasuryCap` holder can mint and burn freely.
 
 - **Fixed supply:** Mint the total supply during initialization, then call `make_supply_fixed` to lock the `TreasuryCap` inside the `Currency`. No further minting or burning is possible.
 - **Burn-only (deflationary):** Mint the initial supply, then call `make_supply_burn_only` to prevent future minting while still allowing burns.

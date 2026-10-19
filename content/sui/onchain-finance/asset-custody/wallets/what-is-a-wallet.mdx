@@ -51,7 +51,7 @@ A wallet stores the cryptographic keys that prove ownership of your onchain asse
 
 ## How wallets work
 
-A Sui **account** is a public key and its derived onchain address. This is what holds your assets onchain. The corresponding private key is stored and managed by your **wallet**, which can hold one or more accounts. When you send SUI, transfer an object, or interact with a smart contract, the wallet uses the private key of the active account to sign the transaction. Sui validators verify that signature before processing anything.
+The terms account and wallet often appear interchangeably, but they mean different things. A Sui **account** is a public key and its derived onchain address. This is what holds your assets onchain. Your **wallet** stores and manages the corresponding private key, and can hold one or more accounts. When you send SUI, transfer an object, or interact with a smart contract, the wallet uses the private key of the active account to sign the transaction. Sui validators verify that signature before processing anything.
  
 Keeping those private keys secure is the central responsibility of any wallet. How a wallet stores and manages them is what distinguishes one wallet type from another:
 
@@ -62,7 +62,7 @@ Both hot and cold wallets can be **self-custodial**, meaning you hold the privat
 
 :::tip
 
-Match the wallet to the value it protects. Keep only spending balances in a hot wallet, and use a hardware or multisig wallet for large balances or privileged funds. Avoid blind signing: confirm the human-readable transaction intent before approving, and prefer wallets that display clear, decoded transaction details. See [user and operator key management](/develop/security/best-practices#user-and-operator-key-management).
+Match the wallet to the value it protects. Keep only spending balances in a hot wallet, and use a hardware or multisig wallet for large balances or privileged funds. Avoid blind signing (approving a transaction without seeing what it does): confirm the human-readable transaction intent before approving, and prefer wallets that display clear, decoded transaction details. See [user and operator key management](/develop/security/best-practices#user-and-operator-key-management).
 
 :::
 
@@ -70,9 +70,15 @@ Match the wallet to the value it protects. Keep only spending balances in a hot 
 
 [**Slush**](/onchain-finance/asset-custody/wallets/slush): A wallet built and maintained by Mysten Labs. It combines self-custodial key management with a first-party interface optimized for Sui. Slush also exposes an [SDK for wallet and app integration](https://sdk.mystenlabs.com/slush-wallet).
 
-[**Self-custodial wallets**](/onchain-finance/asset-custody/wallets/self-custody): A wallet that stores your private key on your device or hardware. Common self-custodial options include browser extension wallets and hardware wallets such as [Ledger](https://www.ledger.com/), which keep the key isolated on a dedicated device. Self-custodial wallets require you to safely back up your recovery passphrase. If you lose both the device and the passphrase, access to your assets is permanently lost.
+[**Self-custodial wallets**](/onchain-finance/asset-custody/wallets/self-custody): A wallet that stores your private key on your device or hardware. Common self-custodial options include browser extension wallets and hardware wallets such as [Ledger](https://www.ledger.com/), which keep the key isolated on a dedicated device. Self-custodial wallets require you to safely back up your recovery passphrase. If you lose both the device and the passphrase, you permanently lose access to your assets.
 
-[**zkLogin wallets**](/onchain-finance/asset-custody/wallets/zk-login-wallets) A wallet that leverages [zero-knowledge login (zkLogin)](/sui-stack/zklogin-integration/zklogin), a Sui primitive that lets you authorize transactions using an OAuth credential without exposing that credential onchain. A zero-knowledge proof (ZKP) verifies that you are the rightful account owner without exposing your OAuth identity onchain. zkLogin wallets are useful for onboarding users who are unfamiliar with key management.
+[**zkLogin wallets**](/onchain-finance/asset-custody/wallets/zk-login-wallets): A wallet that leverages [zero-knowledge login (zkLogin)](/sui-stack/zklogin-integration/zklogin), a Sui primitive that lets you authorize transactions using an OAuth credential without exposing that credential onchain. In place of the credential itself, a zero-knowledge proof (ZKP) verifies that you are the rightful account owner, so you never expose your OAuth identity onchain. zkLogin wallets are useful for onboarding users who are unfamiliar with key management.
+
+| Option | How keys are managed | Consider it when |
+| --- | --- | --- |
+| Slush | Self-custodial key management with a first-party interface optimized for Sui | You want a wallet built for Sui, or an SDK for wallet and app integration |
+| Self-custodial wallets | Private key stored on your device or hardware, such as a Ledger | You want to hold the key yourself and can safely back up your recovery passphrase |
+| zkLogin wallets | Transactions authorized with an OAuth credential, verified by a zero-knowledge proof | You are onboarding users who are unfamiliar with key management |
 
 ## Transaction fees
 

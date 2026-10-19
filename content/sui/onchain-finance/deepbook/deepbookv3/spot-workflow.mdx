@@ -68,7 +68,7 @@ The steps, in order:
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
 - [x] A current CLI: run `suiup update sui`, then `sui --version` to confirm it (a stale CLI causes version-skew errors).
-- [x] Testnet SUI and DEEP on your address, from [Fees and Funding](/onchain-finance/deepbook/deepbookv3/fees-and-funding#obtain-testnet-deep-usdc-and-sui). Placing an order needs at least the `DEEP_SUI` minimum order size of 10 DEEP, plus SUI for gas.
+- [x] Testnet SUI and DEEP on your address, from [Fees and Funding](/onchain-finance/deepbook/deepbookv3/fees-and-funding#where-do-i-get-testnet-deep-usdc-and-sui). Placing an order needs at least the `DEEP_SUI` minimum order size of 10 DEEP, plus SUI for gas.
 - [x] The SDK installed:
 
 ```sh
@@ -111,7 +111,7 @@ Size the amount to your wallet balance. `depositIntoManager` sources coins with 
 
 :::info
 
-`DEEP_SUI` is currently a whitelisted pool, so it charges no trading fee and deducts no DEEP. The `payWithDeep` flag has no effect here. On a fee-paying pool, the pool deducts DEEP from your manager on each fill, sized by its floating DEEP price, so keep DEEP in the manager. See [How the DEEP fee is sized](/onchain-finance/deepbook/deepbookv3/fees-and-funding#how-the-deep-fee-is-sized) and [Pay fees in DEEP or the input token](/onchain-finance/deepbook/deepbookv3/fees-and-funding#pay-fees-in-deep-or-the-input-token).
+`DEEP_SUI` is currently a whitelisted pool, so it charges no trading fee and deducts no DEEP. The `payWithDeep` flag has no effect here. On a fee-paying pool, the pool deducts DEEP from your manager on each fill, sized by its floating DEEP price, so keep DEEP in the manager. See [How the DEEP fee is sized](/onchain-finance/deepbook/deepbookv3/fees-and-funding#how-is-the-deep-trading-fee-calculated) and [Pay fees in DEEP or the input token](/onchain-finance/deepbook/deepbookv3/fees-and-funding#do-deepbook-orders-require-deep-tokens).
 
 :::
 

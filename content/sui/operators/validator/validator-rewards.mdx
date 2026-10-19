@@ -59,7 +59,7 @@ When you stake SUI tokens, the tokens are wrapped into `StakedSUI` objects. Your
 
 Each staking pool maintains a time series of its exchange rates. The system uses this data to determine the correct withdrawal amount for any staker in the pool.
 
-### Find the exchange rate 
+### How to find the exchange rate 
 
 Each epoch change emits a `0x2::validator_set::ValidatorEpochInfo` event per validator with the exchange rate information. Use the Events API to query these events.
 
@@ -69,11 +69,11 @@ A stake deposit request goes into a pending state immediately in the staking poo
 
 At the end of each epoch, the network distributes collected gas fees and stake subsidies among validators and stakers as staking rewards. The rewards a validator receives depend on:
 
-- **Performance:** If a validator does not operate performantly, other validators can report them through the tallying rule. The network then slashes the reported validator's staking rewards for that epoch.
+- **Performance:** If a validator does not operate performantly, other validators can report them through the tallying rule (see [Validator slashing and tallying rule](#validator-slashing-and-tallying-rule)). The network then slashes the reported validator's staking rewards for that epoch.
 
 - **Commission rate:** The commission rate determines the portion of staking rewards the validator keeps. For example, if a validator has a 10% commission rate, then 10% of the staking rewards of their stakers go to the validator each epoch as new stake objects owned by the validator.
 
-### Rewards withdrawal
+### How to withdraw rewards
 
 The network distributes validator rewards as regular stake objects, so withdrawal works the same for validators and stakers. A validator can call the [`request_withdraw_stake` function](https://github.com/MystenLabs/sui/blob/6234ae2cc8137f3a2a34cd0aa1ac4fd5f31260e2/crates/sui-framework/packages/sui-system/sources/sui_system.move#L272) in the `sui_system` module to withdraw stake and receive rewards.
 
@@ -85,7 +85,7 @@ $$
 
 You cannot withdraw a portion of your active stake. You must withdraw all staked SUI at the same time. You can, however, stake using multiple `StakedSui` objects by splitting your SUI into multiple coins. You can then perform a partial withdrawal from a validator by un-staking only some of the `StakedSUI` objects.
 
-## Staker rewards 
+## How staker rewards are calculated
 
 Within a given validator staking pool, all stakers receive the same proportion of rewards through the pool's exchange rate appreciation. Because validators earn commissions on the stake they manage, they receive additional `StakedSUI` objects at the end of each epoch in proportion to the amount of commissions their staking pool earns.
 
@@ -106,7 +106,7 @@ $$
 GasFee = GasPrice * GasUnits
 $$
 
-The total gas fees correspond to the sum of gas fees across all transactions the network processes in the epoch. During regular market conditions, the vast majority of transactions should have a `GasPrice` equal to the `ReferenceGasPrice`.
+The total gas fees correspond to the sum of gas fees across all transactions the network processes in the epoch. During regular market conditions, the vast majority of transactions should have a `GasPrice` equal to the [`ReferenceGasPrice`](#reference-gas-price).
 
 ## Reference gas price 
 
@@ -117,7 +117,7 @@ Operationally, a gas price survey determines this value as follows:
 - During each epoch E, each validator submits what they think the optimal reference gas price should be for the next epoch E+1.
 - At the epoch boundary, when Sui transitions from epoch E to epoch E+1, the network observes the gas price quotes across the validator set and sets the 2/3 percentile weighted by stake as the epoch's reference gas price. The reference gas price is constant throughout each epoch and only updates when the epoch changes.
 
-For example, assume that there are 7 validators with equal stake, and the price quotes they submit are `{15, 1, 4, 2, 8, 3, 23}`. The protocol sets the reference gas price at 8.
+For example, assume that there are 7 validators with equal stake, and the price quotes they submit are `{15, 1, 4, 2, 8, 3, 23}`. The protocol sets the reference gas price at 8. Sorted, the quotes are `{1, 2, 3, 4, 8, 15, 23}`, and 8 is the 2/3 percentile by stake. The reference gas price is a stake-weighted percentile, not a weighted mean or weighted median.
 
 In practice, the process for submitting a gas price quote for the Gas Price Survey is a straightforward one. Each validator owns an object that contains their quote for the reference gas price. To change their response, they must update the value in that object.
 

@@ -101,11 +101,11 @@ The following sample builds the transaction that deposits DEEP into your Balance
 
 <ImportContent source="examples/deepbook-spot/src/fund-with-deep.ts" mode="code" tag="fund-deep" />
 
-Sign and execute the returned transaction with your keypair. See [BalanceManager](/onchain-finance/deepbook/deepbookv3-sdk/balance-manager) for creating and sharing a manager.
+Sign and execute the returned transaction with your key pair. See [BalanceManager](/onchain-finance/deepbook/deepbookv3-sdk/balance-manager) for creating and sharing a manager.
 
 ## Where do I get Testnet DEEP, USDC, and SUI?
 
-There is no Testnet DEEP faucet, by design: the DEEP token's treasury cap is locked in a shared `ProtectedTreasury` whose only public supply function is `burn`, and the test coins transfer their treasury caps to the deployer at publish. Nobody can mint DEEP or the test coins. Get DEEP one of two ways:
+There is no Testnet DEEP faucet, by design: a shared `ProtectedTreasury`, whose only public supply function is `burn`, locks the DEEP token's treasury cap, and the test coins transfer their treasury caps to the deployer at publish. Nobody can mint DEEP or the test coins. Get DEEP one of two ways:
 
 - **Token-request form (reliable):** the [DeepBook Testnet token request form](https://tally.so/r/Xx102L) grants DEEP and quote assets such as DBUSDC directly. Use it as the default, and always for quote assets.
 - **Swap SUI for DEEP (when the book has liquidity):** on the whitelisted `DEEP_SUI` pool, faucet SUI converts to DEEP with no BalanceManager. The Testnet `DEEP_SUI` book is thin and intermittent, so treat this as a convenience, not a guarantee.
@@ -126,19 +126,19 @@ sui client active-address
 sui client gas
 ```
 
-Faucets are rate-limited per address and IP, so request only when the balance is actually empty. Request Testnet SUI from a [Sui faucet](/getting-started/onboarding/get-coins), which lists the browser, Discord, and cURL routes. If the primary faucet rate-limits you, use one of those fallback routes.
+Faucets rate-limit requests per address and IP, so request only when the balance is actually empty. Request Testnet SUI from a [Sui faucet](/getting-started/onboarding/get-coins), which lists the browser, Discord, and cURL routes. If the primary faucet rate-limits you, use one of those fallback routes.
 
 ##### Step 2: Get DEEP
 
 Request DEEP, and any quote assets, from the [token-request form](https://tally.so/r/Xx102L). This route is reliable and does not depend on book state.
 
-If the `DEEP_SUI` book has liquidity, you can instead swap faucet SUI for DEEP with no BalanceManager, which avoids a chicken-and-egg where you would need DEEP to buy DEEP. Check the quote first with `getQuantityOut`: if it returns fewer DEEP than the pool's minimum size (10 DEEP), the book is too thin, so use the form. Set a nonzero `minOut` so a book that empties reverts instead of returning your SUI unfilled:
+If the `DEEP_SUI` book has liquidity, you can instead swap faucet SUI for DEEP with no BalanceManager, so you do not need DEEP to buy DEEP. Check the quote first with `getQuantityOut`: if it returns fewer DEEP than the pool's minimum size (10 DEEP), the book is too thin, so use the form. Set a nonzero `minOut` so a book that empties reverts instead of returning your SUI unfilled:
 
 <ImportContent source="examples/deepbook-spot/src/bootstrap-swap.ts" mode="code" tag="bootstrap-swap" />
 
 ##### Step 3: Deposit DEEP
 
-Deposit the DEEP into your BalanceManager with the [funding step above](#how-do-i-fund-a-balancemanager-with-deep). You can now place fee-paying orders.
+Deposit the DEEP into your BalanceManager with the steps in [How do I fund a `BalanceManager` with DEEP?](#how-do-i-fund-a-balancemanager-with-deep). You can now place fee-paying orders.
 
 ### Troubleshooting
 

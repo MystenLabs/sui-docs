@@ -41,52 +41,52 @@ answer: >-
   development.
 ---
 
-Sui has several networks available, each serving a different purpose. Each network is comprised of nodes, described in [What types of nodes run on each network?](#what-types-of-nodes-run-on-each-network).
+Sui has several networks available, each serving a different purpose. Each network consists of nodes. For details, see [What types of nodes run on each network?](#what-types-of-nodes-run-on-each-network).
 
 ## Which networks does Sui provide?
 
 | Network | Purpose | Tokens | Epoch length | Data persistence |
 | --- | --- | --- | --- | --- |
 | Mainnet | Production applications and transactions | Real SUI or MIST, bought from an exchange | Approximately 24 hours | Always persisted |
-| Testnet | Staging network to test code before production | Testnet SUI and MIST from a faucet; no real value | Approximately 24 hours | Not guaranteed; planned wipes are announced ahead of time |
-| Devnet | Unstable network for developing against upcoming features | — | 1 hour | Wiped weekly |
-| Localnet | Local development on your own computer | Local faucet | — | Configurable |
+| Testnet | Staging network to test code before production | Testnet SUI and MIST from a faucet; no real value | Approximately 24 hours | Not guaranteed; Sui announces planned wipes ahead of time |
+| Devnet | Unstable network for developing against upcoming features | Not specified | 1 hour | Wiped weekly |
+| Localnet | Local development on your own computer | Local faucet | Not specified | Configurable |
 
 ## How do I choose a network?
 
-Use Localnet to develop in an environment you control, Testnet to test your code before placing it in production, and Mainnet for production applications and transactions. Use Devnet only if you want to write code against upcoming Sui features; it is not recommended for new developers because it is better suited for advanced use cases.
+Use Localnet to develop in an environment you control, Testnet to test your code before placing it in production, and Mainnet for production applications and transactions. Use Devnet only if you want to write code against upcoming Sui features. Sui does not recommend it for new developers because it is better suited for advanced use cases.
 
 ## Mainnet
 
-Mainnet is responsible for all production environment applications and transactions. All activity on Mainnet costs real SUI or MIST tokens, which have a value of fiat currency. SUI or MIST must be bought from an exchange, and excess SUI or MIST can be sold at a later date on the exchange for its fiat value. All activity on Mainnet is public and can be viewed through explorers such as [suiscan](https://suiscan.xyz/mainnet/home).
+Mainnet is responsible for all production environment applications and transactions. All activity on Mainnet costs real SUI or MIST tokens, which have a value of fiat currency. You must buy SUI or MIST from an exchange, and you can sell excess SUI or MIST on the exchange at a later date for its fiat value. All activity on Mainnet is public, and you can view it through explorers such as [suiscan](https://suiscan.xyz/mainnet/home).
 
-[Epochs](/develop/sui-architecture/epochs) on Mainnet are approximately 24 hours long. Data is always persisted on the network. Learn more about [data storage and storage fees](/develop/sui-architecture/sui-storage).
+[Epochs](/develop/sui-architecture/epochs) on Mainnet are approximately 24 hours long. The network always persists data. Learn more about [data storage and storage fees](/develop/sui-architecture/sui-storage).
 
 The RPC URL for Mainnet is: `https://fullnode.mainnet.sui.io:443`.
 
 ## Testnet
 
-Testnet is a staging network designed for developers to test their code before placing it in production. Activity on Testnet uses Testnet SUI and MIST tokens, which can be obtained through a [faucet](/getting-started/onboarding/get-coins). Testnet tokens have no real value and cannot be exchanged for fiat currency.
+Testnet is a staging network designed for developers to test their code before placing it in production. Activity on Testnet uses Testnet SUI and MIST tokens, which you can obtain through a [faucet](/getting-started/onboarding/get-coins). Testnet tokens have no real value, and you cannot exchange them for fiat currency.
 
-All activity on Testnet is public and can be viewed through explorers such as [SuiVision](https://testnet.suivision.xyz/).
+All activity on Testnet is public, and you can view it through explorers such as [SuiVision](https://testnet.suivision.xyz/).
 
-[Epochs](/develop/sui-architecture/epochs) on Testnet are approximately 24 hours long. Data on Testnet is not guaranteed to be persisted because data might be wiped occasionally. It should not be relied on for permanent storage. Testnet data persists through the regular update process, and planned data wipes are announced ahead of time.
+[Epochs](/develop/sui-architecture/epochs) on Testnet are approximately 24 hours long. Testnet does not guarantee data persistence because occasional data wipes might occur. Do not rely on Testnet for permanent storage. Testnet data persists through the regular update process, and Sui announces planned data wipes ahead of time.
 
 The RPC URL for Testnet is: `https://fullnode.testnet.sui.io:443`.
 
 ## Devnet
 
-Devnet is an unstable network used to develop new features. If you want to write code against upcoming Sui features, you can use this network for early testing before the feature is finalized and released.
+Devnet is an unstable network used to develop new features. If you want to write code against upcoming Sui features, you can use this network for early testing before Sui finalizes and releases the feature.
 
-All activity on Devnet is public and can be viewed through explorers such as [suiscan](https://suiscan.xyz/devnet/home).
+All activity on Devnet is public, and you can view it through explorers such as [suiscan](https://suiscan.xyz/devnet/home).
 
-[Epochs](/develop/sui-architecture/epochs) on Devnet are 1 hour long. Devnet is not recommended for new developers because it is better suited for advanced use cases. Data on Devnet is wiped **weekly** as part of its [scheduled update process](https://sui.io/networkinfo).
+[Epochs](/develop/sui-architecture/epochs) on Devnet are 1 hour long. Sui does not recommend Devnet for new developers because it is better suited for advanced use cases. Devnet wipes its data **weekly** as part of its [scheduled update process](https://sui.io/networkinfo).
 
 The RPC URL for Devnet is: `https://fullnode.devnet.sui.io:443`.
 
 ## Localnet
 
-Localnet is used to run an instance of the Sui network on your local computer. Developing on a local network provides an optimized workflow in an environment you control. You can set custom network configuration parameters, such as data persistence and a local faucet.
+Localnet runs an instance of the Sui network on your local computer. Developing on a local network provides an optimized workflow in an environment you control. You can set custom network configuration parameters, such as data persistence and a local faucet.
 
 :::tip
 
@@ -98,7 +98,7 @@ Learn more about [creating a local Sui network](/getting-started/onboarding/loca
 
 ## What types of nodes run on each network?
 
-Each network is comprised of nodes. Nodes provide resources to the network and participate in activities such as validating onchain transactions through a process called [consensus](/develop/sui-architecture/consensus). There are 2 types of nodes on each Sui network:
+Each network consists of nodes. Nodes provide resources to the network and participate in activities such as validating onchain transactions through a process called [consensus](/develop/sui-architecture/consensus). There are 2 types of nodes on each Sui network:
 
 - **Full node:** Can validate blockchain activity including transactions, checkpoints, and epoch changes. 
 

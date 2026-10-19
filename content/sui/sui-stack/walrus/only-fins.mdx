@@ -103,7 +103,7 @@ This example teaches:
 
 The example has 4 actors and 1 onchain package. The frontend builds transactions and renders post feeds as a React app. The Enoki wallet handles zkLogin authentication and transaction signing. The posts Move package stores post metadata and issues `ViewerToken` objects as [shared](/develop/objects/object-ownership/shared) and [address-owned](/develop/objects/object-ownership/address-owned) objects on Sui. Seal key servers hold threshold encryption keys and release them only when the Move contract confirms access through `seal_approve_access`. Walrus stores the actual image blobs, both encrypted and unencrypted. The sponsor backend covers gas fees so users do not need SUI in their wallet.
 
-The diagram below traces 1 full interaction from a user unlocking content to viewing the decrypted image.
+The sequence diagram in this section traces 1 full interaction from a user unlocking content to viewing the decrypted image.
 
 ```mermaid
 sequenceDiagram
@@ -215,7 +215,7 @@ The snippets in this section render from the [`onlyfins-example-app`](https://gi
     The `grant_access` function mints a new `ViewerToken` and returns it. The token links the viewer address to a specific post ID, which `seal_approve_access` checks later.
   </Step>
   <Step lines="52-69" title="`seal_approve_access` gate">
-    The `seal_approve_access` function is the onchain gate that Seal calls before releasing decryption keys. It checks two conditions: the caller is the post author, or the caller holds a `ViewerToken` linked to this post. It also verifies the requested `encryption_id` matches the post. If any check fails, the transaction aborts and Seal refuses to release the key.
+    The `seal_approve_access` function is the onchain gate that Seal calls before releasing decryption keys. It checks 2 conditions: the caller is the post author, or the caller holds a `ViewerToken` linked to this post. It also verifies the requested `encryption_id` matches the post. If any check fails, the transaction aborts and Seal refuses to release the key.
   </Step>
 </CodeWalkthrough>
 
@@ -241,7 +241,7 @@ For each encrypted post the user has access to, the hook builds a `seal_approve_
 
 - **Add subscription tiers:** Create a `Subscription` object that grants access to all posts from a creator for a set duration. Check subscription validity in `seal_approve_access` alongside the per-post `ViewerToken` check.
 
-- **Replace Enoki with wallet-only auth:** Remove the Enoki zkLogin flow and use a standard wallet connection through dApp Kit. Remove the sponsor backend and let users pay their own gas.
+- **Replace Enoki with wallet-only authentication:** Remove the Enoki zkLogin flow and use a standard wallet connection through dApp Kit. Remove the sponsor backend and let users pay their own gas.
 
 - **Add content categories:** Extend the `Post` struct with a `category` field. Filter posts by category in the frontend and allow creators to organize their content.
 
@@ -262,7 +262,7 @@ The following sections address common issues with this example.
 
 **Symptom:** Clicking **Sign In** does nothing, or the Google OAuth flow fails.
 
-**Cause:** The Enoki API key or Google Client ID is misconfigured, or the browser blocks third-party cookies.
+**Cause:** You misconfigured the Enoki API key or Google Client ID, or the browser blocks third-party cookies.
 
 **Fix:** Verify the Enoki and Google credentials in `main.tsx`. Try a different browser or disable cookie-blocking extensions.
 
@@ -270,9 +270,9 @@ The following sections address common issues with this example.
 
 **Symptom:** A modal appears saying the session key has expired, and decryption stops working.
 
-**Cause:** Seal session keys have a 30-minute TTL. The key expired between signing and attempting decryption.
+**Cause:** Seal session keys have a 30-minute time to live (TTL). The key expired between signing and attempting decryption.
 
-**Fix:** Click the button in the modal to sign a new session key. The app signs automatically and resumes decryption. Expiry is expected behavior: as the caution at the top of this page notes, enforce session-key expiry rather than extending sessions to avoid this prompt.
+**Fix:** Click the button in the modal to sign a new session key. The app signs automatically and resumes decryption. Expiry is expected behavior: as the caution in the introduction notes, enforce session-key expiry rather than extending sessions to avoid this prompt.
 
 ### Encrypted image fails to load
 

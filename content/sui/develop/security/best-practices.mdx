@@ -56,13 +56,15 @@ answer: Overview of security best practices on Sui.
 
 To build securely on Sui, audit and govern your packages, enforce access control with capabilities, protect coin capabilities and keys, use onchain randomness safely, validate offchain data, and apply the specific practices for Seal and Nautilus.
 
-This page describes a few recommended security best practices when developing applications on Sui. These recommendations are not comprehensive for all application types, use cases, or architectures. Do your own research and have production applications audited thoroughly.
+The following security best practices apply when you develop applications on Sui. These recommendations are not comprehensive for all application types, use cases, or architectures. Do your own research and get thorough audits for production applications.
 
 ## What are the main smart contract security risks on Sui?
 
+The following practices address risks in your packages, their upgrades, their dependencies, and their logic.
+
 #### Audit your contracts
 
-Ensure transactions operate on smart contracts you trust and have audited. Sui packages are immutable once published. If a package is upgradeable, the `UpgradeCap` controls publication of newer versions, so audit both the current package and its upgrade policy.
+Ensure transactions operate on smart contracts you trust and have audited. Sui packages are immutable once you publish them. If a package is upgradeable, the `UpgradeCap` controls publication of newer versions, so audit both the current package and its upgrade policy.
 
 #### Govern package upgrades
 
@@ -92,13 +94,15 @@ Emit [events](/develop/accessing-data/using-events) for admin changes, allowlist
 
 ## Onchain randomness
 
+The following practices prevent callers from influencing or selectively rejecting random outcomes.
+
 #### Limit what follows a random call in a PTB
 
 Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable.
 
 #### Mark randomness-consuming functions as private `entry`
 
-Declare functions that consume randomness as private `entry` functions. A private `entry` function can be called directly from a transaction but not from another Move module, which prevents other modules from composing your randomness-consuming function into a larger call that enables a test-and-abort attack. This is not optional: the Move compiler enforces it by rejecting `public` functions that take `Random` or `RandomGenerator` as an argument.
+Declare functions that consume randomness as private `entry` functions. A transaction can call a private `entry` function directly, but another Move module cannot, which prevents other modules from composing your randomness-consuming function into a larger call that enables a test-and-abort attack. This is not optional: the Move compiler enforces it by rejecting `public` functions that take `Random` or `RandomGenerator` as an argument.
 
 #### Never accept `RandomGenerator` as a parameter
 
@@ -112,7 +116,7 @@ Design functions so that the outcome favorable to the transaction sender consume
 
 For high-stakes applications, consider a two-transaction commit-reveal pattern to further reduce the influence a caller has over a random outcome.
 
-## Seal (Encryption and Access Control)
+## Seal (encryption and access control)
 
 Seal provides encryption and access control for your data. You express access rules in Move code in `seal_approve*` functions, and you rely on key servers that you choose. The following practices cover choosing key servers, structuring encryption, and keeping your access policy correct.
 
@@ -136,7 +140,7 @@ Less code means a smaller attack surface.
 
 #### Audit dependencies
 
-Review all libraries used in the enclave.
+Review all libraries that the enclave uses.
 
 #### Use short timestamps
 
@@ -148,13 +152,15 @@ Before you trust enclave output, verify that the platform configuration register
 
 #### Protect signed enclave payloads
 
-Apply signed payload hygiene to every message the enclave signs. Use domain or intent separation so a signature for one purpose cannot be replayed for another. Check timestamp freshness, and include a nonce or request ID wherever replay matters.
+Apply signed payload hygiene to every message the enclave signs. Use domain or intent separation so an attacker cannot replay a signature for one purpose in another. Check timestamp freshness, and include a nonce or request ID wherever replay matters.
 
 #### Don't rely solely on TEE guarantees
 
 A trusted execution environment reduces risk but does not remove it. Combine it with the other practices on this page.
 
 ## How do I protect capabilities and coins in Move?
+
+The following practices cover the capabilities that control a coin and its supply model.
 
 #### Protect TreasuryCap
 
@@ -192,7 +198,7 @@ Some designs still need an address allowlist, for example a set of accounts that
 
 #### Require explicit capabilities for privileged functions
 
-Make every privileged function take the relevant capability as a parameter, such as `AdminCap` for configuration, `TreasuryCap` for minting, or `DenyCapV2` for usage restrictions. Move's type system enforces this at transaction construction time, because a caller cannot produce a `&AdminCap` reference without owning the object. Place the capability as the second parameter to keep method associativity, as described in the [Admin capability](/develop/write-move/move-best-practices) section of the Move best practices guide.
+Make every privileged function take the relevant capability as a parameter, such as `AdminCap` for configuration, `TreasuryCap` for minting, or `DenyCapV2` for usage restrictions. Move's type system enforces this at transaction construction time, because a caller cannot produce a `&AdminCap` reference without owning the object. Place the capability as the second parameter to keep method associativity, as the [Admin capability](/develop/write-move/move-best-practices) section of the Move best practices guide describes.
 
 #### Protect and rotate admin capabilities
 
@@ -202,7 +208,7 @@ Treat admin capabilities as high-value assets:
 
 - Hold admin capabilities in a [multisig](/develop/transactions/transaction-auth/multisig) address or a dedicated custody setup rather than a single hot wallet.
 
-- Plan a rotation path before you publish. If a capability holder is compromised, you need a way to issue a new capability and stop honoring the old one.
+- Plan a rotation path before you publish. If an attacker compromises a capability holder, you need a way to issue a new capability and stop honoring the old one.
 
 #### Include a revocation path
 
@@ -226,17 +232,23 @@ Anyone can submit a transaction that references a [shared object](/develop/objec
 
 ## How should I handle oracle and offchain data safely?
 
+The following practice covers offchain data that your contracts consume.
+
 #### Validate offchain data before you use it
 
-If your contracts consume offchain data, such as price feeds, validate it before you act on it. Check the freshness of the data, confirm the source, and verify any signatures. Apply replay protection so an old data point cannot be submitted again. Define explicit failure behavior for when the data is missing, stale, or invalid, so a feed outage does not produce an unsafe result.
+If your contracts consume offchain data, such as price feeds, validate it before you act on it. Check the freshness of the data, confirm the source, and verify any signatures. Apply replay protection so no one can submit an old data point again. Define explicit failure behavior for when the data is missing, stale, or invalid, so a feed outage does not produce an unsafe result.
 
 ## Emergency controls
+
+Emergency controls help you contain an active incident.
 
 #### Consider pause and rate-limit mechanisms
 
 For high-value applications, consider a pause, kill-switch, or rate-limit mechanism that can contain an active incident. Document who can trigger each control and how you prevent abuse, because an emergency control is itself a privileged operation. Gate it with a capability, and emit an event whenever someone uses it.
 
 ## Frontend and transaction signing
+
+The following practices help users understand and verify what they sign.
 
 #### Show human-readable transaction intent
 
@@ -248,9 +260,11 @@ Verify the exact package IDs your frontend calls. Do not trust a package only be
 
 #### Domain-separate offchain signed messages
 
-When your app signs messages offchain, such as personal messages, include a domain separator and an intent so a signature created for one context cannot be replayed in another. See [Intent Signing](/develop/transactions/transaction-auth/intent-signing) for how Sui separates signing domains.
+When your app signs messages offchain, such as personal messages, include a domain separator and an intent so an attacker cannot replay a signature that you create for one context in another. See [Intent Signing](/develop/transactions/transaction-auth/intent-signing) for how Sui separates signing domains.
 
 ## User and operator key management
+
+The following practices protect the keys that users and operators hold.
 
 #### Keep your private signature key private
 
@@ -270,9 +284,11 @@ Use separate keys for the deployer, the admin, and routine operations, so a comp
 
 #### Document recovery and rotation procedures
 
-Write down how to recover and rotate every privileged key before you launch. A documented procedure is what lets you respond quickly when a key is lost or compromised.
+Write down how to recover and rotate every privileged key before you launch. A documented procedure is what lets you respond quickly when you lose a key or an attacker compromises it.
 
 ## General network security
+
+The following points describe the security properties of the Sui network itself.
 
 #### Understand the validator trust assumption
 

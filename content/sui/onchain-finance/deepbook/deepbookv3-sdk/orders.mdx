@@ -76,7 +76,7 @@ The `clientOrderId` you set is your own identifier for the order. It is differen
 
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap. The limit order example below shows the `PlaceLimitOrderParams` interface with its fields.
+- `params`: `SwapParams` object that represents the parameters for the swap. The limit order example shows the `PlaceLimitOrderParams` interface with its fields.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/deepbook.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="placeLimitOrder" signatureOnly/>
 
@@ -86,13 +86,13 @@ Use `placeMarketOrder` to place market orders. The call returns a function that 
 
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap. The market order example below shows the `PlaceMarketOrderParams` interface with its fields.
+- `params`: `SwapParams` object that represents the parameters for the swap. The market order example shows the `PlaceMarketOrderParams` interface with its fields.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/deepbook.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="placeMarketOrder" signatureOnly/>
 
 ### cancelOrder
 
-Use `cancelOrder` to cancel an existing order that is identified by the `orderId` that you provide. The call returns a function that takes a `Transaction` object.
+Use `cancelOrder` to cancel the existing order that the `orderId` you provide identifies. The call returns a function that takes a `Transaction` object.
 
 :::warning
 The `orderId` is the protocol `orderId` generated during order placement, which is different from the client `orderId`.
@@ -155,7 +155,7 @@ Use `withdrawSettledAmounts` to withdraw all settled amounts for a balance manag
 
 ### `withdrawSettledAmountsPermissionless`
 
-Use `withdrawSettledAmountsPermissionless` to withdraw settled amounts permissionlessly for any balance manager. This can be called by anyone and does not require a trade proof. The call returns a function that takes a `Transaction` object.
+Use `withdrawSettledAmountsPermissionless` to withdraw settled amounts permissionlessly for any balance manager. Anyone can call it, and it does not require a trade proof. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 

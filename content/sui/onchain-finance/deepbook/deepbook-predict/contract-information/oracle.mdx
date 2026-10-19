@@ -57,7 +57,7 @@ The Mainnet and Testnet deployments run the same package sources, so everything 
 | BTC `BlockScholesValueStore` | `0xe83f843b15ae63045b2cea445fb8ea7ad85c5fc2a05f66db122a511e1f2c67bc` | `0x1e5142471311505a7428b072230c9ffe8a747b3b9392720e39246af4aea08216` |
 | BTC `BlockScholesSVIStore` | `0xfdd447be39d847747caf18ecf3355031bb33979c472581f1a5481375d3748bfb` | `0x0f1cbefd1dd2ba08ae700a7067c32e0718edf926fa18cea80bd231c02d509ece` |
 
-BTC is `propbook_underlying_id` `1` on both networks. The full package and object tables are on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#underlyings-and-oracle-objects).
+BTC is `propbook_underlying_id` `1` on both networks. The full package and object tables are on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information).
 
 ## Oracle objects
 
@@ -277,7 +277,7 @@ Live pricing finds its spot in the recent history by source timestamp:
 	noComments
 />
 
-`recent_spot_at` scans the 10 recent entries and returns the one whose source timestamp equals `source_timestamp_ms`, or `none` when no entry matches. It applies no freshness policy and never reads the minute-boundary history, so it can return `none` for a timestamp that `spot_at` still finds.
+`recent_spot_at` scans the 10 recent entries and returns the one whose source timestamp equals `source_timestamp_ms`, or `none` when no entry matches. It applies no freshness policy and never reads the minute-boundary history, so it can return `none` for a timestamp that `spot_at` still finds. You do not pass this timestamp to `load_live_pricer`: the pricer calls `recent_spot_at` itself with the latest forward's source timestamp, as [Forward and spot pairing](#forward-spot-pairing) describes.
 
 Compute a series identifier when you need to address a series directly:
 
@@ -290,6 +290,8 @@ Compute a series identifier when you need to address a series directly:
 	fun="spot_sid,forward_sid,svi_sid"
 	noComments
 />
+
+These return the `u256` series identifiers that the forward and SVI tables key by, and the spot series identifier that every spot batch must carry.
 
 Unpack a `BsRead` with the read accessors:
 
@@ -376,7 +378,7 @@ Predict validates whatever objects you pass, so a call fails rather than pricing
 
 Settlement needs no volatility surface, so `try_settle` takes no SVI store. A reference tick is a single spot reading, so `set_reference_tick` takes only the Pyth feed. Market creation reads no price at all: it takes the registry solely to confirm the underlying has canonical bindings.
 
-On protocol version 4, a queued order reads the oracles at 2 moments. Placement takes all 4 objects and validates the Pyth feed and the 2 Block Scholes stores against the bindings the registry records, the way `load_live_pricer` does, and snapshots the Block Scholes spot, forward, and SVI into the order, and it requires `use_pyth_spot_for_forward` (`EPythForwardRequired`) and an SVI no older than the order desk's `svi_max_age_ms`. It does not require a fresh `PythFeed` spot. The spot the order fills at comes later, from a Pyth Lazer update that the Pyth Lazer verifier checked earlier in the committing transaction and that `deepbook_predict_math::lazer_price` decodes: `queue::commit` takes those verified updates, not the `PythFeed` object, and the fill re-anchors the snapshotted forward basis on that committed price. [Commit and resolve](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#commit-and-resolve) covers which update a cohort accepts.
+On protocol version 4, a queued order reads the oracles at 2 moments. Placement takes all 4 objects and validates the Pyth feed and the 2 Block Scholes stores against the bindings the registry records, the way `load_live_pricer` does, and snapshots the Block Scholes spot, forward, and SVI into the order, and it requires `use_pyth_spot_for_forward` (`EPythForwardRequired`) and an SVI no older than the order desk's `svi_max_age_ms`. It does not require a fresh `PythFeed` spot. The spot the order fills at comes later, from a Pyth Lazer update that the Pyth Lazer verifier checked earlier in the committing transaction and that `deepbook_predict_math::lazer_price` decodes: `queue::commit` takes those verified updates, not the `PythFeed` object, and the fill re-anchors the snapshotted forward basis on that committed price. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) covers which update a cohort accepts.
 
 The pool flush reads oracles in exactly one place. `plp::snapshot_expiry_pricer` takes all 4 objects, loads a live pricer for one market, and freezes it into the vault's valuation snapshot; the later `plp::value_expiry` takes only the vault, the market, and the configuration, and prices the market from that frozen copy, so it can run in a different transaction from the snapshot without touching an oracle. See [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) for the staged flush.
 
@@ -393,6 +395,8 @@ Live pricing runs through a `Pricer`, which you build once per transaction from 
 	fun="load_live_pricer"
 	noComments
 />
+
+`load_live_pricer` returns a `Pricer`:
 
 <ImportContent
 	source="packages/predict/sources/pricing/pricing.move"
@@ -432,6 +436,8 @@ Both take `range_codec::Strike` values, which you build from a tick with `range_
 	struct="RangePrice"
 />
 
+Read a `RangePrice` with its accessors:
+
 <ImportContent
 	source="packages/predict/sources/pricing/pricing.move"
 	mode="code"
@@ -446,9 +452,19 @@ Both take `range_codec::Strike` values, which you build from a tick with `range_
 
 The SVI shapes behind them, `pricing::RawSVI` and `pricing::PricingSVI`, have no public constructors or accessors: the pricer is the only public view of the surface. The pricer also records the 4 source timestamps it validated, and the trade events report the same 4 values, so an event's `block_scholes_*_source_timestamp_ms` fields are the provider per-update times the pricer keyed freshness and roll-down on.
 
+### How do I price a strike from start to finish?
+
+The calls above combine into this sequence:
+
+1. Resolve the underlying's `PythFeed`, `BlockScholesValueStore`, and `BlockScholesSVIStore` IDs from `OracleRegistry` with `propbook_pyth_id_for_underlying` and `propbook_block_scholes_store_pair_for_underlying`, as [Discover the canonical objects](#discover-the-canonical-objects) describes.
+2. In one programmable transaction block, call `expiry_market::load_live_pricer` for the market, passing all 4 oracle objects.
+3. Build each strike from a tick with `range_codec::strike_from_tick`.
+4. Pass the same pricer to `up_price` or `range_price`, and to every quote and trade command in that block.
+5. Keep oracle writes out of this transaction and submit them separately, because of [the same-transaction write guard](#the-same-transaction-write-guard).
+
 ### Binding validation
 
-Loading a pricer first checks all 3 feed objects against the registry's current bindings, then checks that the market has not expired. A mismatch aborts before Predict reads any price:
+Loading a pricer first checks all 3 feed objects against the registry's current bindings, then checks that the market has not expired. A mismatch aborts before Predict reads any price. These are `deepbook_predict::pricing` codes, so they also appear, with the same numbers, in the full [Pricing errors](#pricing-errors) table:
 
 | **Code** | **Name** | **Raised when** |
 | --- | --- | --- |
@@ -465,7 +481,7 @@ After the binding and expiry checks pass, the pricer resolves its inputs in this
 1. It reads the latest Block Scholes forward for the market's expiry. With no forward, loading aborts with `pricing::EBlockScholesPriceUnavailable`, code `12`.
 2. It calls `recent_spot_at` with that forward's source timestamp. With no matching spot in the recent spot history, loading aborts with the same code `12`. Pricing never falls back to the latest spot or to the minute-boundary history.
 3. It checks the paired forward and spot against `block_scholes_price_freshness_ms`, then reads the SVI observation for the expiry and checks it against `block_scholes_svi_freshness_ms`.
-4. It checks the pricing-safe envelope, including the basis bound between the forward and the paired spot, and rolls the SVI surface down to the current time.
+4. It checks the pricing-safe envelope, including the basis bound between the forward and the paired spot, and rolls the SVI surface down to the current time. [Pricing errors](#pricing-errors) lists every bound in the envelope under `EBlockScholesInputsInvalid`.
 5. It reads the latest Pyth spot and reanchors the forward on it only when `use_pyth_spot_for_forward` is on and that spot is fresh.
 
 Pairing by source timestamp means the basis, the ratio of the forward to the spot, always compares 2 observations that carry the same provider time, however the spot and forward batches interleave onchain. It also means the pricer's `block_scholes_spot_source_timestamp_ms` always equals its `block_scholes_forward_source_timestamp_ms`, so trade events report the same value in both fields.
@@ -493,7 +509,9 @@ Both 2,000 ms windows are the package defaults at this pin; the earlier `predict
 
 Block Scholes staleness is fatal to live pricing: a forward outside its window aborts with `EBlockScholesPriceStale`, and an SVI observation outside its window aborts with `EBlockScholesSVIStale`. The paired spot carries the forward's source timestamp, so its freshness check always agrees with the forward's, and a fresher spot elsewhere in the recent history never rescues a stale forward. A stale Pyth spot is not fatal while `use_pyth_spot_for_forward` is on. Pricing ignores a missing, non-normalizable, or stale Pyth spot and uses the Block Scholes forward directly, which is also what happens when the setting is off.
 
-These 4 values are mutable protocol state with no public getter, so read them rather than assuming the table above still holds. One route works: read the `ProtocolConfig` shared object directly. All 4 fields sit in its `pricing_config` field and come back in a single object query, over GraphQL or gRPC, against the `protocolConfig` object for the network you are on, which `getConfig(network).objects.protocolConfig` returns:
+#### How do I read the current freshness values?
+
+These 4 values are mutable protocol state with no public getter, so read them rather than assuming the Freshness windows table still holds. One route works: read the `ProtocolConfig` shared object directly. All 4 fields sit in its `pricing_config` field and come back in a single object query, over GraphQL or gRPC, against the `protocolConfig` object for the network you are on, which `getConfig(network).objects.protocolConfig` returns:
 
 | **Network** | **`ProtocolConfig`** |
 | --- | --- |

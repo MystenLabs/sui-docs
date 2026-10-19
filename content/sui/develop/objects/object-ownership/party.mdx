@@ -1,8 +1,8 @@
 ---
 title: Party Objects
 description: >-
-  Party objects are owned by a specified party at the time of transfer and
-  versioned by consensus. Learn how to create, transfer, and access these
+  The party you specify at the time of transfer owns a party object, and
+  consensus versions it. Learn how to create, transfer, and access these
   objects.
 keywords:
   - party objects
@@ -43,19 +43,19 @@ answer: >-
   objects.
 ---
 
-A party object is owned by a `Party`: a permission set that determines which addresses can access the object and how. Like [shared](/develop/objects/object-ownership/shared) objects, party objects are sequenced and versioned by [consensus](/develop/sui-architecture/consensus), so several transactions can be submitted concurrently. As with shared objects, transactions that mutate a party object are sequenced and execute one at a time, while transactions that only read it can execute concurrently. Unlike shared objects, only the addresses with the appropriate permissions can access a party object. These permissions govern all aspects of an object, including reads, writes, and transfers.
+A party object belongs to a `Party`: a permission set that determines which addresses can access the object and how. Like [shared](/develop/objects/object-ownership/shared) objects, party objects rely on [consensus](/develop/sui-architecture/consensus) for sequencing and versioning, so you can submit several transactions concurrently. As with shared objects, transactions that mutate a party object execute one at a time in consensus order, while transactions that only read it can execute concurrently. Unlike shared objects, only the addresses with the appropriate permissions can access a party object. These permissions govern all aspects of an object, including reads, writes, and transfers.
 
-Party objects are transferred using the [`sui::transfer::party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_party_transfer) or [`sui::transfer::public_party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_party_transfer) function. The object's permissions are then defined by the `Party` to which it is transferred.
+You transfer party objects using the [`sui::transfer::party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_party_transfer) or [`sui::transfer::public_party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_party_transfer) function. The `Party` that receives the object then defines its permissions.
 
 :::info
 
-Party objects currently support only single-address ownership. The `sui::party::Party` type already models permissions for multiple members, but the public transfer functions today accept only a single-owner party. Support for multi-member parties, and for additional ownership variants, is planned.
+Party objects currently support only single-address ownership. The `sui::party::Party` type already models permissions for multiple members, but the public transfer functions today accept only a single-owner party. Support for multi-member parties and additional ownership variants is on the roadmap.
 
 :::
 
 ## How do party objects differ from shared and address-owned objects?
 
-Party objects sit between [address-owned](/develop/objects/object-ownership/address-owned) objects and [shared](/develop/objects/object-ownership/shared) objects. They keep single-address ownership like address-owned objects, but they are sequenced by [consensus](/develop/sui-architecture/consensus) like shared objects. The following table summarizes the practical differences.
+Party objects sit between [address-owned](/develop/objects/object-ownership/address-owned) objects and [shared](/develop/objects/object-ownership/shared) objects. They keep single-address ownership like address-owned objects, but [consensus](/develop/sui-architecture/consensus) sequences them, as it does shared objects. The following table summarizes the practical differences.
 
 | **Property** | **Address-owned** | **Party** | **Shared** |
 |---|---|---|---|
@@ -80,13 +80,13 @@ public fun public_party_transfer<T: key + store>(obj: T, party: sui::party::Part
 
 - Use the [`sui::transfer::party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_party_transfer) function only for objects without `store`, where the defining module governs transfers through a [custom transfer policy](/develop/objects/transfers/custom-rules). This mirrors the distinction between `sui::transfer::transfer` and `sui::transfer::public_transfer`.
 
-Both functions take a `sui::party::Party` value. Currently, that value can be constructed only with [`sui::party::single_owner`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/party.move), which grants all permissions to one address and no permissions to anyone else:
+Both functions take a `sui::party::Party` value. Currently, you can construct that value only with [`sui::party::single_owner`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/party.move), which grants all permissions to one address and no permissions to anyone else:
 
 ```
 public fun single_owner(owner: address): sui::party::Party
 ```
 
-The `sui::party` module also provides wrapper macros for the `transfer` functions that can be used with method syntax, e.g. `my_party.public_transfer()`. The `sui::party::transfer` macro calls `sui::transfer::party_transfer`, and the `sui::party::public_transfer` macro calls `sui::transfer::public_party_transfer`.
+The `sui::party` module also provides wrapper macros for the `transfer` functions that you can use with method syntax, for example `my_party.public_transfer()`. The `sui::party::transfer` macro calls `sui::transfer::party_transfer`, and the `sui::party::public_transfer` macro calls `sui::transfer::public_party_transfer`.
 
 The following example creates an object and transfers it to a single-owner party in one function:
 
@@ -103,9 +103,9 @@ After creation, a party object behaves like an [address-owned](/develop/objects/
 
 ## When should I use party objects?
 
-Use party objects when you want an object to remain owned by one address but be versioned by [consensus](/develop/sui-architecture/consensus), such as for operational convenience. If you only use an object together with other party or [shared](/develop/objects/object-ownership/shared) objects, converting it to a party object has no additional performance cost.
+Use party objects when you want an object to remain owned by one address but use [consensus](/develop/sui-architecture/consensus) for versioning, such as for operational convenience. If you only use an object together with other party or [shared](/develop/objects/object-ownership/shared) objects, converting it to a party object has no additional performance cost.
 
-Party objects can be used by multiple inflight transactions at the same time, but only one transaction can modify the object at a time. This contrasts with [address-owned](/develop/objects/object-ownership/address-owned) objects, which allow only a single inflight transaction at a time. Because consensus manages the versioning of a party object, many applications can pipeline several transactions against the same object: that is, submit the next transaction without waiting for the previous one to finalize.
+Multiple inflight transactions can use a party object at the same time, but only one transaction can modify the object at a time. This contrasts with [address-owned](/develop/objects/object-ownership/address-owned) objects, which allow only a single inflight transaction at a time. Because consensus manages the versioning of a party object, many applications can pipeline several transactions against the same object: that is, submit the next transaction without waiting for the previous one to finalize.
 
 :::info
 
@@ -171,7 +171,7 @@ tx.moveCall({
 });
 ```
 
-Party objects whose owning address corresponds to an object ID are not supported for access through the [transfer to object](/develop/objects/transfers/transfer-to-object) mechanism. To transfer a party object owned by an account address:
+The [transfer to object](/develop/objects/transfers/transfer-to-object) mechanism does not support access to party objects whose owning address corresponds to an object ID. To transfer a party object owned by an account address:
 
 <ImportContent source="examples/move/basics/sources/object_basics.move" mode="code" fun="party_transfer_single_owner" noComments />
 
@@ -179,8 +179,8 @@ Party objects whose owning address corresponds to an object ID are not supported
 
 Keep the following constraints in mind when you design with party objects:
 
-- **Single-owner only:** The public transfer functions currently accept only single-owner parties, constructed with `sui::party::single_owner`. The type models permissions for multiple members, and support for multi-member parties is planned.
-- **No transfer to object for object-ID owners:** Even when a single-owner party's address corresponds to an object ID, the party object cannot currently be received through the [`sui::transfer::Receiving`](/develop/objects/transfers/transfer-to-object) mechanism.
+- **Single-owner only:** The public transfer functions currently accept only single-owner parties, constructed with `sui::party::single_owner`. The type models permissions for multiple members, and support for multi-member parties is on the roadmap.
+- **No transfer to object for object-ID owners:** Even when a single-owner party's address corresponds to an object ID, you cannot currently receive the party object through the [`sui::transfer::Receiving`](/develop/objects/transfers/transfer-to-object) mechanism.
 - **No gas payment with party `Coin<SUI>`:** You cannot pay gas with a party object `Coin<SUI>`. Transfer it back to address-owned first.
 
 ## Troubleshooting

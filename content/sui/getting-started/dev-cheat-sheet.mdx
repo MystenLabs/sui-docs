@@ -47,7 +47,7 @@ questions:
 answer: Quick reference on best practices for Sui Network developers.
 ---
 
-This page is a quick reference on best practices for Sui Network developers: what to check when writing, testing, and upgrading Move packages, how to build apps, how to sign transactions, and how to use zkLogin safely.
+Best practices for Sui Network developers cover what to check when writing, testing, and upgrading Move packages, how to build apps, how to sign transactions, and how to use zkLogin safely.
 
 ## Move
 
@@ -66,15 +66,15 @@ Best practices for writing Move smart contracts on Sui.
 ### Composability
 
 - Use [Sui Object Display](https://move-book.com/programmability/display) to customize how your objects appear in wallets, apps, and explorers.
-- Avoid self-transfers. When possible, return the object from the current function so that it can be used in a different command in a [programmable transaction block](/develop/transactions/ptbs/building-ptb).
+- Avoid self-transfers. When possible, return the object from the current function so that you can use it in a different command in a [programmable transaction block](/develop/transactions/ptbs/building-ptb).
 
 ### Package upgrades
 
 - Read about [package upgrades](/develop/publish-upgrade-packages/upgrade) before publishing your package.
-- Packages are immutable, so any published package can be called forever. Use [object versioning](/develop/publish-upgrade-packages/upgrade#versioned-shared-objects) to prevent older versions from being called.
-- If you upgrade a package `P1` to `P2`, other packages and clients that depend on `P1` will continue using `P1`. They do not auto-update to `P2`. Both dependent packages and client code must be explicitly updated to point at `P2`.
-- Packages that expect to be extended by dependent packages can avoid breaking their extensions with each upgrade by providing a standard (unchanging) interface that all versions conform to. See the [message sending](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move) across a bridge example from Wormhole. Extension packages that produce outbound messages can use [`prepare_message`](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move#L68-L90) from any version of the Wormhole package to produce a [`MessageTicket`](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move#L52-L66) while client code that sends the message must pass that `MessageTicket` into [`publish_message`](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move#L92-L152) in the latest version of the package.
-  - `public` function signatures cannot be deleted or changed, but `public(package)` functions can. Use `public(package)` or private visibility liberally unless you are exposing library functions that will live forever.
+- Packages are immutable, so anyone can call any published package forever. Use [object versioning](/develop/publish-upgrade-packages/upgrade#versioned-shared-objects) to prevent anyone from calling older versions.
+- If you upgrade a package `P1` to `P2`, other packages and clients that depend on `P1` continue using `P1`. They do not auto-update to `P2`. You must explicitly update both dependent packages and client code to point at `P2`.
+- Packages that expect dependent packages to extend them can avoid breaking their extensions with each upgrade by providing a standard (unchanging) interface that all versions conform to. See the [message sending](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move) across a bridge example from Wormhole. Extension packages that produce outbound messages can use [`prepare_message`](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move#L68-L90) from any version of the Wormhole package to produce a [`MessageTicket`](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move#L52-L66) while client code that sends the message must pass that `MessageTicket` into [`publish_message`](https://github.com/wormhole-foundation/wormhole/blob/74dea3bf22f0e27628b432c3e9eac05c85786a99/sui/wormhole/sources/publish_message.move#L92-L152) in the latest version of the package.
+  - You cannot delete or change `public` function signatures, but you can delete or change `public(package)` functions. Use `public(package)` or private visibility liberally unless you are exposing library functions that live forever.
   - It is not possible to delete `struct` types, change their definition, or add new [abilities](https://move-book.com/reference/abilities) through an upgrade. Introduce new types carefully because they live forever.
 
 ### Testing
@@ -101,4 +101,4 @@ Best practices for writing Move smart contracts on Sui.
 ## zkLogin
 
 - Call the proving service as sparingly as possible. Design your app flows such that you call the proving service only when the user is about to perform a real transaction.
-- Beware of how you cache the ephemeral private key. Treat the private key as highly sensitive data, such as a password. If an unexpired ephemeral private key and its corresponding ZK proof are leaked, an attacker can steal the user's assets.
+- Beware of how you cache the ephemeral private key. Treat the private key as highly sensitive data, such as a password. If an unexpired ephemeral private key and its corresponding ZK proof leak, an attacker can steal the user's assets.

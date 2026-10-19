@@ -58,9 +58,9 @@ Valid participating keys for multisig are:
 
 1. ECDSA Secp256k1
 
-1. ECDSA Secp256r1. 
+1. ECDSA Secp256r1
 
-A [u8](https://doc.rust-lang.org/std/primitive.u8) weight is set for each participating key and you can set the threshold as [u16](https://doc.rust-lang.org/std/primitive.u16). If the serialized multisig contains enough valid signatures of which the sum of weights passes the threshold, Sui considers the multisig valid and the transaction executes.
+You set a [u8](https://doc.rust-lang.org/std/primitive.u8) weight for each participating key and you can set the threshold as [u16](https://doc.rust-lang.org/std/primitive.u16). If the serialized multisig contains enough valid signatures of which the sum of weights passes the threshold, Sui considers the multisig valid and the transaction executes.
 
 ## Applications of multisig
 
@@ -89,7 +89,7 @@ To learn more about how to create multisig addresses and create multisig transac
 
 <ImportContent source="prerequisites" mode="snippet" />
 
-This topic assumes you are somewhat familiar with the Sui CLI, specifically the `sui client` and `sui keytool` commands. Consequently, a command might be introduced without any context. If you are unsure about the details of a referenced command, see the Sui CLI documentation for more information.
+The following steps assume you are somewhat familiar with the Sui CLI, specifically the `sui client` and `sui keytool` commands. Consequently, a command might appear without any context. If you are unsure about the details of a referenced command, see the Sui CLI documentation for more information.
 
 You need an existing address on the network you are working on to receive an object. The topic assumes that this address is the current active address (`sui client active-address`), but any address you have access to is fine.
 
@@ -101,7 +101,7 @@ To demonstrate multisig, this topic guides you through setting up and executing 
 
 ### Create addresses with different schemes
 
-To begin, create three addresses that will act as the signers for the transaction you perform later in the instruction. Use the `sui client new-address` command to generate a Sui address and public key for three supported key schemes.
+To begin, create three addresses that act as the signers for the transaction you perform later in the instruction. Use the `sui client new-address` command to generate a Sui address and public key for three supported key schemes.
 
 ```sh
 $ sui client new-address ed25519
@@ -203,7 +203,7 @@ $ PKEY_3=<PUBLIC-KEY-SECP256R1>
 
 ### Create a multisig address
 
-To sign a transaction using multisig, you need to create a multisig address using `sui keytool multi-sig-address`. The multisig address is created using the public keys from each individual participating address. Each address is also assigned a `weight` value that determines how many are needed to create a valid signature. When summed, the `weight` of the included signatures must be greater than or equal to the `threshold` value you also set with the command. For this example, use the following command, which states that the first two addresses require at least one more signature to create a valid multisig. The last address has a weight of `3`, which is equal to the `threshold` value, so its owner can create a valid signature without the others.
+To sign a transaction using multisig, you need to create a multisig address using `sui keytool multi-sig-address`. You create the multisig address using the public keys from each individual participating address. You also assign each address a `weight` value that determines how many you need to create a valid signature. The sum of the `weight` values of the included signatures must be greater than or equal to the `threshold` value you also set with the command. For this example, use the following command, which states that the first two addresses require at least one more signature to create a valid multisig. The last address has a weight of `3`, which is equal to the `threshold` value, so its owner can create a valid signature without the others.
 
 ```sh
 $ sui keytool multi-sig-address --pks $PKEY_1 $PKEY_2 $PKEY_3 --weights 1 2 3 --threshold 3
@@ -242,7 +242,7 @@ Before getting SUI, set a `MULTISIG` shell variable to the multisig address prov
 $ MULTISIG=<MULTISIG-ADDRESS>
 ```
 
-If you use the `sui client objects $MULTISIG` command, you can see that the newly created multisig address has no objects. This means you need to get SUI before you can perform any transactions. To get SUI for your multisig account, use the `sui client faucet` command and provide the multisig address using the `--address` flag. Run this command twice so that the multisig address owns at least two SUI. This example uses two SUI so that one can be transferred and the other can pay for gas.
+If you use the `sui client objects $MULTISIG` command, you can see that the newly created multisig address has no objects. This means you need to get SUI before you can perform any transactions. To get SUI for your multisig account, use the `sui client faucet` command and provide the multisig address using the `--address` flag. Run this command twice so that the multisig address owns at least two SUI. This example uses two SUI so that you can transfer one and use the other to pay for gas.
 
 ```sh
 $ sui client faucet --address $MULTISIG
@@ -321,7 +321,7 @@ $ SIG_2=<SIGNATURE-HASH-SECP256K1>
 
 ### Combine individual signatures into a multisig
 
-As mentioned, the multisig must be composed of enough individual signatures such that the sum of the participating signer weights is greater than the `threshold` value. Use the `sui keytool multi-sig-combine-partial-sig` command to combine the ed25519 signature (`weight: 1`) and the secp256k1 (`weight: 2`). To complete the command, you must provide all public keys, their weights, and the threshold that defined the multisig address.
+As mentioned, the multisig must contain enough individual signatures such that the sum of the participating signer weights is greater than the `threshold` value. Use the `sui keytool multi-sig-combine-partial-sig` command to combine the ed25519 signature (`weight: 1`) and the secp256k1 (`weight: 2`). To complete the command, you must provide all public keys, their weights, and the threshold that defined the multisig address.
 
 ```sh
 $ sui keytool multi-sig-combine-partial-sig --pks $PKEY_1 $PKEY_2 $PKEY_3 --weights 1 2 3 --threshold 3 --sigs $SIG_1 $SIG_2
@@ -355,7 +355,7 @@ If successful, the console responds with transaction details.
 <summary>
 Transaction response
 </summary>
-This response contains the actual values from a test signing. Your response should be formatted the same but the values you receive are going to be different.
+This response contains the actual values from a test signing. Your response has the same format, but the values you receive are different.
 
 ```sh
 Transaction Digest: 7mBWUxT6HUVDa8bii3PZJc7nhWqefTLNTsGbHYnx7ZA4
