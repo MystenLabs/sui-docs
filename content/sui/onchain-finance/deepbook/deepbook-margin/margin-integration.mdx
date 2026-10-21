@@ -112,7 +112,7 @@ Anyone can liquidate any position your integration opens once its risk ratio fal
 3. It sources repay capital from a shared liquidation vault.
 4. It calls the manager's inner settlement, which repays part of the debt and pays a reward out of the collateral, restoring the position to the target risk ratio.
 
-The [Leveraged Position Workflow](/onchain-finance/deepbook/deepbook-margin/leveraged-workflow#what-happens-if-you-do-nothing-and-the-price-moves-against-you) shows the onchain entry point, and [Margin Risks](/onchain-finance/deepbook/deepbook-margin/margin-risks#how-liquidation-works) works the consequences through with numbers.
+The [Leveraged Position Workflow](/onchain-finance/deepbook/deepbook-margin/leveraged-workflow#what-happens-if-you-do-nothing-and-the-price-moves-against-you) shows the onchain entry point, and [Margin Risks](/onchain-finance/deepbook/deepbook-margin/margin-risks#how-does-liquidation-work) works the consequences through with numbers.
 
 For an integrator this means two things. First, no grace period protects the positions you build, so surface the risk ratio and its distance to the liquidation threshold to your users, and act early. Second, if you run a liquidator, it is a standard permissionless keeper: watch positions, supply oracles and repay capital, and receive the reward.
 
@@ -139,5 +139,5 @@ Every row below reflects current source or an existing reference page.
 | Oracle dependency | None | Pyth prices required for borrow, withdraw, trade, and valuation | [Oracle risk](/onchain-finance/deepbook/deepbook-margin/margin-risks#oracle-risk) |
 | Withdrawal | Withdraw settled funds anytime | Gated by the Min Withdraw Risk Ratio | [Risk ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio) |
 | Cost | DEEP trading fee per fill | DEEP trading fee plus continuously accruing borrow interest | [Interest rates](/onchain-finance/deepbook/deepbook-margin/contract-information/interest-rates) |
-| Liquidation | None | Permissionless at the liquidation threshold, routed through the liquidation vault | [Margin Risks](/onchain-finance/deepbook/deepbook-margin/margin-risks#how-liquidation-works) |
+| Liquidation | None | Permissionless at the liquidation threshold, routed through the liquidation vault | [Margin Risks](/onchain-finance/deepbook/deepbook-margin/margin-risks#how-does-liquidation-work) |
 | New failure modes | Insufficient balance, off-tick or below min size | Adds risk-ratio aborts, stale-oracle reverts, and empty-pool borrow failures | [Workflow troubleshooting](/onchain-finance/deepbook/deepbook-margin/leveraged-workflow#troubleshooting) |
