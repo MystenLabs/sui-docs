@@ -94,7 +94,7 @@ Update interest rate parameters and margin pool configuration settings.
 <details>
 <summary>Withdraw fees</summary>
 
-Withdraw accumulated maintainer and protocol fees from the margin pool.
+Withdraw accumulated fees from the margin pool: `withdraw_maintainer_fees` for maintainer fees, `withdraw_protocol_fees` for protocol fees, and `admin_withdraw_default_referral_fees` for default referral fees.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -108,7 +108,7 @@ Withdraw accumulated maintainer and protocol fees from the margin pool.
 
 ## Events
 
-The margin registry emits the following events when maintainer or pause capabilities change, or when a DeepBook pool is registered or updated in the registry. Listen for them to track these changes.
+The margin registry, defined in the `margin_registry` module of the `deepbook_margin` package, emits the following events when maintainer or pause capabilities change, or when a DeepBook pool is registered or updated in the registry. Listen for them to track these changes.
 
 <details>
 <summary>`MaintainerCapUpdated`</summary>

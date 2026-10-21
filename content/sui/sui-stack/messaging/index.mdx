@@ -40,8 +40,8 @@ The Messaging SDK provides end-to-end encrypted, permissioned group messaging on
 The SDK includes:
 
 - A canonical Move package
-- A TypeScript client
-- A reference implementation for a Rust relayer
+- A TypeScript client: encrypts messages client-side with AES-256-GCM and manages keys through Seal threshold encryption
+- A reference implementation for a Rust relayer: archives ciphertext to Walrus for decentralized persistence
 - A reference implementation for a TypeScript discovery indexer
 
 ## Where do I go next?
