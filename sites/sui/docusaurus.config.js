@@ -86,7 +86,7 @@ const config = {
   onBrokenAnchors: "warn",
   onDuplicateRoutes: 'throw',
 
-  staticDirectories: ["static", "src/open-spec"],
+  staticDirectories: ["static"],
   markdown: {
     format: "detect",
     mermaid: true,

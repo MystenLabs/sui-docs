@@ -5,8 +5,13 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Create directory
-const topdir = path.join(__dirname, "../src/open-spec");
+// The specs are served at /open-spec/<network>/openrpc.json: that is the
+// path the API catalog (static/.well-known/api-catalog) and the web client
+// publish, and the JSON-RPC reference reads. They used to be served at
+// /<network>/openrpc.json from a second static directory, but vercel.json
+// redirects every /testnet/* and /devnet/* path to the root, so only the
+// mainnet spec ever loaded and the catalog links were dead.
+const topdir = path.join(__dirname, "../static/open-spec");
 
 if (!fs.existsSync(topdir)){
     fs.mkdirSync(topdir);
@@ -41,7 +46,7 @@ const fetchSpec = async (branch) => {
 
 const downloadFile = async (branch) => {
   const branchDir = path.join(topdir, branch);
-  const specDir = path.join(__dirname, `../src/open-spec/${branch}`);
+  const specDir = path.join(topdir, branch);
   const specFile = path.join(specDir, "openrpc.json");
   const backupFile = path.join(specDir, "openrpc_backup.json");
 
@@ -88,8 +93,8 @@ const downloadFile = async (branch) => {
   for (const network of NETWORKS) {
     if (await downloadFile(network)) available.push(network);
   }
-  // Served at /networks.json next to the specs (src/open-spec is a static
-  // directory). The network switch lists only these.
+  // Served at /open-spec/networks.json next to the specs. The network switch
+  // lists only these.
   fs.writeFileSync(path.join(topdir, "networks.json"), JSON.stringify(available, null, 2) + "\n", "utf8");
   console.log(`OpenRPC specs available: ${available.join(", ") || "none"}.`);
 })();

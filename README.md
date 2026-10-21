@@ -63,7 +63,7 @@ untracked files after a local build.
 | `content/sui/sui-stack/seal/*.mdx` | `fetch-external-docs.js`, then `transform-external-docs.js` | `MystenLabs/seal` |
 | `content/sui/sui-stack/messaging/*.mdx` | the same pair | `MystenLabs/sui-stack-messaging` |
 | `sites/sui/src/data/skills.json` | `generate-skills.mjs` | every `SKILL.md` in `MystenLabs/skills` |
-| `sites/sui/src/open-spec/<branch>` | `getopenrpcspecs.js` | the OpenRPC spec in `MystenLabs/sui`, per branch |
+| `sites/sui/static/open-spec/<branch>` | `getopenrpcspecs.js` | the OpenRPC spec in `MystenLabs/sui`, per branch |
 | `sites/sui/.generated/ImportContentMap.ts` | `generate-import-context.js` | the `ImportContent` tags across the pages |
 | `sites/sui/.resolved/` | `generate-resolved-pages.js` | the pages |
 | `sites/sui/static/display-preview` | cloned and built during `build` | `MystenLabs/display-preview` |

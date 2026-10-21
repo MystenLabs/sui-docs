@@ -16,7 +16,7 @@ const NETWORKS = [
 // writes the list; a network that no longer publishes a spec is not offered.
 async function loadAvailable() {
   try {
-    const res = await fetch("/networks.json");
+    const res = await fetch("/open-spec/networks.json");
     if (!res.ok) return NETWORKS.map((n) => n.value);
     const list = await res.json();
     return Array.isArray(list) && list.length ? list : NETWORKS.map((n) => n.value);

@@ -5,10 +5,10 @@ const fs = require("fs");
 const path = require("path");
 
 // The specs the site serves: scripts/getopenrpcspecs.js downloads one per
-// network from that network's release branch into src/open-spec/<network>/,
-// and docusaurus.config.js serves that directory at /open-spec/. These are
-// what the JSON-RPC reference renders and what the API catalog links, so
-// they are what is validated.
+// network from that network's release branch into static/open-spec/<network>/,
+// served at /open-spec/<network>/openrpc.json. These are what the JSON-RPC
+// reference renders and what the API catalog links, so they are what is
+// validated.
 //
 // This used to read one file out of the fetched MystenLabs/sui checkout at
 // `main`, crates/sui-indexer-alt-jsonrpc/openrpc.json. That crate was removed
@@ -22,7 +22,7 @@ const path = require("path");
 // last branch to move, is required. A network whose spec is present is
 // validated; one whose spec is absent is reported, and the downloader leaves
 // it out of networks.json so the reference does not offer it.
-const SPEC_DIR = path.resolve(__dirname, "../src/open-spec");
+const SPEC_DIR = path.resolve(__dirname, "../static/open-spec");
 
 const SPECS = [
   { network: "mainnet", relPath: "mainnet/openrpc.json", strictJson: true },

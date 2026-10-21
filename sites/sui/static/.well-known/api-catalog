@@ -19,11 +19,6 @@
           "href": "https://docs.sui.io/open-spec/testnet/openrpc.json",
           "type": "application/json",
           "title": "Sui JSON-RPC OpenRPC Specification (Testnet)"
-        },
-        {
-          "href": "https://docs.sui.io/open-spec/devnet/openrpc.json",
-          "type": "application/json",
-          "title": "Sui JSON-RPC OpenRPC Specification (Devnet)"
         }
       ]
     },
