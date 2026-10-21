@@ -15,7 +15,7 @@ keywords:
   - pricer
   - oracle freshness
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4); both ProtocolConfig objects read 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4); both ProtocolConfig objects read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' freshness windows re-read after Mainnet's reopen
 goal:
   description: >-
     Reader can resolve the canonical Propbook oracle objects for an underlying,
@@ -81,7 +81,7 @@ There is one `OracleRegistry` per deployment, one `PythFeed` per Pyth source, an
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="OracleRegistry,BlockScholesStorePair,OracleMetadata"
 />
 
@@ -96,7 +96,7 @@ Resolve an underlying to its 3 feed objects before building a transaction:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="propbook_pyth_id_for_underlying,propbook_block_scholes_store_pair_for_underlying,block_scholes_value_store_id,block_scholes_svi_store_id"
 	noComments
 />
@@ -110,7 +110,7 @@ Richer metadata is available when you need the source ID behind a binding rather
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="pyth_metadata_for_underlying,propbook_underlying_id,oracle_kind,source_id,propbook_oracle_id,value_kind"
 	noComments
 />
@@ -126,7 +126,7 @@ Creating a Pyth feed object is permissionless, but binding one to an underlying 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="create_and_share_pyth_feed,create_and_share_block_scholes_stores,bind_pyth_to_underlying,replace_pyth_binding_for_underlying"
 	noComments
 />
@@ -157,7 +157,7 @@ Binding changes emit `OracleSourceRegistered`, `OracleBound`, `BlockScholesStore
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="PythFeed,RawSpot"
 />
 
@@ -172,7 +172,7 @@ The feed has 4 accessors that cover the latest observation and an exact historic
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="raw_spot,normalized_spot,raw_spot_at,normalized_spot_at"
 	noComments
 />
@@ -190,7 +190,7 @@ Writes are permissionless because possession of a verified Pyth Lazer update is 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="update,insert_at,migrate"
 	noComments
 />
@@ -222,7 +222,7 @@ The vendor surface lives in 2 shared objects. `BlockScholesValueStore` holds spo
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="BlockScholesValueStore,BlockScholesSVIStore"
 />
 
@@ -245,7 +245,7 @@ Every observation comes back wrapped in a `BsRead`, and SVI values carry an `SVI
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="BsRead,SVIParams"
 />
 
@@ -258,7 +258,7 @@ Read the observations themselves:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="spot,spot_at,forward,svi"
 	noComments
 />
@@ -272,7 +272,7 @@ Live pricing finds its spot in the recent history by source timestamp:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="recent_spot_at"
 	noComments
 />
@@ -286,7 +286,7 @@ Compute a series identifier when you need to address a series directly:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="spot_sid,forward_sid,svi_sid"
 	noComments
 />
@@ -300,7 +300,7 @@ Unpack a `BsRead` with the read accessors:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="read_source_timestamp_ms,read_onchain_timestamp_ms,read_writer_digest,read_value"
 	noComments
 />
@@ -318,7 +318,7 @@ Writes are permissionless because the signed vendor batch is the authority:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="apply_spot_batch,apply_forward_batch,apply_svi_batch"
 	noComments
 />
@@ -343,7 +343,7 @@ Store creation is internal to the package and reachable only through `registry::
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="OracleRead"
 />
 
@@ -354,7 +354,7 @@ Store creation is internal to the package and reachable only through `registry::
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="read_source_timestamp_ms,read_onchain_timestamp_ms,read_writer_digest,read_value"
 	noComments
 />
@@ -391,7 +391,7 @@ Live pricing runs through a `Pricer`, which you build once per transaction from 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="load_live_pricer"
 	noComments
 />
@@ -403,7 +403,7 @@ Live pricing runs through a `Pricer`, which you build once per transaction from 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="Pricer"
 />
 
@@ -420,7 +420,7 @@ A pricer feeds 2 read functions:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="up_price,range_price"
 	noComments
 />
@@ -432,7 +432,7 @@ Both take `range_codec::Strike` values, which you build from a tick with `range_
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="RangePrice"
 />
 
@@ -443,7 +443,7 @@ Read a `RangePrice` with its accessors:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="lower_up,higher_up,probability"
 	noComments
 />
@@ -496,14 +496,14 @@ Live pricing stays unavailable until the matching spot lands or a newer forward 
 
 ### Freshness windows
 
-Predict measures freshness against the wall clock, not against how recently a value changed, and the age of an observation is `now - source_timestamp_ms`, the provider's per-update time. A chain read on 2026-10-13 found these windows on each network's `ProtocolConfig`:
+Predict measures freshness against the wall clock, not against how recently a value changed, and the age of an observation is `now - source_timestamp_ms`, the provider's per-update time. Each network's `ProtocolConfig` sets these windows:
 
 | **Setting** | **Mainnet** | **Testnet** | **Meaning** |
 | --- | --- | --- | --- |
 | `use_pyth_spot_for_forward` | `true` | `true` | A fresh Pyth spot reanchors the Block Scholes forward basis |
 | `pyth_spot_freshness_ms` | `2000` | `2000` | Maximum age of a Pyth spot used to reanchor the forward |
 | `block_scholes_price_freshness_ms` | `2000` | `2000` | Maximum age of the Block Scholes forward and the spot paired with it |
-| `block_scholes_svi_freshness_ms` | `60000` | `10000` | Maximum age of a Block Scholes SVI observation |
+| `block_scholes_svi_freshness_ms` | `10000` | `10000` | Maximum age of a Block Scholes SVI observation |
 
 Both 2,000 ms windows are the package defaults at this pin; the earlier `predict-8-21` deployment ran both at 10,000 ms.
 
@@ -583,7 +583,7 @@ Outside of live pricing, 2 market functions read oracles, and both are permissio
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	fun="set_reference_tick,try_settle"
 	noComments
 />
@@ -604,7 +604,7 @@ Settlement emits `MarketSettled`, which carries the settlement price and the sou
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="abb4cfd93b2e51f7925941fe5d53b3fe70fc140c"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
 	struct="ReferenceTickSet,MarketSettled"
 />
 

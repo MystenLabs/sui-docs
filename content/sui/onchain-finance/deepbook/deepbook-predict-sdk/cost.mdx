@@ -49,11 +49,11 @@ answer: >-
   returns the all-in debit for a payout quantity, cost.mintCostForBudget runs
   the mint_exact_cost lot search locally to size a fill inside an all-in
   budget, and cost.redeemLiveProceeds returns what a live close credits. The
-  namespace exports each fee component separately. These are local previews for a UI; the
-  read.quoteMint, read.quoteMintCost, and read.quoteRedeem dry runs remain the
-  pre-trade check against real account and market state.
+  namespace exports each fee component separately. These are local previews for
+  a UI. The read.planMint and read.planSell plans remain the pre-trade check
+  against real account and market state.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa); Mainnet predict protocol version 3 and sessions 2, Testnet predict protocol version 4 and sessions 3, publication records at deepbookv3 29117434'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434, and both networks'' strike-exposure template re-read after Mainnet''s reopen'
 ---
 
 The `cost` namespace on `@mysten/deepbook-v3/predict` prices a Predict trade without touching the chain. It is an exact integer port of the deployed fee path, not an estimate: feed it the same inputs the execution sees and it returns the same raw amounts the contract charges. That makes it the right tool for an order ticket that has to re-price on every keystroke, for a board of candidate strikes, and for sizing a spend before a transaction exists.
@@ -66,7 +66,7 @@ import { cost, pricing } from '@mysten/deepbook-v3/predict';
 
 :::caution
 
-A local preview is arithmetic, not a preflight. `cost` never reads the chain, so it cannot see your balance, your builder code, the expiry's cash backing, a paused market, or the no-trade window, and it cannot tell you whether the probabilities you handed it are fresh. Confirm every trade with [`read.quoteMint`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), [`read.quoteMintCost`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), or [`read.quoteRedeem`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), which dry-run the real transaction against real state.
+A local preview is arithmetic, not a preflight. `cost` never reads the chain, so it cannot see your balance, your builder code, the expiry's cash backing, a paused market, or the no-trade window, and it cannot tell you whether the probabilities you handed it are fresh. Confirm every trade with [`read.planMint`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#plan-mint) or [`read.planSell`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#plan-sell), which quote against real state and run the enqueue builder's preflight.
 
 :::
 
@@ -80,7 +80,7 @@ Every entry point in this namespace takes the same 3 kinds of input.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="136-155" />
 
-`cost.SHIPPED_FEE_POLICY` is the template the contracts compile in: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Neither deployment runs it any more. Both now charge a 20.4 percent base fee, ramp the fee to 3 times over the last 60 seconds, and admit entries in a narrow band, 25 to 75 percent on Mainnet, so a preview built from it comes out low. Version 2.7.0 adds `read.feePolicy(market)`, one object read that returns the policy a market snapshotted at creation, ready to pass as `fees`. Use that for a live market:
+`cost.SHIPPED_FEE_POLICY` is the template the contracts compile in: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Neither deployment runs it. Both charge a 20.4 percent base fee, ramp the fee to 3 times over the last 60 seconds, and admit entries in a narrow band, 15 to 85 percent, so a preview built from it comes out low. Version 2.7.0 adds `read.feePolicy(market)`, one object read that returns the policy a market snapshotted at creation, ready to pass as `fees`. Use that for a live market:
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="164-174" />
 
@@ -107,7 +107,7 @@ The namespace has 2 mint previews: `cost.mintCost` for an exact payout quantity 
 
 ### `cost.mintCost` {#mint-cost}
 
-Use `cost.mintCost` to price an exact payout quantity, the local twin of `tx.mint`. It mirrors the contract's `compute_mint_quote`, including the admission checks, and throws a `PredictInputError` naming the abort the chain would have raised: the entry-probability band on each finite leg and on the range, the 1 USDC minimum premium, the lot grid, and the rule that a contract must never cost more than it can pay out.
+Use `cost.mintCost` to price an exact payout quantity, the local twin of an exact-quantity queued mint priced at the clock. It mirrors the contract's `compute_mint_quote`, including the admission checks, and throws a `PredictInputError` naming the abort the chain would have raised: the entry-probability band on each finite leg and on the range, the 1 USDC minimum premium, the lot grid, and the rule that a contract must never cost more than it can pay out.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="726-726" />
 
@@ -124,7 +124,7 @@ A full mint preview runs in this order:
 1. Read the market's fee policy with `read.feePolicy(market)`, or from the market's `MarketCreated` event.
 2. Read the range's price with `read.price` and convert each finite boundary with `probabilityToRaw`.
 3. Call `cost.mintCost` with the policy, the market's `expiryMs`, the probabilities, and the quantity.
-4. Before submitting, confirm the trade with `read.quoteMint`.
+4. Before submitting, confirm the trade with [`read.planMint`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#plan-mint), which runs the enqueue builder's preflight.
 
 ```ts
 import { cost, probabilityToRaw } from '@mysten/deepbook-v3/predict';
@@ -159,7 +159,7 @@ The same 3 sizing limits that qualify the onchain entrypoint qualify this one, b
 - **The maximum-payout step-down is best effort.** It preserves the contract's own fallback, rounding included, so it can miss a larger admissible fill or reject a `minQuantity` that another fill would have met.
 - **Backing is not a sizing input.** Neither this function nor the chain quote preflights the expiry's cash backing or its exposure-index capacity.
 
-Submit the result through [`tx.mintCost`](/onchain-finance/deepbook/deepbook-predict-sdk/positions), which works on either network. This preview itself is pure arithmetic, so it needs no deployment at all.
+Queue the order with [`tx.enqueuePlan`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#enqueue-plan) or `tx.enqueueMintCost`, which sizes the fill at its price instant rather than at the preview's prices. This preview itself is pure arithmetic, so it needs no deployment at all.
 
 ## What does closing a live position pay out? {#close-previews}
 
@@ -175,7 +175,7 @@ Price it against the **order's own range**, which is the pair of boundaries you 
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="885-912" />
 
-`proceeds` is the figure the real call compares `min_proceeds` against. A preview does not guarantee execution at that amount, so take the floor you send from `read.quoteRedeem`.
+`proceeds` is the figure the real call compares `min_proceeds` against. A preview does not guarantee execution at that amount, so take the floor a queued sell sends from `read.planSell`, which applies your slippage to a fresh chain quote.
 
 ## Order helpers {#order-helpers}
 
