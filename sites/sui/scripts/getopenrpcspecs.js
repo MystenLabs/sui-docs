@@ -13,7 +13,13 @@ if (!fs.existsSync(topdir)){
 }
 
 // The spec moved when the fullnode JSON-RPC server was removed; release
-// branches cut before that still carry it at the legacy path.
+// branches cut before that still carry it at the legacy path. A branch cut
+// after sui-indexer-alt-jsonrpc itself was removed (14 October 2026) has no
+// spec at all: devnet lost it first, and testnet and mainnet follow as their
+// release branches move past that commit. The reference serves whatever is
+// still published, so a missing branch is reported here and recorded in
+// networks.json, which the network switch reads.
+const NETWORKS = ["mainnet", "testnet", "devnet"];
 const SPEC_PATHS = [
   "crates/sui-indexer-alt-jsonrpc/openrpc.json",
   "crates/sui-open-rpc/spec/openrpc.json",
@@ -62,16 +68,28 @@ const downloadFile = async (branch) => {
 
     fs.writeFileSync(specFile, JSON.stringify(res.data, null, 2), "utf8");
     console.log(`Downloaded ${branch} spec.`);
+    return true;
   } catch (err) {
-    console.error(`Error downloading ${branch} openrpc spec.`, err.message);
+    const status = err.response?.status;
+    if (status === 404) {
+      console.warn(
+        `No OpenRPC spec on the ${branch} branch of MystenLabs/sui (404 at every known path): ` +
+          `that network no longer publishes a JSON-RPC spec, so the reference will not offer it.`,
+      );
+    } else {
+      console.error(`Error downloading ${branch} openrpc spec.`, err.message);
+    }
+    return false;
   }
 };
 
-// Download Mainnet OpenRPC spec
-downloadFile("mainnet");
-
-// Download Testnet OpenRPC spec
-downloadFile("testnet");
-
-// Download Devnet OpenRPC spec
-downloadFile("devnet");
+(async () => {
+  const available = [];
+  for (const network of NETWORKS) {
+    if (await downloadFile(network)) available.push(network);
+  }
+  // Served at /networks.json next to the specs (src/open-spec is a static
+  // directory). The network switch lists only these.
+  fs.writeFileSync(path.join(topdir, "networks.json"), JSON.stringify(available, null, 2) + "\n", "utf8");
+  console.log(`OpenRPC specs available: ${available.join(", ") || "none"}.`);
+})();

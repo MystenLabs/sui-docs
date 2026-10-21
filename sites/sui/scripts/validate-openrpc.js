@@ -14,15 +14,20 @@ const path = require("path");
 // `main`, crates/sui-indexer-alt-jsonrpc/openrpc.json. That crate was removed
 // from main on 23 September 2026 (the last JSON-RPC server); the build kept
 // passing only while Vercel's build cache held an older checkout, and failed
-// the first time the cache was cold. The release branches still carry a spec,
-// at that path on testnet and devnet and at crates/sui-open-rpc/spec/ on
-// mainnet, which the downloader already knows.
+// the first time the cache was cold.
+//
+// The release branches carried a spec for a while longer, and lose it one by
+// one as they move past that removal: devnet had none from 21 October 2026,
+// and every preview build failed on the missing file. So only mainnet, the
+// last branch to move, is required. A network whose spec is present is
+// validated; one whose spec is absent is reported, and the downloader leaves
+// it out of networks.json so the reference does not offer it.
 const SPEC_DIR = path.resolve(__dirname, "../src/open-spec");
 
 const SPECS = [
   { network: "mainnet", relPath: "mainnet/openrpc.json", strictJson: true },
-  { network: "testnet", relPath: "testnet/openrpc.json", strictJson: true },
-  { network: "devnet", relPath: "devnet/openrpc.json", strictJson: true },
+  { network: "testnet", relPath: "testnet/openrpc.json", strictJson: false },
+  { network: "devnet", relPath: "devnet/openrpc.json", strictJson: false },
 ];
 
 // Treat these as "expected non-JSON stubs".
@@ -110,7 +115,10 @@ function main() {
             `before the build (scripts/build-and-check.sh); run it, or check that branch still carries a spec.`,
         );
       } else {
-        warnings.push(`⚠️ Missing ${spec.network} spec (allowed): ${abs}`);
+        warnings.push(
+          `⚠️ No ${spec.network} spec at ${abs}: the ${spec.network} branch of MystenLabs/sui ` +
+            `no longer publishes one, so the reference does not offer ${spec.network}.`,
+        );
         continue;
       }
     }
