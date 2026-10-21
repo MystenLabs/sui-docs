@@ -15,7 +15,7 @@ keywords:
   - pricer
   - oracle freshness
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4); both ProtocolConfig objects read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4); both ProtocolConfig objects read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' freshness windows re-read after Mainnet's reopen
 goal:
   description: >-
     Reader can resolve the canonical Propbook oracle objects for an underlying,
@@ -496,7 +496,7 @@ Live pricing stays unavailable until the matching spot lands or a newer forward 
 
 ### Freshness windows
 
-Predict measures freshness against the wall clock, not against how recently a value changed, and the age of an observation is `now - source_timestamp_ms`, the provider's per-update time. A chain read on 2026-10-13 found these windows on each network's `ProtocolConfig`:
+Predict measures freshness against the wall clock, not against how recently a value changed, and the age of an observation is `now - source_timestamp_ms`, the provider's per-update time. Each network's `ProtocolConfig` sets these windows:
 
 | **Setting** | **Mainnet** | **Testnet** | **Meaning** |
 | --- | --- | --- | --- |

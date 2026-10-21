@@ -15,7 +15,7 @@ keywords:
   - deepbook
   - sui
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434 on Testnet, 98128174 on Mainnet after its cutover); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 4 on both networks (deepbookv3 29117434 on Testnet, 98128174 on Mainnet after its cutover); '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13, and both networks' entry band re-read after Mainnet's reopen
 goal:
   description: >-
     Reader understands what DeepBook Predict is, knows which network to run
@@ -55,7 +55,7 @@ answer: >-
 
 DeepBook Predict is an expiry-based prediction market protocol on Sui. Each market covers one underlying and one expiry timestamp, and every position is a range contract: it pays a fixed amount when the settlement price lands inside a chosen strike range, and nothing otherwise. Liquidity providers supply USDC to a shared pool, receive `PLP` shares, and take the other side of every trade.
 
-Predict runs on Sui Mainnet as `deepbook-predict-mainnet` and on Sui Testnet as `deepbook-predict-testnet`. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict) and Testnet from `4d752fb8`. Both have since moved to protocol version 4, which adds delayed execution: every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders), placed now and filled at Pyth's signed price for an instant about 800 ms later, or refunded. The [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) package ships a `/predict` subpath that builds every transaction and answers every read, so trading needs no indexer. Version 2.7.0 carries the Testnet deployment, and Mainnet needs version 2.8.0 or later. The examples on these pages select a network with one constant and default to Testnet.
+Predict runs on Sui Mainnet as `deepbook-predict-mainnet` and on Sui Testnet as `deepbook-predict-testnet`. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict) and Testnet from `4d752fb8`. Both run protocol version 4, which adds delayed execution: every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders), filled at Pyth's signed price for an instant about 800 ms after placement, or refunded. The [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) package ships a `/predict` subpath that builds every transaction and answers every read, so trading needs no indexer. Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The examples on these pages select a network with one constant and default to Testnet.
 
 :::caution
 
@@ -67,7 +67,7 @@ The quickstart below runs on Testnet. A freshly created market also rejects a mi
 
 ## Quickstart: how to place a position
 
-The following 7 steps install the DeepBook TypeScript SDK, prepare a funded Predict account, and plan and queue a position on a live market. They run on Testnet, where the quote coin is a mintable test coin and every trade is a queued order. The samples live in the `examples/deepbook-predict` package, which type-checks with `npm run build` (`tsc --noEmit`) against `@mysten/deepbook-v3` version 2.7.0 or later and `@mysten/sui` version 2.30.0 or later. They pass compile checks but do not run against Testnet during the documentation build, so work through [Verify on Testnet](#verify-on-testnet) before you rely on them.
+The following 7 steps install the DeepBook TypeScript SDK, prepare a funded Predict account, and plan and queue a position on a live market. They run on Testnet, where the quote coin is a mintable test coin and every trade is a queued order. The samples live in the `examples/deepbook-predict` package, which type-checks with `npm run build` (`tsc --noEmit`) against `@mysten/deepbook-v3` version 2.8.0 or later and its `@mysten/sui` peer dependency at version 2.37.0 or later. They pass compile checks but do not run against Testnet during the documentation build, so work through [Verify on Testnet](#verify-on-testnet) before you rely on them.
 
 ### 1. Install the SDK
 
@@ -140,7 +140,7 @@ A brand-new market also opens with zero working cash and rejects a mint until po
 
 ### 6. Plan, then queue the order
 
-A mint is a queued order. Plan it first: `client.predict.read.planMint` quotes the order at the current price, turns a slippage in cents per contract into the limits the order carries onchain, and runs a preflight of the queue gates, the balance, and the limits, so `plan.accepting` is false, with a typed `refusal`, when the queue would refuse the order now. A few checks run only onchain at placement, so a plan that accepts can still abort there. `client.predict.tx.enqueuePlan` then builds the enqueue. Once it executes, a keeper fills the order at Pyth's signed price for its price instant, about a second later, within those limits, or refunds it.
+A mint is a queued order. Plan it first: `client.predict.read.planMint` quotes the order at the current price, turns a slippage in cents per contract into the limits the order carries onchain, and runs a preflight of the queue gates, the balance, and the limits, so `plan.accepting` is false, with a typed `refusal`, when the queue would refuse the order at that moment. A few checks run only onchain at placement, so a plan that accepts can still abort there. `client.predict.tx.enqueuePlan` then builds the enqueue. Once it executes, a keeper fills the order at Pyth's signed price for its price instant, about a second later, within those limits, or refunds it.
 
 <ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-mint" />
 
@@ -148,7 +148,7 @@ A directional position is a one-sided range: `side: 'up'` pays when settlement l
 
 3 rules decide whether the order lands:
 
-- **A strike near the money.** Admission refuses an entry probability outside the market's band, `0.15` to `0.85` on markets created since each network widened it, and a window's reference strike drifts away from the money as the price moves. The sample picks the strike that prices near 50 cents and snaps it onto the admission grid.
+- **A strike near the money.** Admission refuses an entry probability outside the market's band, `0.15` to `0.85` on both networks, and a window's reference strike drifts away from the money as the price moves. The sample picks the strike that prices near 50 cents and snaps it onto the admission grid.
 - **A premium of at least 1 USDC.** The premium is the quantity multiplied by the entry probability, so admission refuses a budget too small to buy 1 USDC of premium.
 - **An order fee on top.** Each queued order pays a flat 0.02 USDC on both networks. `plan.totalDebit` is the budget plus the fee, and unused budget comes back when the order fills.
 
@@ -172,7 +172,7 @@ DeepBook Predict provides the following capabilities:
 
 - **Per-expiry markets:** Each market settles once, at one timestamp, from one of 2 sources: the exact Pyth price at the expiry timestamp, or, when that is unavailable 30 seconds after expiry, the exact Block Scholes minute-boundary spot. Cadence slots run from 1 minute to 1 month in 6 sizes, and each deployment's registry enables its own set. Trading closes 10 seconds before expiry, so no trade fills inside that no-trade window at a converged price.
 - **Range positions:** Every position pays its full quantity when settlement lands inside its strike range and nothing otherwise. Directional positions are ranges with one open end.
-- **Queued orders:** From protocol version 4, which both networks run, the protocol prices every mint and early sell at Pyth's signed price for a fixed instant shortly after placement, so nobody can trade against a price that is already stale. Any caller can fill or refund a due order, and the queue pays filled positions at settlement with no claim step.
+- **Queued orders:** The protocol prices every mint and early sell at Pyth's signed price for a fixed instant shortly after placement, so nobody can trade against a price that is already stale. Any caller can fill or refund a due order, and the queue pays filled positions at settlement with no claim step.
 - **Oracle pricing from external feeds:** Pyth Lazer spot, plus Block Scholes forward and stochastic volatility inspired (SVI) data, drive every quote from shared objects in a separate `propbook` package.
 - **Shared account custody:** One shared account per owner holds USDC balances, positions minted before the cutover, and builder code attribution, at an address derived from the owner address.
 - **Pooled liquidity:** Liquidity providers queue USDC supply and `PLP` withdrawal requests, each with an optional floor, and a periodic flush fills them at one frozen pool value.

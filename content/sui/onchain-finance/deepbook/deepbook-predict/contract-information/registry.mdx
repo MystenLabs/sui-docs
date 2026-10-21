@@ -19,7 +19,7 @@ keywords:
   - no_trade_window_ms
   - max_valuation_window_ms
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet after its cutover, built from the byte-identical 98128174); both ProtocolConfig objects read 2026-10-13; Testnet cadence terms re-read 2026-10-19
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet after its cutover, built from the byte-identical 98128174); both ProtocolConfig objects read 2026-10-13; Testnet cadence terms re-read 2026-10-19, and both networks' cadence terms re-read after Mainnet's reopen
 goal:
   description: >-
     Reader can look up markets and cadence terms in the Predict Registry, and
@@ -140,7 +140,7 @@ Read the terms with the accessors rather than by field:
 	noComments
 />
 
-`cadence_enabled` reads no stored flag: a cadence counts as enabled exactly when its window size is greater than zero. Both deployments register one underlying, BTC, and each network's registry enables its own cadences. A chain read of Testnet on 2026-10-19 found these terms:
+`cadence_enabled` reads no stored flag: a cadence counts as enabled exactly when its window size is greater than zero. Both deployments register one underlying, BTC. Each network's registry enables its own cadences, and both enable the 1m and 5m cadences with the same terms:
 
 | **Cadence** | **Enabled** | **`tick_size`** | **`admission_tick_size`** | **`max_expiry_allocation`** | **`initial_expiry_cash`** | **`window_size`** |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -358,7 +358,7 @@ They come with 2 permissionless reads: `valuation_in_progress(config): bool` rep
 
 ### Protocol version 4 controls {#protocol-config-v4}
 
-Protocol version 4, which both networks run, adds 4 admin controls to `ProtocolConfig`, each taking `&AdminCap` and each stored as a dynamic field so the published struct layout is unchanged:
+Protocol version 4 adds 4 admin controls to `ProtocolConfig`, each taking `&AdminCap` and each stored as a dynamic field so the published struct layout is unchanged:
 
 | **Function** | **Effect** | **Version-gated** | **Event** |
 | --- | --- | --- | --- |
@@ -409,15 +409,15 @@ Abort codes restart at `0` in each module, so match a code together with the mod
 | `4` | `EVersionWatermarkNotAdvanced` | `bump_version_watermark` did not strictly increase the watermark |
 | `5` | `EProtocolFrozen` | A version-gated flow ran while frozen |
 | `6` | `ESnapshotInProgress` | A trade, a settled redeem, or a second `start_pool_valuation` landed inside a flush's snapshot transaction |
-| `7` | `ETradeWindowClosed` | A live quote, mint, or live redeem ran inside the no-trade window. Only the trades that protocol version 4 retired raised it, so nothing raises it now |
+| `7` | `ETradeWindowClosed` | Raised only by the retired immediate trades, inside the no-trade window. No live path raises it |
 | `8` | `ESettledRedeemKeeperAlreadyAdded` | `add_settled_redeem_keeper` named an address already on the list |
 | `9` | `ESettledRedeemKeeperNotFound` | `remove_settled_redeem_keeper` named an address not on the list |
 | `10` | `EFlushOperatorAlreadyAdded` | `add_flush_operator` named an address already on the list |
 | `11` | `EFlushOperatorNotFound` | `remove_flush_operator` named an address not on the list |
 | `12` | `ENotFlushOperator` | `finish_flush` from a sender off the flush-operator allowlist |
-| `13` | `ECutoverNotReached` | a queued order arrived before the watermark reached 4 |
-| `14` | `EEwmaRetired` | a retired EWMA setter ran |
-| `15` | `EOrderFlowNotAllowed` | an order-flow call came from a witness that is not allowlisted |
+| `13` | `ECutoverNotReached` | A queued order arrived before the watermark reached 4 |
+| `14` | `EEwmaRetired` | A retired EWMA setter ran |
+| `15` | `EOrderFlowNotAllowed` | An order-flow call came from a witness that is not allowlisted |
 
 Setter bounds failures come from `deepbook_predict::config_constants`, codes `0` through `24`, and on protocol version 4 also `EInvalidFeeIncentiveSubsidyRate` (`25`), `EInvalidFeeIncentiveLiveTargetRate` (`26`), and `EInvalidFeeIncentiveLifetimeCapRate` (`27`), including `EMarketTickSizeTooLarge` (`16`), `EInvalidCadenceWindowSize` (`15`), `EInvalidMaxValuationWindowMs` (`23`), and `EInvalidNoTradeWindowMs` (`24`).
 

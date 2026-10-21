@@ -65,13 +65,13 @@ verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sd
 
 The position functions in the DeepBook Predict SDK place and follow queued orders, quote a mint, claim a position held in the account, list the positions an account holds, and decode the receipt of each trade. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) explains the mechanics that these builders wrap.
 
-Both networks run Predict protocol version 4, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders). Version 2.7.0 records the Testnet deployment, and Mainnet needs version 2.8.0 or later. `read.executionMode()` confirms which path a network is on.
+Both networks run Predict protocol version 4, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders). Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. `read.executionMode()` confirms which path a network is on.
 
 Every function is a member of `client.predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) shows how to register. Each builder and quote that targets a market takes the market as a [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets): an object that names the market by its `underlying`, `expiryMs`, and optional `marketId`, plus the strike, as a binary or range position, where the call needs one. The function then reads the chain to resolve the market object and caches it per client, so those functions are asynchronous. The SDK takes and returns amounts as decimal USDC values and converts them to 6-decimal base units; see [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units).
 
 ## Queued orders {#queued-orders}
 
-From Predict protocol version 4, a mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement, and a keeper or any other caller then fills it at that price or refunds it. Version 2.7.0 of the SDK adds the queued path to `client.predict` and records Testnet's delayed-execution deployment, and version 2.8.0 records Mainnet's. With an older release on Mainnet, the queued functions throw `PredictInputError` unless you pass a `config` that sets `packages.predictDelayedExecution`, `packages.predictOrders`, `objects.orderDesk`, and `objects.queueRegistry`.
+A mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement, and a keeper or any other caller then fills it at that price or refunds it.
 
 A queued order differs from an immediate trade in 4 ways:
 
@@ -178,7 +178,30 @@ Use `read.quoteMint` to quote an exact payout quantity. It returns a `Promise<Mi
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2261-2265" />
 
-`MintQuote` carries `entryProbability`, `premium`, a `fees` breakdown of `trading`, `subsidy`, `builder`, `penalty`, `referral`, and `inventoryImpact`, the all-in `cost`, the `quantity`, a `raw` block of exact `bigint` amounts, and, for a queued preview, `queued` and `orderFee`. `cost` is `premium + (trading - subsidy) + builder + penalty + inventoryImpact`, and `referral` is a part of the trading fee that the protocol routes to a referrer, not an extra debit.
+`MintQuote` carries these fields:
+
+| **Field** | **Meaning** |
+| --- | --- |
+| `entryProbability` | Fill price between 0 and 1 per 1 USDC of payout |
+| `premium` | Premium alone, before fees |
+| `fees` | Fee breakdown by component, in the following list |
+| `cost` | All-in account debit for the fill, which the order's `maxCost` caps |
+| `quantity` | Payout quantity the quote priced |
+| `raw` | Exact `bigint` amounts for `premium`, `cost`, `quantity`, and `entryProbability` |
+| `feesExact` | Always `true`, because the fees come from the chain's own quote functions |
+| `queued` | `true` when the quote previews a queued fill |
+| `orderFee` | The flat order fee, charged once per order on top of `cost`, on a queued preview |
+
+`fees` breaks the debit into these components:
+
+- `trading`: The trading fee before the sponsor subsidy, summed over the finite boundaries of the range.
+- `subsidy`: The sponsor-funded part of the trading fee, which you do not pay.
+- `builder`: The builder add-on, 0 when the account carries no builder code.
+- `penalty`: The retired congestion surcharge, 0 on a queued preview.
+- `referral`: The part of the trading fee that the protocol routes to a referrer, 0 unless the account has a referrer.
+- `inventoryImpact`: The inventory-impact charge, a separate charge that `cost` includes.
+
+`cost` is `premium + (trading - subsidy) + builder + penalty + inventoryImpact`, and `referral` is a part of the trading fee that the protocol routes to a referrer, not an extra debit.
 
 ### `read.quoteMintCost` {#quote-mint-cost}
 
@@ -190,7 +213,7 @@ For a preview that costs no chain call at all, [Predict Cost SDK](/onchain-finan
 
 ### Deprecated immediate builders {#immediate-builders}
 
-Before protocol version 4, `tx.mint`, `tx.mintAmount`, and `tx.mintCost` built the immediate mints, `tx.redeem` built the live close, and `read.quoteRedeem` quoted it. Protocol version 4 always aborts those calls, with `EDelayedExecutionRequired`, on both networks, and version 2.7.0 deprecates the 5 functions. Build every trade with [`tx.enqueuePlan`](#enqueue-plan) or the `enqueue*` builders instead, and quote an early sell with `read.planSell` or `read.quoteSell`.
+`tx.mint`, `tx.mintAmount`, and `tx.mintCost` build the [retired immediate mints](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position), `tx.redeem` builds the retired live close, and `read.quoteRedeem` quotes it. Every call they build aborts with `EDelayedExecutionRequired` on both networks, and version 2.7.0 deprecates the 5 functions. Build every trade with [`tx.enqueuePlan`](#enqueue-plan) or the `enqueue*` builders instead, and quote an early sell with `read.planSell` or `read.quoteSell`.
 
 ### `tx.claimSettled` {#claim-settled}
 

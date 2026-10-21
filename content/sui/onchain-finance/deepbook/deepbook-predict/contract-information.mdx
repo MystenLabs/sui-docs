@@ -23,7 +23,7 @@ keywords:
   - order desk
   - delayed execution
 last_verified: 2026-10-13
-verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict publish 4 at 0x98235c58, upgrade GRE9hRtF at checkpoint 334077809, recorded by deepbookv3 #1363; Mainnet predict_orders publish 1 at 0x7cd41de3 with OrderDesk 0x87b0a872 and QueueRegistry 0x8d4f0c67, publish 91f5tZpY at checkpoint 334309297; both read on chain 2026-10-15; Mainnet sessions publish 3 at 0xfd9ef53c, upgrade QY4eHW1u at checkpoint 334455961, read on chain 2026-10-18, record in deepbookv3 #1365; predict_orders recorded by deepbookv3 #1364) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13, both SessionsConfig watermarks re-read 2026-10-18 (Testnet 3, Mainnet 1 until the cutover transaction raises it to 3) and both DeepBook registries re-read 2026-10-15; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); Testnet cadence terms re-read 2026-10-19 (max_expiry_allocation 2,000 USDC), Mainnet SVI freshness and max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each
+verified_against: publication records at deepbookv3 dd8813c4 (Mainnet predict_math publish 1; Mainnet predict publish 4 at 0x98235c58, upgrade GRE9hRtF at checkpoint 334077809, recorded by deepbookv3 #1363; Mainnet predict_orders publish 1 at 0x7cd41de3 with OrderDesk 0x87b0a872 and QueueRegistry 0x8d4f0c67, publish 91f5tZpY at checkpoint 334309297; both read on chain 2026-10-15; Mainnet sessions publish 3 at 0xfd9ef53c, upgrade QY4eHW1u at checkpoint 334455961, read on chain 2026-10-18, record in deepbookv3 #1365; predict_orders recorded by deepbookv3 #1364) and 29117434 (Testnet predict publish 5 at protocol version 4, sessions publish 3, predict_orders and predict_math publish 1); Testnet subsidy rate and OrderDesk read 2026-10-14; Mainnet reopen values from the rollout plan; both ProtocolConfig, Registry, SessionsConfig, and the Testnet OrderDesk read 2026-10-13, both SessionsConfig watermarks re-read 2026-10-18 (Testnet 3, Mainnet 1 until the cutover transaction raises it to 3) and both DeepBook registries re-read 2026-10-15; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); Testnet cadence terms re-read 2026-10-19 (max_expiry_allocation 2,000 USDC), Mainnet SVI freshness and max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each, and configuration, cadences, and DeepBook registry authorizations on both networks re-read after Mainnet's reopen
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -63,17 +63,19 @@ answer: >-
   published address while its type tags keep its original one. Both networks
   run predict protocol version 4 and sessions protocol version 3, plus the
   deepbook_predict_orders and deepbook_predict_math packages, so every trade is
-  a queued order. Version 2.7.0 of the @mysten/deepbook-v3 SDK records the
-  Testnet deployment, and version 2.8.0 is the first to record Mainnet's.
+  a queued order. Version 2.8.0 or later of the @mysten/deepbook-v3 SDK
+  returns both networks' identifiers.
 ---
 
-DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Version 2.7.0 of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) returns the Testnet identifiers on this page from `getConfig`, and version 2.8.0 is the first to return Mainnet's protocol version 4 identifiers. The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict), and the original Testnet publish from source commit [`4d752fb8`](https://github.com/MystenLabs/deepbookv3/tree/4d752fb82d909a821c85bcc5d3963725efb546f4/packages/predict), whose Move sources are byte-identical to the Mainnet ones.
+DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Both run `predict` protocol version 4 and `sessions` protocol version 3, together with the `deepbook_predict_orders` and `deepbook_predict_math` packages, so every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) and the 2 networks expose the same entrypoints. Version 2.8.0 or later of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) returns the identifiers on this page from `getConfig`, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
-Both networks have since upgraded `predict` and `sessions` to version 2 from source commit [`8d7d42a0`](https://github.com/MystenLabs/deepbookv3/tree/8d7d42a0f48bc6434bc282d45d2403809b4e492c/packages/predict), which added the [`mint_exact_cost`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) all-in budget entrypoint and its session wrapper. Protocol version 4 retired both, and an all-in budget order is now an `enqueue_exact_cost` queued order.
+The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict), and the original Testnet publish from source commit [`4d752fb8`](https://github.com/MystenLabs/deepbookv3/tree/4d752fb82d909a821c85bcc5d3963725efb546f4/packages/predict), whose Move sources are byte-identical to the Mainnet ones. Both networks then took the same 3 upgrades:
 
-Both have since taken a further `predict` upgrade, to protocol version 3, which adds [`plp::add_usdc_to_plp`](/onchain-finance/deepbook/deepbook-predict/contract-information/vault).
-
-Both have since moved to protocol version 4, which adds delayed execution, Testnet first and then Mainnet. Each network upgraded `predict` to protocol version 4 and `sessions` to protocol version 3, published 2 new packages, `deepbook_predict_orders` and `deepbook_predict_math`, and passed the delayed-execution cutover. Every trade is now a queued order, and the immediate mint and live-redeem entrypoints abort. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) covers the order flow. The 2 networks again expose the same entrypoints.
+| **Protocol version** | **What it added** | **Source commit** |
+| --- | --- | --- |
+| 2 | The [`mint_exact_cost`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) all-in budget entrypoint and its session wrapper, in `predict` and `sessions` version 2. Protocol version 4 retired both in favor of the `enqueue_exact_cost` queued order. | [`8d7d42a0`](https://github.com/MystenLabs/deepbookv3/tree/8d7d42a0f48bc6434bc282d45d2403809b4e492c/packages/predict) |
+| 3 | [`plp::add_usdc_to_plp`](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#add-usdc) | [`abb4cfd9`](https://github.com/MystenLabs/deepbookv3/tree/abb4cfd93b2e51f7925941fe5d53b3fe70fc140c/packages/predict) |
+| 4 | Delayed execution: the queued-order flow, `sessions` protocol version 3, and the new `deepbook_predict_orders` and `deepbook_predict_math` packages. The immediate mint and live-redeem entrypoints abort. | [`29117434`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict), with Mainnet built from the byte-identical `98128174` |
 
 Every upgrade kept its original ID, so the lineage is unchanged and every object, position, account, and session grant created before it stays valid.
 
@@ -110,15 +112,15 @@ A Move package upgrade publishes at a new address and keeps its original one. Th
 
 A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` version that introduced them: the Testnet version 5 address `0x0654ecbe…` and the Mainnet version 4 address `0x98235c58…`. The version numbers do not line up across networks, so check the defining ID on each one.
 
-The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. Version 2.7.0 records Testnet's delayed-execution deployment, and version 2.8.0 is the first to record Mainnet's. Version 2.7.0 still resolves Mainnet's protocol version 3 call target, which stopped working when Mainnet's watermark passed it, so a Mainnet integration needs the later release.
+The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. A Mainnet integration needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
-The distinction is easy to get wrong in the direction that fails silently rather than loudly. A call sent to an original ID reaches the version 1 code, which the version gate now refuses for every gated function, because each network's watermark is 4. Only the few ungated calls, such as the builder-code setters and the fee claim, still run there. A type tag built from a call target, in turn, names a type that does not exist at all.
+The distinction is easy to get wrong in the direction that fails silently rather than loudly. A call sent to an original ID reaches the version 1 code, which the version gate refuses for every gated function, because each network's watermark is 4. Only the few ungated calls, such as the builder-code setters and the fee claim, still run there. A type tag built from a call target, in turn, names a type that does not exist at all.
 
 :::caution
 
 Every identifier on this page belongs to one of the 2 current deployments. The current deployments supersede every earlier Testnet deployment, and the accounts, positions, and markets on those earlier deployments are not visible on the current ones, so ignore identifiers from them in local configuration files and scripts.
 
-Both deployments went live on 2026-09-12, and Mainnet reopened on delayed execution after its cutover. Read `read.markets()`, `read.pool()`, and the `ProtocolConfig` object rather than assuming either network's state.
+Both deployments went live on 2026-09-12. Read `read.markets()`, `read.pool()`, and the `ProtocolConfig` object rather than assuming either network's state.
 
 :::
 
@@ -262,7 +264,7 @@ As on Mainnet, the PLP type carries `predict`'s original ID, `0x59d71119…`, no
 
 Each `ExpiryMarket` is its own shared object, one per underlying and expiry. Market IDs are not deployment configuration: read them from `registry::expiry_market_id` onchain or from `read.markets()` at runtime. Each network's Predict package defines the PLP type, so it differs per network and changes with every redeployment; a package upgrade leaves it alone, because it stays at the original ID. The quote coin type differs per network too, so always take it from `getConfig(network).quoteCoinType` rather than from a symbol.
 
-The entrypoint surface is the same on both networks. `plp::add_usdc_to_plp` arrived at `predict` protocol version 3. Protocol version 4 retires the immediate mints, `redeem_live`, and their session wrappers, and adds the queued-order entrypoints in `deepbook_predict_orders` and the queued session wrappers in `sessions` protocol version 3.
+The entrypoint surface is the same on both networks: the queued-order entrypoints in `deepbook_predict_orders`, the queued session wrappers in `sessions` protocol version 3, and `plp::add_usdc_to_plp`. The immediate mints, `redeem_live`, and their session wrappers abort, as [Retired immediate trades](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) describes.
 
 ## Underlyings and oracle objects {#underlyings-and-oracle-objects}
 
@@ -287,7 +289,7 @@ The `deepbookCoreAccount` package declares the `account_data::DeepbookCoreAccoun
 
 On both networks, the `AccountRegistry` authorizes `PredictApp`, `SessionsApp`, and `DeepbookCoreAccountApp`. That is live registry state, so read it with `account_registry::is_app_authorized<App>` rather than assuming it.
 
-The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Both deployment manifests record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`, because neither DeepBook registry had authorized `DeepbookCoreAccountApp` when its deployment was verified. Both have authorized it since: a chain read on 2026-10-15 found it in Testnet's DeepBook registry `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and in Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`, so the spot wrappers run on both networks. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and that administrator can grant or revoke it in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers what that authorization gates.
+The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Both DeepBook registries authorize `DeepbookCoreAccountApp`, Testnet's `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`, so the spot wrappers run on both networks. Both deployment manifests still record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`, because neither registry had authorized the app when its deployment was verified. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and that administrator can grant or revoke it in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers what that authorization gates.
 
 ## Units and constants
 
@@ -306,17 +308,17 @@ Predict mixes 2 scales, and confusing them is the fastest way to misprice a trad
 
 A probability of `500000000` is 0.5. A price of `110000000000000` is 110,000.00. An amount of `1000000` is 1 USDC. A position quantity of `10000` is one lot, 0.01 contracts.
 
-The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `850000000` on markets created since the band widened, 2026-10-13 on Testnet and at the delayed-execution reopening on Mainnet. The smallest quantity such a market accepts is therefore about 1.18 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
+The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `850000000` on both networks. The smallest quantity such a market accepts is therefore about 1.18 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
 
 Read every quantity that arrives as a JSON string with decimal or bigint tooling. Postgres `NUMERIC` columns serialize as strings, and `parseFloat` silently loses precision on them.
 
 ## Configuration
 
-The Testnet values below come from chain reads on 2026-10-13, 2026-10-14, and 2026-10-19, and the Mainnet values are those it reopened with after its cutover. Configuration is mutable protocol state, so read the live values from `ProtocolConfig`, the `OrderDesk`, and `registry::cadence_configs` rather than pinning the ones below.
+The values below are each network's current configuration. Configuration is mutable protocol state, so read the live values from `ProtocolConfig`, the `OrderDesk`, and `registry::cadence_configs` rather than pinning the ones below.
 
 ### Cadences
 
-Each underlying has 6 cadence slots, and a cadence ID addresses each one. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. A chain read of Testnet on 2026-10-19 found the 1m and 5m cadences enabled:
+Each underlying has 6 cadence slots, and a cadence ID addresses each one. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences, with the same terms:
 
 | **ID** | **Name** | **Period (ms)** | **Enabled** | **Tick size** | **Admission tick size** | **Maximum expiry allocation** | **Initial expiry cash** | **Window size** |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -329,8 +331,8 @@ Each underlying has 6 cadence slots, and a cadence ID addresses each one. A cade
 
 Read each column as follows:
 
-- **Tick size:** The price-axis resolution, in fixed-point price units. Both enabled cadences in the read use `10000000`, which is 0.01 USD.
-- **Admission tick size:** The coarser grid a finite position boundary must land on, also in fixed-point price units. Both enabled cadences in the read use `1000000000`, which is 1 USD, or every 100 ticks. A boundary tick must be a multiple of `admission_tick_size / tick_size` ticks.
+- **Tick size:** The price-axis resolution, in fixed-point price units. Both enabled cadences use `10000000`, which is 0.01 USD.
+- **Admission tick size:** The coarser grid a finite position boundary must land on, also in fixed-point price units. Both enabled cadences use `1000000000`, which is 1 USD, or every 100 ticks. A boundary tick must be a multiple of `admission_tick_size / tick_size` ticks.
 - **Maximum expiry allocation:** The cadence cap on cash allocated to one expiry market, in USDC base units: 2,000 USDC. This same value also scales the market's inventory-impact curve.
 - **Initial expiry cash:** The cash the vault seeds a new market with, in USDC base units: 2,000 USDC.
 - **Window size:** How many expiries of this cadence can be live at once, so 2 markets of each enabled cadence are live at any time. Zero disables the cadence.
@@ -363,7 +365,7 @@ The strike-exposure template is the policy each new market snapshots at creation
 
 - Base fee of 20.4 percent
 - Minimum fee of 2.2 percent
-- Entry probability band of 15 percent to 85 percent, on Testnet since 2026-10-13 and on Mainnet since it reopened on delayed execution, where it was 25 percent to 75 percent before
+- Entry probability band of 15 percent to 85 percent
 - Backing buffer lambda of 0.31
 - Inventory impact rate of 0
 - Expiry fee window of 60 seconds with a 3x maximum multiplier
@@ -500,10 +502,10 @@ The SDK carries both deployments' identifiers, so keep them in a single network-
 The 2 deployments run the same protocol versions, but they are separate deployments with separate configuration. What differs is:
 
 - **Quote asset and funding:** Testnet quotes in a test coin you can request for free, and Testnet SUI is free. Mainnet quotes in native USDC, there is no faucet, and any top-up path that assumes free replenishment needs replacing.
-- **SDK release:** Version 2.7.0 of the SDK records Testnet's delayed-execution deployment, and Mainnet's arrives in a later release, as [Upgraded packages carry 2 IDs](#two-ids) explains. `client.predict.read.executionMode()` reports `'delayed'` once the configuration and the chain agree.
+- **SDK release:** Testnet works from version 2.7.0 of the SDK, and Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 - **Cadences and activity:** Each network's registry enables its own cadences, so read `registry::cadence_configs` rather than assuming either network's set. `read.markets()` lists live-and-unsettled markets, which includes an expired market nobody has settled, so check each entry's expiry before you quote against it.
 - **Read services:** None exists for either current deployment as of 2026-09-14.
-- **DeepBook core authorization:** Both deployment manifests record the DeepBook core registry as not having authorized `DeepbookCoreAccountApp`, but both registries have authorized it since, as a chain read on 2026-10-15 found. Read the registry rather than the manifest before relying on the session spot wrappers, per [App authorization](#app-authorization).
+- **DeepBook core authorization:** Both deployment manifests record the DeepBook core registry as not having authorized `DeepbookCoreAccountApp`, yet both registries authorize it. Read the registry rather than the manifest before relying on the session spot wrappers, per [App authorization](#app-authorization).
 - **Package version:** The networks have not upgraded in lockstep and need not. Compare protocol versions rather than publish counts, as [Publish count is not protocol version](#version-numbers) explains, and remember that an older call target keeps working only until the `ProtocolConfig` watermark passes it.
 
 Structure your code so none of these become assumptions:

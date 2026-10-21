@@ -51,7 +51,7 @@ answer: >-
   `redeemLive`, and `redeemSettled`, which require explicit mint caps and accept
   close-side floors.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13, and both DeepBook registry authorizations re-read after Mainnet''s reopen'
 ---
 
 The `@mysten/deepbook-v3/sessions` subpath exports `SessionsContract`, which builds the owner-signed calls that grant and revoke a time-limited session key and the session-signed calls that trade DeepBook Predict positions for the account. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) explains the contract mechanism behind each call.
@@ -273,11 +273,11 @@ The following example lists an account's grants, splits them at the current time
 
 ## How to trade as a session key {#trade}
 
-Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Version 2.7.0 records Testnet's Sessions v3 package, and Mainnet needs version 2.8.0 or later. On Mainnet, 2.7.0 resolves Sessions version 2, `0xec678aee…`, which Mainnet's cutover retired, so every session call it builds there aborts with `EPackageVersionDisabled`, DeepBook spot calls included. Only `revokeSession` still works through it, because revocation has no version gate. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
+Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. An older release still builds a working `revokeSession` on Mainnet, because revocation has no version gate. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
 
 ### Queue orders as the session key {#queue-as-session}
 
-4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3, which version 2.7.0's Testnet `getSessionsConfig` records and version 2.8.0 records on Mainnet. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
+4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
 
 Each takes a `SessionsQueuedOrderTarget` that names the market, the owner's wrapper, the order-flow package's `orderDesk` and `queueRegistry`, the Predict `protocolConfig`, the `oracleRegistry`, and the market's 3 oracle objects. Take the order-flow IDs from `client.predict.cfg.objects` and the oracle objects from `client.predict.cfg.underlyings`. `queueId` defaults to the ID derived from `queueRegistry` and the market.
 
@@ -349,7 +349,7 @@ The following example builds an owner-signed revocation, reads a session's expir
 - `cancelLiveOrders`: Cancels several DeepBook spot orders.
 - `withdrawSettledAmounts`: Sweeps settled DeepBook spot proceeds into account custody.
 
-They need Sessions version 3 on both networks, so on Mainnet use version 2.8.0 of the SDK or later. Whether they succeed also depends on a DeepBook registry authorization. A chain read on 2026-10-15 found it on both networks, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
+They need Sessions version 3, so on Mainnet use version 2.8.0 of the SDK or later. Whether they succeed also depends on a DeepBook registry authorization, which both networks' registries hold, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
 
 Each generated function takes an options object with these fields:
 

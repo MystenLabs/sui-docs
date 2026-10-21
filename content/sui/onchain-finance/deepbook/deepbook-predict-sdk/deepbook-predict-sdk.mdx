@@ -41,25 +41,24 @@ questions:
   - What do the predict, account, and sessions subpaths of @mysten/deepbook-v3 export?
   - How do I handle errors and decode receipts from the DeepBook Predict SDK?
 answer: >-
-  Install @mysten/deepbook-v3 version 2.7.0 or later with its @mysten/sui
-  version 2.30.0 or later peer dependency, then register the Predict client
-  with client.$extend(predict({ network })). Version 2.7.0 adds the queued-order
-  flow that Testnet's delayed execution requires, and read.executionMode tells
-  an app which trade path a network is on. The client exposes transaction
+  Install @mysten/deepbook-v3 version 2.8.0 or later with its @mysten/sui
+  version 2.37.0 or later peer dependency, then register the Predict client
+  with client.$extend(predict({ network })). Version 2.8.0 is the first release
+  that places queued orders on both networks. The client exposes transaction
   builders that return unsigned transactions, reads that simulate against a
   full node with no indexer, and pure decoders that turn an execution result's
   events into typed receipts. The SDK throws PredictInputError for input it
   rejects before building anything and PredictMoveError for a Move abort during
   a simulation.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434, and ''@mysten/deepbook-v3'' 2.8.0 peer dependency ''@mysten/sui'' ^2.37.0 read from npm'
 ---
 
 The DeepBook Predict SDK builds every Predict transaction, reads live Predict state through your Sui client, and decodes the receipts that executed transactions emit. It ships as the `/predict` subpath of the `@mysten/deepbook-v3` TypeScript package, and [DeepBook Predict](/onchain-finance/deepbook/deepbook-predict) explains the markets, positions, and pool behind each call.
 
 ## How do I install the Predict SDK? {#install}
 
-Install `@mysten/deepbook-v3` version 2.7.0 or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with its `@mysten/sui` peer dependency at version 2.30.0 or later. The package requires Node.js 22 or later. Version 2.7.0 is the first release that resolves the current package of every Predict deployment and places queued orders, which every Testnet trade has been since Testnet's delayed-execution cutover on 2026-10-09. Earlier releases build immediate trades that Testnet aborts.
+Install `@mysten/deepbook-v3` version 2.8.0 or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with its `@mysten/sui` peer dependency at version 2.37.0 or later. The package requires Node.js 22 or later. Version 2.8.0 is the first release that places queued orders on both networks, as [Create the client](#client) explains.
 
 ```sh npm2yarn
 npm install @mysten/deepbook-v3 @mysten/sui
@@ -105,7 +104,7 @@ The Predict client exposes 3 groups of members:
 
 The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) covers, `queueIdFor(marketId)`, which derives a market's queue ID, and `cfg`, the `PredictConfig` that the client uses.
 
-Both recorded networks run Predict protocol version 4, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders, and `tx.mint` and its siblings always abort. Version 2.7.0 records Testnet's delayed-execution deployment, and Mainnet needs version 2.8.0 or later: 2.7.0 still resolves Mainnet's retired protocol version 3 call target, so every version-gated Predict call it builds there aborts with `EPackageVersionDisabled`. `client.predict.read.executionMode()` reports `'delayed'` once the configuration records the deployment. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers the queued path.
+Both networks run Predict protocol version 4, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders, and `tx.mint` and its siblings always abort. Version 2.7.0 records Testnet's deployment, and Mainnet needs version 2.8.0 or later. On Mainnet, version 2.7.0 still resolves the retired Predict protocol version 3 and Sessions version 2 call targets, so every version-gated Predict or Sessions call it builds there aborts with `EPackageVersionDisabled`. Its Mainnet configuration also lacks the order-flow IDs, so its queued builders and reads throw `PredictInputError` there. `client.predict.read.executionMode()` reports `'delayed'` once the configuration records the deployment. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers the queued path.
 
 ## Configuration {#configuration}
 
@@ -128,7 +127,7 @@ The SDK records the Testnet and Mainnet deployments, so you never transcribe a p
 
 <ImportContent source="packages/deepbook-v3/src/predict/config/types.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="59-110" />
 
-Version 2.7.0's Testnet configuration records the delayed-execution fields, and its Mainnet configuration leaves them unset, so the queued builders and reads throw `PredictInputError` on Mainnet with that release. Version 2.8.0 records Mainnet's. `predictDelayedExecution` is the Predict version that introduced the delayed-execution types and events, `0x0654ecbe…` on Testnet and `0x98235c58…` on Mainnet, which the decoders match those events against.
+Version 2.8.0 records the delayed-execution fields for both networks. `predictDelayedExecution` is the Predict version that introduced the delayed-execution types and events, `0x0654ecbe…` on Testnet and `0x98235c58…` on Mainnet, which the decoders match those events against.
 
 Resolve the configuration once at startup and pass the result down, rather than inlining an ID at a call site. Every value in it is deployment-specific, and most differ between Mainnet and Testnet. The `config.ts` sample in [Create the client](#client) keeps them in a single network-keyed record: a `NETWORK` constant selects Testnet or Mainnet, and every other value derives from it.
 

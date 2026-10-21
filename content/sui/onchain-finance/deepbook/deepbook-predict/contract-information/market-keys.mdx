@@ -43,7 +43,7 @@ answer: >-
   tick 1073741823 is the positive-infinity sentinel. A minted position is a
   packed u256 order ID that is unique only within one expiry market.
 last_verified: 2026-09-23
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8, and both networks' cadence terms re-read after Mainnet's reopen
 ---
 
 Every strike in DeepBook Predict is an absolute integer tick counted from zero. One expiry market fixes one `tick_size`, and the raw strike is the product:
@@ -105,14 +105,14 @@ strike_from_tick(tick) =
     tick * tick_size          otherwise
 ```
 
-Both deployments run one underlying, BTC. Each network's registry enables its own cadences, so read them from `registry::cadence_configs`. A chain read of Testnet on 2026-10-13 found 2 enabled cadences, both on the same grids:
+Both deployments run one underlying, BTC. Each network's registry enables its own cadences, so read them from `registry::cadence_configs`. Both networks enable 2 cadences, both on the same grids:
 
 | **Cadence** | **`tick_size` raw** | **Fine grid** | **`admission_tick_size` raw** | **Admission grid** |
 |---|---|---|---|---|
 | 1m | `10_000_000` | 0.01 USD | `1_000_000_000` | 1 USD |
 | 5m | `10_000_000` | 0.01 USD | `1_000_000_000` | 1 USD |
 
-The same read found the 1h, 1d, 1w, and 1mo cadences in a disabled state, and a disabled cadence reads back as an all-zero configuration. Read the live values with `registry::cadence_config` or `registry::cadence_configs`, or as `tickSize` and `admissionTickSize` from `read.markets()`, rather than hardcoding them, because an admin can change a cadence and each market keeps the terms it received at creation.
+The 1h, 1d, 1w, and 1mo cadences are disabled on both networks, and a disabled cadence reads back as an all-zero configuration. Read the live values with `registry::cadence_config` or `registry::cadence_configs`, or as `tickSize` and `admissionTickSize` from `read.markets()`, rather than hardcoding them, because an admin can change a cadence and each market keeps the terms it received at creation.
 
 ## A position is a tick pair {#range-key}
 

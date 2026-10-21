@@ -44,7 +44,7 @@ answer: >-
   every market's pricer in one snapshot transaction, values each market in later
   transactions, and then fills both queues at that single frozen pool NAV.
 last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet after its cutover, built from the byte-identical 98128174); Testnet FlushOperatorUpdated event read 2026-10-13; Testnet cadence terms re-read 2026-10-19, Mainnet max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet after its cutover, built from the byte-identical 98128174); Testnet FlushOperatorUpdated event read 2026-10-13; Testnet cadence terms re-read 2026-10-19, Mainnet max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each, and both networks' cadence terms re-read after Mainnet's reopen
 ---
 
 The Predict pool is the counterparty to every trade. Liquidity providers deposit USDC, receive PLP shares, and collectively back the payout liability of every active expiry. All of that capital sits in one shared object, `deepbook_predict::plp::PoolVault`.
@@ -320,7 +320,7 @@ public fun finish_flush(
 ): u64
 ```
 
-Before protocol version 4 it was permissionless, because `start_pool_valuation` committed the drain budgets at start. Protocol version 4 restricts it to flush operators: it aborts with `protocol_config::ENotFlushOperator` unless the sender is on an allowlist that `AdminCap` edits with `protocol_config::add_flush_operator` and `remove_flush_operator`, each emitting `FlushOperatorUpdated`, and that `is_flush_operator` reads. Liquidity fills move idle cash, and restricting who completes a flush keeps idle predictable for the keeper that funds markets for queued orders. The allowlist starts empty, and each network added its flush keeper when it passed the cutover. `remove_flush_operator` skips the version gate, so an admin can revoke an operator during the emergency freeze. Starting a flush still needs a `PoolValuationCap`, and `value_expiry` stays permissionless. It aborts with `EMissingExpiryValuation` unless `value_expiry` has valued every expected market, computes the LP-attributable pool NAV from the frozen figures, drains both queues at that mark up to the recorded cutoffs and budgets, releases the valuation flag, emits `FlushExecuted`, and returns the pool NAV as a `u64`.
+Protocol version 4 restricts it to flush operators: it aborts with `protocol_config::ENotFlushOperator` unless the sender is on an allowlist that `AdminCap` edits with `protocol_config::add_flush_operator` and `remove_flush_operator`, each emitting `FlushOperatorUpdated`, and that `is_flush_operator` reads. Liquidity fills move idle cash, and restricting who completes a flush keeps idle predictable for the keeper that funds markets for queued orders. The allowlist starts empty, and each network added its flush keeper when it passed the cutover. `remove_flush_operator` skips the version gate, so an admin can revoke an operator during the emergency freeze. Starting a flush still needs a `PoolValuationCap`, and `value_expiry` stays permissionless. It aborts with `EMissingExpiryValuation` unless `value_expiry` has valued every expected market, computes the LP-attributable pool NAV from the frozen figures, drains both queues at that mark up to the recorded cutoffs and budgets, releases the valuation flag, emits `FlushExecuted`, and returns the pool NAV as a `u64`.
 
 `supply_budget` and `withdraw_budget`, each an `Option<u64>`, bound how many requests that queue can process. `none` means unbounded. Neither budget depends on the other, so a supply backlog can never starve withdrawals.
 
@@ -490,14 +490,14 @@ sweep_threshold  = max(required_cash * (1 + 2 * band), initial_expiry_cash)
 
 `band` is `expiry_rebalance_pct`, which is `100_000_000` at 1e9 scale, or 10 percent. Below `target_cash` the pool tops the market up, and above `sweep_threshold` it pulls the excess back to idle. `payout_liability` and `inventory_impact_reserve` are the market's backing terms, which [Per-expiry backing](#max-payout) defines.
 
-Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and a chain read of Testnet on 2026-10-19 found these terms on its 2 enabled cadences:
+Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and both networks run these terms on their 2 enabled cadences:
 
 | **Cadence** | **`initial_expiry_cash` raw** | **Reads as** | **`max_expiry_allocation` raw** | **Reads as** |
 |---|---|---|---|---|
 | 1m | `2_000_000_000` | 2,000 USDC | `2_000_000_000` | 2,000 USDC |
 | 5m | `2_000_000_000` | 2,000 USDC | `2_000_000_000` | 2,000 USDC |
 
-The same read found the 1h, 1d, 1w, and 1mo cadences disabled, with every term at zero. Read `registry::cadence_config` for the network you target.
+The 1h, 1d, 1w, and 1mo cadences are disabled on both networks, with every term at zero. Read `registry::cadence_config` for the network you target.
 
 `constants::expiry_cash_floor!()`, which is `1_000_000_000`, plays no part in the rebalance. It is the minimum admissible `initial_expiry_cash` that cadence validation enforces, so a cadence configured below 1,000 USDC aborts with `EInvalidCadenceConfig`, as does one whose `initial_expiry_cash` exceeds its `max_expiry_allocation`. A market on a cadence configured above that minimum floors its rebalance at the configured figure. Read the live figures with `registry::cadence_config`, and see the cadence table on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).
 
@@ -625,7 +625,7 @@ Both networks set the live target rate and the lifetime cap rate to 20 percent e
 
 :::info
 
-`add_usdc_to_plp` arrived in `predict` protocol version 3, so both networks have it. Reach it through the current call target, not a superseded one: a client pinned to an older `predict` address cannot see it. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
+Both networks have `add_usdc_to_plp`. Reach it through the current call target, not a superseded one: a client pinned to an older `predict` address cannot see it. See [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#two-ids).
 
 :::
 

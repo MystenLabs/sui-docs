@@ -374,7 +374,7 @@ Predict does not store positions in its own objects. It attaches a `PredictData`
 | `Position` | `root_id` | `u256` | Original mint's order ID, carried forward across partial-close replacements. |
 | `Position` | `opened_at_ms` | `u64` | Onchain time at which the position opened, also carried forward. |
 
-From protocol version 4, which both networks run, a queued fill never enters this table. The filled position stays in the market's `MarketQueue` as an Open record owned by the account, so `has_position` and `read.positions` do not see it, and the account follows it by its queue record ID instead. Positions minted into the table before the cutover stay there, and `redeem_settled` still pays them. [Open records and early sells](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#open-records) covers the queue side.
+Every trade is a queued order, and a queued fill never enters this table. The filled position stays in the market's `MarketQueue` as an Open record owned by the account, so `has_position` and `read.positions` do not see it, and the account follows it by its queue record ID instead. Positions minted into the table before the cutover stay there, and `redeem_settled` still pays them. [Open records and early sells](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#open-records) covers the queue side.
 
 An order ID alone does not identify a position. It carries the quantity and the tick range but not the market, so only the `(expiry_market_id, order_id)` pair binds a position to its market. Never infer market facts from an order ID.
 
