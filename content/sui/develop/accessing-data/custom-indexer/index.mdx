@@ -44,7 +44,7 @@ The custom indexing framework (`sui-indexer-alt-framework`) exposes specific int
 
 - `commit()`: Store your processed data to the database with proper transaction handling. The framework calls this with batches of processed data for efficient bulk operations.
 
-- `prune()`: Clean up old data based on your retention policies (optional). Useful for managing database size by removing outdated records while preserving recent data.
+- `prune()`: Clean up old data based on your retention policies (optional). Useful for managing database size by removing outdated records while preserving recent data. You enable pruning for pipelines configured with a retention policy, which sets how many of the most recent checkpoints the pipeline keeps.
 
 ## Which pipeline type should you use?
 
