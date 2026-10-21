@@ -13,10 +13,12 @@ export function getRef(url) {
   return url.substring(url.lastIndexOf("/") + 1);
 }
 
+// Under /open-spec/ because vercel.json redirects /testnet/* and /devnet/*
+// to the root; at /<network>/openrpc.json only the mainnet spec ever loaded.
 const SPEC_URLS = {
-  mainnet: "/mainnet/openrpc.json",
-  testnet: "/testnet/openrpc.json",
-  devnet: "/devnet/openrpc.json",
+  mainnet: "/open-spec/mainnet/openrpc.json",
+  testnet: "/open-spec/testnet/openrpc.json",
+  devnet: "/open-spec/devnet/openrpc.json",
 };
 
 async function loadSpec(network) {
