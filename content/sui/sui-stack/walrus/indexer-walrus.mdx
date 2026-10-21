@@ -105,7 +105,7 @@ LIMIT $2;
 
 ## Custom indexer implementation
 
-This example uses a [sequential pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture), ensuring each checkpoint is committed once in strict order and as a single atomic operation. The sequential pipeline architecture is not required for this project, but it is a more straightforward option than implementing the concurrent architecture. You can always [scale up to the concurrent pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture#decision-framework) if and when your project requires it.
+This example uses a [sequential pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture), ensuring each checkpoint is committed once in strict order and as a single atomic operation. The sequential pipeline architecture is not required for this project, but it is a more straightforward option than implementing the concurrent architecture. You can always [scale up to the concurrent pipeline](/develop/accessing-data/custom-indexer/pipeline-architecture#how-do-i-decide-which-pipeline-to-use) if and when your project requires it.
 
 This implementation tracks the latest object state at checkpoint boundary. When the `Metadata` dynamic field is created, mutated, wrapped or deleted, or unwrapped, it appears among the transaction output under the object changes. You can see an [example transaction](https://suivision.xyz/txblock/3Qcuo2FaTZL5wfdi7JzPELcmkuZm7hVfdNrkLrdkKioN?tab=Changes) on Testnet that creates the field. Dynamic fields use the type `0x2::dynamic_field::Field<vector, 0xabc...123::metadata::Metadata>`.
 
