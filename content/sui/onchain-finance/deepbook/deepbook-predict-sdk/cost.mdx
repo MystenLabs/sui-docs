@@ -53,7 +53,7 @@ answer: >-
   a UI. The read.planMint and read.planSell plans remain the pre-trade check
   against real account and market state.
 last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434'
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434, and both networks'' strike-exposure template re-read after Mainnet''s reopen'
 ---
 
 The `cost` namespace on `@mysten/deepbook-v3/predict` prices a Predict trade without touching the chain. It is an exact integer port of the deployed fee path, not an estimate: feed it the same inputs the execution sees and it returns the same raw amounts the contract charges. That makes it the right tool for an order ticket that has to re-price on every keystroke, for a board of candidate strikes, and for sizing a spend before a transaction exists.
@@ -80,7 +80,7 @@ Every entry point in this namespace takes the same 3 kinds of input.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="136-155" />
 
-`cost.SHIPPED_FEE_POLICY` is the template the contracts compile in: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Neither deployment runs it any more. Both now charge a 20.4 percent base fee, ramp the fee to 3 times over the last 60 seconds, and admit entries in a narrow band, 25 to 75 percent on Mainnet, so a preview built from it comes out low. Version 2.7.0 adds `read.feePolicy(market)`, one object read that returns the policy a market snapshotted at creation, ready to pass as `fees`. Use that for a live market:
+`cost.SHIPPED_FEE_POLICY` is the template the contracts compile in: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Neither deployment runs it. Both charge a 20.4 percent base fee, ramp the fee to 3 times over the last 60 seconds, and admit entries in a narrow band, 15 to 85 percent, so a preview built from it comes out low. Version 2.7.0 adds `read.feePolicy(market)`, one object read that returns the policy a market snapshotted at creation, ready to pass as `fees`. Use that for a live market:
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="164-174" />
 

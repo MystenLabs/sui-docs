@@ -154,7 +154,7 @@ In a programmable transaction block, a priced flow therefore runs in this order:
 1. Call `load_live_pricer` for the market.
 1. Pass the resulting `Pricer` to each priced call on that same market in the same block, such as a quote, a mint, `redeem_live`, `current_nav`, or `live_order_value`.
 
-The load judges freshness against each input's own source timestamp: the Pyth feed timestamp and, for the Block Scholes price, forward, and stochastic volatility inspired (SVI) inputs, the provider's per-update timestamp. Both deployments run the Pyth spot and Block Scholes price windows at 2,000 ms. A chain read on 2026-10-13 found the SVI window at 60,000 ms on Mainnet and 10,000 ms on Testnet.
+The load judges freshness against each input's own source timestamp: the Pyth feed timestamp and, for the Block Scholes price, forward, and stochastic volatility inspired (SVI) inputs, the provider's per-update timestamp. Both deployments run the Pyth spot and Block Scholes price windows at 2,000 ms and the SVI window at 10,000 ms.
 
 See [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) for how to discover the `PythFeed`, `BlockScholesValueStore`, and `BlockScholesSVIStore` object IDs for an underlying.
 
