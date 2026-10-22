@@ -17,6 +17,10 @@ keywords:
   - graphql event query
   - graphql transaction query
   - graphql balance query
+  - sui_multiGetObjects
+  - executeTransaction
+  - object version lookup
+  - sui_getObject
 goal:
   description: >-
     Reader can replace any JSON-RPC call with the equivalent GraphQL query or
@@ -85,7 +89,7 @@ Each recipe pairs a JSON-RPC call with its GraphQL replacement and explains the 
 
 :::
 
-## Before you start
+## Where do you send GraphQL queries?
 
 GraphQL queries run against the online IDE or any GraphQL endpoint. Access the service at:
 
@@ -103,7 +107,7 @@ curl -X POST <GRAPHQL_ENDPOINT> \
   -d '{ "query": "{ epoch { referenceGasPrice } }" }'
 ```
 
-## Get a single object
+## How do you get a single object?
 
 Replace `sui_getObject` with `Query.object`. Select only the fields you need instead of toggling `showContent`, `showOwner` booleans.
 
@@ -206,7 +210,7 @@ query {
 - GraphQL applies the same field selection to all objects in the batch.
 - Each key can optionally include a `version` to fetch a specific version of that object.
 
-## Get a transaction
+## How do you get a transaction?
 
 Replace `sui_getTransactionBlock` with `Query.transaction`.
 
@@ -382,7 +386,7 @@ query {
 - Pagination uses `first` and `after` (forward) or `last` and `before` (backward) with cursors from `pageInfo`.
 - Named arguments replace JSON-RPC's positional `[filter, cursor, limit, descending]` array.
 
-## Query events
+## How do you query events?
 
 Replace `suix_queryEvents` with `Query.events` and an `EventFilter`.
 
@@ -519,7 +523,7 @@ query {
 - Without a `sequenceNumber` argument, `checkpoint` returns the latest.
 - GraphQL can also look up a checkpoint by `digest`.
 
-## Paginate checkpoints
+## How do you paginate checkpoints?
 
 Replace `sui_getCheckpoints` polling with `Query.checkpoints` pagination.
 
@@ -564,7 +568,7 @@ query ($after: String) {
 - For reverse order, use `last` and `before` instead of `first` and `after`.
 - For real-time streaming, use gRPC [`SubscribeEvents`](/develop/accessing-data/grpc/grpc-migration-cookbook#live-event-streaming) or [`SubscribeTransactions`](/develop/accessing-data/grpc/grpc-migration-cookbook#stream-transactions) instead. GraphQL has subscription infrastructure but gRPC is the production streaming path today.
 
-## Get balances
+## How do you get balances?
 
 Replace `suix_getBalance` and `suix_getAllBalances` with `Address.balance` and `Address.balances`.
 
@@ -629,7 +633,7 @@ query {
 - `balance` returns a single balance for a specific coin type. `balances` returns a paginated list of all coin type balances.
 - The GraphQL balance includes `addressBalance`, `coinBalance`, and `totalBalance` fields. Read `totalBalance` for the combined amount.
 
-## List owned coins
+## How do you list owned coins?
 
 Replace `suix_getCoins` and `suix_getAllCoins` with `Address.objects` filtered by coin type.
 
@@ -871,7 +875,7 @@ query {
 </TabItem>
 </Tabs>
 
-## Execute a transaction
+## How do you execute a transaction?
 
 Replace `sui_executeTransactionBlock` with `Mutation.executeTransaction`.
 
@@ -990,7 +994,7 @@ query ($tx: JSON!) {
 </Tabs>
 
 **Key differences:**
-- `simulateTransaction` accepts, through the `JSON!`-typed `$tx` variable, a JSON transaction matching the Sui gRPC transaction schema, or a BCS-encoded transaction with `{"bcs": {"value": "<base64>"}}`. If you already have the transaction bytes you would pass to `sui_dryRunTransactionBlock`, use the BCS form shown in the variables example.
+- The `$tx` variable has the `JSON!` type and accepts one of two forms: a BCS-encoded transaction, written as `{"bcs": {"value": "<base64>"}}`, or a JSON transaction that matches the Sui gRPC transaction schema. If you already have the transaction bytes you would pass to `sui_dryRunTransactionBlock`, use the BCS form shown in the variables example.
 - Set `doGasSelection: true` to have the service automatically select gas coins for the simulation.
 
 ## Get reference gas price
