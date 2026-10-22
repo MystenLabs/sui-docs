@@ -151,7 +151,7 @@ const PERMISSIONS: u128 = 1;
 /// The Witness struct used to identify and authorize the extension.
 public struct Extension has drop {}
 
-/// Install the Mallbox extension into the Kiosk.
+/// Install the Letterbox extension into the Kiosk.
 public fun add(kiosk: &mut Kiosk, cap: &KioskOwnerCap, ctx: &mut TxContext) {
     kiosk_extension::add(Extension {}, kiosk, cap, PERMISSIONS, ctx)
 }
@@ -169,8 +169,8 @@ A `u128` integer storing a bitmap represents permissions. Each of the bits corre
 | --- | --- | --- |
 | 0000 | 0 | No permissions |
 | 0001 | 1 | App can place |
-| 0010| 2 |	App can place and lock |
-| 0011| 3 |	App can place and lock |
+| 0010| 2 |	App can place and lock (the second bit grants both) |
+| 0011| 3 |	App can place and lock (same as `2`) |
 
 :::info
 
@@ -192,7 +192,7 @@ const PERMISSIONS: u128 = 1;
 /// The witness struct used to identify and authorize the app.
 public struct Extension has drop {}
 
-/// Install the Mallbox app into the kiosk and request `place` permission.
+/// Install the Letterbox app into the kiosk and request `place` permission.
 public fun add(kiosk: &mut Kiosk, cap: &KioskOwnerCap, ctx: &mut TxContext) {
     kiosk_extension::add(Extension {}, kiosk, cap, PERMISSIONS, ctx)
 }
@@ -223,11 +223,11 @@ Currently, two functions are available:
 
 ### How do I check an app's permissions? {#checking-permissions}
 
-Use the `can_place<Ext>(kiosk: &Kiosk): bool` function to check if the app has the `place` permission. Similarly, you can use the `can_lock<Ext>(kiosk: &Kiosk): bool` function to check if the app has the `lock` permission. Both functions make sure that the app is enabled, so you don't need to explicitly check for that.
+Use the `can_place<Ext>(kiosk: &Kiosk): bool` function to check if the app has the `place` permission. Similarly, you can use the `can_lock<Ext>(kiosk: &Kiosk): bool` function to check if the app has the `lock` permission. Both functions make sure that the app is enabled, so you don't need to explicitly check for that. If the kiosk owner disables the app, both functions return `false`, so the `assert!` in the `place` example aborts with `ENotEnoughPermissions`.
 
 ## App storage
 
-Every app gets its isolated storage as a bag type that only the app module can access (providing the app witness). See [The Move Book](https://move-book.com/programmability/dynamic-collections) to learn more about dynamic collections, like bags, available in Move. After you install an app, it can use the storage to store its data. Ideally, manage the storage so that the kiosk owner can remove the app from the kiosk if there are no active trades or other activities happening at the moment.
+Every app gets its isolated storage as a bag, a dynamic collection type in Move, that only the app module can access (providing the app witness). See [The Move Book](https://move-book.com/programmability/dynamic-collections) to learn more about dynamic collections, like bags, available in Move. After you install an app, it can use the storage to store its data. Ideally, manage the storage so that the kiosk owner can remove the app from the kiosk if there are no active trades or other activities happening at the moment.
 
 The storage is always available to an installed app. The owner of a kiosk can't access the storage of the app unless the app implements the logic for it.
 
@@ -235,8 +235,8 @@ The storage is always available to an installed app. The owner of a kiosk can't 
 
 An installed app can access the storage mutably or immutably using one of the following functions:
 
-- `storage(_ext: Extension {}, kiosk: &Kiosk): Bag`: Returns a reference to the storage of the app. Use the function to read the storage.
-- `storage_mut(_ext: Extension {}, kiosk: &mut Kiosk): &mut Bag`: Returns a mutable reference to the storage of the app. Use the function to read and write to the storage.
+- `storage<Ext>(_ext: Ext, kiosk: &Kiosk): &Bag`: Returns a reference to the storage of the app. Use the function to read the storage.
+- `storage_mut<Ext>(_ext: Ext, kiosk: &mut Kiosk): &mut Bag`: Returns a mutable reference to the storage of the app. Use the function to read and write to the storage.
 
 ## Disabling and removing
 
@@ -254,13 +254,13 @@ Use the `disable<Ext>(kiosk: &mut Kiosk, cap: &KioskOwnerCap)` function to disab
 
 ```javascript
 let txb = new TransactionBuilder();
-let kioskArg = tx.object('<ID>');
-let capArg = tx.object('<ID>');
+let kioskArg = txb.object('<ID>');
+let capArg = txb.object('<ID>');
 
 txb.moveCall({
     target: '0x2::kiosk_extension::disable',
     arguments: [ kioskArg, capArg ],
-    typeArguments: '<letter_box_package>::letterbox_ext::Extension'
+    typeArguments: [ '<letter_box_package>::letterbox_ext::Extension' ]
 });
 ```
 
@@ -274,12 +274,12 @@ The call fails if the storage is not empty.
 
 ```javascript
 let txb = new TransactionBuilder();
-let kioskArg = tx.object('<ID>');
-let capArg = tx.object('<ID>');
+let kioskArg = txb.object('<ID>');
+let capArg = txb.object('<ID>');
 
 txb.moveCall({
     target: '0x2::kiosk_extension::remove',
     arguments: [ kioskArg, capArg ],
-    typeArguments: '<letter_box_package>::letterbox_ext::Extension'
+    typeArguments: [ '<letter_box_package>::letterbox_ext::Extension' ]
 });
 ```
