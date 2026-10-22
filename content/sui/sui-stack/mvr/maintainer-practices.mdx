@@ -43,7 +43,12 @@ For more information, see [Automated Address Management](/develop/manage-package
 
 ## Which Sui dependency should I use? {#sui-dependency}
 
-Switch your `Sui` dependency to the correct network you are publishing or upgrading against (for example, `framework/testnet` for Testnet, `framework/mainnet` for Mainnet).
+Switch your `Sui` dependency to the correct network you are publishing or upgrading against:
+
+| **Network** | **`Sui` dependency** |
+|---|---|
+| Testnet | `framework/testnet` |
+| Mainnet | `framework/mainnet` |
 
 > Starting from Sui v1.45, you should remove the Sui framework and all other system dependencies from your Move.toml file, as they are now automatically added and managed when used.
 
@@ -53,6 +58,13 @@ Proper use of tags or commit SHAs helps code maintenance.
 
 - Tag your releases with `<network>/<version>` (for example, `mainnet/v1`). Make sure the commit you push after configuring [Automated Address Management](#automated-address-management) is also tagged, or is part of your `main` branch.
 - After applying a release tag, use the commit SHA or the tag to update the source code origin in the `PackageInfo` object.
+
+For example, to tag a release as `mainnet/v1` and push your tags, run:
+
+```sh
+$ git tag mainnet/v1
+$ git push --tags
+```
 
 ## How should I name packages in a multi-package repository? {#name-your-package}
 
