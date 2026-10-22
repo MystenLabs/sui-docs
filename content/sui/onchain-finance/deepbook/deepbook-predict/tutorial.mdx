@@ -67,7 +67,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-A complete DeepBook Predict flow on Testnet with the TypeScript SDK covers pricing a market board, creating an account, queuing directional and two-sided range mints, selling or settling the positions, and running the queued liquidity provider flow. The walkthrough continues from the [DeepBook Predict quickstart](/onchain-finance/deepbook/deepbook-predict), which covers install, funding, and a first mint.
+To run a complete DeepBook Predict flow on Testnet with the TypeScript SDK, you price a market board, create an account, queue directional and two-sided range mints, sell or settle the positions, and run the queued liquidity provider flow. The walkthrough continues from the [DeepBook Predict quickstart](/onchain-finance/deepbook/deepbook-predict), which covers install, funding, and a first mint.
 
 The walkthrough sends every transaction and every read through the `/predict` subpath of `@mysten/deepbook-v3`, version 2.8.0 or later. The SDK carries both the `deepbook-predict-mainnet` and `deepbook-predict-testnet` deployments, and the samples select one with a single `NETWORK` constant that defaults to `'testnet'`. The walkthrough runs on Testnet, where the quote coin is a mintable test coin. Both networks run Predict protocol version 4, so every trade is a queued order and the same code runs on Mainnet. On Mainnet the quote coin is native USDC. The SDK builds transactions and never signs them, and every read it exposes runs against the Sui client core API, so no indexer or server sits on the critical path. The samples live in the `examples/deepbook-predict` package, which type-checks with `npm run build` (`tsc --noEmit`). This document does not execute them, so run the [manual verification steps](#verify-on-testnet) before you rely on the write paths.
 
@@ -86,7 +86,7 @@ Read `read.markets()`, `read.pool()`, the `ProtocolConfig` object, and `read.exe
 </TabItem>
 </Tabs>
 
-## Configuration and client
+## How do I configure the network and client? {#configuration-and-client}
 
 Keep every deployment-specific identifier in one configuration block, select the network there, and assert the deployment name at startup. A later SDK release can intentionally move a network to a newer deployment, so an unchecked upgrade silently repoints your application.
 
@@ -108,7 +108,7 @@ Every write in this walkthrough asks the account owner to sign. An application t
 
 The SDK raises 2 typed errors: `PredictInputError` when it rejects an argument before building anything, and `PredictMoveError` when a simulation hits a Move abort. [Errors](/onchain-finance/deepbook/deepbook-predict-sdk#errors) in the DeepBook Predict SDK section covers both, how to map an abort to its module's error table, and why a quote doubles as a preflight.
 
-## Understand the oracle
+## How does Predict use the oracle? {#understand-the-oracle}
 
 Predict owns no oracle. Pricing inputs live in the separate `propbook` package as 3 shared objects per underlying: a `PythFeed` holding exact-timestamp spot observations, a `BlockScholesValueStore` holding spot and forward observations, and a `BlockScholesSVIStore` holding the stochastic volatility inspired (SVI) volatility surface. One underlying is live on both networks, BTC, with propbook underlying ID `1`.
 
@@ -116,7 +116,7 @@ Every priced call rebuilds a transaction-local `Pricer` from those objects throu
 
 Freshness bounds are protocol configuration, and pricing aborts on a stale Block Scholes input. Both networks require the Block Scholes spot and forward within 2 seconds and the SVI surface within 10 seconds. Read the live values from the `ProtocolConfig` shared object rather than assuming them, because the deployment manifest records only an initial snapshot.
 
-A queued order uses the oracles twice. Placement snapshots the Block Scholes spot, forward, and SVI surface into the order. The spot it fills at comes later, from Pyth Lazer's signed update for the order's τ, which the keeper verifies and commits to the queue. The SDK resolves the oracle objects for placement, and you never handle a Lazer update unless you run a filler yourself.
+A queued order uses the oracles twice. Placement snapshots the Block Scholes spot, forward, and SVI surface into the order. The spot it fills at comes later, from Pyth Lazer's signed update for the order's τ (its price instant, about 800 ms after placement), which the keeper verifies and commits to the queue. The SDK resolves the oracle objects for placement, and you never handle a Lazer update unless you run a filler yourself.
 
 ### Discover markets
 
@@ -175,9 +175,9 @@ The market's `referencePrice` is the one finite off-grid boundary the chain admi
 
 Every value here is a decimal float rather than chain fixed-point, and every calculation runs locally. Pass a `lower` of 0 or below for negative infinity and `Infinity` for an open upper bound. Check `asOf` before you render a board, because a pricer built from an observation that later goes stale still prices locally without complaint.
 
-## Set up the account
+## How do I set up the account? {#set-up-the-account}
 
-Each owner has exactly one Predict account: a shared `AccountWrapper` object holding an `Account`. The wrapper holds your quote coin balance, your PLP balance, and Predict's per-account data. A position is a packed order ID recorded against that account rather than an object in your wallet, so scanning owned objects never finds one.
+Each owner has exactly one Predict account: a shared `AccountWrapper` object holding an `Account`. The wrapper holds your quote coin balance, your PLP balance, and Predict's per-account data. PLP is the share that liquidity providers hold, a proportional claim on pool value. A position is a packed order ID recorded against that account rather than an object in your wallet, so scanning owned objects never finds one. The account has 2 IDs: the wrapper ID, which every Move call takes, and the canonical account ID, which events report as `account_id` and indexed read services key on.
 
 `client.predict.tx.createManager()` takes no arguments and returns a transaction that creates the wrapper and shares it. The method name carries legacy DeepBook balance-manager naming; the object it creates is an account wrapper. [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) documents every account function.
 
@@ -195,7 +195,7 @@ Funding and reading the account takes 3 calls:
 - **Withdraw:** `tx.withdraw(owner, amountUsdc)` sends the quote coin to the owner's address balance. Pass `{ toCoinObject: true }` to receive a coin object instead.
 - **Read the balance:** `read.balance(owner)` returns the account's quote balance as a decimal number.
 
-## Read state
+## How do I read Predict state? {#read-state}
 
 Read live state through the SDK first. Every `read` method runs against the full node for the selected network and needs no indexer, and together they cover everything this page acts on:
 
@@ -279,7 +279,7 @@ All 3 services share 4 conventions:
 
 ## How do I queue a directional mint? {#queue-a-mint}
 
-Both networks run Predict protocol version 4, so a mint is a queued order. You place it with its limits and its money, it waits in the market's queue until Pyth Lazer publishes its signed price for the order's price instant, about 800 ms after placement, and a keeper then fills it at that price or refunds it. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) covers the onchain side, and [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) documents every builder and read.
+Both networks run Predict protocol version 4, so a mint is a queued order. You place it with its limits and its money, it waits in the market's queue until Pyth Lazer publishes its signed price for the order's price instant, about 800 ms after placement, and a keeper then fills it at that price or refunds it. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) covers the onchain side, and [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) documents every builder and read.
 
 A directional position pays `$1` per contract when settlement lands inside its range, and nothing otherwise, so `quantity` is the maximum payout in USD. The sample plans an all-in budget mint: `read.planMint(owner, descriptor, { amount, slippageCents })` quotes the order at the current price and turns the slippage into the limits the order carries onchain, and `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits. A few checks run only onchain at placement, such as the market's SVI age and room in the payout tree for a new strike, so a plan that accepts can still abort there.
 
@@ -293,7 +293,7 @@ A directional position pays `$1` per contract when settlement lands inside its r
 - **The order fee is per order.** Each queued order escrows a flat fee, 0.02 USDC on both networks, on top of its budget. `plan.totalDebit` is the budget plus that fee, and the plan's `amount` includes the fee by default. A fill, or a refund for the order's own limits or for failing admission, keeps the fee, and every other refund returns it.
 - **New orders stop before expiry.** An order whose τ would fall within 10 seconds of expiry aborts with `EPastCutoff`, so new orders stop about 11 seconds before expiry. `tradeableMarket` keeps a 30-second margin.
 
-After the enqueue executes with events included, `decode.enqueue(result)` returns the record ID. Persist it: it is the handle for following the order, selling the position, and showing the result, and nothing onchain lists an account's queue records for you. `read.waitForOutcome(descriptor, recordId)` polls the record until the keeper fills or refunds it. A filled order's `view.position` carries the packed order ID and quantity, and a refunded one's `view.reason` carries the [refund reason](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-refunds).
+After the enqueue executes with events included, `decode.enqueue(result)` returns the record ID. Persist it: it is the handle for following the order, selling the position, and showing the result, and nothing onchain lists an account's queue records for you. `read.waitForOutcome(descriptor, recordId)` polls the record until the keeper fills or refunds it. A filled order's `view.position` carries the packed order ID and quantity, and a refunded one's `view.reason` carries the [refund reason](/onchain-finance/deepbook/deepbook-predict/contract-information/predict). A filled position stays in the market's queue as an Open record rather than in your account, so `read.positions(owner)` does not list it. Follow it with `read.order(market, recordId)`.
 
 ### Queue a two-sided range
 
@@ -332,9 +332,9 @@ A position an immediate mint recorded in the account before the cutover stays th
 
 ### The retired immediate builders
 
-`tx.mint`, `tx.mintAmount`, `tx.mintCost`, and `tx.redeem` build the [retired immediate trades](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position), which abort on both networks, and version 2.7.0 of the SDK deprecates them. Build every trade as a queued order instead.
+`tx.mint`, `tx.mintAmount`, `tx.mintCost`, and `tx.redeem` build the [retired immediate trades](/onchain-finance/deepbook/deepbook-predict/contract-information/predict), which abort on both networks, and version 2.7.0 of the SDK deprecates them. Build every trade as a queued order instead.
 
-## Liquidity provider flow
+## How do I supply and withdraw vault liquidity? {#liquidity-provider-flow}
 
 Liquidity providers supply the quote coin to the shared `PoolVault` and hold PLP, a proportional claim on pool value. The pool is the counterparty to every Predict trade, so PLP value tracks pool profit and loss rather than a fixed yield.
 
