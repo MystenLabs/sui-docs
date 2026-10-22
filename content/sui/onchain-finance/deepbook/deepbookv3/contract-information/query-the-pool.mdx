@@ -72,7 +72,7 @@ To perform trades, you pass a `BalanceManager` and `TradeProof` into the relevan
 DeepBookV3 exposes a set of endpoints that can be used to query any pool. Each entry below describes what the function returns, followed by the function's source from `packages/deepbook/sources/pool.move` in the MystenLabs `deepbookv3` repository.
 
 <details>
-<summary>Check whitelist status</summary>
+<summary>Check whitelist status: `whitelisted`</summary>
 
 Accessor to check whether the pool is whitelisted.
 
@@ -81,7 +81,7 @@ Accessor to check whether the pool is whitelisted.
 </details>
 
 <details>
-<summary>Check quote quantity against base (DEEP fees)</summary>
+<summary>Check quote quantity against base (DEEP fees): `get_quote_quantity_out`</summary>
 
 Dry run to determine the quote quantity out for a given base quantity. Uses DEEP as fee.
 
@@ -90,7 +90,7 @@ Dry run to determine the quote quantity out for a given base quantity. Uses DEEP
 </details>
 
 <details>
-<summary>Check base quantity against quote (DEEP fees)</summary>
+<summary>Check base quantity against quote (DEEP fees): `get_base_quantity_out`</summary>
 
 Dry run to determine the base quantity out for a given quote quantity. Uses DEEP as fee.
 
@@ -99,7 +99,7 @@ Dry run to determine the base quantity out for a given quote quantity. Uses DEEP
 </details>
 
 <details>
-<summary>Check quote quantity against base (input token fees)</summary>
+<summary>Check quote quantity against base (input token fees): `get_quote_quantity_out_input_fee`</summary>
 
 Dry run to determine the quote quantity out for a given base quantity. Uses input token as fee.
 
@@ -108,7 +108,7 @@ Dry run to determine the quote quantity out for a given base quantity. Uses inpu
 </details>
 
 <details>
-<summary>Check base quantity against quote (input token fees)</summary>
+<summary>Check base quantity against quote (input token fees): `get_base_quantity_out_input_fee`</summary>
 
 Dry run to determine the base quantity out for a given quote quantity. Uses input token as fee.
 
@@ -117,7 +117,7 @@ Dry run to determine the base quantity out for a given quote quantity. Uses inpu
 </details>
 
 <details>
-<summary>Check quote quantity against quote or base</summary>
+<summary>Check base, quote, and DEEP quantities: `get_quantity_out`</summary>
 
 Dry run to determine the quantity out for a given base or quote quantity. Only one out of base or quote quantity should be nonzero. Returns the (`base_quantity_out`, `quote_quantity_out`, `deep_quantity_required`).
 
@@ -126,7 +126,20 @@ Dry run to determine the quantity out for a given base or quote quantity. Only o
 </details>
 
 <details>
-<summary>Check fee required</summary>
+<summary>Retrieve reverse quantity calculations: `get_base_quantity_in`, `get_quote_quantity_in`</summary>
+
+Dry run to determine the base quantity needed to receive a given quote quantity out.
+
+<ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="get_base_quantity_in" noComments />
+
+Dry run to determine the quote quantity needed to receive a given base quantity out.
+
+<ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="get_quote_quantity_in" noComments />
+
+</details>
+
+<details>
+<summary>Check fee required: `get_order_deep_required`</summary>
 
 Returns the DEEP required for an order if it's a taker or maker given quantity and price (`deep_required_taker`, `deep_required_maker`).
 
@@ -135,7 +148,7 @@ Returns the DEEP required for an order if it's a taker or maker given quantity a
 </details>
 
 <details>
-<summary>Retrieve mid price for a pool</summary>
+<summary>Retrieve mid price for a pool: `mid_price`</summary>
 
 Returns the mid price of the pool.
 
@@ -144,7 +157,7 @@ Returns the mid price of the pool.
 </details>
 
 <details>
-<summary>Retrieve order IDs</summary>
+<summary>Retrieve order IDs: `account_open_orders`</summary>
 
 Returns the `order_id` for all open orders for the `balance_manager` in the pool.
 
@@ -153,7 +166,7 @@ Returns the `order_id` for all open orders for the `balance_manager` in the pool
 </details>
 
 <details>
-<summary>Retrieve prices and quantities for an order book</summary>
+<summary>Retrieve prices and quantities for an order book: `get_level2_range`, `get_level2_ticks_from_mid`</summary>
 
 Use `get_level2_range` when you want all orders within a specific price range, and `get_level2_ticks_from_mid` when you want a fixed number of ticks starting from the best bid and best ask.
 
@@ -168,7 +181,7 @@ Returns vectors holding the prices (`price_vec`) and quantities (`quantity_vec`)
 </details>
 
 <details>
-<summary>Retrieve balances</summary>
+<summary>Retrieve balances: `vault_balances`</summary>
 
 Get all balances held in this pool.
 
@@ -177,7 +190,7 @@ Get all balances held in this pool.
 </details>
 
 <details>
-<summary>Retrieve pool ID</summary>
+<summary>Retrieve pool ID: `get_pool_id_by_asset`</summary>
 
 Get the ID of the pool given the asset types.
 
@@ -186,7 +199,7 @@ Get the ID of the pool given the asset types.
 </details>
 
 <details>
-<summary>Retrieve order information</summary>
+<summary>Retrieve order information: `get_order`, `get_orders`, `get_account_order_details`</summary>
 
 Returns the `Order` struct using the order ID.
 
@@ -203,7 +216,7 @@ Returns a vector of `Order` structs for all orders that belong to a `BalanceMana
 </details>
 
 <details>
-<summary>Retrieve locked balance</summary>
+<summary>Retrieve locked balance: `locked_balance`</summary>
 
 Returns the locked balance for a `BalanceManager` in the pool (`base_quantity`, `quote_quantity`, `deep_quantity`).
 
@@ -212,7 +225,7 @@ Returns the locked balance for a `BalanceManager` in the pool (`base_quantity`, 
 </details>
 
 <details>
-<summary>Retrieve pool parameters</summary>
+<summary>Retrieve pool parameters: `pool_trade_params`, `pool_trade_params_next`, `quorum`, `pool_book_params`, `get_order_deep_price`</summary>
 
 Returns the trade parameters for the pool (`taker_fee`, `maker_fee`, `stake_required`).
 
@@ -237,20 +250,7 @@ Returns the `OrderDeepPrice` struct for the pool, which determines the conversio
 </details>
 
 <details>
-<summary>Retrieve reverse quantity calculations</summary>
-
-Dry run to determine the base quantity needed to receive a given quote quantity out.
-
-<ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="get_base_quantity_in" noComments />
-
-Dry run to determine the quote quantity needed to receive a given base quantity out.
-
-<ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="get_quote_quantity_in" noComments />
-
-</details>
-
-<details>
-<summary>Pre-trade validation</summary>
+<summary>Pre-trade validation: `can_place_limit_order`, `can_place_market_order`, `check_limit_order_params`, `check_market_order_params`</summary>
 
 Check if a limit order can be placed with the given parameters. Returns `true` if the order can be placed, `false` otherwise.
 
@@ -271,7 +271,7 @@ Validate market order parameters and return detailed error information if invali
 </details>
 
 <details>
-<summary>Pool status</summary>
+<summary>Pool status: `stable_pool`, `registered_pool`</summary>
 
 Check if the pool is a stable pool (uses stable curve pricing).
 
@@ -284,7 +284,7 @@ Check if the pool is registered in the registry.
 </details>
 
 <details>
-<summary>Account queries</summary>
+<summary>Account queries: `account_exists`, `account`</summary>
 
 Check if an account exists for a `BalanceManager` in the pool.
 
