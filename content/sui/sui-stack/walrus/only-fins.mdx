@@ -191,9 +191,20 @@ AUTHOR_1_PRIVATE_KEY=YOUR_ED25519_PRIVATE_KEY
 PACKAGE_ID=YOUR_PACKAGE_ID
 ```
 
-Export a private key with `sui keytool export --key-identity YOUR_WALLET_ADDRESS` and copy the `exportedPrivateKey` value, which starts with `suiprivkey1`.
+Export a private key with `sui keytool export --key-identity YOUR_WALLET_ADDRESS` and copy the `exportedPrivateKey` value, which starts with `suiprivkey1`, into `AUTHOR_1_PRIVATE_KEY`.
 
 The frontend configures the Enoki API key and Google Client ID in `main.tsx`. Create the Enoki API key in your [Enoki](https://portal.enoki.mystenlabs.com/) project.
+
+The following table lists the configuration values the example reads:
+
+| **Setting** | **Component** | **File** | **Value** |
+|---|---|---|---|
+| `POSTS_PACKAGE_ID` | Frontend | `src/constants.ts` | Package ID from the publish step |
+| Walrus aggregator URL | Frontend | `constants.ts` | A reachable Walrus aggregator |
+| Enoki API key | Frontend | `main.tsx` | API key from your Enoki project |
+| Google Client ID | Frontend | `main.tsx` | Your Google Client ID |
+| `PACKAGE_ID` | Backend | `.env` | Package ID from the publish step |
+| `AUTHOR_1_PRIVATE_KEY` | Backend | `.env` | The `exportedPrivateKey` value from `sui keytool export` |
 
 ## How the pieces fit together
 
@@ -288,4 +299,4 @@ The following sections address common issues with this example.
 
 **Cause:** The sponsor backend gas budget is below what the function consumes.
 
-**Fix:** Increase the gas budget in the sponsor backend or the transaction builder. For CLI publishing, raise `--gas-budget` to `200000000`.
+**Fix:** Increase the gas budget in the sponsor backend or the transaction builder. For CLI publishing, raise `--gas-budget` above `200000000`.
