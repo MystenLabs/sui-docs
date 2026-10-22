@@ -193,7 +193,7 @@ To mutate `Greeting`, the function `update_text` takes the input `(&mut Greeting
 
 #### How does this differ from EVM applications?
 
-The Ethereum Virtual Machine (EVM) adopts a gas-based resource safety strategy. Every opcode on an EVM chain has an associated gas price that makes transactions costly, preventing the network from running a single transaction indefinitely. 
+The Ethereum Virtual Machine (EVM) adopts a gas-based resource safety strategy. Every opcode on an EVM chain has an associated gas price that makes transactions costly, preventing the network from running a single transaction indefinitely. Sui also charges gas, but Move adds a second layer of protection: the Move Bytecode Verifier enforces resource safety, so your code cannot copy resources and must move or destroy all of them by the end of a transaction.
 
 ## Build the Move package
 
@@ -420,7 +420,7 @@ Interact with the newly published package by first making a call to the `new` fu
 $ sui client call --package <PACKAGE_ID> --module greeting --function new  
 ```
 
-Replace `<PACKAGE_ID>` with the package ID the output of the `sui client publish` command returned. You must include the `--package`, `--module`, and `--function` flags. You do not pass any object arguments because `new` only takes the transaction context (`&mut TxContext`), which Sui provides automatically.
+Replace `<PACKAGE_ID>` with the `PackageID` value under **Published Objects** in the output of the `sui client publish` command. You must include the `--package`, `--module`, and `--function` flags. You do not pass any object arguments because `new` only takes the transaction context (`&mut TxContext`), which Sui provides automatically.
 
 The output of this call includes a newly created object:
 
