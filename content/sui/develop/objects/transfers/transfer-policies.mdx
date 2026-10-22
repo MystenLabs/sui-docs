@@ -42,7 +42,7 @@ answer: >-
 
 A [`TransferPolicy`](https://docs.sui.io/references/framework/sui_sui/transfer_policy) on Sui is a customizable primitive that enables the owner of a type to create custom rules that define how the type can be transferred. You can set any number of rules, such as paying a royalty or commission, and all must be satisfied in a single transaction for the transfer to succeed. A `TransferPolicy` can be used within a Sui Kiosk marketplace or any other system that integrates the `TransferPolicy` primitive. 
 
-In a kiosk, creating and sharing a `TransferPolicy<T>` makes the type `T` tradable in that kiosk. On every kiosk purchase, the `TransferPolicy` must confirm the `TransferRequest`, or the transaction fails.
+In a kiosk, creating and sharing a `TransferPolicy<T>` makes the type `T` tradable in that kiosk. On every kiosk purchase, the `TransferPolicy` must confirm the `TransferRequest`, or the transaction fails. For details, see [How do transfer policies work with kiosks?](#how-do-transfer-policies-work-with-kiosks).
 
 ## `TransferPolicy` rules 
 
@@ -71,6 +71,8 @@ The `TransferPolicy` module allows removing any rule at any time, as guaranteed 
 1. On each transfer, the buyer calls the rule's actionable function, which calls `policy::add_receipt` to add the rule's receipt to the `TransferRequest`.
 
 1. When `confirm_request` runs, the receipts are compared against the policy's rules, and the request is confirmed only if they match.
+
+The `dummy_rule` module in the [Example](#example) section contains the code for steps 1 through 3 in one module: `add` is the set function, and `pay` is the actionable function.
 
 Every `add` function on this page takes the `&mut TransferPolicy<T>` and the `&TransferPolicyCap<T>`. Rules that have configuration take additional arguments, such as `amount_bp` in the royalty rule or `start_time` in the time-based rule.
 
@@ -126,13 +128,13 @@ module examples::dummy_rule {
 }
 ```
 
+The `dummy_rule` module has no configuration and accepts a `Coin<SUI>` of any value.
+
 ### Use multiple transfer policies
 
 You can create multiple policies for different purposes. For example, a default VAT policy requires everyone to use it. However, travelers leaving the country can claim a VAT refund without altering the default policy.
 
 To achieve this, you can issue a second `TransferPolicy` for the same type and wrap it in a custom object to implement the logic. For instance, a `TaxFreePolicy` object can bypass VAT. This object stores another `TransferPolicy`, accessible only if the buyer presents a valid `Passport` object. The inner policy might contain no rules, so the buyer pays no fees.
-
-This example module has no configuration and accepts a `Coin<SUI>` of any value.
 
 ## Royalty rules
 
@@ -209,7 +211,11 @@ module examples::time_rule {
     const ETooSoon: u64 = 0;
 
     /// Add a rule that enables purchases after a certain time
-    public fun add<T>(/* skip default fields */, start_time: u64) {
+    public fun add<T>(
+        policy: &mut TransferPolicy<T>,
+        cap: &TransferPolicyCap<T>,
+        start_time: u64
+    ) {
         policy::add_rule(Rule {}, policy, cap, Config { start_time })
     }
 
@@ -265,9 +271,9 @@ module sui::transfer_policy {
 
 There are 2 ways to authorize an action: 
 
-1. Static, by using a witness pattern, such as the `Rule` struct in the previous examples.
+1. Static, by using a witness pattern, such as the `Rule` struct in the previous examples. Only the module that defines the witness type can create it.
 
-1. Dynamic, through a capability pattern. 
+1. Dynamic, through a capability pattern. The caller presents a reference to a capability object, as the `capability_rule` example shows.
 
 Adding type parameters lets you create a generic rule that varies not just by configuration, but also by its type:
 
@@ -311,7 +317,7 @@ module examples::capability_rule {
 
     /// Changing the type parameter name for better readability
     public struct Rule<phantom Cap> has drop {}
-    public struct Config {}
+    public struct Config has store, drop {}
 
     /// Absolutely identical to the witness setting
     public fun add<T, Cap>(/* ... */) {
