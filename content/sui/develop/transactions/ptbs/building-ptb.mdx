@@ -13,6 +13,15 @@ keywords:
   - transaction blocks
   - transactions as arguments
   - passing transactions
+  - sui cli ptb
+  - build ptb cli
+  - rust sdk
+  - offline transaction building
+  - gas configuration
+  - coin transfer
+  - balance transfer
+  - send sui
+  - signAndExecuteTransaction
 goal:
   description: >-
     Reader can build programmable transaction blocks with the TypeScript SDK and
@@ -66,7 +75,7 @@ import { Transaction } from '@mysten/sui/transactions';
 const tx = new Transaction();
 ```
 
-Using this, you can then add transactions to the PTB:
+Using this, you can then add transactions to the PTB. The following example uses [`tx.balance()`](https://sdk.mystenlabs.com/sui/transactions/coins-and-balances) to send SUI to the recipient's address balance. `tx.balance()` and `tx.coin()` both draw from the sender's coin objects and address balance, so you do not select coins yourself:
 
 ```ts
 // Send 100 MIST to the recipient's address balance. tx.balance() draws from the
@@ -233,12 +242,12 @@ tx.objectRef({ objectId, version, digest });
 tx.sharedObjectRef({ objectId, initialSharedVersion, mutable });
 ```
 
-Every offline build must also set:
+Every offline build must also set the following values. For the gas methods, see [Gas configuration](#gas-configuration).
 
-1. The sender
-2. The gas price
-3. The gas budget
-4. The gas payment
+1. The sender, with `setSender()`
+2. The gas price, with `setGasPrice()`
+3. The gas budget, with `setGasBudget()`
+4. The gas payment, with `setGasPayment()`
 5. The ValidDuring expiration
 
 When the transaction uses no owned objects for gas or inputs, such as when `setGasPayment([])` draws gas from an address balance, set a `ValidDuring` expiration as well.
@@ -368,6 +377,8 @@ ptb.programmable_move_call(
 );
 ```
 
+Before you run the example, replace `0x...` with the ID of your shared object and `0xPACKAGE` with the ID of your package. Replace `module` and `function` with the names of the Move module and function you call.
+
 ### Passing type arguments
 
 Generic Move functions require type parameters. Specify them as a `Vec<TypeTag>` in Rust or as string type tags in TypeScript:
@@ -392,7 +403,7 @@ tx.moveCall({
 
 Reads come from indexed state, which trails execution. After you submit a transaction, use `waitForTransaction` before you query its effects. This prevents race conditions where querying immediately after submission returns no results.
 
-Pass the execution result directly. `signAndExecuteTransaction` returns a discriminated union of `Transaction` and `FailedTransaction`, so the digest is not on the result itself.
+Pass the execution result directly. `signAndExecuteTransaction` returns a discriminated union of `Transaction` and `FailedTransaction`, so the digest is not on the result itself. To get the digest, read it from whichever of `result.Transaction` or `result.FailedTransaction` is present, as the following example shows:
 
 ```typescript
 const result = await client.signAndExecuteTransaction({ transaction: tx, signer: keypair });
