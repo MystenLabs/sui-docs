@@ -106,7 +106,7 @@ The type argument `T` is the balance type, for example `Balance<0x2::sui::SUI>`,
 
 Set at least one of `lifetime_cap` and `rate_limit`, and at least one of `expiration_timestamp_ms` and `rate_limit`. The call creates the allowance as a shared object and sends an `AllowanceCap` to the funder. The cap can be used for revocation. It has only the `key` ability, so it cannot be transferred or wrapped inside another object.
 
-### Rate limits
+### How do I set a rate limit?
 
 Build a rate limit with one of the constructors in the same module and pass it as `some(rate_limit)`:
 
@@ -126,7 +126,7 @@ Windows are fixed, not sliding, and unused amounts do not carry over. Periodic w
 
 ### TypeScript SDK
 
-The TypeScript examples on this page share the following setup:
+Each TypeScript example imports its client, keypairs, or addresses from `./setup`. Save the following `setup.ts` in the same directory as the example files:
 
 ```typescript title='setup.ts'
 import { SuiGrpcClient } from '@mysten/sui/grpc';
@@ -290,7 +290,7 @@ if (result.$kind === 'FailedTransaction') {
 
 Pass `type` for a coin other than SUI. The returned `Balance<T>` works in any Move call. To skip the allowance lookup when you already know the funder, pass `{ objectId, funder }` as the `allowance`. For an app-bound allowance, pass `{ objectId, app: { type, permit } }`, where `permit` is a `SpendPermit` your module returned earlier in the same transaction.
 
-For full control over the transaction, replace the `tx.balance()` call above with a withdrawal input built with `from: 'allowance'` and a direct call to `balance_spend`:
+For full control over the transaction, replace the `tx.balance()` call in `spend-allowance.ts` with a withdrawal input built with `from: 'allowance'` and a direct call to `balance_spend`:
 
 ```typescript
 import { funderAddress } from './setup';
@@ -382,6 +382,8 @@ The returned `Balance<C>` behaves like any other balance. Convert it to a coin w
 
 An app-bound allowance routes every spend through the Move module that defines the app type `A`. Use it when your contract, not just the spender's key, must decide whether each pull is allowed, or when you need to rotate the spender key without involving the funder.
 
+Your module authorizes actions on an app-bound allowance with permits. A `SettingsPermit<A>` authorizes issuing and rotating the spender, and a `SpendPermit<A>` authorizes a single spend. Your module obtains the permits from `std::internal::permit<A>()`, which only the module that defines `A` can call.
+
 Issuance has 2 steps. The funder calls `sui::allowance::propose_for_app` in a PTB, which returns an `AllowanceProposal` instead of creating anything. In the same PTB, the funder passes the proposal to a function in your module that accepts it with `sui::allowance::issue`:
 
 ```move
@@ -398,7 +400,7 @@ entry fun propose_for_app<T, A>(
 public fun issue<T, A>(proposal: AllowanceProposal<T>, _: SettingsPermit<A>, ctx: &mut TxContext)
 ```
 
-Your module obtains the permits from `std::internal::permit<A>()`, which only the module that defines `A` can call. Import it with `use std::internal;`, as in the module below. A `SettingsPermit<A>` authorizes issuing and rotating the spender, and a `SpendPermit<A>` authorizes a single spend. The following module accepts proposals, spends, and rotates the spender for its `APP` type. Add your own checks before each call:
+Import `std::internal` with `use std::internal;`. The following module accepts proposals, spends, and rotates the spender for its `APP` type. Add your own checks before each call:
 
 ```move title='allowance_app.move'
 module my_app::allowance_app;
