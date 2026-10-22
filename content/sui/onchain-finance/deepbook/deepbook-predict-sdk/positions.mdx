@@ -69,7 +69,7 @@ Both networks run Predict protocol version 4, where every trade is a queued orde
 
 Every function is a member of `client.predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) shows how to register. Each builder and quote that targets a market takes the market as a [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets): an object that names the market by its `underlying`, `expiryMs`, and optional `marketId`, plus the strike, as a binary or range position, where the call needs one. The function then reads the chain to resolve the market object and caches it per client, so those functions are asynchronous. The SDK takes and returns amounts as decimal USDC values and converts them to 6-decimal base units; see [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units).
 
-## Queued orders {#queued-orders}
+## How do queued orders work? {#queued-orders}
 
 A mint or an early sell is a queued order. You place it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, τ, about 800 ms after placement, and a keeper or any other caller then fills it at that price or refunds it.
 
@@ -122,7 +122,7 @@ Use `read.waitForOutcome` to poll a record until it is filled, refunded, or clos
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2872-2876" />
 
-`read.order(m, recordId)` and `read.orders(m, recordIds)` read records without waiting. Each record's `view.state` is `'placed'`, `'priced'`, `'refunding'`, `'filled'`, `'refunded'`, or `'closed'`. A filled record's `view.position` carries the packed `orderId` and the held quantity, and `view.sellable` reports whether you can sell it now. A keeper that commits a price and fills in one transaction moves an order from `'placed'` straight to `'filled'`, so do not count on seeing `'priced'`.
+`read.order(m, recordId)` and `read.orders(m, recordIds)` read records without waiting. Each record's `view.state` is `'placed'`, `'priced'`, `'refunding'`, `'filled'`, `'refunded'`, or `'closed'`. A filled record's `view.position` carries the packed `orderId` and the held quantity, and `view.sellable` reports whether you can sell it now. The record ID identifies the queued order in its market's queue, and the order ID identifies the position the record holds, which `cost.settledPayout` takes. A keeper that commits a price and fills in one transaction moves an order from `'placed'` straight to `'filled'`, so do not count on seeing `'priced'`.
 
 ### `read.planSell` {#plan-sell}
 
@@ -168,7 +168,7 @@ The following sample sells an Open record early, offers a manual refund only for
 
 <ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-sell" />
 
-## Quotes {#mint-functions}
+## How to quote a mint {#mint-functions}
 
 `read.quoteMint` and `read.quoteMintCost` quote a mint without placing it. They read Predict's protocol version 4 quote functions and preview a queued fill at the current clock: the quote has `queued: true`, `fees.penalty` is 0, and the flat order fee is in `orderFee`, on top of `cost`. The fill itself prices at its committed Pyth tick, so a quote is an estimate. For an order form, [`read.planMint`](#plan-mint) is the fuller tool, because it adds the slippage limits and the enqueue builder's preflight. Both quotes read the owner's account, so it must exist, and both throw `PredictInputError` when the configuration lacks the order-flow package or its desk. Neither checks that the balance covers the order, so use a plan or the enqueue preflight for that.
 
@@ -211,7 +211,7 @@ Use `read.quoteMintCost` to see what an all-in budget buys. It returns a `Promis
 
 For a preview that costs no chain call at all, [Predict Cost SDK](/onchain-finance/deepbook/deepbook-predict-sdk/cost) runs the same budget search locally from a pricer snapshot.
 
-### Deprecated immediate builders {#immediate-builders}
+### Why do the immediate builders abort? {#immediate-builders}
 
 `tx.mint`, `tx.mintAmount`, and `tx.mintCost` build the [retired immediate mints](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position), `tx.redeem` builds the retired live close, and `read.quoteRedeem` quotes it. Every call they build aborts with `EDelayedExecutionRequired` on both networks, and version 2.7.0 deprecates the 5 functions. Build every trade with [`tx.enqueuePlan`](#enqueue-plan) or the `enqueue*` builders instead, and quote an early sell with `read.planSell` or `read.quoteSell`.
 
@@ -229,7 +229,7 @@ It takes these parameters:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="732-736" />
 
-## Position reads {#position-reads}
+## How to read account positions {#position-reads}
 
 The SDK reads positions straight from the account's onchain position table, so neither read needs an indexer. The fastest path is to persist the order ID from each mint receipt and replace it after each partial close; use these reads to recover a lost ID or to validate a stored one.
 
@@ -259,7 +259,7 @@ It takes these parameters:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="857-857" />
 
-## Receipt decoders {#decode}
+## How to decode trade receipts {#decode}
 
 The receipt decoders turn an executed transaction's events into typed receipts, with no network call. Include events when you execute the transaction, and pass the result. Without events, a singular decoder throws `PredictInputError` because it finds no matching event, and a plural decoder returns an empty array. A decoder also throws `PredictInputError` when a matching event carries no Binary Canonical Serialization (BCS) payload. Each singular decoder throws `PredictInputError` unless the result holds exactly 1 matching event, and each plural decoder returns every matching receipt in event order, for a transaction that batches several trades. [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#decode) covers how the decoders read events.
 
