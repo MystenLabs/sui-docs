@@ -357,7 +357,7 @@ console.log(`enable_address_balance_gas_payments on ${network}:`, enabled);
 
 </details>
 
-## Sponsored transactions
+## How do sponsored transactions work with address balances?
 
 Address balances simplify sponsored transactions compared to coin-based sponsorship:
 
@@ -474,7 +474,7 @@ Copy the following examples into [GraphQL IDE (Testnet)](https://graphql.testnet
 
 For more details, see the GraphQL reference for `IAddressable.balance`.
 
-## Computing balance changes from checkpoint data
+## How do I compute balance changes from checkpoint data?
 
 Deposits to and withdrawals from address balances do not show up as coin objects in a transaction's inputs and outputs. Instead, they appear as accumulator events: a `Merge` operation records funds deposited to an address balance, and a `Split` operation records funds withdrawn from it.
 
@@ -539,7 +539,7 @@ pub struct BalanceChange {
 }
 ```
 
-## Converting existing coins to address balances
+## How do I convert existing coins to address balances?
 
 Migration is optional. To consolidate coins into address balances using [Sui CLI](/references/cli/ptb):
 
