@@ -72,7 +72,9 @@ public fun public_transfer<T: key + store>(obj: T, recipient: address)
 
 In both functions, `obj` is the object to transfer and `recipient` is the address that becomes its owner.
 
-An object's ownership can change over the life of that object, either by adding it as a [dynamic object field](/develop/objects/dynamic-fields), transferring it to a different address, or making it [immutable](/develop/objects/object-ownership/immutable). However, after you create an object and set its ownership, it cannot be [shared](/develop/objects/object-ownership/shared).
+An object's ownership can change over the life of that object: you can add it as a [dynamic object field](/develop/objects/dynamic-fields), transfer it to a different address, or make it [immutable](/develop/objects/object-ownership/immutable). However, after you create an object and set its ownership, you cannot make it [shared](/develop/objects/object-ownership/shared).
+
+The `create` function in the `object_basics.move` example module creates an address-owned object:
 
 <ImportContent source="examples/move/basics/sources/object_basics.move" mode="code" fun="create" noComments />
 
