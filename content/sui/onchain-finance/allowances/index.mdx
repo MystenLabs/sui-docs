@@ -43,7 +43,12 @@ Funds stay in the funder's balance until a spend succeeds, so an allowance is a 
 
 ## What kinds of allowances are there?
 
-A direct allowance names a spender that can spend within the limits with its own signature, without further approval from the funder. An app-bound allowance routes every spend through the Move module of a specific app, which can also change the spender. Both kinds are shared objects that the funder revokes with a capability only the funder holds.
+There are 2 kinds of allowances:
+
+- **Direct allowance:** Names a spender that can spend within the limits with its own signature, without further approval from the funder.
+- **App-bound allowance:** Routes every spend through the Move module of a specific app, which can also change the spender.
+
+Both kinds are shared objects that the funder revokes with a capability only the funder holds.
 
 import DocCardList from '@theme/DocCardList';
 
