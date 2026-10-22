@@ -54,7 +54,9 @@ Browser extension wallets built for Sui use the [Wallet Standard](https://github
 
 If you are building a wallet, the helper library `@mysten/wallet-standard` provides types and utilities to help get started.
 
-## Working with wallets
+To build a wallet, start with [How do I build a wallet that apps can detect?](#how-do-i-build-a-wallet-that-apps-can-detect). To connect your app to existing wallets, start with [How does my app interact with wallets?](#how-does-my-app-interact-with-wallets).
+
+## How do I build a wallet that apps can detect?
 
 The Wallet Standard includes features to help build wallets.
 
@@ -117,7 +119,7 @@ Legacy methods:
 - `sui:signPersonalMessage`: Use to prompt the user to sign a personal message and return the
   message signature back to the app. This is essential for user verification flows used by many apps.
 
-Implement these features in your wallet class under the `features` property. The keys in square brackets, such as `[StandardConnect]`, are computed property keys: each constant imported from `@mysten/wallet-standard` holds the feature's identifier (for example, `standard:connect`).
+Implement these features in your wallet class under the `features` property.
 
 ```tsx
 import {
@@ -139,7 +141,7 @@ import {
 class YourWallet implements Wallet {
 	/* ... existing code from above ... */
 
-  get features(): ConnectFeature & EventsFeature & SuiFeatures {
+  get features(): StandardConnectFeature & StandardEventsFeature & SuiFeatures {
     return {
       [StandardConnect]: {
         version: "1.0.0",
@@ -164,11 +166,11 @@ class YourWallet implements Wallet {
     };
   };
 
-  #on: EventsOnMethod = () => {
+  #on: StandardEventsOnMethod = () => {
     // Your wallet's events on implementation
   };
 
-  #connect: ConnectMethod = () => {
+  #connect: StandardConnectMethod = () => {
     // Your wallet's connect implementation
   };
 
@@ -186,6 +188,8 @@ class YourWallet implements Wallet {
 }
 ```
 
+In the `features` getter, the keys in square brackets, such as `[StandardConnect]`, are computed property keys. Each constant imported from `@mysten/wallet-standard` holds the feature's identifier (for example, `standard:connect`).
+
 ### How do I expose accounts from a wallet?
 
 The last requirement of the wallet interface is to expose an `accounts` interface. Wallets that comply with the Wallet Standard should automatically populate this array with any previously authorized accounts when the wallet loads. This means:
@@ -195,6 +199,8 @@ The last requirement of the wallet interface is to expose an `accounts` interfac
 - After revocation: Revoked accounts do not appear in the array
 
 The accounts use the `ReadonlyWalletAccount` class to construct an account matching the required interface. Each account's `chains` and `features` can be a subset of those the wallet declares, but every chain and feature listed on an account must also exist on the wallet itself.
+
+In the following example, `someWalletAccounts` is a placeholder for your wallet's internal list of accounts, each with a `suiAddress` and `pubkey`.
 
 ```tsx
 import { ReadonlyWalletAccount } from '@mysten/wallet-standard';
@@ -223,7 +229,7 @@ class YourWallet implements Wallet {
 }
 ```
 
-### Registering in the window
+### How do I register my wallet in the window?
 
 After you have a compatible interface for your wallet, use the `registerWallet`
 function to register it.
@@ -234,7 +240,7 @@ import { registerWallet } from '@mysten/wallet-standard';
 registerWallet(new YourWallet());
 ```
 
-## Managing wallets
+## How does my app interact with wallets?
 
 The Wallet Standard includes features to help your apps interact with wallets.
 
@@ -264,7 +270,7 @@ Use the `Wallet.icon` and `Wallet.name` attributes to display the wallet details
 
 The `Wallet.accounts` is an array of `WalletAccount`s. Each `WalletAccount` type has `address` and `publicKey` properties, which are most useful during development. This data fills and caches after account authorization.
 
-### Features
+### How do I check which features a wallet supports?
 
 Both the `Wallet` type and the `WalletAccount` type have a property called `features`. This property contains the main wallet functionality. The previous code lists the mandatory features that wallets must implement.
 
@@ -303,7 +309,7 @@ Similar to the connect (account authorization) feature, the Wallet Standard also
 wallet.features['standard:disconnect'].disconnect();
 ```
 
-### Transactions - suggested approach
+### How do I sign and execute a transaction?
 
 Once the user has authorized accounts from a wallet, your app has the necessary information to execute transactions, such as address and method.
 
@@ -336,7 +342,7 @@ await client.executeTransaction({
 
 This example connects to Mainnet. Configure the client for the same network as the chain of the account that signed the transaction.
 
-### Transactions - abbreviated approach
+### How do I sign and execute in one step?
 
 Many wallets abstract the above flow into one feature: `sui:signAndExecuteTransaction`. The required arguments for this feature are the raw transaction and the options with the desired information to include in the response:
 
@@ -347,7 +353,7 @@ Many wallets abstract the above flow into one feature: `sui:signAndExecuteTransa
 - `showInput`: Include the transaction's input.
 - `showRawInput`: Same as `showInput` but the format is raw.
 
-### Events wallets emit
+### How do I listen for wallet events?
 
 The wallet emits events on certain user actions that apps can listen to. These events allow your app to be responsive to user actions on their wallets.
 
