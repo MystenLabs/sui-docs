@@ -42,7 +42,7 @@ answer: >-
   module in DeepBook Margin.
 ---
 
-The `pool_proxy` module provides wrapper functions for trading with margin managers. These functions enable placing orders, modifying and canceling them, and managing staking and governance participation through a margin manager. All trading operations require the margin manager to be associated with the correct DeepBook pool. To place orders, call the `_v2` functions in the `pool_proxy_upgraded` module; modify, cancel, settlement, staking, governance, and rebate functions are in `pool_proxy`.
+The `pool_proxy` module provides wrapper functions for trading with margin managers. These functions enable placing orders, modifying and canceling them, and managing staking and governance participation through a margin manager. All trading operations require the margin manager to be associated with the correct DeepBook pool. To place orders, call the `_v2` functions in the `pool_proxy_upgraded` module, which accept price objects from Pyth's upgraded package. The modify, cancel, settlement, staking, governance, and rebate functions are in `pool_proxy`.
 
 ## What are margin orders in DeepBook?
 
