@@ -110,7 +110,7 @@ Collateral is the Move type `usdc::usdc::USDC`. On Mainnet that resolves to nati
 | `mint_paused` | `bool` | When true, new mints abort. Every other flow stays available. |
 | `valuation_stamp` | `Option<ValuationStamp>` | `some` from a pool flush's snapshot stage until this market's `value_expiry` runs or the stamp goes stale. Trading never reads it and never waits on it. |
 
-The field order in the table is declaration order, which is also the Binary Canonical Serialization (BCS) order of the object. `ValuationStamp` holds the flush sequence number and the market's cash and inventory-impact reserve at the snapshot instant; see [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) for the flush that writes it.
+The field order in the table is declaration order, which is also the Binary Canonical Serialization (BCS) order of the object, so a client that decodes the object's raw bytes must read the fields in this order. `ValuationStamp` holds the flush sequence number and the market's cash and inventory-impact reserve at the snapshot instant; see [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) for the flush that writes it.
 
 <details>
 <summary>`ExpiryMarket` source</summary>
@@ -126,7 +126,7 @@ The field order in the table is declaration order, which is also the Binary Cano
 
 </details>
 
-## Load a pricer {#load-a-pricer}
+## How do I load a pricer? {#load-a-pricer}
 
 Every priced flow takes a `Pricer`, a snapshot of the oracle surface for one market. Build it with `load_live_pricer`, which reads the current canonical Propbook feeds for the market's underlying:
 
@@ -173,7 +173,7 @@ See [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/ora
 
 </details>
 
-## Quote a mint {#quote-a-mint}
+## How do I quote a mint? {#quote-a-mint}
 
 The module has 3 Move functions that price a prospective mint without changing market state. Each prices the order the way a queued fill would at the current clock. None is a preflight, and this section names the layer each claim belongs to:
 
@@ -314,7 +314,7 @@ The SDK's fill receipts report it, because that value comes from the `OrderMinte
 
 ## Queued orders {#queued-orders}
 
-A mint or an early sell is a queued order: the trader places it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, called τ, and then any caller can commit that price and fill or refund the order. τ falls about 800 ms after placement on both networks.
+A mint or an early sell is a queued order: the trader places it with its limits and its money, it waits in its market's queue until Pyth Lazer publishes its signed price for the order's price instant, called τ, and then any caller can commit that price and fill or refund the order. τ falls about 800 ms after placement on both networks. Orders in one market that share one τ form a cohort, and they share one signed update and one commit.
 
 :::info
 
@@ -324,7 +324,7 @@ Both networks passed the delayed-execution cutover, so every trade on either is 
 
 The Move snippets in this section pin DeepBookV3 `main` at [`29117434`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159), the protocol version 4 source. Mainnet's publishes come from `98128174`, whose Mainnet builds are byte-identical. The order-flow sources are at [`packages/predict_orders/sources`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict_orders/sources), and the math library is at [`packages/predict_math/sources`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict_math/sources).
 
-### Why orders wait {#why-orders-wait}
+### Why do orders wait? {#why-orders-wait}
 
 Predict prices a queued order at Pyth's signed price for a fixed instant after placement, rather than at whatever spot is onchain when the trader's own transaction executes. Neither the trader nor the filler picks that instant or that price.
 
@@ -361,15 +361,15 @@ Predict protocol version 4 compiles `constants::current_version!()` as `4`, and 
 - **The mint quotes price a queued fill.** `quote_mint`, `quote_mint_for_account`, and `quote_mint_exact_cost_for_account` keep their signatures and price the order like a queued fill at the current clock. See [Quotes from protocol version 4](#quotes-v4).
 - **The congestion surcharge is gone.** `set_ewma_params` and `set_ewma_enabled` abort with `EEwmaRetired`, and every fill and quote reports `penalty_fee` as 0.
 - **Settled redemption is unchanged for account positions.** `redeem_settled` pays positions that immediate mints left in accounts before the cutover. A queued fill never enters an account, so it never needs it. Protocol version 4 also limits `redeem_settled_permissionless` to an admin allowlist of keepers, as [Redeem a position](#redeem-a-position) describes.
-- **Only flush operators finish a pool flush.** `plp::finish_flush` aborts with `ENotFlushOperator` unless the sender is on an admin-managed allowlist. See [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#finish-stage).
+- **Only flush operators finish a pool flush.** `plp::finish_flush` aborts with `ENotFlushOperator` unless the sender is on an admin-managed allowlist. See [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault).
 
 ### Who calls what {#roles}
 
-A trader, or a [session](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#predict-wrappers) acting for one, places orders through the `queue` module of `deepbook_predict_orders`. Every step after placement is open to anyone and needs no account authority: `commit`, `resolve`, `refund`, `settle_step`, `cleanup`, `pay_open`, and `claim_parked` in the order-flow package, plus Predict's `rebalance_expiry_cash` and `try_settle`. The protocol's keepers normally make those calls, with no special rights. Only a holder of Predict's `AdminCap` can allowlist the order flow, change the policy, refund orders by ID, bump the order-flow package's version floor, or edit the flush-operator allowlist.
+A trader, or a [session](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) acting for one, places orders through the `queue` module of `deepbook_predict_orders`. Every step after placement is open to anyone and needs no account authority: `commit`, `resolve`, `refund`, `settle_step`, `cleanup`, `pay_open`, and `claim_parked` in the order-flow package, plus Predict's `rebalance_expiry_cash` and `try_settle`. The protocol's keepers normally make those calls, with no special rights. Only a holder of Predict's `AdminCap` can allowlist the order flow, change the policy, refund orders by ID, bump the order-flow package's version floor, or edit the flush-operator allowlist.
 
 ### The order lifecycle {#order-lifecycle}
 
-The queue keeps each order as one record in a table, keyed by a sequential `u64` record ID that restarts in every market. A record ID is not the packed `u256` order ID of a position. Each record holds Predict's `OrderReceipt` for its order and that order's own escrowed USDC, so a refund pays exactly what that order escrowed.
+The queue keeps each order as one record in a table, keyed by a sequential `u64` record ID that restarts in every market. A record ID is not the packed `u256` order ID of a position, which [Strikes and Ticks](/onchain-finance/deepbook/deepbook-predict/contract-information/market-keys) describes. Each record holds Predict's `OrderReceipt` for its order and that order's own escrowed USDC, so a refund pays exactly what that order escrowed.
 
 | **Status** | **Code** | **Meaning** | **Leaves the status by** |
 | --- | --- | --- | --- |
@@ -497,7 +497,7 @@ The deadline is `min(τ + stall_timeout_ms, expiry)`, never earlier than the mar
 
 Both networks run an 800 ms delay on the 200 ms channel, a 5-second stall timeout, and a 10-second no-trade window. τ then falls 600 to 800 ms after placement, the deadline falls 5 seconds after τ, and the cutoff falls 10 seconds before expiry, so new orders stop about 11 seconds before expiry. Each order keeps the τ, deadline, channel, and order fee from its placement, so a change to those reaches only new orders. A change to `pyth_price_buffer_ms` or `gap_wait_ms` also reaches cohorts already waiting, because `commit` reads both from the desk when it runs.
 
-### Commit and resolve {#commit-and-resolve}
+### How does a queued order fill? {#commit-and-resolve}
 
 2 permissionless calls move a waiting order to its outcome:
 
@@ -656,7 +656,7 @@ public fun settle_step(
 ): u8
 ```
 
-It returns the phase the next call runs. Anyone can call it, and it aborts with `EMarketNotExpired` before expiry:
+It returns the phase the next call runs. Anyone can call it, and it aborts with `EMarketNotExpired` before expiry. While it returns `0` or `1`, call it again in a new transaction. When it returns `2`, the walk is done and `cleanup` can run:
 
 | **Phase** | **Code** | **Runs when** | **Does** | **Records visited for each call** |
 | --- | --- | --- | --- | --- |
@@ -762,7 +762,7 @@ Every read below is permissionless and non-mutating:
 
 ### Queue orders from TypeScript {#queued-orders-sdk}
 
-The TypeScript SDK, [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3), places queued orders through `client.predict`: `read.planMint` quotes an order and turns a slippage in cents per contract into its limits, `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits, `decode.enqueue` reads the record ID from the result, and `read.waitForOutcome` polls the record until it fills or refunds. Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. [Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers each method.
+The TypeScript SDK, [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3), places queued orders through `client.predict`: `read.planMint` quotes an order and turns a slippage in cents per contract into its limits, `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits, `decode.enqueue` reads the record ID from the result, and `read.waitForOutcome` polls the record until it fills or refunds. Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. [Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) covers each method.
 
 <details>
 <summary>Queue a mint and follow it</summary>
@@ -790,8 +790,8 @@ An integration that targeted protocol version 3 also meets these differences:
 - **The no-trade window:** Inside the window, the version 3 live quotes, mints, and live redeems aborted with `protocol_config::ETradeWindowClosed` (`7`). Admission refuses a queued order by its τ instead, with `EInvalidOrderTiming`, and no live path raises `ETradeWindowClosed`.
 - **Error codes:** `expiry_market` codes `2`, `3`, and `6` to `8` belong to the immediate trades. Every version 3 quote and mint also raised `EMintCostAboveMaxPayout` (`11`) when `all_in_cost` exceeded `quantity`.
 - **Events:** Each immediate mint emitted [`OrderMinted`](#order-minted) and each `redeem_live` emitted [`LiveOrderRedeemed`](#live-order-redeemed), with the same fields as the queued fills, so one decoder reads both.
-- **Congestion surcharge:** The version 3 trades could charge an EWMA congestion surcharge, reported as `penalty_fee`, which also entered the [referral fee basis](/onchain-finance/deepbook/deepbook-predict/design#referral-fee). Protocol version 4 retires it, so `penalty_fee` is 0.
-- **Pool flushes:** `plp::finish_flush` was permissionless, because `start_pool_valuation` committed the drain budgets at start. Protocol version 4 limits it to [flush operators](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#finish-stage).
+- **Congestion surcharge:** The version 3 trades could charge an EWMA congestion surcharge, reported as `penalty_fee`, which also entered the [referral fee basis](/onchain-finance/deepbook/deepbook-predict/design). Protocol version 4 retires it, so `penalty_fee` is 0.
+- **Pool flushes:** `plp::finish_flush` was permissionless, because `start_pool_valuation` committed the drain budgets at start. Protocol version 4 limits it to [flush operators](/onchain-finance/deepbook/deepbook-predict/contract-information/vault).
 
 <details>
 <summary>Retired entrypoint source</summary>
@@ -810,7 +810,7 @@ An integration that targeted protocol version 3 also meets these differences:
 
 Version 2.7.0 of the TypeScript SDK deprecates `tx.mint`, `tx.mintAmount`, `tx.mintCost`, and `tx.redeem`, which build these calls, and `read.quoteRedeem`, which quoted `redeem_live`.
 
-## The no-trade window {#no-trade-window}
+## What is the no-trade window? {#no-trade-window}
 
 Trading stops shortly before each expiry. `ProtocolConfig.no_trade_window_ms` defines a window at the end of a market's life, `10000` on both networks, above its compiled default of `2000`. Admission refuses a queued order whose τ would fall at or past `expiry - no_trade_window_ms`, with `EInvalidOrderTiming`, and the window is one term of the order-flow package's cutoff, so new orders stop about 11 seconds before expiry. See [τ, cohorts, the deadline, and the cutoff](#order-timing).
 
@@ -818,7 +818,7 @@ The window does not apply to the quotes, `redeem_settled`, `redeem_settled_permi
 
 Read the live value with `protocol_config::no_trade_window_ms(config): u64`. A window of `0` disables the gate, and an admin can move the value between `0` and `15000` ms at any time, including while a flush is in flight, because nothing in a flush reads it. A change emits `NoTradeWindowUpdated`. The examples on these pages skip any market with less than 30 seconds to run, which clears the window and the cutoff with margin.
 
-## Redeem a position {#redeem-a-position}
+## How do I redeem a position? {#redeem-a-position}
 
 A position from a queued fill is an Open record. It is sold early with `enqueue_redeem_open` and paid at settlement by the queue's settlement walk, with no claim, as [Open records and early sells](#open-records) describes. The functions below close a position recorded in an account, which only an immediate mint from before the cutover created:
 
@@ -1010,7 +1010,7 @@ Error numbers repeat across modules, so read the module out of the abort locatio
 |---|---|---|
 | `0` | `EMintPaused` | This market's `mint_paused` flag is true. Other flows remain open. |
 | `1` | `EMarketNotSettled` | A settled-only flow ran on an unsettled market, including `redeem_settled` and `settled_order_payout`. |
-| `2` | `EMintCostAboveMax` | The quoted `all_in_cost` exceeds the `max_cost` you passed. |
+| `2` | `EMintCostAboveMax` | The quoted `all_in_cost` exceeds the `max_cost` you passed. Code `11`, `EMintCostAboveMaxPayout`, compares `all_in_cost` against `quantity` instead. |
 | `3` | `EMintProbabilityAboveMax` | The quoted entry probability exceeds the `max_probability` you passed. |
 | `4` | `EWrongPricer` | `load_live_pricer` built the pricer for a different market. Load one against this market in the same transaction. |
 | `5` | `EReferenceTickObservationMissing` | No exact Pyth observation exists at the market's `reference_tick_source_timestamp_ms`. |
@@ -1111,7 +1111,7 @@ Because error numbers repeat across modules, the number alone identifies nothing
 
 ## Order events {#events}
 
-Order-domain events live in `deepbook_predict::order_events` and all 3 carry `copy`, `drop`, and `store`. The field order below is declaration order, which is the order BCS decoding depends on. Do not reorder it.
+Order-domain events live in `deepbook_predict::order_events` and all 3 carry `copy`, `drop`, and `store`. The field order in each table is declaration order, which is the order BCS decoding depends on: a decoder must read the fields in this order. Do not reorder them.
 
 ### `OrderMinted` {#order-minted}
 
