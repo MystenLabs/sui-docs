@@ -74,7 +74,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-To migrate from JSON-RPC to gRPC, replace each JSON-RPC call with the corresponding gRPC service method: `LedgerService` for transaction and checkpoint lookups, `StateService` for balances and owned objects, `SubscriptionService` for streaming, and `TransactionExecutionService` for submission. For filtered historical event queries, you can also use [GraphQL `Query.events`](/develop/accessing-data/using-events#querying-events-with-graphql).
+You migrate from JSON-RPC to gRPC by replacing each JSON-RPC call with the corresponding gRPC service method: `LedgerService` for transaction and checkpoint lookups, `StateService` for balances and owned objects, `SubscriptionService` for streaming, and `TransactionExecutionService` for submission. For filtered historical event queries, you can also use [GraphQL `Query.events`](/develop/accessing-data/using-events).
 
 Each recipe pairs a JSON-RPC call with its gRPC replacement and explains the key differences. For the full method mapping and decision criteria, see the [JSON-RPC Migration Guide](/develop/accessing-data/json-rpc-migration). For gRPC concepts and setup, see [What is gRPC?](/develop/accessing-data/grpc/what-is-grpc) and [Querying Data with gRPC](/develop/accessing-data/grpc/using-grpc).
 
@@ -104,6 +104,11 @@ const client = new SuiGrpcClient({
 });
 ```
 
+The recipes call the client in the following ways:
+
+- `client.core`: Provides high-level wrapper methods, such as `getObject` and `getTransaction`, which select fields with the `include` parameter.
+- `client.ledgerService` and `client.subscriptionService`: Call the generated proto client directly and take proto field names such as `readMask`. Recipes use them for checkpoint lookups, which have no Core API wrapper, and for subscriptions, which the SDK exposes through the proto client.
+
 For `grpcurl` and Buf CLI examples, replace `<FULL_NODE_URL>` with your provider's gRPC endpoint. See [Querying Data with gRPC](/develop/accessing-data/grpc/using-grpc) for setup details and language-specific client instructions for Go and Python.
 
 ## Key concepts
@@ -112,7 +117,7 @@ The recipes on this page rely on the following terms:
 
 - **Field masks:** JSON-RPC selects response fields with per-field booleans such as `showContent` and `showEffects`. gRPC instead takes a `read_mask` that lists the field paths to return (`readMask` in the TypeScript proto client). The TypeScript SDK's `include` parameter expresses the same selection, so `include: { effects: true, events: true }` corresponds to `"read_mask": { "paths": ["effects", "events"] }` in `grpcurl`. See [field masks](/develop/accessing-data/grpc/using-grpc#field-masks).
 - **Cursor:** An opaque binary token that marks a position in a stream. Pass it as `options.after` to resume ascending pagination, or `options.before` for descending.
-- **Watermark:** A progress marker in each `List*` response frame. It carries a resume `cursor` and a `checkpoint` field that tells you how much of the checkpoint range the server scanned.
+- **Watermark:** A progress marker in each `List*` response frame. It carries a resume `cursor` and a `checkpoint` field that tells you how much of the checkpoint range the server scanned. To resume from the cursor and read the `checkpoint` field, see [List and paginate transactions](#list-and-paginate-transactions).
 - **`QueryEnd`:** Appears on the final frame of a `List*` stream with the reason the stream ended. See [List and paginate transactions](#list-and-paginate-transactions).
 
 ## Get a single object
@@ -493,7 +498,7 @@ The gRPC subscription differs from the JSON-RPC subscription in the following wa
 
 - JSON-RPC WebSocket subscriptions filtered events server-side, and Sui deprecated them in mid-2024. gRPC `SubscribeEvents` also filters server-side using an `EventFilter`, so your client receives only matching events.
 - Subscriptions begin at the current tip and do not accept a resume point. Filtered subscriptions start with a progress-only frame whose cursor marks the point immediately before live delivery; an unfiltered subscription can start with a payload, so never discard the first frame. Immediately consume live frames into durable, capacity-managed storage while `LedgerService.ListEvents` backfills to that boundary. If the spool fills or the stream drops, restart from the last durably processed cursor and backfill the gap. See [Subscriptions for streaming data](/develop/accessing-data/grpc/what-is-grpc#subscriptions-for-streaming-data).
-- For filtered historical event queries over a range, use `LedgerService.ListEvents` or [GraphQL `Query.events`](/develop/accessing-data/using-events#querying-events-with-graphql).
+- For filtered historical event queries over a range, use `LedgerService.ListEvents` or [GraphQL `Query.events`](/develop/accessing-data/using-events).
 
 ### Query events over a checkpoint range
 
