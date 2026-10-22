@@ -45,6 +45,8 @@ answer: Build your first app on Sui if you have Solana experience.
 
 The biggest difference between Sui and Solana development lies in the programming language. Sui uses [**Move**](/develop/write-move/sui-move-concepts), while Solana relies on **Rust**, typically paired with a development framework that simplifies app development and management. **Anchor** is the most popular Solana framework.
 
+## How does Move on Sui compare to Rust on Solana?
+
 | **Topic** | **Rust (Solana)** | **Move (Sui)** |
 |------|---------------|------------|
 | Model | Account-based model where accounts store all data. Programs declare read/write accounts upfront. Everything is an account (programs, data, wallets). | Object ownership inherent to Sui, objects are first class citizens and encompass everything owned on Sui. |
@@ -125,9 +127,9 @@ See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/buildi
 | Consensus mechanism | Tower BFT (PoS variant) with Proof of History (PoH) | DAG-based BFT consensus (Mysticeti), with validators selected by DPoS |
 | VM and its languages | Solana VM, Rust, C, C++ | MoveVM, Move Lang |
 | Chain data structure | Blocks with PoH ordering | DAG |
-| Common standards (coin, token, NFT, and so on) | SPL Token, MPL Core, Token22 | Coin Standard, Closed-Loop Token |
+| Common standards (coin, token, NFT, and so on) | SPL Token, MPL Core, Token22 | Coin Standard, Closed-Loop Token, Kiosk |
 | Coin names, name of the smallest unit | SOL, Lamport | SUI, MIST |
-| Available frameworks for development | Anchor framework, Solana CLI, native Rust tooling | Sui CLI |
+| Available frameworks for development | Anchor framework, Solana CLI, native Rust tooling | Sui CLI, Sui TypeScript SDK |
 | L1 and L2 | Emerging but not widespread, mostly relies on fast L1 with parallel execution | No L2, relies on fast L1 with horizontal scaling |
 | Governance | Offchain governance through SIMD (Solana Improvement Documents) | Onchain governance |
 | Bridges | Supported | Supported |
