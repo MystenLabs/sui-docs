@@ -42,22 +42,30 @@ answer: Use DeepBookV3 to execute token swaps.
 
 ## How do I swap tokens through DeepBook?
 
-DeepBook provides a swap-like interface commonly seen in automatic market makers (AMMs). Unlike the order functions, you can call `swap_exact_amount` without a `BalanceManager`. You call it directly with `Coin` objects instead. The direction of the swap determines which input must be zero:
+To swap tokens through DeepBook, call one of the swap functions that the `Pool` exposes. You can pass `Coin` objects directly or use a `BalanceManager`. DeepBook provides a swap-like interface commonly seen in automatic market makers (AMMs). Unlike the order functions, you can call `swap_exact_quantity` without a `BalanceManager`. You call it directly with `Coin` objects instead. The direction of the swap determines which input must be zero:
 
 | Direction | `base_in` | `quote_in` |
 | --- | --- | --- |
 | Base → quote | Positive | Zero |
 | Quote → base | Zero | Positive |
 
-Some `deep_in` amount is required to pay for trading fees. You can overestimate this amount, because the call returns the unused DEEP tokens at the end.
+Swaps pay trading fees in DEEP tokens. When you swap with `Coin` objects, you provide a `deep_in` amount to pay the fees. You can overestimate this amount, because the call returns the unused DEEP tokens at the end. The manager-based functions take fees from the DEEP that the `BalanceManager` holds instead.
 
 You can use the `get_amount_out` endpoint to simulate a swap. The function returns the exact amount of DEEP tokens that the swap requires.
 
 ## Which swap function should I use?
 
-- To swap with `Coin` objects directly, without a `BalanceManager`, use `swap_exact_base_for_quote` or `swap_exact_quote_for_base`. Both require some DEEP for fees; you can overestimate it and the call returns the remainder.
-- To set the direction yourself, call `swap_exact_quantity` directly, with either the base or the quote input at zero value.
-- If you use a `BalanceManager` that holds enough DEEP for fees, use `swap_exact_base_for_quote_with_manager` or `swap_exact_quote_for_base_with_manager`. `swap_exact_quantity_with_manager` is the underlying function that both call.
+Pick the function that matches how you hold funds and which direction you swap:
+
+| If you | Use |
+| --- | --- |
+| Swap base for quote with `Coin` objects, without a `BalanceManager` | `swap_exact_base_for_quote` |
+| Swap quote for base with `Coin` objects, without a `BalanceManager` | `swap_exact_quote_for_base` |
+| Set the direction yourself with `Coin` objects | `swap_exact_quantity`, with either the base or the quote input at zero value |
+| Swap base for quote with a `BalanceManager` that holds enough DEEP for fees | `swap_exact_base_for_quote_with_manager` |
+| Swap quote for base with a `BalanceManager` that holds enough DEEP for fees | `swap_exact_quote_for_base_with_manager` |
+
+`swap_exact_base_for_quote` and `swap_exact_quote_for_base` both require some DEEP for fees. You can overestimate it, and the call returns the remainder. `swap_exact_quantity_with_manager` is the underlying function that both manager-based functions call.
 
 ## API
 
@@ -116,7 +124,7 @@ The following is the `swap_exact_quote_for_base` function from `pool.move`:
 <details>
 <summary>Swap exact quantity</summary>
 
-This function is what the previous two functions call with `coin::zero()` set for the third coin. Users can call this directly for base → quote or quote → base as long as base or quote have a zero value.
+The previous two functions call this function and pass `coin::zero()`, a `Coin` object with zero value, for the input they do not use. You can call it directly to swap base for quote or quote for base, as long as either the base input or the quote input has zero value.
 
 The following is the `swap_exact_quantity` function from `pool.move`:
 
