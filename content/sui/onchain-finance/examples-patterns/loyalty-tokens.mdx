@@ -85,7 +85,7 @@ Lastly, a `buy_a_gift` function handles the redemption of `LOYALTY` tokens for `
 When you implement loyalty tokens, consider the following:
 
 - **Protect the `TreasuryCap`.** The holder of the `TreasuryCap` can mint unlimited tokens. Store it in a multisig address or a dedicated custody solution, not a single hot wallet ([Security Best Practices](/develop/security/best-practices)).
-- **Gate the spend action with rules.** Without a rule on the `spend` action, any holder can spend tokens without authorization. The `GiftShop` witness pattern shown above ensures tokens can only be spent through the `buy_a_gift` function. See [Spending](/onchain-finance/closed-loop-token/spending) for details.
+- **Gate the spend action with rules.** Without a rule on the `spend` action, any holder can spend tokens without authorization. The `GiftShop` witness pattern in the `buy_a_gift` code example ensures that holders can spend tokens only through the `buy_a_gift` function. See [Spending](/onchain-finance/closed-loop-token/spending) for details.
 - **Handle insufficient balance.** If a user tries to spend more tokens than they hold, the transaction aborts. Your frontend should check the user's token balance before constructing the spend transaction.
 
 ## What is the lifecycle of a loyalty token?
