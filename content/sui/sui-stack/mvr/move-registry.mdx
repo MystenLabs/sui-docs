@@ -35,7 +35,7 @@ Use MVR to:
 
 - Depend on other packages when developing with Move.
 
-Additionally, MVR can help you manage package versioning. With MVR, you call a specific version of a package without having to resolve the addresses yourself. You also do not need to worry about someone updating the package, because if you use a name without a specified version, MVR automatically defaults to the latest version available.
+Additionally, MVR can help you manage package versioning. With MVR, you call a specific version of a package without having to resolve the addresses yourself. You also do not need to worry about someone updating the package, because if you use a name without a specified version, MVR automatically defaults to the latest version available. To call a specific version, add the version number to the MVR name, as described in [What is an MVR name?](#what-is-an-mvr-name)
 
 :::info
 
@@ -45,7 +45,7 @@ MVR default service currently supports Mainnet and Testnet networks.
 
 ## How is MVR designed?
 
-- `PackageInfo` registration: Exists independently on each network.
+- `PackageInfo` registration: Registers the package's metadata object. Exists independently on each network.
 - MVR registration: A single source of truth located on Mainnet.
 
 The following diagram shows the MVR design at a high level.
@@ -82,7 +82,7 @@ To register a package:
 1. Using your SuiNS name, register an application.
 2. Based on the network, associate the application name with a `PackageInfo` object:
 - **Mainnet:** Associate the application name with a complete `PackageInfo` object, which provides the full metadata and ownership proof.
-- **Other networks:** Associate the application name with the object ID, acting as a pointer without ensuring a full mapping.
+- **Other networks (for example, Testnet):** Associate the application name with the object ID, acting as a pointer without ensuring a full mapping.
 
 ![Move Registry](/img/mvr/mvr-registry.svg)
 
