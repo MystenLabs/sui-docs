@@ -64,6 +64,16 @@ There are various ways to use object fields to store primitive data and other ob
 
 Fortunately, Sui provides dynamic fields with arbitrary names, not just identifiers, that are added and removed on-the-fly, which only affect gas when they are accessed. Dynamic fields can store heterogeneous values. 
 
+Working with dynamic fields follows these steps:
+
+1. Define the object types for the parent and the child.
+
+1. Add the child as a field with `add`, as described in [Adding dynamic fields](#adding-dynamic-fields).
+
+1. Read or modify the field with `borrow` or `borrow_mut`, as described in [Accessing dynamic fields](#accessing-dynamic-fields).
+
+1. Remove the field with `remove` to get its value back, as described in [Removing a dynamic field](#removing-a-dynamic-field).
+
 ## What is the difference between fields and object fields?
 
 There are 2 types of dynamic field: fields and object fields, which differ based on how you store their values:
@@ -78,6 +88,8 @@ In practice, choose an object field when the stored object must stay visible at 
 ## Field names
 
 Unlike an object's regular fields where names must be Move identifiers, dynamic field names can be any value that has `copy`, `drop`, and `store`. This includes all Move primitives (integers, Booleans, byte strings), and structs whose contents all have `copy`, `drop`, and `store`.
+
+A field's key is the combination of the parent ID, the name's type, and the name's value. If you add a field with a name of type `vector<u8>`, you cannot access it with a name of type `String`, even if the underlying bytes are identical. A name of the wrong type aborts with `EFieldDoesNotExist`, while a value of the wrong type aborts with `EFieldTypeMismatch`.
 
 ## Adding dynamic fields
 
@@ -143,6 +155,8 @@ A transaction fails if it attempts to borrow a field that does not exist.
 
 :::
 
+To check whether a field exists before you borrow it, use `exists` from the `dynamic_field` module. When the value type matters, use `exists_with_type`, because `exists` only checks the key. For the errors these checks prevent, see [Debugging dynamic field errors](#debugging-dynamic-field-errors).
+
 The `<Value>` type passed to `borrow` and `borrow_mut` must match the type of the stored field, or the transaction aborts.
 
 You must access dynamic object field values through these APIs. A transaction that attempts to use those objects as inputs (by value or by reference), is rejected for having invalid inputs.
@@ -195,7 +209,7 @@ public fun new<K: copy + drop + store, V: store>(
 
 `Bag` is a heterogeneous map, so it can hold key-value pairs of arbitrary types, they do not need to match each other. The `Bag` type does not have any type parameters for this reason. Like `Table`, `Bag` is also an object, so creating one with `sui::bag::new` requires supplying a `&mut TxContext` to generate an ID.
 
-See `sui::bag::ObjectBag` for the object-preserving version of `Bag`.
+See `sui::object_bag::ObjectBag` for the object-preserving version of `Bag`.
 
 ```move
 module sui::bag;
