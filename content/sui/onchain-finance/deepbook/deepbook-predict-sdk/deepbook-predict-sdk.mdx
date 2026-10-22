@@ -56,6 +56,12 @@ verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sd
 
 The DeepBook Predict SDK builds every Predict transaction, reads live Predict state through your Sui client, and decodes the receipts that executed transactions emit. It ships as the `/predict` subpath of the `@mysten/deepbook-v3` TypeScript package, and [DeepBook Predict](/onchain-finance/deepbook/deepbook-predict) explains the markets, positions, and pool behind each call.
 
+To set up the Predict SDK:
+
+1. Install `@mysten/deepbook-v3` and its `@mysten/sui` peer dependency, as [How do I install the Predict SDK?](#install) shows.
+2. Register the Predict client on your Sui client with `client.$extend(predict({ network }))`, as [Create the client](#client) shows.
+3. Resolve the configuration once at startup, as [Configuration](#configuration) describes.
+
 ## How do I install the Predict SDK? {#install}
 
 Install `@mysten/deepbook-v3` version 2.8.0 or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with its `@mysten/sui` peer dependency at version 2.37.0 or later. The package requires Node.js 22 or later. Version 2.8.0 is the first release that places queued orders on both networks, as [Create the client](#client) explains.
@@ -74,13 +80,21 @@ The package ships 3 subpaths beside its root, each a separate entry in its `expo
 - `@mysten/deepbook-v3/account`: The shared account primitive that every Predict account builds on: `AccountContract`, `getAccountConfig`, the generated `accountMoveCalls`, `accountRegistryMoveCalls`, and `accountEvents` namespaces, and the `Account` and `AccountWrapper` Binary Canonical Serialization (BCS) types. See [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 - `@mysten/deepbook-v3/sessions`: Time-limited session keys that trade for an account until a fixed expiry: `SessionsContract`, `getSessionsConfig`, the `MAX_SESSION_DURATION_MS` and `MAX_SESSIONS_PER_ACCOUNT` limits, and the generated `sessionsMoveCalls` and `sessionConfigMoveCalls` namespaces. See [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions).
 
+Import each surface by name from its subpath:
+
+```ts
+import { predict, PredictClient } from '@mysten/deepbook-v3/predict';
+import { AccountContract, getAccountConfig } from '@mysten/deepbook-v3/account';
+import { SessionsContract, getSessionsConfig } from '@mysten/deepbook-v3/sessions';
+```
+
 ## Create the client {#client}
 
 Register the Predict client as an extension on any Sui client that exposes the core API. The examples select the network in a single configuration module, which the other examples reach directly or through the client module:
 
 <ImportContent source="examples/deepbook-predict/src/config.ts" mode="code" tag="config" />
 
-The client module extends a gRPC client with the Predict client for that network:
+The client module extends a gRPC client, a Sui client that exposes the core API, with the Predict client for that network:
 
 <ImportContent source="examples/deepbook-predict/src/client.ts" mode="code" tag="client" />
 
@@ -104,6 +118,8 @@ The Predict client exposes 3 groups of members:
 
 The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) covers, `queueIdFor(marketId)`, which derives a market's queue ID, and `cfg`, the `PredictConfig` that the client uses.
 
+`client.predict` holds the Predict client, while `client.core` remains the core API that the Sui client exposes. Execute the transactions that `client.predict.tx` returns through `client.core` or your wallet, as [How do I handle Predict errors?](#errors) shows.
+
 Both networks run Predict protocol version 4, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders, and `tx.mint` and its siblings always abort. Version 2.7.0 records Testnet's deployment, and Mainnet needs version 2.8.0 or later. On Mainnet, version 2.7.0 still resolves the retired Predict protocol version 3 and Sessions version 2 call targets, so every version-gated Predict or Sessions call it builds there aborts with `EPackageVersionDisabled`. Its Mainnet configuration also lacks the order-flow IDs, so its queued builders and reads throw `PredictInputError` there. `client.predict.read.executionMode()` reports `'delayed'` once the configuration records the deployment. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers the queued path.
 
 ## Configuration {#configuration}
@@ -118,7 +134,7 @@ The SDK records the Testnet and Mainnet deployments, so you never transcribe a p
 - `packages`: The `predict`, `account`, and `propbook` package IDs, `predictV1`, the original Predict ID, and on a network with delayed execution `predictDelayedExecution`, `predictOrders`, and `predictMath`.
 - `objects`: The 5 shared object IDs that builders and reads pass as arguments, plus `orderDesk` and `queueRegistry` on a network with delayed execution.
 - `quoteCoinType`: The coin type that every amount settles in.
-- `coinTypes`: The `plp` and `deep` coin types.
+- `coinTypes`: The `plp` coin type, for the PLP shares that [Predict Liquidity SDK](/onchain-finance/deepbook/deepbook-predict-sdk/liquidity) covers, and the `deep` coin type.
 - `units`: The lot size, fixed-point scale, and decimals the deployment records.
 - `underlyings`: One entry per underlying symbol, such as `BTC`, each with its propbook underlying ID and its 3 oracle object IDs.
 - `oracle`: Optional objects only a queued-order filler needs, such as Pyth Lazer's `pythLazerState`.
@@ -270,7 +286,7 @@ const { orderId } = client.predict.decode.mint(result.Transaction);
 
 The decoders read each event's BCS bytes rather than its JSON rendering, so a result decodes the same from any transport. They match events against the package IDs in the client's configuration, so decode with a client whose configuration matches the network that executed the transaction. An event that matches but carries no BCS payload throws `PredictInputError`.
 
-Each singular decoder throws `PredictInputError` unless the result holds exactly 1 matching event, so a result executed without events makes it throw. `mints`, `redeems`, and `claims` are plural forms that return every matching receipt in event order, for a programmable transaction block (PTB) that batches several actions, and they return an empty array for a result that carries no events. The other decoders have no plural form.
+Each singular decoder throws `PredictInputError` unless the result holds exactly 1 matching event, so a result executed without events makes it throw. `mints`, `redeems`, and `claims` are plural forms that return every matching receipt in event order, for a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) that batches several actions, and they return an empty array for a result that carries no events. The other decoders have no plural form.
 
 The following table lists every decoder, the event it reads, and the page that documents its receipt:
 
@@ -288,7 +304,7 @@ The following table lists every decoder, the event it reads, and the page that d
 
 ## Compose your own transactions {#compose}
 
-Each `client.predict.tx` call creates and returns its own finished `Transaction`, so 2 facade calls cannot share 1 PTB. The only composed flow the client builds is `tx.deposit` with `{ create: true }`, which creates, funds, and shares an account in a single PTB. To put a Predict call in a PTB with anything else, build that PTB yourself from what version 2.6.1 exports:
+Each `client.predict.tx` call creates and returns its own finished `Transaction`, so 2 facade calls cannot share 1 PTB. The only composed flow the client builds is `tx.deposit` with `{ create: true }`, which creates, funds, and shares an account in a single PTB. To put a Predict call in a PTB with anything else, build that PTB yourself from these exports:
 
 - `loadLivePricer(config, args)`: Adds the `expiry_market::load_live_pricer` command and returns its result, the market-bound `Pricer` that every live mint and live redeem borrows. The `/sessions` Predict wrappers take this result as their `pricer`.
 - `generateAuth(cfg)`: Adds the command that mints owner authority for the transaction sender, an `Auth` value that the next account-loading call in the same PTB must consume.
