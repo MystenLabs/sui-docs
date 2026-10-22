@@ -166,9 +166,11 @@ Use `withdrawSettledAmountsPermissionless` to withdraw settled amounts permissio
 
 ## Examples
 
-The following examples demonstrate some custom functions for DeepBookV3 orders.
-
+:::info
 The usage snippets are methods of an example `DeepBookMarketMaker` class that calls the SDK through `this.deepBook`. They are fragments to adapt inside your own class, not standalone code you can import.
+:::
+
+The following examples demonstrate some custom functions for DeepBookV3 orders.
 
 ### How to place a limit order
 
@@ -253,6 +255,8 @@ customPlaceMarketOrder = (tx: Transaction) => {
 
 Example of canceling a single order in a pool for a balance manager.
 
+In the example, `12345678` stands in for the protocol `orderId` generated during order placement. Use that value, not your `clientOrderId`.
+
 ```tsx
 /**
  * @description Cancel an existing order
@@ -287,7 +291,7 @@ Example of canceling all orders in a pool for a balance manager.
 cancelAllOrders = (poolKey: string, balanceManagerKey: string) => (tx: Transaction) => {};
 
 // Example usage in DeepBookMarketMaker class
-// Cancel order 12345678 in SUI_DBUSDC pool
+// Cancel all orders in SUI_DBUSDC pool
 cancelOrder = (tx: Transaction) => {
 	const poolKey = 'SUI_DBUSDC'; // Pool key, check constants.ts for more
 	const managerKey = 'MANAGER_1'; // Balance manager key, initialized during client creation by user
