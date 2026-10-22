@@ -67,7 +67,7 @@ answer: >-
   returns both networks' identifiers.
 ---
 
-DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Both run `predict` protocol version 4 and `sessions` protocol version 3, together with the `deepbook_predict_orders` and `deepbook_predict_math` packages, so every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) and the 2 networks expose the same entrypoints. Version 2.8.0 or later of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) returns the identifiers on this page from `getConfig`, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Both run `predict` protocol version 4 and `sessions` protocol version 3, together with the `deepbook_predict_orders` and `deepbook_predict_math` packages, so every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) and the 2 networks expose the same entrypoints. A queued order prices after a short delay rather than immediately. Version 2.8.0 or later of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) returns the identifiers on this page from `getConfig`, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
 The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict), and the original Testnet publish from source commit [`4d752fb8`](https://github.com/MystenLabs/deepbookv3/tree/4d752fb82d909a821c85bcc5d3963725efb546f4/packages/predict), whose Move sources are byte-identical to the Mainnet ones. Both networks then took the same 3 upgrades:
 
@@ -104,6 +104,8 @@ Every version-gated call runs `assert_version`, which aborts with `EPackageVersi
 Each network's delayed-execution cutover raised its watermark to 4, so only protocol version 4 runs on either. `SessionsConfig` has a watermark of its own, and each network's cutover raised it to 3. Only Sessions version 3 runs on either network, so a call through Sessions version 1 or 2 aborts with `session_config::EPackageVersionDisabled`, and that includes the DeepBook spot wrappers. `deepbook_predict_orders` has a floor of its own on each `OrderDesk`, at 1.
 
 ## Upgraded packages carry 2 IDs {#two-ids}
+
+Send every call to the call target and build every type tag from the original ID. A gated call sent to the original ID aborts at the version gate, and a type tag built from the call target names a type that does not exist.
 
 A Move package upgrade publishes at a new address and keeps its original one. The 2 IDs are not interchangeable, and both networks need both:
 
@@ -332,7 +334,7 @@ Each underlying has 6 cadence slots, and a cadence ID addresses each one. A cade
 Read each column as follows:
 
 - **Tick size:** The price-axis resolution, in fixed-point price units. Both enabled cadences use `10000000`, which is 0.01 USD.
-- **Admission tick size:** The coarser grid a finite position boundary must land on, also in fixed-point price units. Both enabled cadences use `1000000000`, which is 1 USD, or every 100 ticks. A boundary tick must be a multiple of `admission_tick_size / tick_size` ticks.
+- **Admission tick size:** The coarser grid a finite position boundary must land on, also in fixed-point price units. Both enabled cadences use `1000000000`, which is 1 USD, or every 100 ticks. A boundary tick must be a multiple of `admission_tick_size / tick_size` ticks. For example, a boundary at 110,000 USD lands on the grid, and a boundary at 110,000.50 USD does not.
 - **Maximum expiry allocation:** The cadence cap on cash allocated to one expiry market, in USDC base units: 2,000 USDC. This same value also scales the market's inventory-impact curve.
 - **Initial expiry cash:** The cash the vault seeds a new market with, in USDC base units: 2,000 USDC.
 - **Window size:** How many expiries of this cadence can be live at once, so 2 markets of each enabled cadence are live at any time. Zero disables the cadence.
@@ -549,7 +551,7 @@ The `SupplyFilled` and `WithdrawFilled` payloads name their quote amounts `usdc_
 
 Stream Predict events with `SubscriptionService.SubscribeEvents`, filtering on the Predict package ID, and page the same events historically with `LedgerService.ListEvents` under an identical filter. Sui full nodes no longer serve the older WebSocket subscription API, so do not build on `sui_subscribeEvent`.
 
-Subscribe to market creation and settlement on Testnet. The `PACKAGE` value is the Testnet `predict` original ID, because event type prefixes use the original ID rather than the call target. For Mainnet, swap in the Mainnet `predict` original ID, `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba`, not its call target, and `fullnode.mainnet.sui.io:443`:
+Subscribe to market creation and settlement on Testnet. The `PACKAGE` value is the Testnet `predict` original ID, because event type prefixes use the original ID rather than the call target. For Mainnet, swap in the Mainnet `predict` original ID, `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba`, not its call target, and `fullnode.mainnet.sui.io:443`. The commands set and expand shell variables, so run them in a POSIX shell:
 
 ```shell
 $ PACKAGE=0x59d71119e990573a738dd3ff9c4c7d28d6893af69c87c1a7f3a2e90e280ce2f4
@@ -598,7 +600,7 @@ Subscriptions begin at the current tip and accept no resume point, so recovering
 
 ## Source pointers
 
-The links below pin every module to DeepBookV3 `main` at `2911743402372d3e79ab5d48a0f9ed64f1a32159`, the source of Testnet's protocol version 4. Mainnet's protocol version 4 publishes come from `98128174`, whose `predict`, `predict_orders`, `predict_math`, and `sessions` Mainnet builds are byte-identical to those at `29117434`. There is no `entry fun` in any Predict package: every integrator call is a `public fun` invoked as a `moveCall`, and several of them return values that a later command in the same transaction must consume.
+The links in the following table pin every module to DeepBookV3 commit `2911743402372d3e79ab5d48a0f9ed64f1a32159` on `main`, the source of Testnet's protocol version 4, so they do not change when `main` moves. Mainnet's protocol version 4 publishes come from `98128174`, whose `predict`, `predict_orders`, `predict_math`, and `sessions` Mainnet builds are byte-identical to those at `29117434`. There is no `entry fun` in any Predict package: every integrator call is a `public fun` invoked as a `moveCall`, and several of them return values that a later command in the same transaction must consume. On this page, an entrypoint is any such `public fun`, not an `entry fun`.
 
 | **Area** | **Source** |
 | --- | --- |
