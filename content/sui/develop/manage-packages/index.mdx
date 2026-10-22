@@ -46,7 +46,7 @@ An upgradeable package's `UpgradeCap` controls all of its future behavior, so tr
 
 :::
 
-Once published, a package's bytecode never changes. Upgrading a package publishes a new object at a new address and links it to the original through the upgrade chain. This means every version of your package coexists onchain, and any package can call any version, but a caller uses only the version whose address its dependency declaration explicitly references; it does not automatically resolve to other versions.
+Once published, a package's bytecode never changes. Upgrading a package publishes a new object at a new address and links it to the original package. This sequence of linked versions, starting from the original package, is the package's upgrade chain. This means every version of your package coexists onchain, and any package can call any version, but a caller uses only the version whose address its dependency declaration explicitly references; it does not automatically resolve to other versions.
 
 Managing packages correctly requires you to:
 
@@ -57,7 +57,7 @@ Managing packages correctly requires you to:
 
 ## What does the `UpgradeCap` control?
 
-When you publish an upgradeable package, Sui returns an `UpgradeCap` object to the publisher. Whoever holds that object can upgrade the package. The `UpgradeCap` is the sole source of upgrade authority by default, so its ownership determines who controls the package's future behavior.
+When you publish an upgradeable package, Sui returns an `UpgradeCap` object to the publisher. Whoever holds that object can upgrade the package. For an upgradeable package, the `UpgradeCap` is the sole source of upgrade authority by default, so its ownership determines who controls the package's future behavior.
 
 You have several options for handling the `UpgradeCap`:
 
