@@ -56,9 +56,10 @@ questions:
   - What replaces JSON-RPC WebSocket subscriptions?
   - Why does my migrated query return no historical data?
 answer: >-
-  Choose between gRPC and GraphQL RPC when migrating from the deprecated
-  JSON-RPC API. Includes a method mapping, decision criteria, and common
-  migration gotchas.
+  The deprecated Sui JSON-RPC API has 2 replacements: gRPC for real-time full
+  node access, Archival Service access, and transaction execution, and GraphQL
+  RPC for rich, structured queries over live and historical blockchain data.
+  You can use one API or both.
 ---
 
 import Tabs from '@theme/Tabs';
@@ -131,7 +132,7 @@ The following table maps common JSON-RPC method families to their gRPC service a
 | `suix_getDynamicFields` | `StateService.ListDynamicFields` | `Object.dynamicFields` |
 | `suix_getDynamicFieldObject` | Derive the dynamic field's object ID locally from the parent object ID and the field name, then call `LedgerService.GetObject`. You do not need `ListDynamicFields` when you already know the field name. | `Object.dynamicObjectField` |
 | `suix_queryTransactionBlocks` | `LedgerService.ListTransactions` with a `TransactionFilter` for paginated, filtered queries over a checkpoint range. Use `SubscriptionService.SubscribeTransactions` with the same filter for a live stream of matching transactions. | `Query.transactions` with a `TransactionFilter` |
-| `suix_queryEvents` (deprecated) | `LedgerService.ListEvents` with an `EventFilter` for paginated, filtered queries over a checkpoint range. Use `SubscriptionService.SubscribeEvents` with the same filter for a live stream. For a single transaction's events, use `LedgerService.GetTransaction` with `events` in the field mask. See [Emitting Events](/develop/accessing-data/using-events#querying-events-with-grpc) for examples and migration guidance. | `Query.events` with an `EventFilter`. See [Emitting Events](/develop/accessing-data/using-events#querying-events-with-graphql) for examples. |
+| `suix_queryEvents` (deprecated) | `LedgerService.ListEvents` with an `EventFilter` for paginated, filtered queries over a checkpoint range. Use `SubscriptionService.SubscribeEvents` with the same filter for a live stream. For a single transaction's events, use `LedgerService.GetTransaction` with `events` in the field mask. See [Emitting Events](/develop/accessing-data/using-events) for examples and migration guidance. | `Query.events` with an `EventFilter`. See [Emitting Events](/develop/accessing-data/using-events) for examples. |
 | `sui_subscribeEvent`, `sui_subscribeTransaction` (WebSocket) | `SubscriptionService.SubscribeEvents` with an `EventFilter`, or `SubscriptionService.SubscribeTransactions` with a `TransactionFilter`. Use `SubscriptionService.SubscribeCheckpoints` if you need entire checkpoints. All 3 support server-side filtering. | No streaming subscription. Poll `Query.events` with an `EventFilter`, or `Query.transactions` with a `TransactionFilter`. |
 | `suix_getReferenceGasPrice` | `LedgerService.GetEpoch` (read `reference_gas_price` from the response) | `Epoch.referenceGasPrice` |
 | `suix_getStakes`, `suix_getStakesByIds` | No direct gRPC method. Read owned `StakedSui` objects through `StateService.ListOwnedObjects` filtered by type, then fetch full contents through `LedgerService.GetObject`. | `Address.objects` with `filter: { type: "0x3::staking_pool::StakedSui" }` |
@@ -145,7 +146,7 @@ The JSON-RPC `unsafe_*` builder methods do not have a one-to-one replacement on 
 
 ## Migration gotchas
 
-### No implicit archival fallback in full node gRPC
+### Does full node gRPC fall back to archival data? {#no-implicit-archival-fallback-in-full-node-grpc}
 
 JSON-RPC sometimes resolved requests for older data through fallback paths that were transparent to the caller. Full node gRPC does not do this. A full node serves only the data within its retention window, and `LedgerService` returns `not found` for anything older.
 
@@ -172,7 +173,7 @@ JSON-RPC offered WebSocket subscriptions for events and transactions, which Sui 
 
 See [Subscriptions for streaming data](/develop/accessing-data/grpc/what-is-grpc#subscriptions-for-streaming-data).
 
-### Public load balancer URLs are not production endpoints
+### Can you use the public full node endpoints in production? {#public-load-balancer-urls-are-not-production-endpoints}
 
 The public URLs at `https://fullnode.<network>.sui.io` and `https://graphql.<network>.sui.io/graphql` have rate limits and serve development and public-good access. Do not point a production exchange, indexer, or wallet backend at them. Run your own [Sui full node](/operators/full-node/sui-full-node) or contract with a provider for a dedicated gRPC or GraphQL endpoint.
 
@@ -188,7 +189,7 @@ GraphQL and gRPC expose richer typing for objects and coins than JSON-RPC. A few
 
 - **Checkpoint-scoped consistency.** GraphQL can pin a query to the chain state at a specific checkpoint through `Checkpoint.query`, so a read that spans multiple types or multiple pages sees one consistent snapshot. JSON-RPC has no equivalent.
 
-### Pagination uses typed cursors
+### Can you reuse JSON-RPC pagination cursors? {#pagination-uses-typed-cursors}
 
 JSON-RPC cursors are opaque strings. GraphQL passes cursors through the `after` (or `before`) field on a connection, with the page size in `first` (or `last`). gRPC paging uses fields on the typed request and response messages. Handle cursors as follows:
 
@@ -317,7 +318,7 @@ The following sections show filtered event queries and how to read events from a
 
 #### Filtered event queries (GraphQL only)
 
-- **gRPC:** Use `LedgerService.ListEvents` with an `EventFilter` for paginated historical queries. For live updates, use `SubscriptionService.SubscribeEvents` with the same filter types. Events also arrive as part of transaction data in `LedgerService.GetTransaction` responses. See [Querying events with gRPC](/develop/accessing-data/using-events#querying-events-with-grpc).
+- **gRPC:** Use `LedgerService.ListEvents` with an `EventFilter` for paginated historical queries. For live updates, use `SubscriptionService.SubscribeEvents` with the same filter types. Events also arrive as part of transaction data in `LedgerService.GetTransaction` responses. See [Querying events with gRPC](/develop/accessing-data/using-events).
 
 The following tabs show a filtered event query in JSON-RPC and GraphQL.
 
@@ -426,7 +427,7 @@ Replace `signAndExecuteTransactionBlock` with the gRPC equivalent. The SDK handl
 
 For manual gas resolution (sponsored transactions, custom gas coin selection), see [Manual gas resolution](/develop/accessing-data/grpc/grpc-migration-cookbook#manual-gas-resolution).
 
-### Validator APY
+### How to compute validator APY {#validator-apy}
 
 JSON-RPC provided `suix_getValidatorsApy`. Neither gRPC nor GraphQL has a direct APY field. Validator APY comes from staking pool exchange rate history, which each validator's system-state object stores in dynamic fields. The legacy method used a compounding calculation across up to 30 epoch samples with outlier filtering.
 
