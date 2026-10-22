@@ -52,15 +52,15 @@ answer: >-
   [Mysticeti DAG consensus](/develop/sui-architecture/consensus).
 ---
 
-At a high level, the following diagram outlines the life cycle of a transaction on the Sui blockchain. All transactions are sequenced by Sui's [Mysticeti DAG consensus](/develop/sui-architecture/consensus).
+At a high level, the following diagram outlines the life cycle of a transaction on the Sui blockchain. Sui sequences all transactions through [Mysticeti](/develop/sui-architecture/consensus), a directed acyclic graph (DAG) consensus protocol. In DAG consensus, each new block from a validator references earlier blocks from peer validators.
 
-![Transaction life cycle](./images/transaction_lifecycle_v2.svg)
+![Diagram of the transaction life cycle: a user signs a transaction, a full node submits it to a validator, consensus sequences it, validators execute it, the full node certifies the effects and returns them to the user, and validators include the transaction in a checkpoint](./images/transaction_lifecycle_v2.svg)
 
 The following steps align with those in the diagram:
 
 1. A user with the private key to their Sui account creates and signs a transaction.
 
-1. The user sends the transaction to a [full node](/operators/full-node/sui-full-node). The full node runs *Transaction Driver*, which manages submitting transactions and receiving effects. *Transaction Driver* submits the transaction to a selected [validator](/operators/validator). The validator performs validity and safety checks, and includes the transaction in its next proposed Mysticeti consensus block.
+1. The user sends the transaction to a [full node](/operators/full-node/sui-full-node). The full node runs Transaction Driver, a software component of the full node that manages submitting transactions and receiving effects. Transaction Driver submits the transaction to a selected [validator](/operators/validator). The validator performs validity and safety checks, and includes the transaction in its next proposed Mysticeti consensus block.
 
 1. The Mysticeti [consensus protocol](/develop/sui-architecture/consensus) sequences the block. As later blocks from peer validators reference it, peer validators can reject transactions that fail their own validity checks. When transactions are committed, only those that accumulate enough accept votes in consensus are accepted.
 
@@ -78,9 +78,9 @@ Consider a user transferring some SUI from their wallet to another account. The 
 
 After the transaction is signed, the wallet or app submits it to a Sui full node on the user's behalf.
 
-## Transaction submission
+## How does a full node submit a transaction?
 
-After the transaction is created, the next step is to submit it to a full node. The full node cannot sequence the transaction on its own because it does not have a complete view of transactions across the network. Instead, the *Transaction Driver* component on the full node sends the transaction to one of the validators with the lowest observed finalization latency, shuffled across the fastest few for load balancing. The receiving validator performs a validity check on the transaction. The most important checks include:
+After the transaction is created, the next step is to submit it to a full node. The full node cannot sequence the transaction on its own because it does not have a complete view of transactions across the network. Instead, the Transaction Driver component on the full node sends the transaction to one of the validators with the lowest observed finalization latency, shuffled across the fastest few for load balancing. The receiving validator performs a validity check on the transaction. The most important checks include:
 
 - The transaction has a valid user [signature](/develop/transactions/transaction-auth/auth-overview).
 
@@ -90,13 +90,13 @@ After the transaction is created, the next step is to submit it to a full node. 
 
 If all the validity checks pass, the validator includes the transaction in its next proposed block with available space.
 
-## Transaction voting and sequencing in consensus
+## How does consensus sequence a transaction?
 
 In Sui consensus, each validator broadcasts its proposed blocks to peer validators. When a peer receives a block, it does not yet trust the block or its transactions. Each peer runs the same validity checks (including the ones listed above) to detect and handle misbehavior such as attempts to double-spend. Only after a block and its transactions pass these checks do the receiving validators include accept votes for those transactions in their own next blocks.
 
 If valid, Sui consensus eventually includes the user transaction in its deterministic output: the same ordering of committed transactions that every honest validator derives.
 
-## Transaction effects and finality
+## How does a transaction reach finality?
 
 Sui's parallel execution engine executes transactions emitted by consensus. Transactions that don't conflict on inputs execute completely in parallel. Transaction execution produces the *transaction effects*: the list of all actions the transaction took:
 
@@ -106,9 +106,15 @@ Sui's parallel execution engine executes transactions emitted by consensus. Tran
 
 - The execution status (success or an error code) of the transaction.
 
-After execution, the validator returns either the effects digest or the full effects together with related data such as events and updated objects, depending on what the *Transaction Driver* on the full node requested. *Transaction Driver* only needs full effects from a single validator, plus quorum acknowledgments of the same effects digest from the others.
+After execution, the validator returns either the effects digest or the full effects together with related data such as events and updated objects, depending on what the Transaction Driver on the full node requested. Transaction Driver only needs full effects from a single validator, plus quorum acknowledgments of the same effects digest from the others.
 
 If a quorum of acknowledgments does not arrive (for example, when slow or partitioned validators delay responding), the full node instead waits for the transaction to appear in a certified checkpoint. Inclusion in a certified checkpoint is itself proof of finality.
+
+A full node certifies effects through one of two paths, and either path proves finality:
+
+- **Quorum acknowledgments:** A quorum of validators acknowledges the same effects digest. This is the primary path.
+
+- **Certified checkpoint:** A checkpoint that a quorum of validators signed includes the transaction. The full node uses this path when quorum acknowledgments do not arrive.
 
 :::tip
 
@@ -116,7 +122,7 @@ Certified effects guarantee transaction finality. After a full node observes cer
 
 :::
 
-## Including the transaction in a checkpoint
+## When does a transaction appear in a checkpoint?
 
 Inclusion in a checkpoint is the final stage in the life of a transaction. The consensus layer produces a deterministic ordering of transactions. This ordering is the starting point for the creation of checkpoints.
 
@@ -134,17 +140,27 @@ Approximately every 24 hours, the Sui [Testnet](/develop/sui-architecture/networ
 
 ## How do I resend or verify a pending transaction?
 
-It is best practice to store signed transactions locally before sending them to a full node, and to only remove them after receiving confirmation of finality or invalidity from a full node. When the app restarts, it can resend all pending transactions to full nodes. This is safe because Sui transactions are idempotent: Sui executes a given transaction at most once. Resending an executed transaction returns either its original effects or an indication that the transaction has become invalid.
+To resend pending transactions safely:
 
-To verify whether a pending transaction has been finalized, an app can look the digest up on a trusted full node with gRPC `LedgerService.GetTransaction` (`client.getTransaction` in the TypeScript SDK) or the GraphQL `Query.transaction` field:
+1. Store each signed transaction locally before you send it to a full node.
 
-- If the lookup returns transaction details, Sui has finalized and executed the transaction.
+1. Remove the transaction only after a full node confirms its finality or invalidity.
 
-- If the lookup finds nothing, either Sui never finalized the transaction or this full node does not yet know about it. In this case, the safer option is to resubmit the transaction; as noted above, Sui transactions are idempotent.
+1. When the app restarts, resend all pending transactions to full nodes.
 
-A transaction that executed but aborted onchain still counts as finalized. It returns as a failed transaction rather than as a missing one, so check the execution status rather than treating any response as success.
+Resending is safe because Sui transactions are idempotent: Sui executes a given transaction at most once. Resending an executed transaction returns either its original effects or an indication that the transaction has become invalid.
 
-The full node must wait for the transaction to be checkpointed and state-synced, which normally takes a few seconds. It then executes the transaction and applies the resulting state changes locally.
+To verify whether Sui has finalized a pending transaction:
+
+1. Look up the transaction digest on a trusted full node with gRPC `LedgerService.GetTransaction` (`client.getTransaction` in the TypeScript SDK) or the GraphQL `Query.transaction` field.
+
+1. Check the result:
+
+   - If the lookup returns transaction details, Sui has finalized and executed the transaction. Check the execution status, because a transaction that executed but aborted onchain still counts as finalized. It returns as a failed transaction rather than as a missing one, so do not treat any response as success.
+
+   - If the lookup finds nothing, either Sui never finalized the transaction or this full node does not yet know about it. Resubmit the transaction. Resubmitting is safe because Sui transactions are idempotent.
+
+A full node that does not yet know about a transaction must wait for the transaction to appear in a checkpoint and reach the node through state sync, which normally takes a few seconds. It then executes the transaction and applies the resulting state changes locally. This delay affects only when the transaction appears in that full node's local state, not network finality, which typically takes 400–700 ms.
 
 ## Example: Coffee shop payment
 
