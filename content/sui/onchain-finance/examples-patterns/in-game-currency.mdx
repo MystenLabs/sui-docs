@@ -63,7 +63,7 @@ To create the King Credits currency, initialize the currency using the `coin_reg
 
 In another Move package, implement the `add_rule_config` function to initialize the rule configuration with initial council members and set a limit on the maximum number of members, including a check to ensure the count does not exceed that maximum.
 
-The `add_council_member` and `remove_council_member` functions add and remove members from the council. The `prove` function checks whether the request sender is a council member and adds an approval for the rule if they are:
+After `add_rule_config` sets the initial members, the `add_council_member` and `remove_council_member` functions add and remove members from the council. To approve a transfer, a council member calls the `prove` function, which checks whether the request sender is a council member and adds an approval for the rule if they are:
 
 <ImportContent source="I3/king_credits/sources/crown_council_rule.move" mode="code" org="MystenLabs" repo="sui-move-bootcamp" branch="solution" noComments />
 
