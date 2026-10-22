@@ -66,7 +66,7 @@ The indexing framework provides multiple levels of configuration to optimize per
 
 ### Ingestion layer configuration
 
-Control how checkpoint data is fetched and distributed. These settings include `min_cohort_boundary`, which controls how pipelines are grouped into ingestion cohorts based on how far behind the tip they are (see the tuning guidelines below):
+Control how checkpoint data is fetched and distributed. These settings include `min_cohort_boundary`, which controls how the framework groups pipelines into ingestion cohorts. An ingestion cohort is a group of pipelines at a similar distance behind the tip. The `min_cohort_boundary` entry in the tuning guidelines for this section explains how the framework forms cohorts:
 
 ```rust
 use std::num::NonZeroUsize;
@@ -192,7 +192,7 @@ Read the [README](https://github.com/tokio-rs/console/blob/main/README.md) in th
     telemetry_subscribers = { git = "https://github.com/MystenLabs/sui.git", branch = "main" }
     ```
 
-1. Initialize telemetry
+2. Initialize telemetry
 
     Add telemetry initialization at the beginning of your `main` function:
 
@@ -208,7 +208,7 @@ Read the [README](https://github.com/tokio-rs/console/blob/main/README.md) in th
     }
     ```
 
-1. Run with console enabled
+3. Run with console enabled
 
     Start your indexer with the required flags:
 
@@ -221,7 +221,7 @@ Read the [README](https://github.com/tokio-rs/console/blob/main/README.md) in th
     - `TOKIO_CONSOLE=1`: Enables `tokio-console` integration in `telemetry_subscribers`.
     - `RUSTFLAGS="--cfg tokio_unstable"`: Required by `tokio-console` to collect task instrumentation data.
 
-1. Launch the console dashboard
+4. Launch the console dashboard
 
     ```sh
     # Install tokio-console if not already installed
@@ -293,7 +293,7 @@ This prefixes all default metrics (for example, `my_custom_indexer_indexer_total
 You can register custom metrics using the shared `Registry`:
 
 ```rust
-use prometheus::{IntCounter, register_int_counter_with_registry}
+use prometheus::{IntCounter, register_int_counter_with_registry};
 
 // Get the metrics registry before running the cluster
 let cluster = IndexerCluster::builder()
@@ -326,7 +326,7 @@ Pipelines with more complex pruning rules can still benefit. For example, in con
 
 ### Implementation
 
-You can use `pg_partman` to simplify partition management. Configure a partitioned table with `create_parent`, followed by a cron job to periodically `run_maintenance`. You might need to iterate to determine the correct frequency of `run_maintenance`. 
+You can use `pg_partman`, a PostgreSQL extension, to simplify partition management. Configure a partitioned table with `create_parent`, followed by a cron job to periodically `run_maintenance`. The examples schedule this job with `pg_cron`, another PostgreSQL extension. You might need to iterate to determine the correct frequency of `run_maintenance`. 
 
 :::info
 
