@@ -34,7 +34,7 @@ answer: >-
 
 Fiat on-ramp providers enable you to buy Sui-native tokens (SUI, WAL, DEEP, and others) using fiat currency from a user's bank account, card, or payment method. Embedding an on-ramp provider into your app allows users to fund their Sui wallets with traditional currency without leaving your interface. Verify current provider capabilities before integrating.
 
-Multiple third-party providers support Sui on-ramp integration, including Banxa, Stripe, Coinbase, Meld, and Onramper. Each provider differs in supported assets, regional availability, and integration method. Choose a provider based on the assets your app requires, the regions your users are in, and whether you need a hosted widget or a direct API.
+Multiple third-party providers support Sui on-ramp integration. [What fiat on-ramp providers support Sui?](#what-fiat-on-ramp-providers-support-sui) lists each provider with its supported assets. Each provider differs in supported assets, regional availability, and integration method. Choose a provider based on the assets your app requires, the regions your users are in, and whether you need a hosted widget or a direct API.
 
 ## What fiat on-ramp providers support Sui?
 
@@ -60,11 +60,12 @@ On-ramp coverage is evolving. Provider asset support and regional availability c
 
 ## How do I choose an on-ramp provider?
 
-Selecting a provider depends on three factors. Also consider KYC handling: some providers handle KYC entirely within their hosted flow; others require you to collect and pass user data, so understand your compliance obligations before integrating.
+Selecting a provider depends on four factors:
 
 - **Asset support:** Confirm the provider supports the specific token your app requires. SUI is broadly supported, but tokens like WAL, DEEP, CETUS, and NAVI are available through fewer providers.
 - **Regional availability:** Most providers restrict service in certain countries due to regulatory requirements. Check the provider's coverage map before committing to an integration.
 - **Integration method:** Providers offer different integration surfaces. Some offer hosted checkout widgets you embed with a URL or iframe. Others offer REST APIs you call server-side. Choose based on how much control you need over the user experience.
+- **KYC handling:** Know your customer (KYC) handling determines how much compliance work falls on your app. Some providers handle KYC entirely within their hosted flow. Others require you to collect and pass user data, so understand your compliance obligations before integrating.
 
 ## How do I integrate an on-ramp provider into a Sui app?
 
