@@ -37,7 +37,7 @@ Reference these examples to learn common asset patterns on Sui, including loyalt
 
 Sui supports several standard patterns for creating and managing digital assets onchain. Each pattern defines how an asset is minted, transferred, spent, or restricted. Choosing the right pattern depends on your use case: whether the asset is freely tradeable, restricted to specific actions, or tied to a particular platform or ecosystem. For instance, choose a closed-loop token when spending must be limited to a set of approved services, because the token's policy object lists those services and fails any transaction that targets a service that is not registered.
 
-Asset patterns on Sui are implemented as Move modules. Each pattern uses Sui's object model to represent the asset and its associated policy. The Move type system enforces the structure of each pattern, while the policy objects a pattern defines are checked at runtime during transaction execution, so invalid operations cause the transaction to fail.
+Asset patterns on Sui are implemented as Move modules. Each pattern uses Sui's object model to represent the asset and its associated policy. The Move type system enforces the structure of each pattern, while the Move code that performs the operation checks the policy objects a pattern defines, so invalid operations cause the transaction to fail.
 
 For example, a Closed-Loop Token requires a `TokenPolicy` object that lists approved services. When a user tries to spend the token, the policy checks whether the target service is registered. If it is not, the transaction fails.
 
