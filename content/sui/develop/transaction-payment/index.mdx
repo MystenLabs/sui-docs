@@ -126,6 +126,8 @@ Peer-to-peer transfers of [allowlisted stablecoins](/develop/transaction-payment
 - `gasPayment` is empty and `gasPrice = 0`.
 - The transaction writes no objects.
 
+For gasless transfers, source funds with `tx.balance()` rather than `coinWithBalance`, and pass them to `balance::send_funds` so the transaction stays eligible for zero gas. The `coin::send_funds` function takes a `Coin<T>` instead, such as the output of `splitCoins` in [Swap, save, and send](#swap-save-and-send).
+
 The gRPC and GraphQL transports detect eligibility automatically during simulation and set `gasBudget = 0`. See [Gasless Stablecoin Transfers](/develop/transaction-payment/gasless-stablecoin-transfers) for the full allowlist and integration guide.
 
 ```tsx
@@ -160,6 +162,8 @@ The examples in this section use placeholder package and object IDs (`0xDEX_PACK
 Split a coin, swap part of it on a DEX, and transfer the result, all in one transaction:
 
 ```tsx
+import { Transaction, coinWithBalance } from '@mysten/sui/transactions';
+
 const tx = new Transaction();
 
 // 1. Source funds using coinWithBalance (auto-selects from address balance or coins)
@@ -178,11 +182,19 @@ const [sui] = tx.moveCall({
 tx.transferObjects([sui], recipient);
 ```
 
+:::caution
+
+The swap examples in this section pass `0` as the minimum output. A minimum output of `0` accepts any swap result, so the transaction gives you no slippage protection. Set a real minimum output before you run this code.
+
+:::
+
 ### Swap, save, and send
 
 Compose 3 operations (a swap, a DeFi deposit, and a transfer) into one signed transaction:
 
 ```tsx
+import { Transaction, coinWithBalance } from '@mysten/sui/transactions';
+
 const tx = new Transaction();
 
 // Source 2000 USDC
@@ -232,16 +244,12 @@ See [Building Transactions](/develop/transactions/ptbs/building-ptb) for the ful
 
 ## Which gas strategy should I use? {#decision-flowchart}
 
-Use this to pick the right gas strategy for your transaction:
+Use this table to pick the right gas strategy for your transaction. Answer the questions in order:
 
-1. **Is the transaction a basic stablecoin transfer of an allowlisted token?**
-   - Yes: use [gasless stablecoin transfer](/develop/transaction-payment/gasless-stablecoin-transfers). Zero gas cost.
-   - No: continue.
-2. **Does your app want to pay gas on behalf of the user?**
-   - Yes: use [sponsored transactions](/develop/transaction-payment/sponsor-txn). Consider address-balance sponsorship for simpler flows.
-   - No: continue.
-3. **Does the user have a SUI address balance?**
-   - Yes: use address balance gas (`tx.setGasPayment([])`). No coin lookup needed.
-   - No: use standard gas. The SDK auto-selects coin objects.
+| **Step** | **Question** | **If yes** | **If no** |
+|---|---|---|---|
+| 1 | Is the transaction a basic stablecoin transfer of an allowlisted token? | Use [gasless stablecoin transfer](/develop/transaction-payment/gasless-stablecoin-transfers). Zero gas cost. | Go to step 2. |
+| 2 | Does your app want to pay gas on behalf of the user? | Use [sponsored transactions](/develop/transaction-payment/sponsor-txn). Consider address-balance sponsorship for simpler flows. | Go to step 3. |
+| 3 | Does the user have a SUI address balance? | Use address balance gas (`tx.setGasPayment([])`). No coin lookup needed. | Use standard gas. The SDK auto-selects coin objects. |
 
 For most transactions, use `coinWithBalance` for non-gas coins, and the SDK handles coin-vs-balance selection for you. The exception is [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers), which use `tx.balance()` with `balance::send_funds` so the transaction stays eligible for zero gas.
