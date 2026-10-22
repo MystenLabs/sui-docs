@@ -68,7 +68,16 @@ A session key carries authority over everything the account holds, as the [Sessi
 - **Session key:** The session address signs the 4 Predict builders and the 5 DeepBook spot calls, because each wrapper checks the sender's grant on the account.
 - **Any sender:** You simulate `sessionExpirationMs` rather than execute it, so any sender address works.
 
+The session lifecycle follows this order:
+
+1. The owner grants the session key with [`authorizeSession`](#authorize-session).
+2. The owner [lists the account's grants](#list) and reclaims the slots that expired grants hold.
+3. The session key trades for the account with the [queued-order builders](#queue-as-session) and [`redeemSettled`](#redeem-settled).
+4. The owner removes the grant with [`revokeSession`](#revoke-session), which frees its slot.
+
 ## Configuration {#configuration}
+
+Both networks run Predict protocol version 4 and Sessions protocol version 3. On Mainnet, use version 2.8.0 or later of the SDK, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
 Build a `SessionsContract` for each network from the deployed IDs that `getSessionsConfig` returns:
 
@@ -140,6 +149,12 @@ It takes this parameter:
 ## ID derivation functions {#derive-ids}
 
 An owner has 2 derived objects in the account registry, and `SessionsContract` computes both IDs offchain with no chain read. The shared `AccountWrapper` is the object every builder takes as `wrapperId`. The canonical account is the identity that session grants attach to, and the one that `SessionAuthorized` and `SessionRevoked` report as `account_id`. [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) describes both objects.
+
+The 3 IDs have separate uses, and each function takes the owner address, not another ID:
+
+- **Wrapper ID:** `deriveAccountWrapperId` returns the shared `AccountWrapper` ID, which every builder takes as `wrapperId`.
+- **Account ID:** `deriveAccountId` returns the canonical account ID, which session grants attach to.
+- **Sessions field ID:** `deriveSessionsFieldId` returns the ID of the `DataKey<SessionsApp>` dynamic field under the canonical account, which holds every grant and which you fetch to list grants.
 
 ### `deriveAccountWrapperId` {#derive-account-wrapper-id}
 
@@ -322,7 +337,7 @@ Revocation removes a grant and frees its slot immediately, and the revoked addre
 
 ### `revokeSession` {#revoke-session}
 
-Use `revokeSession` to remove the grant for `session`. It returns a `(tx: Transaction) => void` function that adds the `revoke_session` call, and the owner must sign it. The call takes no `SessionsConfig` object and has no version gate, so it keeps working after a watermark bump, which advances the package version floor through [`bumpVersionWatermark`](#session-config-move-calls), retires the package version.
+Use `revokeSession` to remove the grant for `session`. It returns a `(tx: Transaction) => void` function that adds the `revoke_session` call, and the owner must sign it. The call takes no `SessionsConfig` object and has no version gate, so it keeps working after a watermark bump retires the package version. A watermark bump advances the package version floor through [`bumpVersionWatermark`](#session-config-move-calls).
 
 Revoking an address that holds no grant is a silent no-op: the call neither aborts nor emits `SessionRevoked`, so a successful transaction does not prove that the call removed a grant. Read `sessionExpirationMs` before and after when the difference matters. The Sessions page explains [why the transaction result cannot confirm a revocation](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions).
 
