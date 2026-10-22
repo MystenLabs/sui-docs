@@ -90,9 +90,10 @@ flowchart LR
 | **Stage** | **Call** | **What changes** |
 |---|---|---|
 | Create | `account_registry::new` then `account::share` | Claims both derived IDs for the sender and shares a new `AccountWrapper`. |
-| Deposit | `account::deposit_funds<T>` | Settles pending accumulator funds, then adds a whole `Coin<T>` to stored balance. |
+| Deposit | `account::deposit_funds<T>` | Settles pending [accumulator funds](#quote-balances), then adds a whole `Coin<T>` to stored balance. |
 | Mint | `queue::enqueue_exact_quantity`, `queue::enqueue_exact_amount`, `queue::enqueue_exact_cost` | Debits the budget and the order fee into the order's escrow. A fill keeps the position in the market's queue as an Open record. |
-| Redeem | `queue::enqueue_redeem_open` and the queue's settlement walk for queued positions, and `expiry_market::redeem_settled` or `redeem_settled_permissionless` for a position held in the account from before the cutover | Removes or replaces the position and credits the payout. |
+| Redeem a queued position | `queue::enqueue_redeem_open` and the queue's settlement walk | Removes or replaces the position and credits the payout. |
+| Redeem a pre-cutover position | `expiry_market::redeem_settled` or `redeem_settled_permissionless`, for a position held in the account from before the cutover | Removes or replaces the position and credits the payout. |
 | Withdraw | `account::withdraw_funds<T>` | Settles pending funds, debits stored balance, and returns a `Coin<T>`. |
 
 Every stage shares 3 properties:
@@ -121,7 +122,7 @@ public fun new_self_owned(
 ): AccountWrapper
 ```
 
-`new` and `new_with_referrer` set the owner to the transaction sender. `new_self_owned` sets it to an object's address, so a package can own an account. `new_with_referrer` permanently records the referring account's canonical ID and receive address, which is what makes later mints pay a referral share to that account. [Referrals](/onchain-finance/deepbook/deepbook-predict/design) covers what the referrer earns and how it arrives, and [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) builds the call from TypeScript.
+`new` and `new_with_referrer` set the owner to the transaction sender. `new_self_owned` sets it to an object's address, so a package can own an account. `new_with_referrer` permanently records the referring account's canonical ID and receive address, which is what makes later mints pay a referral share to that account. The share arrives at the referrer's wrapper address through the fund accumulator, as described in [Balances and custody](#quote-balances). [Referrals](/onchain-finance/deepbook/deepbook-predict/design) covers what the referrer earns and how it arrives, and [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) builds the call from TypeScript.
 
 Each constructor returns the `AccountWrapper` by value. You cannot drop a `key`-only value, so the same transaction must consume it, and the only sensible consumer is:
 
@@ -405,7 +406,7 @@ public fun builder_code_id(account: &Account): Option<ID>
 
 Both return the empty answer rather than aborting when the account has no Predict slot yet, so `false` and `none` do not distinguish an unused account from a closed position.
 
-`has_position` answers one exact question and needs the market ID and order ID up front, so it cannot enumerate a portfolio. To list what an account holds, read the dynamic fields of the `positions` table, where each field key is a `PositionKey` in Binary Canonical Serialization (BCS), with the `expiry_market_id` and `order_id` fields listed in [Where does Predict store positions?](#predict-data). The SDK's `client.predict.read.positions(owner)` does this on either network and returns `{ marketId, orderId }` pairs, and `client.predict.read.hasPosition(owner, marketId, orderId)` wraps the single read. The public offchain read services answer the same question over HTTP for the earlier `predict-8-21` deployment only, and their account and position paths key on the canonical account ID rather than the wrapper ID; see [Wrapper ID and account ID](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
+`has_position` answers one exact question and needs the market ID and order ID up front, so it cannot enumerate a portfolio. To list what an account holds, read the dynamic fields of the `positions` table, where each field key is a `PositionKey` in Binary Canonical Serialization (BCS), with the `expiry_market_id` and `order_id` fields listed in [Where does Predict store positions?](#predict-data). The SDK's `client.predict.read.positions(owner)` does this on either network and returns `{ marketId, orderId }` pairs, and `client.predict.read.hasPosition(owner, marketId, orderId)` wraps the single read. The public offchain read services answer the same question over HTTP for the earlier `predict-8-21` deployment only. That deployment does not share accounts with the current Mainnet and Testnet deployments, so use the SDK reads for accounts on the current deployments. The read services key their account and position paths on the canonical account ID rather than the wrapper ID; see [Wrapper ID and account ID](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 
 To value a position, pass its order ID to the market: `expiry_market::live_order_value` with a market-bound pricer while the market is live, or `expiry_market::settled_order_payout` once it has settled. See [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) for both.
 
@@ -578,6 +579,8 @@ The module declares 2 further events, `AppAuthorized` and `AppDeauthorized`, whi
 
 ## Error codes {#error-codes}
 
+Codes repeat across modules, so always resolve an abort against the module named in the abort location rather than against the number alone. Over gRPC or GraphQL the abort also carries the constant name; over JSON-RPC it does not.
+
 | **Code** | **Constant** | **Module** | **Cause** |
 |---|---|---|---|
 | `0` | `EInvalidOwner` | `account::account` | Owner authority does not match the account's stored `owner`. |
@@ -588,5 +591,3 @@ The module declares 2 further events, `AppAuthorized` and `AppDeauthorized`, whi
 | `2` | `EAccountAlreadyExists` | `account::account_registry` | Either derived ID already exists for that owner. |
 | `0` | `EPositionAlreadyExists` | `deepbook_predict::predict_account` | A mint tried to record a duplicate market and order ID pair. |
 | `1` | `EPositionNotFound` | `deepbook_predict::predict_account` | A redeem referenced a position the account does not hold. |
-
-Codes repeat across modules, so always resolve an abort against the module named in the abort location rather than against the number alone. Over gRPC or GraphQL the abort also carries the constant name; over JSON-RPC it does not.
