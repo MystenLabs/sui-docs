@@ -58,7 +58,7 @@ The protocol supports 2 core flows:
   3. Hashi mints an equivalent `Coin<BTC>` on Sui and delivers it to your address.
 - **Withdrawal:**
   1. You burn your `Coin<BTC>` on Sui and specify a Bitcoin destination address.
-  2. The committee signs and broadcasts a Bitcoin transaction to send BTC to your destination.
+  2. The committee signs and broadcasts a Bitcoin transaction that sends BTC from the custody pool to your destination.
 
 To run these flows programmatically, use the [Hashi SDK](#hashi-sdk). For withdrawal ordering and cancellation, see [Security](#security).
 
