@@ -69,7 +69,14 @@ The typical workflow for a lender interacting with a margin pool:
 3. Monitor the pool's interest rate and utilization rate using the read endpoints.
 4. Call `withdraw` when you want to reclaim your assets plus accrued interest. The `amount` parameter is an `Option<u64>` denominated in tokens, not shares. Pass `some(amount)` to take a specific amount, or `none` to withdraw everything the cap holds.
 
-Two things can cap a withdrawal below what your shares are worth. The pool's withdrawal rate limiter aborts with `ERateLimitExceeded` when recent withdrawals have used up the amount the limiter currently allows, so check `get_available_withdrawal` before you submit. The pool's vault also has to hold the assets: if borrowers have drawn them down, the call aborts with `ENotEnoughAssetInPool` until utilization falls.
+Two things can cap a withdrawal below what your shares are worth. The pool's withdrawal rate limiter caps how much recent withdrawals can take out of the pool. When recent withdrawals have used up the amount the limiter currently allows, the call aborts with `ERateLimitExceeded`, so check `get_available_withdrawal` before you submit. The pool's vault also has to hold the assets: if borrowers have drawn them down, the call aborts with `ENotEnoughAssetInPool` until utilization falls.
+
+The `withdraw` call can abort with these errors:
+
+| **Error** | **Cause** | **Resolution** |
+|---|---|---|
+| `ERateLimitExceeded` | Recent withdrawals have used up the amount the withdrawal rate limiter currently allows. | Check `get_available_withdrawal` before you submit. |
+| `ENotEnoughAssetInPool` | Borrowers have drawn down the assets in the pool's vault. | Wait until utilization falls. |
 
 ## API
 
@@ -78,7 +85,7 @@ Following are the different public functions that the `MarginPool` exposes.
 <details>
 <summary>Mint a `SupplierCap`</summary>
 
-Create a new `SupplierCap` that can be used to supply and withdraw from margin pools. One `SupplierCap` can be used across multiple margin pools. The system emits a `SupplierCapMinted` event when you mint a new supplier cap. Minting one emits a `SupplierCapMinted` event, and per-cap positions are readable through the `user_supply_shares` and `user_supply_amount` endpoints.
+Create a new `SupplierCap` that can be used to supply and withdraw from margin pools. The system emits a `SupplierCapMinted` event when you mint a new supplier cap. Minting one emits a `SupplierCapMinted` event, and per-cap positions are readable through the `user_supply_shares` and `user_supply_amount` endpoints.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -123,7 +130,23 @@ Withdraw supplied assets from the margin pool. You can specify an exact amount o
 <details>
 <summary>Read endpoints</summary>
 
-These functions return the pool's current state: its ID, whether a given DeepBook pool is allowed, supply and borrow totals and shares, the last update timestamp, the supply cap, protocol fees, the risk and interest parameters, and the supply shares and amount held by a given `SupplierCap`.
+These functions return the pool's current state:
+
+- `id`: The pool's ID
+- `deepbook_pool_allowed`: Whether the pool allows a given DeepBook pool
+- `total_supply`: The pool's total supply
+- `supply_shares`: The pool's total supply shares
+- `total_borrow`: The pool's total borrow
+- `borrow_shares`: The pool's total borrow shares
+- `last_update_timestamp`: The timestamp of the pool's last update
+- `supply_cap`: The maximum total amount of assets the pool accepts
+- `protocol_fees`: The pool's protocol fees
+- `max_utilization_rate`: The maximum fraction of supplied assets that borrowers can use at one time
+- `protocol_spread`: The portion of interest income that goes to the protocol rather than suppliers
+- `min_borrow`: The smallest borrow amount the pool permits
+- `interest_rate`: The pool's current interest rate
+- `user_supply_shares`: The supply shares that a given `SupplierCap` holds
+- `user_supply_amount`: The supply amount that a given `SupplierCap` holds
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
