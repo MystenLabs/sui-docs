@@ -49,9 +49,14 @@ Use gRPC for:
 
 ## When should I use something else?
 
-For frontends, tools, dynamic-language clients, and queries that join multiple resource types, consider [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc).
+Consider [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc) for:
 
-Full node gRPC is limited by the node's retention; query an [Archival Service](/develop/accessing-data/archival-store) endpoint directly when you need higher-retention point lookups.
+- Frontends
+- Tools
+- Dynamic-language clients
+- Queries that join multiple resource types
+
+The node's retention limits full node gRPC. For point lookups beyond that retention, query an [Archival Service](/develop/accessing-data/archival-store) endpoint directly. The Archival Service offers higher retention than a full node.
 
 import DocCardList from '@theme/DocCardList';
 
