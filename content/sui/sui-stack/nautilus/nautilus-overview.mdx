@@ -61,7 +61,12 @@ A Nautilus application consists of 2 components:
 
 ## How it works
 
-- Deploy the offchain server to a self-managed TEE, such as AWS Nitro Enclaves, or use [Marlin Oyster](/sui-stack/nautilus/community-dev-tools) to deploy Dockerized Nautilus apps.
+A Nautilus application works in this order:
+
+1. Deploy the offchain server to a self-managed TEE, such as AWS Nitro Enclaves, or use [Marlin Oyster](/sui-stack/nautilus/community-dev-tools) to deploy Dockerized Nautilus apps.
+2. The TEE generates a cryptographic attestation that proves the integrity of the execution environment.
+3. Sui smart contracts verify the attestation onchain before accepting the TEE output.
+4. The provider's root of trust anchors the integrity of the TEE, which makes it auditable.
 
 :::danger
 
@@ -72,12 +77,6 @@ The [provided reproducible build template](https://github.com/MystenLabs/nautilu
 You can adapt and extend it to fit your specific use case.
 
 :::
-
-- The TEE generates a cryptographic attestation that proves the integrity of the execution environment.
-
-- Sui smart contracts verify the attestation onchain before accepting the TEE output.
-
-- The integrity of the TEE is auditable and anchored by the provider's root of trust.
 
 Refer to [Nautilus design](/sui-stack/nautilus/nautilus-design) and [using Nautilus](/sui-stack/nautilus/using-nautilus) for details.
 
