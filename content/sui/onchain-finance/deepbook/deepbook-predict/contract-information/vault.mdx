@@ -245,9 +245,15 @@ A flush freezes the entire pool at one instant, values it against that frozen st
 
 ### How to run a complete flush {#flush-checklist}
 
-1. **Snapshot transaction.** In one programmable transaction block, call `registry::generate_pool_valuation_proof` with an allowlisted `PoolValuationCap`, pass the proof and both drain budgets to `start_pool_valuation`, call `expiry_market::try_settle` ahead of the snapshot for any market whose settlement might be due, call `snapshot_expiry_pricer` once for each market that `active_expiry_markets` returns, and end with `seal_valuation_snapshot`. Refresh oracles in an earlier transaction, because the pricer load refuses an observation written in the same transaction.
-2. **Valuation transactions.** Call `value_expiry` once for each snapshotted live market, one market per transaction.
-3. **Finish transaction.** Call `finish_flush` before `started_at_ms + max_valuation_window_ms`. On protocol version 4 the sender must be on the flush-operator allowlist.
+1. **Oracle refresh transaction.** Refresh the oracles in a transaction that runs before the snapshot transaction. The pricer load refuses an oracle observation written in the same transaction.
+2. **Snapshot transaction.** In one programmable transaction block, run these commands in order:
+   1. Call `registry::generate_pool_valuation_proof` with an allowlisted `PoolValuationCap`.
+   2. Pass the proof and both drain budgets to `start_pool_valuation`.
+   3. Call `expiry_market::try_settle` ahead of the snapshot for any market whose settlement might be due.
+   4. Call `snapshot_expiry_pricer` once for each market that `active_expiry_markets` returns.
+   5. End with `seal_valuation_snapshot`.
+3. **Valuation transactions.** Call `value_expiry` once for each snapshotted live market, one market per transaction.
+4. **Finish transaction.** Call `finish_flush` before `started_at_ms + max_valuation_window_ms`. On protocol version 4 the sender must be on the flush-operator allowlist.
 
 The subsections below describe each stage.
 
@@ -330,7 +336,7 @@ Protocol version 4 restricts it to flush operators: it aborts with `protocol_con
 
 ### What a flush blocks {#flush-gates}
 
-The valuation flag no longer gates trading. Trades on a stamped market cannot reach the frozen figures, because the stamp captured the cash rows and the payout tree captures each node's shadow before its first post-snapshot mutation. What a flush blocks and what it leaves open:
+The valuation flag no longer gates trading. Trades on a stamped market cannot reach the frozen figures, because the stamp captured the cash rows and the payout tree captures each node's shadow before its first post-snapshot mutation. Both networks run protocol version 4, so rows that name protocol version 4 describe current behavior on Mainnet and Testnet. What a flush blocks and what it leaves open:
 
 | **Flow** | **During the snapshot transaction** | **During valuation and finish** |
 |---|---|---|
@@ -396,6 +402,8 @@ Each expiry's contribution is exact rather than estimated, and the flush measure
 snapshot_nav = max(0, snapshot_free_cash - frozen_marked_liability)
 snapshot_free_cash = snapshot_cash - snapshot_impact_reserve
 ```
+
+`snapshot_cash` and `snapshot_impact_reserve` are the cash and the inventory-impact reserve that `snapshot_expiry_pricer` stamped on the market. The inventory-impact reserve is an isolated escrow of inventory-impact charges that NAV excludes while the market is live, as [Per-expiry backing](#max-payout) describes.
 
 `frozen_marked_liability` is the full payout-tree walk over the tree's frozen shadow, pricing each distinct boundary tick once through the thawed pricer, so every position open at the snapshot is worth exactly its quantity multiplied by its range probability. There is no verified-versus-unscanned bucket split, no uncertainty band, and no separate supply and withdraw pricing.
 
