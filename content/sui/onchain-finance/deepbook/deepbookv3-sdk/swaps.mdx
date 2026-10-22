@@ -48,7 +48,7 @@ answer: Learn how to use the DeepBookV3 SDK to interact with a swap-like interfa
 
 DeepBookV3 provides a swap-like interface commonly seen in automatic market makers (AMMs). The DeepBookV3 SDK provides functions to leverage the features of this interface. See [Swaps](/onchain-finance/deepbook/deepbookv3/contract-information/swaps) in the API section for more details.
 
-## Swap functions
+## Which swap functions does the SDK provide?
 
 The SDK provides the following functions to perform swaps between the base and quote asset. In the `SUI_DBUSDC` pool used in the examples on this page, SUI is the base asset and DBUSDC is the quote asset.
 
@@ -60,7 +60,7 @@ Use `swapExactBaseForQuote` to swap exact base amount for quote amount. The call
 
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap. The fields of `SwapParams` appear under `swapExactQuantity`, which takes the same object plus `isBaseToCoin`.
+- `params`: `SwapParams` object that represents the parameters for the swap. `SwapParams` has the same fields as the [`swapExactQuantity`](#swapexactquantity) parameters, without `isBaseToCoin`.
 
 ```tsx
 swapExactBaseForQuote({ params: SwapParams });
@@ -72,7 +72,7 @@ Use `swapExactQuoteForBase` to swap exact quote amount for base amount. The call
 
 **Parameters**
 
-- `params`: `SwapParams` object that represents the parameters for the swap. The fields of `SwapParams` appear under `swapExactQuantity`, which takes the same object plus `isBaseToCoin`.
+- `params`: `SwapParams` object that represents the parameters for the swap. `SwapParams` has the same fields as the [`swapExactQuantity`](#swapexactquantity) parameters, without `isBaseToCoin`.
 
 ```tsx
 swapExactQuoteForBase({ params: SwapParams });
@@ -89,7 +89,7 @@ Use `swapExactQuantity` to swap an exact quantity in either direction (base to q
   - `amount`: Number representing the amount to swap.
   - `deepAmount`: Number representing the DEEP amount for fees. The swap returns excess DEEP.
   - `minOut`: Number representing minimum output amount. The transaction fails if the swap returns less than this amount.
-  - `isBaseToCoin`: Boolean indicating swap direction (true = base to quote).
+  - `isBaseToCoin`: Boolean that sets the swap direction. Set it to `true` to swap base to quote, or `false` to swap quote to base.
   - `baseCoin`: Optional `TransactionArgument` for base coin input.
   - `quoteCoin`: Optional `TransactionArgument` for quote coin input.
   - `deepCoin`: Optional `TransactionArgument` for DEEP coin input.
@@ -107,7 +107,7 @@ Use `swapExactQuantityWithManager` to swap an exact quantity using a balance man
   - `balanceManagerKey`: String that identifies the balance manager.
   - `amount`: Number representing the amount to swap.
   - `minOut`: Number representing minimum output amount. The transaction fails if the swap returns less than this amount.
-  - `isBaseToCoin`: Boolean indicating swap direction (true = base to quote).
+  - `isBaseToCoin`: Boolean that sets the swap direction. Set it to `true` to swap base to quote, or `false` to swap quote to base.
   - `tradeCap`: Optional `TransactionArgument` for trade capability.
   - `depositCap`: Optional `TransactionArgument` for deposit capability.
   - `withdrawCap`: Optional `TransactionArgument` for withdraw capability.
