@@ -79,7 +79,7 @@ If your provider does not support gRPC, ask them to enable it or contact the Sui
 </TabItem>
 </Tabs>
 
-## Field masks
+## What is a field mask? {#field-masks}
 
 A [`FieldMask` in protocol buffers](https://protobuf.dev/reference/protobuf/google.protobuf/#field-mask) is a mechanism that specifies a subset of fields within a message to read, update, or return. Instead of retrieving the entire object, a client can request only the specific fields they need by providing a list of field paths. This improves performance and reduces unnecessary data transfer.
 
@@ -185,7 +185,7 @@ In the Sui gRPC API, the proto schema represents identifiers with standard human
 
 - `TypeTag` and `StructTag`: Represented in their canonical string format (such as `0x0000000000000000000000000000000000000000000000000000000000000002::coin::Coin<0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI>`)
 
-## Pagination
+## How to paginate gRPC responses {#pagination}
 
 When using gRPC APIs that return lists of data like account balances, owned objects, and so on, you typically need to handle pagination. These APIs return results in chunks and include tokens to help you request the next batch.
 
@@ -225,9 +225,9 @@ Here are the headers you might encounter:
 
 Not every API response includes all headers. The API includes a header only when it applies to the given RPC.
 
-## Access data using `grpcurl`
+## How to query Sui with `grpcurl` {#access-data-using-grpcurl}
 
-Interact with gRPC by using [`grpcurl`](https://github.com/fullstorydev/grpcurl). 
+Interact with gRPC by using [`grpcurl`](https://github.com/fullstorydev/grpcurl). In the following commands, replace `<FULL_NODE_URL>` with the hostname of your gRPC-enabled full node. Sui Foundation public endpoints use the format `fullnode.<network>.sui.io`, for example `fullnode.mainnet.sui.io`. Replace `<ADDRESS>` with a Sui address (64 hexadecimal characters with a leading `0x`) and `<PACKAGE>` with the ID of the package that defines the event type.
 
 ### List available gRPC services
 
@@ -246,7 +246,7 @@ $ grpcurl <FULL_NODE_URL> list sui.rpc.v2.LedgerService
 ### Get the events and effects details of a particular transaction
 
 ```shell
-$ grpcurl -d '{ "digest": "J4NvV5iQZQFm1xKPYv9ffDCCPW6cZ4yFKsCqFUiDX5L4" }' <FULL_NODE_URL> sui.rpc.v2.LedgerService/GetTransaction
+$ grpcurl -d '{ "digest": "J4NvV5iQZQFm1xKPYv9ffDCCPW6cZ4yFKsCqFUiDX5L4", "read_mask": { "paths": ["events", "effects"]} }' <FULL_NODE_URL> sui.rpc.v2.LedgerService/GetTransaction
 ```
 
 ### Get the transactions in a particular checkpoint
@@ -394,7 +394,7 @@ Every response frame in a list API stream includes a `watermark` with a `cursor`
 
 To paginate, take the `cursor` from the latest `watermark` in the stream and pass it as `options.after` (for ascending order) or `options.before` (for descending order) in your next request. The `watermark` also tells you how much of the checkpoint range the server has covered, which is useful when a sparse filter produces few or no matching items.
 
-For operator-level configuration of these APIs (timeouts, item limits, scan budgets), see [Ledger history configuration](/operators/full-node/sui-full-node#ledger-history-configuration).
+For operator-level configuration of these APIs (timeouts, item limits, scan budgets), see [Ledger history configuration](/operators/full-node/sui-full-node).
 
 ## Add a gRPC client to your project
 
@@ -626,6 +626,7 @@ python -m grpc_tools.protoc -I./protos --python_out=. --grpc_python_out=. ./prot
 
 ```python
 import grpc
+from google.protobuf import field_mask_pb2
 from sui.rpc.v2 import ledger_service_pb2, ledger_service_pb2_grpc
 
 def main():
@@ -639,7 +640,7 @@ def main():
     # Build the request
     request = ledger_service_pb2.GetTransactionRequest(
         digest=base58_digest,
-        read_mask=ledger_service_pb2.TransactionReadMask(paths=["events", "effects"])
+        read_mask=field_mask_pb2.FieldMask(paths=["events", "effects"])
     )
 
     # Make the RPC call
