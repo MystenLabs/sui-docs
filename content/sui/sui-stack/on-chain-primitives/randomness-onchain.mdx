@@ -60,11 +60,13 @@ Although `Random` is a shared object, it is inaccessible for mutable operations.
 :::
 
 
-## Limited resources and `Random` dependent flows
+## How can an attacker exploit limited resources?
 
 Be aware that some resources that are available to transactions are limited. If you are not careful, an attacker can break or exploit your application by deliberately controlling the point where your function runs out of resources. Concretely, gas is such a resource.
 
 The `Random` API does not automatically prevent this kind of attack, and you must be aware of this subtlety when designing your contracts.
+
+An attacker can abuse other per-transaction limits in the same way as gas, by controlling the point where your function exceeds them.
 
 Other limited resources per transaction that you should consider are:
 
@@ -92,7 +94,7 @@ For many use cases, like when selecting a raffle winner or lottery numbers, this
 
 ### Divide logic
 
-Split the logic into 2 functions that different transactions must call.
+Split the logic into 2 functions that different transactions must call. The first transaction fixes the random value before the logic that depends on it runs, so an attacker cannot make the function run out of gas on an unfavorable outcome and retry with new randomness.
 
 1. The first transaction, `tx1`, calls the first function, which fetches a random value and stores it in an object that is unreadable by other commands in `tx1`. For example, the function might transfer the object to the caller or store the transaction digest and check that it is different on read, so that only a later transaction can read the value.
 
@@ -124,7 +126,7 @@ Write the function such that the main processing path does the heavy work, while
 
 - UIDs generated and deleted on the same transaction do not count towards the limit on generated or deleted UIDs. 
 
-## Use (non-public) `entry` functions
+## Why use non-public `entry` functions?
 
 While composition is very powerful for smart contracts, it opens the door to attacks on functions that use randomness.
 
@@ -201,13 +203,13 @@ To protect against PTB-based composition attacks, Sui rejects PTBs that have com
 
 :::
 
-## Instantiating `RandomGenerator`
+## How to instantiate `RandomGenerator`
 
 `RandomGenerator` is secure as long as it is created by the consuming module. If passed as an argument, the caller might be able to predict the outputs of that `RandomGenerator` instance, for example, by calling `bcs::to_bytes(&generator)` and parsing its internal state.
 
 The Move compiler enforces this behavior by rejecting `public` functions with `RandomGenerator` as an argument.
 
-## Accessing `Random` from TypeScript
+## How to access `Random` from TypeScript
 
 If you want to call `roll_dice(r: &Random, ctx: &mut TxContext)` in module `example`, use the following code, where `${PACKAGE_ID}` is the ID of the published package that contains the `example` module:
 
@@ -226,7 +228,7 @@ Having access to random numbers is only one part of designing secure application
 
 To securely access randomness:
 
-- Define your function as (private) `entry` so it cannot be composed and abort-filtered by another module.
+- Define your function as (private) `entry` so another module cannot compose it and abort the transaction when the outcome is unfavorable.
 
 - Prefer generating randomness using function-local `RandomGenerator`. Always create it internally from `&Random`; never accept a `RandomGenerator` as a function parameter.
 
