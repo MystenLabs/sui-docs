@@ -62,7 +62,7 @@ Primary interfaces to access Sui data include:
 
 - [gRPC API](/develop/accessing-data/grpc): A generally available, type-safe full node API that replaces JSON-RPC on full nodes. Use it when you need generated clients, low-latency point lookups, transaction submission, simulation, or streaming subscriptions.
 
-- [Archival Store and Service](/develop/accessing-data/archival-store): Provides long-term storage and access to historical network data that might no longer be available on full nodes because of [pruning](/operators/data-management/managing-data#sui-node-pruning-policies). GraphQL can route supported historical lookups to Archival when the GraphQL operator configures it. Full node gRPC does not implicitly fall back to Archival; gRPC clients must query an Archival Service endpoint directly.
+- [Archival Store and Service](/develop/accessing-data/archival-store): Provides long-term storage and access to historical network data that might no longer be available on full nodes because of [pruning](/operators/data-management/managing-data#sui-node-pruning-policies), the process node operators use to remove older data according to their retention policy. GraphQL can route supported historical lookups to Archival when the GraphQL operator configures it. Full node gRPC does not implicitly fall back to Archival; gRPC clients must query an Archival Service endpoint directly.
 
 - [Custom indexers](/develop/accessing-data/custom-indexer/custom-indexers): [Build your own pipelines](/develop/accessing-data/custom-indexer/build) for application-specific data with the custom indexing framework. PostgreSQL is the default storage path, but custom indexers can write to any storage layer by implementing the framework storage traits.
 
@@ -71,7 +71,7 @@ Primary interfaces to access Sui data include:
 ![Future state data serving stack](./images/access-interfaces_accessing-data_v1.svg)
 
 :::info
-View the video below for a comparison of the latest and legacy Sui data stacks. 
+The following video compares the latest and legacy Sui data stacks.
 <iframe width="560" height="315" src="https://www.youtube.com/embed/CL7H4QQSWd0?si=Mt2xo3HNfm2mbRtE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 :::
 
@@ -101,13 +101,13 @@ Choose the RPC interface based on the client you are building and the data acces
 
 A good default is GraphQL for frontends, tools, and flexible query workloads, and gRPC for backend systems, indexers, streaming, and performance-sensitive typed clients. You can use both interfaces in one application when different components have different requirements.
 
-To apply the table as rules, check these conditions:
+To apply the table as rules, check these conditions in order and use the first one that matches:
 
 - If you need live checkpoint subscriptions or other streaming workflows, use gRPC. Subscription support is not yet available on GraphQL.
 - If you need historical data beyond a full node's retention, use GraphQL with Archival configured by the operator, or query an Archival Service gRPC endpoint directly.
 - If you need flexible, nested, or filtered queries that combine transactions, objects, events, balances, and checkpoints in one request, use GraphQL.
 - If you need generated typed clients, low-latency point lookups, or protobuf-based workflows, use gRPC.
-- Otherwise, follow the default above.
+- Otherwise, use GraphQL for frontends, tools, and flexible query workloads, and gRPC for backend systems, indexers, streaming, and performance-sensitive typed clients.
 
 Refer to the following articles outlining general differences between gRPC and GraphQL. Validate the accuracy and authenticity of the differences using your own experiments.
 
