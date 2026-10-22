@@ -64,9 +64,9 @@ The Currency Standard is a technical standard used by Move smart contracts for c
 
 The Coin and Currency standards are both used to create fungible tokens. However, they use different creation methods and store metadata in a different type of object.
 
-Coin creates assets using `coin::create_currency` while Currency uses `coin_registry::new_currency` and `coin_registry::new_currency_with_otw`.
+The Coin standard creates assets using `coin::create_currency`, while the Currency standard uses `coin_registry::new_currency` and `coin_registry::new_currency_with_otw`.
 
-Coin uses `CoinMetadata` while Currency uses `Currency` object. Fungible tokens created on Sui using the Coin or Currency standard are referred to as coins.
+The Coin standard stores metadata in a `CoinMetadata` object, while the Currency standard stores it in a `Currency` object. Fungible tokens created on Sui using the Coin or Currency standard are referred to as coins.
 
 **Coin** refers to a single object wrapper for a fungible asset, while the term **currency** refers to the object that is created in `CoinRegistry`, which describes the currency properties and setup.
 
@@ -129,7 +129,7 @@ Coins can have different regulatory states:
 
 - **Regulated:** The coin has an associated `DenyCapV2` that can restrict addresses from using it.
 - **Unregulated:** The coin was created without any deny list capabilities.
-- **Unknown:** Regulatory status is undetermined, typically from legacy migrations.
+- **Unknown:** Regulatory status is undetermined, typically for coins migrated from the legacy Coin standard.
 
 ### Creation options
 
@@ -175,9 +175,6 @@ For OTW created currencies, you **must** call `finalize_registration` to promote
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/registries/coin_registry.move" mode="code" fun="finalize" signatureOnly />
 
 If you publish a package that uses an OTW to create a coin in the package `init` function, then a call must be made to `coin_registry::finalize_registration` after initialization. The function transforms the coin into a shared object.
-:::caution OTW currencies
-For OTW created currencies, you **must** call `finalize_registration` to promote the currency to the registry.
-:::
 
 Run the following command in a separate transaction after the package is published.
 
@@ -345,7 +342,7 @@ You can query information directly from the `Currency<T>` object.
 
 Metadata updates require the `MetadataCap<T>` object, which is only available to the bearer of the `TreasuryCap` for a coin. The bearer of the `TreasuryCap` can claim the `MetadataCap` using the `claim_metadata_cap` function only once. `Currency` tracks the claimed status of the capability through its `metadata_cap_id` field.
 
-The bearer of the `MetadataCap` can use the available getter functions to update values.
+The bearer of the `MetadataCap` can use the available setter functions to update values:
 
 - `set_name<T>()`: Update coin name.
 
