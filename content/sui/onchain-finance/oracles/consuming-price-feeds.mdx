@@ -74,7 +74,7 @@ They pin the network's package and object IDs in a config module rather than inl
 
 <ImportContent source="examples/oracle-adapter/ts/src/config.ts" mode="code" tag="config" />
 
-The config's Pyth and Wormhole state object IDs and the Hermes endpoint come from the [Pyth Sui addresses](https://docs.pyth.network/price-feeds/contract-addresses/sui); its feed IDs come from the [Pyth feed list](https://pyth.network/developers/price-feed-ids).
+The config's Pyth and Wormhole state object IDs and the Hermes endpoint come from the [Pyth Sui addresses](https://docs.pyth.network/price-feeds/contract-addresses/sui); its feed IDs come from the [Pyth feed list](https://pyth.network/developers/price-feed-ids). If a call fails because an ID is wrong or has rotated, check it against those pages and update the config module.
 
 ## How do I set up the clients?
 
@@ -84,13 +84,17 @@ Three clients: a Sui RPC client, the Pyth onchain client (which builds the Wormh
 
 ## How do I update and read a Pyth price in one transaction?
 
-Fetch the latest update for your feed from Hermes, apply it with `updatePriceFeeds`, and read the returned `PriceInfoObject` in the same transaction. `updatePriceFeeds` appends the verify and update commands and returns the object IDs to read.
+To update and read a Pyth price in one transaction:
+
+1. Fetch the latest update for your feed from Hermes.
+2. Apply it with `updatePriceFeeds`. It appends the verify and update commands and returns the object IDs to read.
+3. Read the returned `PriceInfoObject` in the same transaction.
+
+The price comes back as an integer magnitude and a signed exponent, and the exponent is typically negative. The price is magnitude × 10^exponent. For example, a magnitude of `68005477` at exponent `-8` is `68005477` × 10^-8 = `0.68005477`, about `0.68` USD. Judge the confidence interval relative to the price.
 
 <ImportContent source="examples/oracle-adapter/ts/src/read.ts" mode="code" tag="update-read" />
 
-**Observe:** the transaction succeeds and the read returns a current price. Running this against Testnet for `SUI/USD` returns a price near the live market rate (for example a magnitude of `68005477` at exponent `-8`, or about `0.68` USD) with a confidence interval around `0.1%` of the price. The read goes through the adapter's staleness bound, so a price the update failed to refresh aborts rather than reading old.
-
-The price comes back as an integer magnitude and a signed exponent, and the exponent is typically negative. The price is magnitude × 10^exponent: in the example, `68005477` × 10^-8 = `0.68005477`, about `0.68` USD. Judge the confidence interval relative to the price, as in the `0.1%` example.
+**Observe:** the transaction succeeds and the read returns a current price. Running this against Testnet for `SUI/USD` returns a price near the live market rate, with a confidence interval around `0.1%` of the price. The `68005477` magnitude in the example is illustrative only, because the market price changes between runs. The read goes through the adapter's staleness bound, so a price the update failed to refresh aborts rather than reading old.
 
 ## What happens when a price feed is stale?
 
@@ -104,7 +108,7 @@ Switchboard's `current_result` does not gate on age, so there is no equivalent s
 
 ## How do I read a Switchboard feed on Sui?
 
-Switchboard is also pull, with a different shape. Instead of a shared price object you update, you hold an `Aggregator` feed and pull a fresh oracle response into your transaction with `fetchUpdateTx`, which must be the first action in the [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). Your Move consumer then reads `switchboard::aggregator::current_result`.
+Switchboard is also pull, with a different shape. Instead of a shared price object you update, you hold an `Aggregator` feed and pull a fresh oracle response into your transaction with `fetchUpdateTx`, which must be the first action in the [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). A PTB runs its commands in order within one transaction, so the fresh response lands before your consumer reads it. Your Move consumer then reads `switchboard::aggregator::current_result`.
 
 <ImportContent source="examples/oracle-adapter/ts/src/switchboard.ts" mode="code" tag="switchboard" />
 
