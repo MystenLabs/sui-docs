@@ -43,7 +43,7 @@ The Take Profit Stop Loss (TPSL) module enables conditional orders that automati
 1. **Create a condition:** Define whether the order should trigger when the price goes above or below a specified trigger price, using `new_condition`.
 2. **Create a pending order:** Specify the order details (limit or market order) that the system places when the condition is met, using `new_pending_limit_order` or `new_pending_market_order`.
 3. **Add conditional order:** Combine the condition and pending order, and add them to your margin manager using `add_conditional_order`.
-4. **Execution:** Anyone can call the permissionless `execute_conditional_orders` function to execute orders whose conditions are met. This is typically handled by keepers or bots: automated programs that monitor the market and submit execution transactions. If a conditional order fails to execute due to insufficient funds, the system emits a `ConditionalOrderInsufficientFunds` event.
+4. **Execution:** Anyone can call the permissionless `execute_conditional_orders` function to execute orders whose conditions are met. Keepers or bots usually make this call. Keepers and bots are automated programs that monitor the market and submit execution transactions. If a conditional order fails to execute due to insufficient funds, the system emits a `ConditionalOrderInsufficientFunds` event.
 
 Conditional orders are stored in sorted vectors for efficient execution:
 - `trigger_below`: Orders that trigger when the price falls below the trigger price (sorted from high to low)
@@ -155,7 +155,7 @@ Cancel all conditional orders for the margin manager.
 <details>
 <summary>Execute conditional orders</summary>
 
-Execute conditional orders whose conditions are met. This is a permissionless function that can be called by anyone (typically keepers or bots).
+Execute conditional orders whose conditions are met. Anyone can call this permissionless function. Keepers or bots, automated programs that monitor the market and submit execution transactions, usually call it.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_manager.move"
