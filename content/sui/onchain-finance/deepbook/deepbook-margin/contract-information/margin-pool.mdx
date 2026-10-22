@@ -286,3 +286,22 @@ The system emits this event when it accrues protocol fees from interest payments
 />
 
 </details>
+
+## Can a PTB read, use, and delete a shared object like a pool?
+
+Yes. The ownership model allows it, within limits. A `Shared` object grants every sender read, write, and delete permissions, but not transfer. You can read it, mutate it, and delete it, but you cannot change its ownership or wrap it. Sharing is also permanent: once you share an object, it stays shared until you delete it.
+
+In a [programmable transaction block](/develop/transactions/ptbs/inputs-and-results), you pass a shared object, such as a `MarginPool`, as a `SharedObject` input. That input carries a mutability flag. The flag controls whether commands can use the object as a mutable reference or by value. A read-only input (`mutable = false`) only supports immutable references.
+
+To read pool state, swap, and then delete the pool in one PTB:
+
+1. Declare the pool as a single `SharedObject` input with mutable access, because the swap borrows `&mut` and the deletion takes the object by value.
+2. Pass that same input to each command that needs it: the read endpoint, the swap, and finally a Move function that takes the pool by value and deletes it.
+
+When the Sui RPC resolves a shared input, it inspects every use of that argument in the PTB. If any Move call takes it as `&mut T`, by value, or as a type parameter, it marks the whole input mutable.
+
+This pattern has scheduling costs:
+
+- Any shared input forces consensus sequencing, so the transaction cannot use the fastpath.
+- Transactions that write a shared object run serially with respect to each other. Read-only transactions can run concurrently.
+- [Contention on a single shared object](/develop/objects/object-ownership) can reduce throughput, so limit how many transactions write to the same pool in a checkpoint.
