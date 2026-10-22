@@ -88,14 +88,12 @@ This example teaches:
 
 - [x] [Install the Sui CLI](/getting-started/onboarding/sui-install) and [fund an address with Testnet SUI](/getting-started/onboarding/get-coins).
 
-- [x] [Node.js](https://nodejs.org/) 22 or later and [pnpm](https://pnpm.io/installation) 10.17.0 or later, per the [Messaging SDK installation requirements](/sui-stack/messaging/installation), plus a [Rust toolchain](https://rustup.rs/) for the relayer.
+- [x] [Node.js](https://nodejs.org/) 22 or later and [pnpm](https://pnpm.io/installation) 10.17.0 or later, per the Messaging SDK installation requirements, plus a [Rust toolchain](https://rustup.rs/) for the relayer.
 
 - [x] A wallet that signs with a standard key, such as [Slush Wallet](https://slush.app/). zkLogin wallets do not work here. See [Wallet compatibility](#wallet-compatibility).
 
 </TabItem>
 </Tabs>
-
-For SDK installation and client setup, see [Installation](/sui-stack/messaging/installation) and [Developer Setup](/sui-stack/messaging/setup).
 
 ## Architecture
 
@@ -154,6 +152,8 @@ The frontend and relayer both need to agree on the same package and key servers.
 | Testnet | `0xba8a26d42bc8b5e5caf4dac2a0f7544128d5dd9b4614af88eec1311ade11de79` |
 | Mainnet | `0x541840ae7df705d1c6329c22415ed61f9140a18b79b13c1c9dc7415b115c1ba8` |
 
+An upgrade to the package changes its ID. Confirm that the ID for your network is current before you use it.
+
 ### Wallet compatibility
 
 The relayer verifies sender signatures, so the connected wallet has to use a signature scheme it recognizes. A zkLogin wallet fails with `Invalid public key format: Unknown signature scheme flag: 0x05`. Use a passphrase or imported-key wallet.
@@ -176,7 +176,7 @@ The following steps walk through the flow:
 
 5. The recipient's frontend polls the relayer for new messages. It receives the ciphertext, fetches the DEK through the same Seal flow (with its own `MessagingReader` permission check), decrypts the message locally, and verifies the sender's signature.
 
-Errors can occur at the Seal step (session key expired, permission revoked), the relayer step (signature invalid, permission denied), or the Walrus step (upload timeout). The SDK retries transient failures and surfaces persistent errors through the `useMessages` hook's error state.
+Errors can occur at the Seal step (session key expired, permission revoked), the relayer step (signature invalid, permission denied), or the Walrus step (upload timeout). Session keys expire after 10 minutes by default. The SDK retries transient failures and surfaces persistent errors through the `useMessages` hook's error state.
 
 The following snippets are the parts of the code worth reading carefully.
 
@@ -194,7 +194,7 @@ The `rotate_encryption_key` function appends a new encrypted DEK version to the 
 
 <ImportContent source="move/packages/sui_stack_messaging/sources/messaging.move" mode="code" org="MystenLabs" repo="sui-stack-messaging" fun="rotate_encryption_key" />
 
-Key rotation creates a new DEK version. Future messages encrypt with the new version. Removed members can still decrypt old messages (they had the old DEK cached) but cannot access the new DEK because Seal checks their permission at decryption time.
+Key rotation creates a new DEK version. Future messages encrypt with the new version. Removed members can decrypt old messages only while they still hold the old DEK in a local cache. Seal checks permission at decryption time, so removed members cannot fetch the new DEK or fetch an old DEK again.
 
 ### Encryption history storage
 
