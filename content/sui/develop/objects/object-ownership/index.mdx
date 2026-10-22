@@ -16,6 +16,17 @@ keywords:
   - transaction objects
   - relating objects and transactions
   - object ownership
+  - address-owned objects
+  - shared objects
+  - immutable objects
+  - wrapped objects
+  - party objects
+  - consensus-address owned
+  - object ownership types
+  - fastpath
+  - consensus ordering
+  - transaction latency
+  - sui object model
 pagination_prev: null
 goal:
   description: >-
@@ -45,7 +56,7 @@ answer: >-
   whether the object is versioned on the fastpath or through consensus.
 ---
 
-Every object has an owner that determines who can use it in transactions and whether the object is versioned on the fastpath or through consensus. The ownership type you choose affects transaction latency, concurrency, and the security model your smart contract must enforce. The ownership type you choose affects transaction latency, concurrency, and the security model your smart contract must enforce.
+Every object has an owner that determines who can use it in transactions and whether Sui versions the object on the fastpath or through consensus. On the fastpath, the sender names the object version in the object reference instead of waiting for consensus to assign one. The ownership type you choose affects transaction latency, concurrency, and the security model your smart contract must enforce.
 
 | Ownership type | Access model | Versioning path | Typical latency |
 | --- | --- | --- | --- |
@@ -55,21 +66,17 @@ Every object has an owner that determines who can use it in transactions and whe
 | [Wrapped](/develop/objects/object-ownership/wrapped) | Only accessible through the object that wraps it. | Depends on the wrapper | Depends on the wrapper |
 | [Consensus-address owned / party](/develop/objects/object-ownership/party) | A single address owns the object, but the object is sequenced by consensus. | Consensus | Higher (consensus sequencing) |
 
-### Choosing an ownership type
+### Which ownership type should you choose?
 
 Choose the ownership type based on your access pattern.
 
-- **Use address-owned objects** when a single user owns and controls the object (for example, a user's NFT, a personal wallet, or a capability token). Only the owner can use an address-owned object, so there is no contention for it, and the sender names the version in the object reference rather than waiting for consensus to assign one.
-- **Use shared objects** when multiple users need to read and write the same object (for example, a marketplace, a liquidity pool, or a game board). Shared objects go through consensus, which adds latency but enables concurrent access. Contention on a single shared object can reduce transaction throughput, so minimize the number of transactions that write to the same shared object in the same checkpoint ([Security Best Practices](/develop/security/best-practices)).
-- **Use immutable objects** for data that never changes after creation (for example, published packages, configuration constants, or reference data). Immutable objects have no versioning overhead, and any number of transactions can read the same one concurrently.
-- **Use wrapped objects** when an object should only be accessible through its parent (for example, a ticket inside an envelope, or inventory items inside a character). See [Wrapped Objects](/develop/objects/object-ownership/wrapped) for details.
 #### Address-owned 
 
 Use address-owned objects when a single user owns and controls the object (for example, a user's NFT, a personal wallet, or a capability token). Only the owner can use an address-owned object, so there is no contention for it, and the sender names the version in the object reference rather than waiting for consensus to assign one.
 
 #### Shared
 
-Use shared objects when multiple users need to read and write the same object (for example, a marketplace, a liquidity pool, or a game board). Shared objects go through consensus, which adds latency but enables concurrent access. Contention on a single shared object can reduce transaction throughput, so minimize the number of transactions that write to the same shared object in the same checkpoint.
+Use shared objects when multiple users need to read and write the same object (for example, a marketplace, a liquidity pool, or a game board). Shared objects go through consensus, which adds latency but enables concurrent access. Contention on a single shared object can reduce transaction throughput, so minimize the number of transactions that write to the same shared object in the same checkpoint ([Security Best Practices](/develop/security/best-practices)).
 
 #### Immutable 
 
