@@ -2,7 +2,7 @@
 title: Permissioned Asset Standard
 description: >-
   Learn how the Permissioned Asset Standard (PAS) enforces restricted asset
-  movement on Sui through Accounts, Policies, and programmable approval logic.
+  movement on Sui through Accounts, Policies, and Requests.
 keywords:
   - PAS
   - Permissioned Asset Standard
@@ -29,7 +29,7 @@ questions:
   - How do I restrict who can hold or move my asset?
 answer: >-
   Learn how the Permissioned Asset Standard (PAS) enforces restricted asset
-  movement on Sui through Accounts, Policies, and programmable approval logic.
+  movement on Sui through Accounts, Policies, and Requests.
 ---
 
 The Permissioned Asset Standard (PAS) is a framework for creating assets on Sui whose movement and use are subject to programmable approval rules. Unlike freely transferable assets, permissioned assets can only move between parties when a set of conditions defined in a Policy are met. This makes PAS well-suited for regulated financial instruments, compliance-bound tokens, and any use case where asset transfer must be controlled by business or legal rules rather than left open to any holder.
@@ -44,7 +44,7 @@ When a holder initiates a transfer, the system creates a Request. That Request m
 
 ## How PAS differs from closed-loop tokens
 
-PAS supports a unified account model in which Accounts hold permissioned assets and are subject to the rules defined by the associated Policy, making discoverability almost free. It also uses derived objects for policy and account discovery, and PTB templates for "automated" client-side policy resolution.
+PAS supports a unified account model in which Accounts hold permissioned assets and are subject to the rules defined by the associated Policy, making discoverability almost free. It also uses derived objects for policy and account discovery, so that the Policy that governs a Request can evaluate it.
 
 import DocCardList from '@theme/DocCardList';
 
