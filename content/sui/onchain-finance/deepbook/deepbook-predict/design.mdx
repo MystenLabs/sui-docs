@@ -85,7 +85,7 @@ Trader balances and positions live in the account layer, and oracle data lives o
 
 `Registry` indexes the protocol. It records each admin-approved propbook underlying, the cadence deployment policy for that underlying, and one `ExpiryMarket` for each underlying and expiry pair. It also holds the allowlists that make a `PauseCap`, a `MarketLifecycleCap`, or a `PoolValuationCap` valid, and it derives the `BuilderCode` objects that attribute builder fees to order-flow routers, which [Builder codes](#builder-codes) explains. It holds no trading state.
 
-Package publication creates `Registry` and `ProtocolConfig` together and sends one `AdminCap` to the deployer. `ProtocolConfig` carries the tunable configuration plus 3 global gates: `trading_paused` blocks new risk, `frozen` halts the whole version-gated surface, and `version_watermark` sets the lowest package version a gated call can run. The [pool flush](#vault-and-plp) has 2 further flags: the flush sets `valuation_in_progress` from its start until it finishes, which spans transactions, and sets `snapshot_in_progress` only inside the single transaction that snapshots the markets. A `flush_seq` counter stamps each valuation. Trading and flushes run under 2 timing values: `no_trade_window_ms`, 10,000 ms on both networks as of 2026-10-13, closes live trading just before expiry, and `max_valuation_window_ms`, deployed at 300000 ms, or 5 minutes, bounds how long a flush can take to finish. One configuration struct is a template: each new `ExpiryMarket` snapshots the current strike-exposure policy at creation, so a template change reaches only later expiries and never affects a live one.
+Package publication creates `Registry` and `ProtocolConfig` together and sends one `AdminCap` to the deployer. `ProtocolConfig` carries the tunable configuration plus 3 global gates: `trading_paused` blocks new risk, `frozen` halts the whole version-gated surface, and `version_watermark` sets the lowest package version a gated call can run. The [pool flush](#vault-and-plp) has 2 further flags: the flush sets `valuation_in_progress` from its start until it finishes, which spans transactions, and sets `snapshot_in_progress` only inside the single transaction that snapshots the markets. A `flush_seq` counter stamps each valuation. Trading and flushes run under 2 timing values: `no_trade_window_ms`, 10,000 ms, or 10 seconds, on both networks as of 2026-10-13, closes live trading just before expiry, and `max_valuation_window_ms`, deployed at 300000 ms, or 5 minutes, bounds how long a flush can take to finish. One configuration struct is a template: each new `ExpiryMarket` snapshots the current strike-exposure policy at creation, so a template change reaches only later expiries and never affects a live one.
 
 `ExpiryMarket` is the hot object for one expiry. It owns trade execution, the tick-keyed payout tree that tracks strike exposure, and an embedded `ExpiryCash` component that holds that expiry's working USDC. It stores the propbook underlying ID rather than any oracle object ID, alongside its tick size, admission tick size, and mint pause flag. A new market opens with zero cash and cannot mint until pool capital funds it. `plp::rebalance_expiry_cash` moves that cash from the pool's idle balance, and anyone can call it.
 
@@ -99,7 +99,10 @@ Predict defines no account object of its own. It uses the shared `AccountWrapper
 
 Both the wrapper and the account address derive from the owner address through the `AccountRegistry`, so an application can compute either offchain before the account exists. `account_registry::new` creates the wrapper permissionlessly with the transaction sender as owner, and `account::share` publishes it in the same transaction. A second creation for the same owner aborts.
 
-The 2 derived addresses are not interchangeable, and each surface takes exactly one of them. Every Move call takes the shared `AccountWrapper` object, so the wrapper ID is the onchain handle. The canonical account ID is the identity everything else keys on: app data hangs off it, event payloads carry it as `account_id`, and indexed read services accept it and nothing else. `client.predict.wrapperIdFor(owner)` derives the first, and `SessionsContract.deriveAccountId(owner)` on the `@mysten/deepbook-v3/sessions` subpath derives the second.
+The 2 derived addresses are not interchangeable, and each surface takes exactly one of them. Every Move call takes the shared `AccountWrapper` object, so the wrapper ID is the onchain handle. The canonical account ID is the identity everything else keys on: app data hangs off it, event payloads carry it as `account_id`, and indexed read services accept it and nothing else. The SDK derives each one:
+
+- **Wrapper ID:** `client.predict.wrapperIdFor(owner)` derives it.
+- **Canonical account ID:** `SessionsContract.deriveAccountId(owner)`, on the `@mysten/deepbook-v3/sessions` subpath, derives it.
 
 Predict attaches its own state to that account under the `PredictApp` namespace: a table of open positions keyed by the pair of expiry market ID and order ID, plus the sticky builder code the account trades under. Positions are not standalone objects, so read them from the account with `read.positions`. From protocol version 4, a queued fill never enters that table: the position stays in the market's queue as an Open record owned by the account, so follow it by its queue record ID instead.
 
@@ -131,7 +134,7 @@ Freshness is a read-time check rather than a writer promise. Live pricing runs u
 
 ## Strikes, ticks, and positions {#positions-and-ranges}
 
-Predict has one strike representation across the whole protocol: an absolute integer tick, where the raw strike is the tick multiplied by the market's `tick_size`. There is no centered grid and no per-market origin, so the same tick means the same price at the public function, in the event, in the payout tree, and at settlement. Because the protocol fixes the tick domain in advance, market creation reads no live spot.
+Predict has one strike representation across the whole protocol, the absolute tick grid: each strike is an absolute integer tick, and the raw strike is the tick multiplied by the market's `tick_size`. There is no centered grid and no per-market origin, so the same tick means the same price at the public function, in the event, in the payout tree, and at settlement. Because the protocol fixes the tick domain in advance, market creation reads no live spot.
 
 A position is a range, carried as the tick pair `lower_tick` and `higher_tick`, and its payout region is half-open: it pays when settlement lands above the lower strike and at or below the higher strike. Either of 2 sentinel ticks gives a range an open end:
 
@@ -173,6 +176,12 @@ A quote reports every charge separately, and a mint debits the premium plus the 
 - **Congestion surcharge:** A flat per-unit charge that fires only when the transaction's gas price is a high outlier against the market's own smoothed estimate. It is `penalty_fee` onchain and `penalty` in the SDK quote and receipt, so a `penalty` line in a quote is this charge. Protocol version 4 retires it, so every quote and fill reports 0.
 - **Order fee:** A flat fee for each queued mint or early sell, 0.02 USDC on both networks, escrowed at placement. A fill moves it into the market's cash, a refund for the order's own limits or for admission keeps it there too, and every other refund returns it.
 - **Inventory-impact charge:** A charge sized by the change a trade makes to the book's payout profile, held in the market's isolated escrow and rebated when a trade closes that exposure. Its rate ships at zero, which makes the mechanism inert.
+
+Outside the expiry ramp, each boundary's per-unit trading fee rate takes this form, where `p` is the probability of settling above that strike:
+
+```text
+boundary_rate = max(per_unit_floor, base_fee * sqrt(p * (1 - p)))
+```
 
 For example, take a two-sided range with a 0.8 probability of settling above its lower strike and a 0.2 probability of settling above its higher strike. Its range probability is 0.6, so the premium is 0.6 USDC per contract. At a 10 percent base fee and outside the expiry ramp, each boundary's rate is `0.1 * sqrt(0.8 * 0.2) = 0.04`, so the range pays 0.08 USDC per contract in trading fee. Each boundary pays at least the per-unit floor, so a two-sided range always pays at least twice the floor.
 
@@ -285,7 +294,7 @@ An account carries at most one code. Attaching one affects only the trades that 
 On each mint and each live close by an account that carries a code, the protocol charges:
 
 ```text
-builder_fee = min(floor(trading_fee * 100_000_000 / 1e9), floor(quantity * 5_000_000 / 1e9))
+builder_fee = min(floor(trading_fee * 100_000_000 / 1_000_000_000), floor(quantity * 5_000_000 / 1_000_000_000))
 ```
 
 That is 10 percent of the trading fee, capped at 0.5 percent of the quantity, which is the position's maximum payout. Both rates are compiled constants, `constants::builder_fee_multiplier` and `constants::max_builder_fee_rate`, so they are the same on both networks and change only with a package upgrade. No admin setting adjusts them, unlike the referral rate.
@@ -344,13 +353,19 @@ Supply and withdrawal are asynchronous, so nobody mints or burns PLP against a l
 
 A flush values the whole pool once and fills eligible queue heads at that single frozen mark. It runs in 3 stages, and only the first must fit in one transaction:
 
-1. **Snapshot, in one transaction:** `registry::generate_pool_valuation_proof` turns an allowlisted `PoolValuationCap` into a proof that `start_pool_valuation` consumes. Starting sets the valuation lock, bumps `flush_seq`, records the active market set, the 2 drain budgets, and each queue's request cutoff, and returns a `SnapshotStage` value with no abilities. `snapshot_expiry_pricer` then runs once per active market, taking the propbook `OracleRegistry` and the 3 feed objects: it freezes a live market's pricer into a `FrozenPricer` and stamps the market's cash, escrow, and payout tree, while it sweeps an already settled market and records it as contributing zero. `seal_valuation_snapshot` consumes the stage, aborts unless every expected market has a snapshot, and freezes the vault's idle balance and profit accounting. The 2 hot potatoes, the proof and the stage, which the same transaction must consume, force all of this into a single transaction, and the snapshot refuses an oracle observation written in that same transaction.
+1. **Snapshot, in one transaction:** `registry::generate_pool_valuation_proof` turns an allowlisted `PoolValuationCap` into a proof that `start_pool_valuation` consumes. Starting sets the valuation lock, bumps `flush_seq`, records the active market set, the 2 drain budgets, and each queue's request cutoff, and returns a `SnapshotStage` value with no abilities. `snapshot_expiry_pricer` then runs once per active market, taking the propbook `OracleRegistry` and the 3 feed objects: it freezes a live market's pricer into a `FrozenPricer` and stamps the market's cash, escrow, and payout tree, while it sweeps an already settled market and records it as contributing zero. `seal_valuation_snapshot` consumes the stage, aborts unless every expected market has a snapshot, and freezes the vault's idle balance and profit accounting. The proof and the stage are hot potatoes, values that the same transaction must consume, so they force all of this into a single transaction, and the snapshot refuses an oracle observation written in that same transaction.
 1. **Valuation, across any number of transactions:** `value_expiry(vault, market, config)` folds one market's frozen mark into the running total: the stamped cash rows plus the payout liability the frozen pricer implies. It is permissionless, takes no oracle or clock, moves no cash, and returns without effect on a market that is not in the snapshot or that an earlier call already valued, so a keeper list that is stale or a retry that repeats is harmless.
 1. **Finish, in any later transaction:** `finish_flush` accepts only an address on the admin-managed flush-operator allowlist, because liquidity fills move the idle cash that funds markets for queued orders. It aborts unless `value_expiry` has run for every snapshotted market, computes the pool's net asset value from the frozen figures, drains the queues at that one mark for every request queued before the cutoff, releases the lock, and emits `FlushExecuted`.
 
 The snapshot expires. `finish_flush` aborts with `EValuationWindowExpired` once `max_valuation_window_ms` has elapsed since the snapshot, 5 minutes on both deployments. There is no abort call: the recovery is a fresh `start_pool_valuation`, which discards the stale valuation, emits `FlushRestarted`, and snapshots again. The next mint, redeem, or settlement on a market lazily clears any stamp an abandoned flush left on it.
 
 Pool value is not idle plus markets. `lp_pool_value` starts from the frozen idle USDC plus accumulated market net asset value, then subtracts 2 held-out terms: an exclusion term covering the protocol's share of profit that PLP holders cannot redeem, and the pending protocol profit already materialized but not yet drained into the reserve. The result floors at zero rather than underflowing. `FlushExecuted.pool_value` reports that frozen figure, and its `idle_balance_before` field is live telemetry rather than the mark input.
+
+The same calculation in pseudocode:
+
+```text
+lp_pool_value = max(0, frozen idle USDC + accumulated market NAV - protocol profit exclusion - pending protocol profit)
+```
 
 The following diagram traces the 3 flush stages above and the order in which `finish_flush` drains the queues.
 
@@ -362,7 +377,7 @@ flowchart TD
   SEAL -. later transactions, permissionless .-> VAL["value_expiry per market: fold frozen NAV"]
   VAL -. any later transaction, within the valuation window .-> FIN["finish_flush: pool NAV from frozen figures, drain queues, release lock"]
   FIN --> SUP["supplies first: mint PLP, join escrow into idle"]
-  FIN --> WD["withdrawals next: burn PLP, pay from idle, in queue order"]
+  SUP --> WD["withdrawals next: burn PLP, pay from idle, in queue order"]
 ```
 
 Starting a flush needs a capability, and finishing it needs a flush operator. Only a `PoolValuationCap` on the registry's allowlist can produce the proof that `start_pool_valuation` consumes, and the snapshot that fixes the mark exists only through that call, so gating the start gates the mark. That boundary is what makes one mark safe in both directions, because an adversary cannot time the valuation against an oracle update they control. After the seal, anyone can value the markets, and nothing a valuer or the flush operator does changes the mark.
