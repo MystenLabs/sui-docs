@@ -59,7 +59,7 @@ Use `createMarginPool` to create a new margin pool for a specific asset. Require
 
 **Parameters**
 
-- `coinKey`: String that identifies the asset type.
+- `coinKey`: String that identifies the asset type, such as `USDC` or `SUI` in the [examples](#examples).
 - `poolConfig`: `TransactionArgument` representing the protocol configuration.
 
 <ImportContent source="/packages/deepbook-v3/src/transactions/marginMaintainer.ts" mode="code" fun="createMarginPool" org="MystenLabs" repo="ts-sdks" signatureOnly />
@@ -85,8 +85,8 @@ Use `newMarginPoolConfig` to create a margin pool configuration object. The call
 - `coinKey`: String that identifies the asset type.
 - `marginPoolConfig`: `MarginPoolConfigParams` object containing:
   - `supplyCap`: Number representing maximum supply allowed
-  - `maxUtilizationRate`: Number representing maximum utilization (such as 0.8 for 80%)
-  - `referralSpread`: Number representing protocol spread percentage
+  - `maxUtilizationRate`: Number representing maximum utilization as a decimal fraction (0.8 is 80%)
+  - `referralSpread`: Number representing protocol spread as a decimal fraction (0.1 is 10%)
   - `minBorrow`: Number representing minimum borrow amount
 
 <ImportContent source="/packages/deepbook-v3/src/transactions/marginMaintainer.ts" mode="code" fun="newMarginPoolConfig" org="MystenLabs" repo="ts-sdks" signatureOnly />
@@ -98,9 +98,9 @@ Use `newInterestConfig` to create an interest configuration object. The call ret
 **Parameters**
 
 - `interestConfig`: `InterestConfigParams` object containing:
-  - `baseRate`: Number representing base interest rate
+  - `baseRate`: Number representing base interest rate as a decimal fraction (0.02 is 2%)
   - `baseSlope`: Number representing interest rate slope before kink
-  - `optimalUtilization`: Number representing the kink point (such as 0.8)
+  - `optimalUtilization`: Number representing the kink point as a decimal fraction (0.8 is 80%)
   - `excessSlope`: Number representing interest rate slope after kink
 
 <ImportContent source="/packages/deepbook-v3/src/transactions/marginMaintainer.ts" mode="code" fun="newInterestConfig" org="MystenLabs" repo="ts-sdks" signatureOnly />
@@ -113,7 +113,7 @@ Use these functions to control which DeepBook pools can borrow from the margin p
 
 - `deepbookPoolKey`: String that identifies the DeepBook pool.
 - `coinKey`: String that identifies the margin pool asset.
-- `marginPoolCap`: String representing the margin pool capability ID.
+- `marginPoolCap`: String representing the margin pool capability ID. You get this ID from the pool creation event.
 
 <ImportContent source="/packages/deepbook-v3/src/transactions/marginMaintainer.ts" mode="code" fun="enableDeepbookPoolForLoan,disableDeepbookPoolForLoan" org="MystenLabs" repo="ts-sdks" signatureOnly />
 
@@ -207,9 +207,9 @@ createUsdcMarginPool = (tx: Transaction) => {
 };
 ```
 
-### Enable a DeepBook pool for borrowing
+### How do I enable a DeepBook pool for borrowing?
 
-Replace the `0x...` placeholder with the ID of your margin pool capability. As the [complete pool setup workflow](#complete-pool-setup-workflow) notes, you get this ID from the pool creation event.
+The `marginPoolCapId` value is the ID of your margin pool capability. You get this ID from the pool creation event, as the [complete pool setup workflow](#what-is-the-complete-pool-setup-workflow) shows. Replace the `0x...` placeholder with your ID.
 
 ```tsx
 // Example: Allow SUI/USDC pool to borrow from USDC margin pool
@@ -243,7 +243,7 @@ updateInterestRates = (tx: Transaction) => {
 };
 ```
 
-### Update margin pool configuration
+### How do I update margin pool configuration?
 
 ```tsx
 // Example: Update USDC margin pool limits
@@ -262,7 +262,7 @@ updatePoolConfig = (tx: Transaction) => {
 };
 ```
 
-### Complete pool setup workflow
+### What is the complete pool setup workflow?
 
 ```tsx
 // Example: Complete workflow for setting up a new margin pool
@@ -297,4 +297,3 @@ setupNewMarginPool = (tx: Transaction) => {
 	tx.add(this.maintainerContract.enableDeepbookPoolForLoan('SUI_USDT', coinKey, marginPoolCapId));
 };
 ```
-
