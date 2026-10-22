@@ -170,7 +170,7 @@ flowchart LR
     SDK2 -->|"blob bytes"| APP
 ```
 
-### Blob storage
+### How does Walrus store blobs?
 
 Walrus stores data as blobs, which are arbitrary binary objects. All blobs stored on Walrus are public and discoverable by anyone.
 
@@ -180,7 +180,7 @@ Both blob contents and their metadata are public. Blob IDs, blob attributes, and
 
 :::
 
-Walrus uses [erasure coding](https://docs.wal.app/docs/system-overview) to distribute encoded parts of each blob across all [storage nodes](https://docs.wal.app/docs/operator-guide/storage-nodes), maintaining storage costs at approximately 5 times the size of the original blob, according to the Walrus documentation. This is significantly more cost-efficient than full replication and more resilient than partial replication.
+Walrus uses [erasure coding](https://docs.wal.app/docs/system-overview) to distribute encoded parts of each blob across all [storage nodes](https://docs.wal.app/docs/operator-guide/storage-nodes), maintaining storage costs at approximately 5 times the size of the original blob, according to the Walrus documentation. With erasure coding, a client fetches only enough encoded parts to reconstruct the original blob. This is significantly more cost-efficient than full replication and more resilient than partial replication.
 
 The `WalrusFile` API groups multiple files into a single blob when storing them together, which is more storage-efficient than uploading each file separately.
 
@@ -193,21 +193,21 @@ Every blob has 2 identifiers:
 
 In OnlyFins, the `image_blob_id` field on each `Post` Sui object stores the blob ID. The frontend uses this to construct a fetch URL. The object ID lets the app manage blob lifecycle onchain, the same way it manages any other Sui object.
 
-### Storage nodes
+### What are storage nodes?
 
 Storage nodes are the servers that store encoded blob data. When you write a blob, the Walrus client distributes encoded shards across the active storage node committee. When you read a blob, the client fetches enough shards to reconstruct the original data. Writing a blob directly to storage nodes requires approximately 2,200 requests. Reading requires approximately 335 requests. These counts are approximate figures from the Walrus documentation, not fixed values.
 
-### Upload relay
+### What is an upload relay?
 
 The [upload relay](https://docs.wal.app/operator-guide/upload-relay.html) is a server-side proxy that accepts blob data from a client and handles the distribution to storage nodes. Using an upload relay significantly reduces the number of requests a client must make to write a blob. This is especially important in browser environments where issuing thousands of direct requests to storage nodes is not practical. Reads through the Walrus SDK still require many requests regardless of whether you use an upload relay. The upload relay is part of the write path only; to read blobs over HTTP, use an [aggregator](#aggregator).
 
-### Publisher
+### What is a publisher?
 
 A [publisher](https://docs.wal.app/docs/operator-guide/aggregator) is an HTTP server that accepts blob data over a REST API and handles the entire Walrus write flow on your behalf. Publishers are the most direct way to integrate uploads in server-side applications without using the TypeScript SDK (TS SDK).
 
-For production environments, use the `send-object-to` parameter when uploading through a publisher. This instructs the publisher to transfer the resulting blob object to a specified Sui address after upload, so you retain ownership of blobs stored through a shared publisher.
+Unlike an upload relay, which only distributes blob data to storage nodes, a publisher runs the entire write flow, so ownership of the resulting blob object matters. For production environments, use the `send-object-to` parameter when uploading through a publisher. This instructs the publisher to transfer the resulting blob object to a specified Sui address after upload, so you retain ownership of blobs stored through a shared publisher.
 
-### Aggregator
+### What is an aggregator? {#aggregator}
 
 An [aggregator](https://docs.wal.app/docs/operator-guide/aggregators/operating-aggregator) is an HTTP server that serves blobs over a standard REST API. Aggregators are the most direct way to read Walrus data without using the TS SDK, and they work well with standard caches and CDNs.
 
@@ -263,7 +263,7 @@ const client = new SuiGrpcClient({
 The [Walrus SDK documentation](https://sdk.mystenlabs.com/walrus) is the single source of truth for all SDK patterns, options, and examples.
 
 :::info
-Some code examples in this guide use `SuiClient` from `@mysten/sui/client` rather than `SuiGrpcClient` from `@mysten/sui/grpc`. `SuiGrpcClient` is the recommended transport for new integrations. In current SDK versions, all Walrus SDK and transaction APIs are identical regardless of which client you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
+Use `SuiGrpcClient` from `@mysten/sui/grpc` for new integrations. Some code examples in this guide use `SuiClient` from `@mysten/sui/client` instead. In current SDK versions, all Walrus SDK and transaction APIs are identical regardless of which client you use, so these examples work with either client. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
 :::
 
 For React apps, wrap your component tree with a context provider that initializes the client once and makes it available throughout the app. The [walrus-pocs](https://github.com/MystenLabs/walrus-pocs) repo includes focused examples for each SDK operation that show this pattern in a clean Node.js context. For a React-specific provider, initialize `SuiGrpcClient.$extend(walrus())` in your app's root and pass the result through React context using the same pattern as the client setup example in [TS SDK](#ts-sdk).
@@ -454,7 +454,7 @@ When reading directly with the TS SDK, the Walrus Onboarding Module 07 shows `re
   fun="downloadWithErrorHandling"
 />
 
-## Managing blobs
+## How to manage blobs
 
 Because blobs are Sui objects, you manage them using the same tools and patterns you use for any other Sui object. The most common blob management operations are [querying blobs](#querying-blobs), [sharing blobs](#sharing-blobs), [deleting blobs](#deleting-blobs), and [extending the lifetime of blobs](#extending-the-lifetime-of-blobs).
 
