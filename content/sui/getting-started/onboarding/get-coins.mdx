@@ -75,14 +75,6 @@ You can get free SUI tokens from the Sui faucet, which lets you deploy and inter
 
 - [x] Set up your Sui account and CLI environment. 
 
-<details className="nudge-details">
-
-<summary>
-
-Create Sui account and setup CLI environment.
-
-</summary>
-
 ```sh
 $ sui client
 ```
@@ -95,12 +87,10 @@ If this is not your first time running `sui client`, then you already have a `cl
 $ sui client new-address ed25519
 ```
 
-</details>
-
 </TabItem>
 </Tabs>
 
-## Request SUI tokens from faucet {#online-faucet}
+## How to request SUI tokens from the faucet {#online-faucet}
 
 Visit the [online faucet](https://faucet.sui.io/) to request SUI tokens.
 
@@ -122,7 +112,7 @@ You can also use the following community-provided faucets to obtain SUI tokens:
 
 These faucets have their own separate limits, such as one request per day or one request every few hours.
 
-### Verify token balance 
+### How to verify your token balance {#verify-token-balance}
 
 To check your balance of SUI tokens and confirm you received some from the faucet, use the command:
 
@@ -205,7 +195,7 @@ If you're working with a local network, replace `"https://faucet.${NETWORK}.sui.
 </TabItem>
 <TabItem value="typescript" label="TypeScript SDK">
 
-You can access the faucet using the [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript).
+You can access the faucet using the [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript). Replace `<YOUR SUI ADDRESS>` with your address. To get your address, run `sui client active-address`.
 
 ```typescript
 import { getFaucetHost, requestSuiFromFaucetV2 } from '@mysten/sui/faucet';
@@ -220,9 +210,9 @@ await requestSuiFromFaucetV2({
 </TabItem>
 </Tabs>
 
-## SUI tokens on a local network
+## How to get SUI tokens on a local network {#sui-tokens-on-a-local-network}
 
-If you are running a local Sui network, you can get SUI tokens from your local faucet. See the [Connect to a Local Network](/getting-started/onboarding/local-network#use-the-local-faucet) topic for details.
+If you are running a local Sui network, you can get SUI tokens from your local faucet. To request tokens with cURL, use the local faucet endpoints in the cURL tab of [Alternative methods for getting SUI tokens](#alternative-faucets). See the [Connect to a Local Network](/getting-started/onboarding/local-network) topic for details.
 
 After you have SUI tokens, you're ready to [build and publish your first package](/getting-started/onboarding/hello-world).
 
