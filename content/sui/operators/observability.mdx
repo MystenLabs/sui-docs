@@ -72,7 +72,7 @@ Here is a list of context information of interest:
 - Epoch
 - Host information, for both clients and validators
 
-In the digest, `process_tx` is a span that covers handling the initial transaction request, and `Checked locks` is a single log message within the transaction handling method in the validator.
+For example, `process_tx` is a span that covers handling the initial transaction request, and `Checked locks` is a single log message within the transaction handling method in the validator.
 
 Every log message that occurs within the span inherits the key-value properties defined in the span, including the `tx_digest` and any other fields you add. Log messages can set their own keys and values. The fact that logs inherit the span properties allows you to trace, for example, the flow of a transaction across thread and process boundaries.
 
@@ -104,6 +104,18 @@ Going from information to debug results in a much larger spew of messages.
 Use the `RUST_LOG` environment variable to set both the overall logging level as well as the level for individual components. Filtering down to specific spans or tags within spans is even possible. For example, `RUST_LOG="info,sui_core=trace"` (used in the [Jaeger](#jaeger) steps later in this topic) sets the overall level to `info` and the level for the `sui_core` component to `trace`.
 
 For more details, see the [EnvFilter](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter) topic.
+
+## Which environment variables does Sui use? {#environment-variables}
+
+Sui reads the following environment variables for logging, tracing, and profiling:
+
+| **Variable** | **Value** | **Purpose** |
+| --- | --- | --- |
+| `RUST_LOG` | Filter string, for example `info,sui_core=trace` | Sets the overall logging level and the level for individual components. See [logging levels](#logging-levels). |
+| `SUI_JSON_SPAN_LOGS` | Define the variable | Outputs detailed span start and end logs in JSON format. Sui does not enable it by default. See [tracing and span output](#tracing-and-span-output). |
+| `SUI_TRACING_ENABLE` | `1` | Enables tracing for the [Jaeger](#jaeger) steps. |
+| `SUI_TOKIO_CONSOLE` | `1` | Enables [Tokio Console](#tokio-console) support. Requires a build with `RUSTFLAGS="--cfg tokio_unstable"`. |
+| `_RJEM_MALLOC_CONF` | `prof:true` | Turns on jemalloc [memory profiling](#memory-profiling). The Docker image sets it automatically. |
 
 ## What metrics does Sui expose? {#metrics}
 
@@ -155,14 +167,14 @@ To see nested spans visualized with [Jaeger](https://www.jaegertracing.io), comp
 $ docker run -d -p6831:6831/udp -p6832:6832/udp -p16686:16686 jaegertracing/all-in-one:latest
 ```
 
-1.  Run Sui like this (trace enables the most detailed spans):
+2.  Run Sui like this (trace enables the most detailed spans):
 
 ```sh
 $ SUI_TRACING_ENABLE=1 RUST_LOG="info,sui_core=trace" ./sui start
 ```
 
-1.  Run some transfers with Sui CLI client, or run the benchmarking tool.
-1.  Browse to `http://localhost:16686/` and select Sui as the service.
+3.  Run some transfers with Sui CLI client, or run the benchmarking tool.
+4.  Browse to `http://localhost:16686/` and select Sui as the service.
 
 :::info
 
@@ -176,7 +188,7 @@ Sui does not connect separate spans (that are not nested) as a single trace for 
 
 1.  Build Sui using a special flag: `RUSTFLAGS="--cfg tokio_unstable" cargo build`.
 1.  Start Sui with `SUI_TOKIO_CONSOLE` set to 1.
-1.  Clone the console repo and `cargo run` to launch the console.
+1.  Clone the [console repo](https://github.com/tokio-rs/console) and `cargo run` to launch the console.
 
 :::tip
 
@@ -198,8 +210,7 @@ To view the profile files on the same platform where you gathered the profiles, 
 1.  Install `libunwind`, the `dot` utility from graphviz, and jeprof. On Debian: `apt-get install libjemalloc-dev libunwind-dev graphviz`.
 1.  Build with debug symbols: `cargo build --profile bench-profiling`
 1.  cd to `$SUI_REPO/target/bench-profiling`, where `$SUI_REPO` is the root of the Sui repository you built in the previous step.
-1.  Run `jeprof --svg sui-node jeprof.xxyyzz.heap` - select the heap profile based on
-    timestamp and memory size in the filename.
+1.  Run `jeprof --svg sui-node jeprof.xxyyzz.heap`, replacing `jeprof.xxyyzz.heap` with the profile file you want to view. Profile file names follow the pattern `jeprof.<TIMESTAMP>.<memorysize>MB.prof`, so select the file by timestamp and memory size.
 
 :::tip
 
