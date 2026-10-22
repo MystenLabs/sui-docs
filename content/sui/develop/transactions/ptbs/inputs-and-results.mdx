@@ -53,11 +53,11 @@ answer: >-
   prompt={"Review this PTB code for invalid pure inputs, custom structs/enums, object references, vectors/options, and command result usage."}
 />
 
-Programmable transaction blocks (PTBs) operate on inputs and produce results. Inputs are the values you provide to the PTB, either objects on the network or pure values like numbers and strings. Results are the values that PTB commands produce, which subsequent commands in the same transaction can use. Together, inputs and results form the data flow through a PTB's execution.
+[Programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks) (PTBs) operate on inputs and produce results. Inputs are the values you provide to the PTB, either objects on the network or pure values like numbers and strings. Results are the values that PTB commands produce, which subsequent commands in the same transaction can use. Together, inputs and results form the data flow through a PTB's execution.
 
 ## What can I pass as an input to a PTB?
 
-Input arguments to a PTB are broadly categorized as either objects or pure values. The direct implementation of these arguments is often obscured by transaction builders or SDKs. Each `Input` is either an object, `CallArg::Object(ObjectArg)`, which contains the necessary metadata to specify the object being used, or a pure value, `CallArg::Pure(Vec<u8>)`, which contains the BCS (Binary Canonical Serialization) bytes of the value.
+Input arguments to a PTB are broadly categorized as either objects or pure values. Transaction builders and SDKs often hide the direct implementation of these arguments. In the underlying Rust types, each `Input` is either an object, `CallArg::Object(ObjectArg)`, which contains the necessary metadata to specify the object being used, or a pure value, `CallArg::Pure(Vec<u8>)`, which contains the BCS (Binary Canonical Serialization) bytes of the value.
 
 For object inputs, the metadata needed differs depending on the type of [ownership of the object](/develop/objects/object-ownership). The data for the `ObjectArg` enum follows:
 
@@ -81,13 +81,13 @@ For pure inputs, the only data provided is the [BCS](https://github.com/MystenLa
 
 For vectors and options, `T` must be a valid pure input type. This rule applies recursively.
 
-Bytes are not validated until a command specifies the expected type, for example in `MoveCall` or `MakeMoveVec`. Each distinct type creates a separate typed copy of the bytes, so the same pure input can be used at multiple types as long as the bytes are valid for each. Each typed copy is treated as its own input, so mutations affect only that type's value.
+Bytes are not validated until a command specifies the expected type, for example in `MoveCall` or `MakeMoveVec`. Each distinct type creates a separate typed copy of the bytes, so the same pure input can be used at multiple types as long as the bytes are valid for each. Each typed copy acts as its own input. If a command mutates the value at one type, the copies at other types do not change.
 
 ## How do I use the result of a previous command?
 
 Each transaction command produces an array of values. The array can be empty. The type of the value can be any arbitrary Move type, so unlike inputs, the values are not limited to objects or pure values. The number of results generated and their types are specific to each transaction command:
 
-- `MoveCall`: The number of results and their types are determined by the Move function being called. Move calls cannot return references (`&T` or `&mut T`).
+- `MoveCall`: The number of results and their types are determined by the Move function being called. Move calls cannot return references (`&T` or `&mut T`), but Move functions can take references as parameters, as `equip_sword` does with `self: &mut Hero`.
 
 - `SplitCoins`: Produces one or more coins from a single coin. The type of each coin is `sui::coin::Coin<T>` where the specific coin type `T` matches the coin being split.
 
@@ -96,6 +96,17 @@ Each transaction command produces an array of values. The array can be empty. Th
 - `Upgrade`: Takes exactly one `Argument`: a `sui::package::UpgradeTicket` (by value). Returns a single `sui::package::UpgradeReceipt`. Module bytes and dependency IDs are embedded in the command, not supplied as `Argument` values. Does not call `init` functions.
 
 - `TransferObjects` and `MergeCoins` produce an empty result vector.
+
+The following table summarizes the results of each command:
+
+| **Command** | **Number of results** | **Result types** |
+|---|---|---|
+| `MoveCall` | Determined by the Move function | Any Move type except references |
+| `SplitCoins` | One or more | `sui::coin::Coin<T>` |
+| `Publish` | 1 | `sui::package::UpgradeCap` |
+| `Upgrade` | 1 | `sui::package::UpgradeReceipt` |
+| `TransferObjects` | 0 | None |
+| `MergeCoins` | 0 | None |
 
 Consider the following Move functions that create a `Hero` and a `Sword` for a game.
 
@@ -141,7 +152,7 @@ public fun equip_sword(self: &mut Hero, sword: Sword) {
 }
 ```
 
-Combine the creation of `Hero`, a `Sword`, and attaching the sword to the hero in a single transaction using TypeScript. Each `tx.moveCall` adds a `MoveCall` command and returns its result, which you can pass as an argument to later commands, and `tx.pure.u64(10)` supplies a pure input as a `u64`. The address `0x123` is a placeholder; replace it with the address of the package where you published the `hero` module.
+The following TypeScript example combines the creation of `Hero`, a `Sword`, and attaching the sword to the hero in a single transaction. Each `tx.moveCall` adds a `MoveCall` command and returns its result, which you can pass as an argument to later commands, and `tx.pure.u64(10)` supplies a pure input as a `u64`. The address `0x123` is a placeholder; replace it with the address of the package where you published the `hero` module.
 
 ```ts
 const tx = new Transaction();
