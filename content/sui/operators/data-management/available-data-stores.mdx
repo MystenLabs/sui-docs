@@ -132,12 +132,12 @@ These endpoints are public-good services for testing only. Do not use them for p
 :::
 
 The HTTPS endpoints are acceptable for:
-- The `--remote-store-url` parameter during [consistent store restore](/operators/data-management/indexer-stack-setup#consistent-store-setup), which reads `epochs.json` and the target end-of-epoch checkpoint.
+- The `--remote-store-url` parameter during [consistent store restore](/operators/data-management/indexer-stack-setup), which reads `epochs.json` and the target end-of-epoch checkpoint.
 - [Testnet archival fallback](/operators/data-management/archives), where 30-day retention is sufficient.
 
 ## Where can I download Sui snapshots? {#snapshot-stores}
 
-Snapshot stores contain point-in-time database state for bootstrapping [full nodes](/operators/snapshots) and [consistent stores](/operators/data-management/indexer-stack-setup#consistent-store-setup). Formal snapshots are minimalistic, database-agnostic, and cryptographically verifiable.
+Snapshot stores contain point-in-time database state for bootstrapping [full nodes](/operators/snapshots) and [consistent stores](/operators/data-management/indexer-stack-setup). Formal snapshots are minimalistic, database-agnostic, and cryptographically verifiable.
 
 ### Formal snapshot HTTPS endpoints {#formal-https}
 
@@ -151,7 +151,7 @@ Snapshot stores contain point-in-time database state for bootstrapping [full nod
 **Credentials:** None required.
 
 Use these endpoints for:
-- [Consistent store restore](/operators/data-management/indexer-stack-setup#consistent-store-setup) with the `--http` flag.
+- [Consistent store restore](/operators/data-management/indexer-stack-setup) with the `--http` flag.
 - [Full node formal snapshot restore](/operators/snapshots) with `sui-tool download-formal-snapshot`.
 
 ### Formal snapshot buckets (Requester Pays) {#formal-buckets}
@@ -166,7 +166,7 @@ Use these endpoints for:
 **Credentials:** AWS or GCS Requester Pays. Provide credentials for the cloud provider you use. For the best download speeds with S3, enable [transfer acceleration](https://aws.amazon.com/s3/transfer-acceleration/).
 
 Use these buckets for:
-- [Consistent store restore](/operators/data-management/indexer-stack-setup#consistent-store-setup).
+- [Consistent store restore](/operators/data-management/indexer-stack-setup).
 - [Full node formal snapshot restore](/operators/snapshots) with `sui-tool download-formal-snapshot`.
 
 ### Formal snapshot free bucket (Cloudflare R2) {#formal-free}
