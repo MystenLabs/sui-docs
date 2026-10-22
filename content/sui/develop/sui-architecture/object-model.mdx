@@ -74,7 +74,7 @@ Every object has the following components:
 
 There are 3 types of objects:
 
-- **Sui object:** Every resource, asset, or piece of data. Sui objects are what transactions interact with, and are the building blocks for all onchain state.
+- **Sui object:** Every resource, asset, or piece of data. Sui objects are what transactions interact with, and are the building blocks for all onchain state. Sui Move objects and Sui Move packages are both kinds of Sui object.
 
 - **Sui Move object:** An object defined using the Move language. To create a Move object, you must use `sui::object::new` to create a struct. This struct must have the `key` ability and include a field `id: UID` as the first defined field. The struct can also contain primitive types, such as integers and addresses, other objects, and non-object structs. This struct can be stored onchain as a Sui object.
 
@@ -98,9 +98,9 @@ Every object has an owner field that dictates who can use it in transactions. Th
 
 - **[Immutable](/develop/objects/object-ownership/immutable):** Not owned by anyone, so anyone can use it. It cannot be mutated, transferred, or deleted.
 
-- **[Consensus-address owned / party](/develop/objects/object-ownership/party):** Owned by a single address but sequenced through consensus. Both names refer to the same ownership form: APIs expose this ownership with a `ConsensusAddressOwner` owner variant, and party objects are the public Move-facing way to create this ownership form using [`sui::transfer::party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_party_transfer) or [`sui::transfer::public_party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_party_transfer).
+- **[Consensus-address owned / party](/develop/objects/object-ownership/party):** Owned by a single address but sequenced through consensus. Consensus-address owned and party are 2 names for the same ownership form. APIs use the first name and expose this ownership with a `ConsensusAddressOwner` owner variant. Move code uses the second name: you create a party object with `sui::transfer::party_transfer` or `sui::transfer::public_party_transfer`.
 
-- **[Shared](/develop/objects/object-ownership/shared):** Ownership is shared using the [`sui::transfer::share_object`](/references/framework/sui_sui/transfer#sui_transfer_share_object) function and is accessible to everyone. 
+- **[Shared](/develop/objects/object-ownership/shared):** You share ownership using the `sui::transfer::share_object` function, and everyone can access the object. 
 
 - **[Wrapped](/develop/objects/object-ownership/wrapped):** A data structure containing one `struct` type nested in another.
 
