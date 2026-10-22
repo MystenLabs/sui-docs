@@ -66,7 +66,7 @@ $ cd <PACKAGE_ROOT>
 $ sui client publish
 ```
 
-The command compiles your package, submits a publish transaction, and returns the package ID, the `UpgradeCap` object ID (the capability that controls future upgrades of the package; see the caution below), and any objects created during the `init` function.
+The command compiles your package, submits a publish transaction, and returns the package ID, the `UpgradeCap` object ID, and any objects created during the `init` function. The `UpgradeCap` is the capability that controls future upgrades of the package.
 
 ### Dry-run before publishing
 
@@ -80,7 +80,7 @@ The dry-run output shows the gas budget required, the objects that would be crea
 
 ### How do I estimate gas before publishing?
 
-The gas cost of publishing depends on the size of your compiled bytecode. Use `--dry-run` to see the exact gas budget required. For most packages, the gas cost is between 0.1 and 1 SUI. Large packages with many modules or dependencies cost more.
+The gas cost of publishing depends on the size of your compiled bytecode. Use `--dry-run` to see the exact gas budget required. Large packages with many modules or dependencies cost more.
 
 ## How do I verify the bytecode of a published package?
 
@@ -119,8 +119,7 @@ $ sui client publish --serialize-unsigned-transaction
 
 The multisig publish workflow runs in this order:
 
-1. Serialize the unsigned publish transaction with the command above. It outputs base64-encoded transaction bytes.
+1. Serialize the unsigned publish transaction with `sui client publish --serialize-unsigned-transaction`. It outputs base64-encoded transaction bytes.
 1. Distribute the transaction bytes to your multisig signers.
 1. Collect enough signatures from the signers.
 1. Submit the signed transaction with `sui client execute-signed-tx`.
-
