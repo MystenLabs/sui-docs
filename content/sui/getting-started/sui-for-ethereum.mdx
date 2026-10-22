@@ -57,7 +57,7 @@ If you have worked with Ethereum Virtual Machine (EVM) before, the biggest diffe
 | Asset or token accessibility | Bound to smart contract. | Anyone can access shared objects. Only the object owner can access owned objects. |
 | Access control | Identity or role-based access control through `Ownable` and `AccessControl` contract. | Mostly [capability based access control](https://move-book.com/programmability/capability) through owned objects. Identity or role-based access control is possible. |
 | Contract upgrades | Proxy contract forwards user transactions. | When you upgrade a package, the new version must be [layout-compatible](/develop/publish-upgrade-packages/upgrade#which-changes-are-compatible-with-a-package-upgrade) with the old one. Need to consider versioning shared objects. |
-| Development environment | Hardhat, Foundry | [Move VSCode extension](https://marketplace.visualstudio.com/items?itemName=mysten.move). |
+| Development environment | Hardhat, Foundry | [Move VSCode extension](https://marketplace.visualstudio.com/items?itemName=mysten.move), Sui CLI. |
 | Mutate contract state | Sending transactions through compile time ABI interface. | Sending transaction through runtime [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB) construction. |
 
 ## Object model: where is data stored on Sui?
@@ -87,7 +87,7 @@ You can still implement address-based checks. However, the recommendation is to 
 
 You can read more in [The Move Book](https://move-book.com/programmability/capability/#address-check-vs-capability).
 
-In this example, the function only creates a new user when the caller presents an `AdminCap` object during the function call.
+In this example, the function only creates a new user when the caller presents an `AdminCap` object during the function call. The example uses Move 2024 syntax.
 
 ```move
 /// Grants the owner the right to create new users in the system.
@@ -108,7 +108,7 @@ In Solidity, a contract defines and stores data structures such as `Mapping`. Mu
 
 In Move, the contract defines the logic that mutates the data, but Move objects store the data.
 
-To mutate the data, the owner of the objects calls the contract functions using a PTB. The protocol checks ownership at the protocol level, so transactions fail if the signer does not have access to the referenced objects.
+To mutate the data, the owner of the objects calls the contract functions using a [PTB](#how-do-i-chain-contract-calls-with-programmable-transaction-blocks). The protocol checks ownership at the protocol level, so transactions fail if the signer does not have access to the referenced objects.
 
 ## How do I chain contract calls with programmable transaction blocks?
 
@@ -129,7 +129,7 @@ See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/buildi
 | Digital signature algorithm | `Ed25519`, `secp256k1`, `secp256r1` | `secp256k1` |
 | Consensus mechanism | DPoS | PoS |
 | VM and its languages | MoveVM, Move Lang | EVM, Solidity, Vyper |
-| Chain data structure | DAG | Blocks |
+| Chain data structure | Directed acyclic graph (DAG) | Blocks |
 | Common standards (coin, token, NFT, and so on) | Currency Standard, Closed-Loop Token | ERC-20, ERC-721, ERC-1155 |
 | Coin names, name of the smallest unit | SUI, MIST | ETH, Wei |
 | Available frameworks for development | Sui CLI | Foundry, Hardhat |
