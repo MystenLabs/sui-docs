@@ -55,7 +55,12 @@ The liquidity functions move USDC into the Predict pool for PLP shares and move 
 
 ## How a request fills {#request-lifecycle}
 
-Neither request mints nor burns PLP in the transaction that makes it. `tx.supplyPlp` and `tx.withdrawPlp` each escrow an amount from your account custody into a queue, and both requests fill at the next pool flush, at the single mark that flush computes for the whole pool. The flush delivers each fill and each refund to your account rather than to the signer, so check the result with [`read.plpBalance`](#plp-balance) or the account's [USDC balance](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) after the flush.
+Neither request mints nor burns PLP in the transaction that makes it. A request moves through these steps:
+
+1. `tx.supplyPlp` or `tx.withdrawPlp` escrows an amount from your account custody into a queue. Escrow means the queue holds the amount until a flush fills it or a cancel or flush refunds it.
+2. The next pool flush fills the request. A flush is the pool operation that processes the queues, and it fills every request at the single mark it computes for the whole pool. The mark is the pool value divided by the total PLP supply, which is the price of 1 PLP.
+3. The flush delivers each fill and each refund to your account rather than to the signer.
+4. After the flush, check the result with [`read.plpBalance`](#plp-balance) or the account's [USDC balance](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 
 Each request takes an optional floor in its options object. The floor bounds the flush's mark for the whole request rather than naming a quantity to fill, and the flush measures it after the pool's supply or withdraw fee, so it bounds what your account actually receives:
 
@@ -102,7 +107,7 @@ The SDK throws `PredictInputError` when `amountUsdc` is negative, is not a plain
 
 Use `tx.withdrawPlp` to queue a request that moves `shares` of PLP from your account custody into the withdraw queue. It returns a `Transaction`, and without `minUsdcOut` the request accepts whatever mark the next flush computes.
 
-The `shares` argument counts raw PLP shares, not USD and not PLP as a decimal: a value of `1_000_000n` is 1 PLP. Read the balance to withdraw with [`read.plpBalance`](#plp-balance), which returns the same raw `bigint`, and pass it straight through.
+The `shares` argument counts raw PLP shares, not USD and not PLP as a decimal: a value of `1_000_000n` is 1 PLP, and a value of `2_500_000n` is 2.5 PLP. Read the balance to withdraw with [`read.plpBalance`](#plp-balance), which returns the same raw `bigint`, and pass it straight through.
 
 It takes these parameters:
 
@@ -161,7 +166,7 @@ To call it, build the `moveCall` yourself against the current call target for yo
 
 ## How do I read the pool and my PLP balance? {#pool-reads}
 
-Both pool reads run a simulated transaction through your Sui client's core API, with no indexer in the path. A failed simulation throws `PredictMoveError` when the chain returns a Move abort and a plain `Error` otherwise. See [Errors](/onchain-finance/deepbook/deepbook-predict-sdk#errors) for both types.
+Both pool reads run a simulated transaction through your Sui client's core API, with no indexer in the path. A failed simulation throws `PredictMoveError` when the chain returns a Move abort and a plain `Error` otherwise. See [Errors](/onchain-finance/deepbook/deepbook-predict-sdk) for both types.
 
 ### `read.pool` {#pool}
 
@@ -180,7 +185,7 @@ It takes no parameters.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="211-218" />
 
-`idleUsdc` is a display value that passes through a JavaScript `number`, while `plpTotalSupply` stays exact. See [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units) for how the SDK converts amounts. `PoolSummary` carries no pool net asset value (NAV) or share price, because only a flush computes the mark. Each flush's `FlushExecuted` event records that mark as `pool_value` divided by `total_supply`, and the SDK does not decode it. See the [pool events](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) for its fields.
+`idleUsdc` is a display value that passes through a JavaScript `number`, while `plpTotalSupply` stays exact. See [Units](/onchain-finance/deepbook/deepbook-predict-sdk) for how the SDK converts amounts. `PoolSummary` carries no pool net asset value (NAV) or share price, because only a flush computes the mark. Each flush's `FlushExecuted` event records that mark as `pool_value` divided by `total_supply`, and the SDK does not decode it. See the [pool events](/onchain-finance/deepbook/deepbook-predict/contract-information/vault) for its fields.
 
 ### `read.plpBalance` {#plp-balance}
 
@@ -196,7 +201,7 @@ It reads the account balance accessor for the deployment's PLP coin type, `clien
 
 ## How do I decode a request or cancel receipt? {#decode}
 
-The liquidity decoders parse an executed transaction's events locally and make no network call. Each expects exactly 1 matching event and throws `PredictInputError` otherwise, and neither has a plural form, so keep 1 request or 1 cancel per transaction when you intend to decode it. Include events when you execute the transaction, because an event with no Binary Canonical Serialization (BCS) payload also throws `PredictInputError`. See [Decode transaction results](/onchain-finance/deepbook/deepbook-predict-sdk#decode) for the result shape the decoders accept.
+The liquidity decoders parse an executed transaction's events locally and make no network call. Each expects exactly 1 matching event and throws `PredictInputError` otherwise, and neither has a plural form, so keep 1 request or 1 cancel per transaction when you intend to decode it. Include events when you execute the transaction, because an event with no Binary Canonical Serialization (BCS) payload also throws `PredictInputError`. See [Decode transaction results](/onchain-finance/deepbook/deepbook-predict-sdk) for the result shape the decoders accept.
 
 ### `decode.plpRequest` {#plp-request}
 
@@ -243,7 +248,7 @@ A flush that refunds your request emits the same event inside the flush transact
 
 ## Example {#example}
 
-The examples import the shared `client` from the [client setup](/onchain-finance/deepbook/deepbook-predict-sdk#client), which selects its network from the examples' `NETWORK` constant. The following example queues a supply with an optional floor, reads the queue index from the executed result, and reads the pool:
+The examples import the shared `client` from the [client setup](/onchain-finance/deepbook/deepbook-predict-sdk), which selects its network from the examples' `NETWORK` constant. The following example queues a supply with an optional floor, reads the queue index from the executed result, and reads the pool:
 
 <ImportContent source="examples/deepbook-predict/src/supply.ts" mode="code" tag="supply" />
 
