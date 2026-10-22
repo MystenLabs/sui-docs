@@ -57,7 +57,7 @@ The DeepBook Margin SDK provides the following functions for interacting with ma
 
 ### `mintSupplierCap`
 
-Use `mintSupplierCap` to create a new supplier capability that can be used to supply and withdraw from margin pools. One `SupplierCap` can be used across multiple margin pools. The call returns a function that takes a `Transaction` object.
+Use `mintSupplierCap` to create a new supplier capability (`SupplierCap`). Both `supplyToMarginPool` and `withdrawFromMarginPool` require a `SupplierCap`, so mint one before you supply. You can use one `SupplierCap` across multiple margin pools. The call returns a function that takes a `Transaction` object. Pass that function to `tx.add`, which returns the new `SupplierCap`, as shown in [How do I create a supplier cap?](#how-do-i-create-a-supplier-cap).
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginPool.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="mintSupplierCap" signatureOnly />
 
@@ -119,27 +119,35 @@ Query basic pool information and configuration.
 
 ### Supply and borrow metrics
 
-Query current supply and borrow amounts and shares.
+Query current supply and borrow amounts and shares. `totalSupply` and `totalBorrow` take a `coinKey` string, as shown in [How do I query pool state?](#how-do-i-query-pool-state).
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginPool.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="totalSupply,supplyShares,totalBorrow,borrowShares,lastUpdateTimestamp" signatureOnly />
 
 ### Interest rate
 
-Query the current interest rate based on utilization.
+Query the current interest rate based on utilization. `interestRate` takes a `coinKey` string, as shown in [How do I query pool state?](#how-do-i-query-pool-state).
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginPool.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="interestRate" signatureOnly />
 
 ### User positions
 
-Query a supplier's position in the pool.
+Query a supplier's position in the pool. `userSupplyShares` and `userSupplyAmount` take a `coinKey` string and the object ID of your supplier cap, as shown in [How do I query pool state?](#how-do-i-query-pool-state).
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginPool.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="userSupplyShares,userSupplyAmount" signatureOnly />
 
 ## Examples
 
-The following examples demonstrate common margin pool operations.
+The following examples demonstrate common margin pool operations. The examples use class member syntax and assume the class already sets `this.marginPoolContract` and `this.config.address`. Replace each `'0x...'` placeholder with the object ID of the `SupplierCap` you create with `mintSupplierCap` or the referral you create with `mintSupplyReferral`.
 
-### Create a supplier cap
+To supply and withdraw liquidity:
+
+1. Mint a `SupplierCap` with `mintSupplierCap` and transfer it to your address.
+2. Supply assets with `supplyToMarginPool`, passing the `SupplierCap`.
+3. Withdraw assets with `withdrawFromMarginPool`, passing the same `SupplierCap`.
+
+### How do I create a supplier cap?
+
+The first statement in the following example shows only the `mintSupplierCap` signature with an empty body, not the SDK implementation. The example usage passes the returned function to `tx.add` and transfers the resulting `SupplierCap` to `this.config.address`.
 
 ```tsx
 /**
@@ -177,7 +185,7 @@ supplyLiquidity = (tx: Transaction) => {
 };
 ```
 
-### Supply with referral
+### How do I supply with a referral?
 
 ```tsx
 // Example: Supply 1000 USDC with a referral
@@ -238,7 +246,7 @@ claimReferralFees = (tx: Transaction) => {
 };
 ```
 
-### Query pool state
+### How do I query pool state?
 
 ```tsx
 // Example: Check interest rate and utilization
