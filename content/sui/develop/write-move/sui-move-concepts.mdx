@@ -45,9 +45,9 @@ answer: >-
 
 <ImportContent source="move-summary" mode="snippet" />
 
-You can use Move to define, create, and manage programmable Sui objects representing assets and smart contracts. Sui implements its [object system](/develop/sui-architecture/object-model) by adding new functionality to Move while also imposing additional restrictions.
+Move is an open source language for writing safe packages to manipulate onchain objects. You can use Move to define, create, and manage programmable Sui objects representing assets and smart contracts. Sui implements its [object system](/develop/sui-architecture/object-model) by adding new functionality to Move while also imposing additional restrictions.
 
-Move on Sui contains some important differences from Move on other blockchains. Sui takes advantage of Move's security and flexibility, enhancing it with the features to vastly improve throughput, reduce delays in finality, and make Move programming more approachable. For full details, see the [Sui Smart Contracts Platform](/doc/sui.pdf) whitepaper.
+Move on Sui contains some important differences from Move on other blockchains. Sui takes advantage of Move's security and flexibility, enhancing it with the features to vastly improve throughput, reduce delays in finality, and make Move programming more approachable.
 
 :::tip
 
@@ -55,7 +55,7 @@ Where the Sui documentation refers to the Move language, the content is document
 
 :::
 
-## Key differences {#differences}
+## How does Move on Sui differ from Move elsewhere? {#differences}
 
 Key differences of Move on Sui include:
 
@@ -75,7 +75,7 @@ In Move on Diem, global storage is part of the programming model. Global storage
 
 This approach introduces a scaling issue, as it is not possible to statically determine which transactions are contending over the same resource and which are not. This is similar to the scaling issues that other blockchains face, where smart contracts typically store account information in large, internal mappings, which limit throughput.
 
-Move on Sui addresses the scaling issue by not having global storage or its related operations. When Sui stores objects (in contrast to resources) and packages (sets of modules), it gives each of them a unique identifier. Each transaction explicitly specifies all of its inputs up front using these unique identifiers to allow the network to schedule transactions with non-overlapping inputs in parallel.
+Move on Sui addresses the scaling issue by not having global storage or its related operations. When Sui stores objects (structs with the `key` ability, in contrast to Move on Diem resources) and packages (sets of modules), it gives each of them a unique identifier. Each transaction explicitly specifies all of its inputs up front using these unique identifiers to allow the network to schedule transactions with non-overlapping inputs in parallel.
 
 ### Addresses represent object IDs {#object-ids}
 
@@ -91,11 +91,11 @@ In Move on Diem, the `key` ability indicates that the type is a resource, meanin
 
 On Sui, the `key` ability indicates that a struct is an object type and comes with an additional requirement that the first field of the struct has signature `id: UID` to contain the object's unique address onchain. Sui's bytecode verifier ensures that Sui always assigns fresh `UID`s to new objects. Sui never reuses identifiers.
 
-### Module initializers {#module-initializers}
+### What is a module initializer? {#module-initializers}
 
 As described in [object-centric global storage](#global-storage), you publish Move modules into Sui storage. The Sui runtime executes a special initializer function you optionally define in a module only once at the time of module publication to pre-initialize module-specific data, for example, creating singleton objects. See the [module initializer section](https://move-book.com/programmability/module-initializer) in The Move Book for more information.
 
-### Entry functions {#entry-functions}
+### When should you use an entry function? {#entry-functions}
 
 The `entry` keyword has a specific use case in Move on Sui. Use `entry` when you want some functionality to be usable by anyone onchain, but you don't want other Move logic to wrap it. In other words, you can call the function in [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) but not in other Sui packages. For example, you use this with Sui's onchain randomness standard to prevent other smart contract engineers from creating logic to essentially front-run or back-run the randomness generation. Find more information about this in the [onchain randomness page](/sui-stack/on-chain-primitives/randomness-onchain#use-non-public-entry-functions).
 
