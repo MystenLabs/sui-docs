@@ -67,7 +67,7 @@ You can see this function used in the [`color_object` example module](https://gi
 
 In this test, you must own a `ColorObject` initially. After freezing, the object becomes immutable and ownerless.
 
-The [`sui::transfer::public_freeze_object`](/references/framework/sui_sui/transfer#sui_transfer_public_freeze_object) function requires that you pass the object by value. If you are allowed to pass the object by a mutable reference, you could still mutate the object after the [`sui::transfer::public_freeze_object`](/references/framework/sui_sui/transfer#sui_transfer_public_freeze_object) call. This contradicts the fact that it should have become immutable.
+The `sui::transfer::public_freeze_object` function requires that you pass the object by value, so the call takes ownership of the object. If the function accepted a mutable reference instead, you could still mutate the object after the `sui::transfer::public_freeze_object` call. This contradicts the fact that it should have become immutable.
 
 Alternatively, you can also provide an API that creates an immutable object at creation:
 
@@ -117,7 +117,7 @@ $ sui client publish $ROOT/examples/move/color_object --gas-budget <GAS-AMOUNT>
 
 In this command, `$ROOT` is the path to your local copy of the Sui repository, which contains the `examples/move/color_object` package.
 
-3. Set the package object ID to the `$PACKAGE` environment variable, if you have it set. Then create a new `ColorObject`:
+3. Set the `$PACKAGE` environment variable to the ID of the package you published in step 2. Then create a new `ColorObject`:
 
 ```sh
 $ sui client call --gas-budget <GAS-AMOUNT> --package $PACKAGE --module "color_object" --function "create" --args 0 255 0
@@ -141,7 +141,7 @@ $ sui client call --gas-budget <GAS-AMOUNT> --package $PACKAGE --module "color_o
 $ sui client objects $ADDR
 ```
 
-7. `$OBJECT` is no longer listed. It is no longer owned by anyone. You can see that it is now immutable by querying the object information:
+7. `$OBJECT` is no longer listed. It is no longer owned by anyone. The object still exists under the same ID, so you can query its information to see that it is now immutable:
 
 ```sh
 $ sui client object $OBJECT
