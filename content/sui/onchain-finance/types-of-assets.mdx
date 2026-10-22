@@ -47,6 +47,17 @@ answer: >-
 
 On Sui, there are a variety of fungible, non-fungible, and other types of asset standards, each with their own defined usage patterns and capabilities. Choosing the correct standard for your use case is important to enable the correct set of features in your application.
 
+## Choose a standard
+
+The following table summarizes the fungible asset standards that this page describes. The section for each standard has more detail and links to the full documentation.
+
+| Standard | Module | Ownership and transfers | Metadata | Use it when |
+| --- | --- | --- | --- | --- |
+| Coin | `sui::coin` | `key` and `store` abilities; supports wrapping and public transfers | `CoinMetadata<T>` | You maintain an existing coin created with `sui::coin`, or your coin does not require advanced supply tracking or regulatory features |
+| Currency | `sui::coin_registry` | Wrappable and freely transferable; can be stored in any application | `Currency<T>` object in Coin Registry | You are creating a new coin, or you need advanced supply management, regulatory features such as deny lists, or registry integration |
+| Permissioned Asset Standard (PAS) |  | Account objects (one per address) hold assets, and assets move between Accounts only through requests approved and resolved in the same programmable transaction block (PTB) |  | You need account-based transfer controls and compliance checks |
+| Closed-Loop Token | `sui::token` | `key` ability only; only an account can own it; custom policies for transfers, spends, and conversions |  | Not recommended for new designs; use PAS in place of CLT |
+
 :::tip
 
 You use both the Coin and Currency standards to create fungible tokens. However, they use different creation methods and store metadata in a different type of object.
@@ -60,17 +71,6 @@ The documentation refers to fungible tokens created on Sui using the Coin or Cur
 For fungible tokens created on Sui using the [Closed-Loop Token standard](/onchain-finance/closed-loop-token), the documentation uses the term **tokens**. In practice, the terms for both these objects are often interchangeable.
 
 :::
-
-## Choose a standard
-
-The following table summarizes the fungible asset standards that this page describes. The section for each standard has more detail and links to the full documentation.
-
-| Standard | Module | Ownership and transfers | Metadata | Use it when |
-| --- | --- | --- | --- | --- |
-| Coin | `sui::coin` | `key` and `store` abilities; supports wrapping and public transfers | `CoinMetadata<T>` | You maintain an existing coin created with `sui::coin`, or your coin does not require advanced supply tracking or regulatory features |
-| Currency | `sui::coin_registry` | Wrappable and freely transferable; can be stored in any application | `Currency<T>` object in Coin Registry | You are creating a new coin, or you need advanced supply management, regulatory features such as deny lists, or registry integration |
-| Permissioned Asset Standard (PAS) |  | Account objects (one per address) hold assets, and assets move between Accounts only through requests approved and resolved in the same programmable transaction block (PTB) |  | You need account-based transfer controls and compliance checks |
-| Closed-Loop Token | `sui::token` | `key` ability only; only an account can own it; custom policies for transfers, spends, and conversions |  | Not recommended for new designs; use PAS in place of CLT |
 
 ## Fungible tokens: Coin standard
 
@@ -96,7 +96,9 @@ Use the Coin standard if you are:
 
 ### Address balances
 
-Address balances tie fungible assets to a Sui address directly. They replace the UTXO-style `Coin<T>` model, where you calculate a balance by summing all `Coin<T>` objects an address owns. With the address balance functionality, each Sui address can have one address-owned balance for each currency they own, with the total balance being the sum of all `Coin<T>` objects plus the address balance. `Coin<T>` and address balances can exist together, however address balances provide several advantages over using `Coin<T>` alone.
+Address balances tie fungible assets to a Sui address directly. They replace the unspent transaction output (UTXO) style `Coin<T>` model, where you calculate a balance by summing all `Coin<T>` objects an address owns. With the address balance functionality, each Sui address can have one address-owned balance for each currency they own, with the total balance being the sum of all `Coin<T>` objects plus the address balance. `Coin<T>` and address balances can exist together, however address balances provide several advantages over using `Coin<T>` alone.
+
+The Permissioned Asset Standard (PAS) also uses address balances. For details, see [Permissioned assets](#permissioned-assets).
 
 For the full specification, see [SIP-58: Sui Address Balances](https://github.com/sui-foundation/sips/blob/main/sips/sip-58.md).
 
@@ -134,7 +136,7 @@ Use the Currency standard if you are:
 
 ## Permissioned assets
 
-The Permissioned Asset Standard (PAS) enables asset ownership through Account objects. Account objects can hold assets and enforce transfer controls and compliance checks. There is one Account per address, and an Account can hold any asset type. Assets can only move between Accounts through hot potato requests that you must approve and resolve in the same programmable transaction block (PTB).
+The Permissioned Asset Standard (PAS) enables asset ownership through Account objects. Account objects can hold assets and enforce transfer controls and compliance checks. There is one Account per address, and an Account can hold any asset type. Assets can only move between Accounts through hot potato requests. A hot potato request is a request that you must approve and resolve in the same programmable transaction block (PTB).
 
 PAS uses Sui [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances). PAS manages PAS balances on behalf of the wallet address. A derived Account object holds them. However, transfers always target the Account address, not the wallet address.
 
