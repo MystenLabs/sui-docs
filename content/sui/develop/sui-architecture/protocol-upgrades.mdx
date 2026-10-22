@@ -61,7 +61,9 @@ The process for protocol upgrades includes the following steps:
 
 1. The new feature becomes active.
 
-Full node operators follow a similar process but do not participate in voting. They follow the actions recorded by validators.
+### How do full nodes replay protocol changes?
+
+Full node operators follow a similar process but do not participate in voting. Full nodes do not signal to the validator committee. They follow the actions recorded by validators.
 
 When validators switch to a new protocol version, they record the new version number in the special end-of-epoch transaction. Full nodes execute this transaction as they replay the chain history, allowing them to switch to the new protocol version at the correct time.
 
@@ -69,7 +71,14 @@ When validators switch to a new protocol version, they record the new version nu
 
 Not all new Sui functionality comes from validator code changes. Developers also extend the Sui framework. For example, they might add new native functions to expose functionality to smart contracts. The process for framework updates is similar to protocol upgrades.
 
-Instead of feature flags, Sui objects coordinate framework changes. The Sui framework is a special object with ID `0x2`. The Move source code for the framework is built into the validator binary.
+Instead of feature flags, Sui objects coordinate framework changes. The Sui framework is a special object with ID `0x2`.
 
-If a validator notices that its built-in framework differs from the framework in object `0x2`, it signals to other validators that it wants to upgrade the framework to a new version. As with `ProtocolConfig`, if 2/3 or more of validators agree, the new framework object is written at the end of the current epoch. Transactions executed in the new epoch then use the new version of the framework.
+The process for framework upgrades includes the following steps:
 
+1. Each validator binary includes the Move source code for the framework.
+
+1. If a validator notices that its built-in framework differs from the framework in object `0x2`, it signals to other validators that it wants to upgrade the framework to a new version.
+
+1. As with `ProtocolConfig`, if 2/3 or more of validators agree, Sui writes the new framework object at the end of the current epoch.
+
+1. Transactions executed in the new epoch use the new version of the framework.
