@@ -48,7 +48,7 @@ answer: >-
   Connect, Wormhole Portal Bridge, or ZetaChain.
 ---
 
-Bridging is the process of moving tokens from one blockchain to another. When you use a bridge to move tokens between incompatible blockchains, the bridge wraps the tokens and converts them to a derivative token for the target blockchain (for example, Wormhole-minted tokens or ZetaChain ZRC-20 tokens, described below). You can transfer tokens from other blockchains to Sui, or transfer SUI tokens to other blockchains.
+Bridging is the process of moving tokens from one blockchain to another. When you use a bridge to move tokens between incompatible blockchains, the bridge wraps the tokens and converts them to a derivative token for the target blockchain (for example, Wormhole-minted tokens or ZRC-20 tokens, which [ZetaChain](#zetachain) uses to represent bridged assets on the ZetaChain network). You can transfer tokens from other blockchains to Sui, or transfer SUI tokens to other blockchains.
 
 Sui supports bridging through [Sui Bridge](#sui-bridge), [Wormhole Connect](#wormhole-connect), [Wormhole Portal Bridge](#wormhole-portal-bridge), and [ZetaChain](#zetachain). Each bridge offers different features and capabilities to suit various use cases. To confirm the Sui address of a bridged token, see the [Token address list](#token-address-list).
 
@@ -119,7 +119,7 @@ The validator committee sets limits by vote and announces them in the [mn-valida
 
 ### Asset pricing
 
-Sui Bridge v1 uses static pricing to calculate limits. ETH is priced at $2,600. One ETH consumes $2,600 of the limit. The validator committee governs pricing through voting.
+Sui Bridge v1 uses static pricing to calculate limits. The validator committee sets these static prices by vote, so they can change over time. ETH is priced at $2,600. One ETH consumes $2,600 of the limit.
 
 ### What are the minimum and maximum transfer amounts? {#minimum-and-maximum-transfers}
 
@@ -149,7 +149,7 @@ Do not assume a bridge transfer is complete based on the source chain transactio
 
 ## Wormhole Connect {#wormhole-connect}
 
-Wormhole Connect lets you bridge tokens from any supported Wormhole chain into Sui, with an extra drop of SUI for gas fees. You can also embed Connect in your own websites and apps.
+Wormhole Connect lets you bridge tokens from any supported Wormhole chain into Sui, with an extra drop of SUI for gas fees. You can also embed Connect in your own websites and apps. [Wormhole Portal Bridge](#wormhole-portal-bridge) also uses Wormhole, but you use it directly from its website instead of embedding it in your own app.
 
 :::tip
 
@@ -159,7 +159,7 @@ See [Cross-Chain Token Transfers with Wormhole Connect](https://wormhole.com/doc
 
 ### Supported assets
 
-Wormhole Connect supports lock-and-mint bridging for ETH, WETH, USDC, MATIC, WMATIC, BNB, WBNB, AVAX, WAVAX, FTM, WFTM, CELO, GLMR, WGLRM, and SOL across Ethereum, Polygon, BSC, Avalanche, Celo, Moonbeam, Solana, and Sui. You receive bridged tokens as Wormhole-minted tokens on the destination chain. See the [Wormhole token list](https://github.com/wormhole-foundation/wormhole-token-list). Some tokens support swapping on destination DEXs.
+Wormhole Connect supports lock-and-mint bridging for ETH, WETH, USDC, MATIC, WMATIC, BNB, WBNB, AVAX, WAVAX, FTM, WFTM, CELO, GLMR, WGLMR, and SOL across Ethereum, Polygon, BSC, Avalanche, Celo, Moonbeam, Solana, and Sui. In lock-and-mint bridging, the bridge locks your original tokens on the source chain and mints wrapped tokens that represent them on the destination chain. You receive bridged tokens as Wormhole-minted tokens on the destination chain. See the [Wormhole token list](https://github.com/wormhole-foundation/wormhole-token-list). Some tokens support swapping on destination DEXs.
 
 ### Features
 
@@ -181,7 +181,7 @@ See the [Wormhole FAQ](https://wormhole.com/docs/products/connect/overview/) for
 
 ZetaChain supports native cross-chain transfers for tokens such as:
 
-- **Bitcoin (BTC):** Native Bitcoin transfers through HTLC
+- **Bitcoin (BTC):** Native Bitcoin transfers
 
 - **Ethereum (ETH):** Native ETH and ERC-20 tokens including USDC, USDT, and WBTC
 
