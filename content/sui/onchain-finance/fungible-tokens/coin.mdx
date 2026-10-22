@@ -89,15 +89,15 @@ See [Sui Tokenomics](/develop/sui-architecture/tokenomics-overview) to learn mor
 
 The `Coin<T>` type represents open-loop fungible tokens (see [`Token<T>`](/onchain-finance/closed-loop-token) for closed-loop tokens). The type parameter `T` denominates coins and also has associated metadata (like name, symbol, decimal precision, and so on) that applies to all instances of `Coin<T>`. The `sui::coin` module exposes an interface over `Coin<T>` that treats it as fungible, meaning that a unit of `T` held in one instance of `Coin<T>` is interchangeable with any other unit of `T`, much like how traditional fiat currencies operate.
 
-## Coin creation
+## How to create a coin
 
 When you create a coin using the `coin::create_currency` function, the publisher of the smart contract that creates the coin receives a `TreasuryCap` object.
 
-## Treasury capability
+## What does the `TreasuryCap` do?
 
 :::danger
 
-While `TreasuryCap` is freely transferable, never freeze or share the `TreasuryCap`. Doing so might allow malicious actors to call functions as the currency owner and the latter allows anyone to mint new coins and act as the owner of the currency.
+While `TreasuryCap` is freely transferable, never freeze or share the `TreasuryCap`. Freezing it might allow malicious actors to call functions as the currency owner. Sharing it allows anyone to mint new coins and act as the owner of the currency.
 
 :::
 
@@ -105,7 +105,7 @@ You need the `TreasuryCap` object to mint new coins or to burn current ones. Con
 
 The `TreasuryCap` object is transferable, so a third party can take over the management of a coin that you create if you transfer the `TreasuryCap`. After transferring the capability, however, you can no longer mint and burn tokens yourself.
 
-## Regulated coins
+## What are regulated coins?
 
 The Coin standard includes the ability to create regulated coins. To create a regulated coin, you use the `coin::create_regulated_currency_v2` function (which uses the `coin::create_currency` function itself), but which also returns a `DenyCapV2` capability. The `DenyCapV2` capability allows the bearer to maintain a list of addresses that cannot use the token.
 
@@ -154,7 +154,7 @@ The fields of the metadata objects include the following:
 | `coin_metadata_object` | The ID of the underlying `CoinMetadata` object for the same coin type as the regulated token.|
 | `deny_cap_object`      | The ID of the token's `DenyCapV2` object, which is necessary to maintain the deny list entries that controls who can and cannot use the token. |
 
-## Minting and burning coins
+## How to mint and burn coins
 
 The `coin` module provides the logic for creating and destroying coins on the Sui network (as long as you own the associated `TreasuryCap`). These functions are the same for all coins and each requires the `TreasuryCap` as an input.
 
@@ -174,7 +174,7 @@ Use the `coin::burn` function to destroy current tokens.
 
 The signature shows that only the `TreasuryCap` and coin object you want to burn are necessary inputs, returning the amount by which the supply decreased (value of the coin). The function does not allow you to burn more coins than are available in the supply.
 
-## Adding and removing addresses to and from the deny list
+## How to add and remove deny list addresses
 
 The deny list is only applicable to regulated coins. As mentioned previously, when you create a regulated coin you receive a `DenyCapV2` that authorizes the bearer to add and remove addresses from the system-created `DenyList` object. The process works as follows:
 
@@ -187,7 +187,7 @@ Because epochs last approximately 24 hours, an address you add to the deny list 
 
 <ImportContent source="coin-standards" mode="snippet" />
 
-## Reading coin data
+## How to read coin data
 
 You can use the following functions to retrieve data from coins.
 
@@ -233,6 +233,8 @@ public entry fun <FUNCTION-NAME><T>(
 | `update_symbol`      | `symbol: ascii::String`       |
 | `update_description` | `description: string::String` |
 | `update_icon_url`    | `url: ascii::String`          |
+
+The `update_icon_url` function takes the URL as an `ascii::String`, unlike `get_icon_url`, which returns an `option::Option<url::Url>`.
 
 The resulting signatures are:
 
