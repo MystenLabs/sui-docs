@@ -462,7 +462,7 @@ Use `mintReferral` to create a new referral for a pool with a specified multipli
 
 ### `updateReferralMultiplier`
 
-Use `updateReferralMultiplier` to update the multiplier for an existing referral. Only the referral owner can update the multiplier. The call returns a function that takes a `Transaction` object.
+Use `updateReferralMultiplier` to update the multiplier for an existing referral. Only the referral owner can update the multiplier. The call returns a function that takes a `Transaction` object. The signature that follows comes from the `updatePoolReferralMultiplier` function in the SDK.
 
 **Parameters**
 
@@ -474,7 +474,7 @@ Use `updateReferralMultiplier` to update the multiplier for an existing referral
 
 ### `claimReferralRewards`
 
-Use `claimReferralRewards` to claim accumulated referral fees. Returns an object with `baseRewards`, `quoteRewards`, and `deepRewards`. The call returns a function that takes a `Transaction` object.
+Use `claimReferralRewards` to claim accumulated referral fees. The call returns a function that takes a `Transaction` object and returns an object with `baseRewards`, `quoteRewards`, and `deepRewards`.
 
 **Parameters**
 
