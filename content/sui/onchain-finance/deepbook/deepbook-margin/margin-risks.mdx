@@ -76,6 +76,19 @@ This means a liquidation does not take your entire position. The liquidator repa
 
 However, if your position is severely underwater (assets barely cover debt plus rewards), a full liquidation might occur where the liquidator repays all debt and the lending pool might incur bad debt.
 
+### What are the liquidation thresholds?
+
+The following table collects the risk ratio thresholds and fees for each trading pair:
+
+| Parameter | SUI/USDC | WAL/USDC and DEEP/USDC |
+|-----------|----------|------------------------|
+| Leverage | 5x | 3x |
+| Warning zone (risk ratio) | 1.1 to 1.2 | 1.2 to 1.3 |
+| Liquidation Risk Ratio | 1.1 | See [risk ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio) |
+| Target Liquidation Risk Ratio | 1.25 | 1.5 |
+| Liquidation reward to liquidator | 2% (typical) | 2% (typical) |
+| Margin pool fee | 3% (typical) | 3% (typical) |
+
 ### Example: Getting liquidated on SUI/USDC
 
 The following example uses the SUI/USDC trading pair, which has a **Liquidation Risk Ratio of 1.1**.
@@ -87,7 +100,11 @@ The following example uses the SUI/USDC trading pair, which has a **Liquidation 
 - Total debt: 400 USDC
 - **Starting risk ratio: 500 / 400 = 1.25**
 
+A risk ratio of 1.25 is the min borrow ratio for SUI/USDC, so this example starts at the lowest risk ratio the protocol allows for borrowing. Starting higher gives you more room before liquidation.
+
 **The path to liquidation:**
+
+In the following table, **Danger zone** marks the lower part of the warning zone, just above the 1.1 Liquidation Risk Ratio, where a small further drop makes the position liquidatable.
 
 | SUI price (USDC) | SUI value (USDC) | Total assets (USDC) | Risk ratio | Status |
 |------------------|------------------|---------------------|------------|--------|
@@ -97,13 +114,11 @@ The following example uses the SUI/USDC trading pair, which has a **Liquidation 
 | 1.275 | 340 | 440 | 1.10 | Liquidatable |
 | 1.20 | 320 | 420 | 1.05 | Underwater |
 
-In this table, **Danger zone** marks the lower part of the warning zone, just above the 1.1 Liquidation Risk Ratio, where a small further drop makes the position liquidatable.
-
 **What happens at 1.275 USDC per SUI:**
 - Your risk ratio hits 1.1 (the liquidation threshold for SUI/USDC)
 - Anyone can now liquidate your position
 - A liquidator partially liquidates your position, repaying enough debt to restore your risk ratio to 1.25
-- You pay liquidation rewards (5% total: 2% to liquidator, 3% to pool)
+- You pay liquidation rewards (5% total at the typical rates: 2% to liquidator, 3% to pool)
 - Your remaining position has a 1.25 risk ratio, but with significantly less equity and smaller size
 
 With 5x leverage, a mere 15% adverse price movement can trigger liquidation. Without leverage, you would be down 15% on paper.
@@ -187,7 +202,7 @@ Interest accrues to your debt, which means:
 DeepBook Margin uses Pyth price oracles to value your assets and debts. While the protocol includes several protections, some oracle-related risks remain:
 
 - **Price delays:** Oracle prices might lag behind real market prices during extremely volatile periods. The protocol mitigates this by rejecting prices older than around 60 seconds, but brief delays within this window can still occur.
-- **Price manipulation:** Although Pyth's design resists manipulation and DeepBook validates prices against confidence intervals and EWMA (exponentially weighted moving average) prices, extreme market conditions could still affect price accuracy.
+- **Price manipulation:** Although Pyth's design resists manipulation and DeepBook validates prices against confidence intervals and EWMA (exponentially weighted moving average) prices to reject anomalous price spikes, extreme market conditions could still affect price accuracy.
 
 ### Oracle protections
 
@@ -225,6 +240,7 @@ Just because you can borrow at 5x doesn't mean you should. Consider:
 DeepBook Margin supports [TPSL orders](/onchain-finance/deepbook/deepbook-margin/contract-information/tpsl) that automatically close your position:
 - Set a stop loss above your liquidation price
 - This exits your position with a smaller loss rather than getting liquidated
+- TPSL orders are best-effort and can lag or fail during congestion or extreme volatility, so your position might not close at your expected price
 
 ### 4. Maintain collateral reserves
 
@@ -246,10 +262,10 @@ If you're new to margin trading:
 
 ## Summary of key risks
 
-| Risk | What can happen | How to mitigate |
-|------|-----------------|-----------------|
-| Liquidation | Price volatility forces your position closed, and you lose collateral and fees | Use less leverage, set stop losses, monitor positions |
-| Interest rates | Borrowing costs spike unexpectedly | Check utilization, factor in rate variability |
-| Oracle risk | Prices might not reflect true market | Understand oracle mechanics, avoid extreme leverage |
+| Risk | What can happen | Key thresholds | How to mitigate |
+|------|-----------------|----------------|-----------------|
+| Liquidation | Price volatility forces your position closed, and you lose collateral and fees | SUI/USDC: warning zone 1.1 to 1.2, liquidation at 1.1; WAL/USDC and DEEP/USDC: warning zone 1.2 to 1.3 | Use less leverage, set stop losses, monitor positions |
+| Interest rates | Borrowing costs spike unexpectedly | USDC pool: 12% APR at 80% utilization (optimal), 62% APR at 90% (max) | Check utilization, factor in rate variability |
+| Oracle risk | Prices might not reflect true market | The protocol rejects prices older than around 60 seconds | Understand oracle mechanics, avoid extreme leverage |
 
 With these risks in mind, the [Leveraged Position Workflow](/onchain-finance/deepbook/deepbook-margin/leveraged-workflow) walks through opening, monitoring, and closing a position on Testnet, reading each risk parameter onchain as you go.
