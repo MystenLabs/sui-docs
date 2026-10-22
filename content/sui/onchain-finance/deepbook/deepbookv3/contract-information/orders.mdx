@@ -54,7 +54,7 @@ answer: >-
 
 ## How do I place a limit or market order on DeepBook?
 
-Users can create limit or market orders, modify orders, and cancel orders. The `BalanceManager` must have the necessary funds to process orders. DeepBookV3 has four order options and three self matching options. If you set the `pay_with_deep` flag to `true`, trading fees are paid with the DEEP token. If you set the `pay_with_deep` flag to `false`, trading fees are paid with the input token.
+To place a limit order, call `place_limit_order` on the `Pool`. To place a market order, call `place_market_order` on the `Pool`. Before you place orders, generate a `TradeProof` from your `BalanceManager` and make sure the `BalanceManager` has the necessary funds to process orders. DeepBookV3 has four order options and three self matching options. If you set the `pay_with_deep` flag to `true`, trading fees are paid with the DEEP token. If you set the `pay_with_deep` flag to `false`, trading fees are paid with the input token.
 
 ## How do I cancel or modify an order?
 
