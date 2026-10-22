@@ -77,13 +77,13 @@ npm install @mysten/deepbook-v3 @mysten/sui
 </TabItem>
 </Tabs>
 
-## Set up the client
+## Step 1: Set up the client {#set-up-the-client}
 
 The client references pools and coins by SDK key (such as `DEEP_SUI` and `DEEP`) instead of hardcoded onchain object IDs, and refers to your manager by a name you assign, such as `MANAGER_1`. Read-only calls work without a manager; all trading operations require the manager to be associated with the correct DeepBook pool.
 
 <ImportContent source="examples/deepbook-spot/src/client.ts" mode="code" tag="client" />
 
-## Set up a `BalanceManager`
+## Step 2: Set up a `BalanceManager` {#set-up-a-balancemanager}
 
 Create one `BalanceManager` and reuse it across runs. It holds your deposited balances and is the account every order trades from. Creating a new manager each run leaves orphaned shared objects and confuses any step that lists your managers, so reuse an existing manager and create only when you have none.
 
@@ -97,7 +97,7 @@ If that returns nothing (you have never created one, or the indexer has not caug
 
 **Observe:** on creation, the effects contain a created shared object whose type ends in `BalanceManager`. Read its object ID from the effects, save it, and pass it to the client as a named manager.
 
-## Deposit assets
+## Step 3: Deposit assets {#deposit-assets}
 
 Deposit the asset you plan to trade. This workflow sells DEEP, so deposit DEEP.
 
@@ -111,27 +111,27 @@ Size the amount to your wallet balance. `depositIntoManager` sources coins with 
 
 :::info
 
-`DEEP_SUI` is currently a whitelisted pool, so it charges no trading fee and deducts no DEEP. The `payWithDeep` flag has no effect here. On a fee-paying pool, the pool deducts DEEP from your manager on each fill, sized by its floating DEEP price, so keep DEEP in the manager. See [How the DEEP fee is sized](/onchain-finance/deepbook/deepbookv3/fees-and-funding#how-is-the-deep-trading-fee-calculated) and [Pay fees in DEEP or the input token](/onchain-finance/deepbook/deepbookv3/fees-and-funding#do-deepbook-orders-require-deep-tokens).
+`DEEP_SUI` is currently a whitelisted pool, so it charges no trading fee and deducts no DEEP. Testnet pool settings can change, so this might not hold later. The `payWithDeep` flag has no effect here. On a fee-paying pool, the pool deducts DEEP from your manager on each fill, sized by its floating DEEP price, so keep DEEP in the manager. See [How the DEEP fee is sized](/onchain-finance/deepbook/deepbookv3/fees-and-funding#how-is-the-deep-trading-fee-calculated) and [Pay fees in DEEP or the input token](/onchain-finance/deepbook/deepbookv3/fees-and-funding#do-deepbook-orders-require-deep-tokens).
 
 :::
 
-## Place a limit order
+## Step 4: Place a limit order {#place-a-limit-order}
 
-Place a resting maker ask. `POST_ONLY` guarantees the order rests instead of taking: if it would cross the book, the pool does not place it, so you never pay a taker fee by accident. Price and quantity must respect the pool's tick size and lot size (`DEEP_SUI`: tick `0.00001`, lot `1`, minimum size `10` DEEP; these can change, so read the current values with `poolBookParams` as in [Troubleshooting](#troubleshooting)). The `clientOrderId` is your own tag for the order: the SDK types it as a string, but the contract encodes it as `u64`, so pass a numeric string such as a timestamp, not a label like `order-1`.
+Place a resting maker ask. `POST_ONLY` guarantees the order rests instead of taking: if it would cross the book, the pool does not place it, so you never pay a taker fee by accident. Price and quantity must respect the pool's tick size and lot size. At the time of writing, `DEEP_SUI` uses tick `0.00001`, lot `1`, and minimum size `10` DEEP. These values can change, so read the current `tickSize`, `lotSize`, and `minSize` with `poolBookParams`, as in [Troubleshooting](#troubleshooting). The `clientOrderId` is your own tag for the order: the SDK types it as a string, but the contract encodes it as `u64`, so pass a numeric string such as a timestamp, not a label like `order-1`.
 
 <ImportContent source="examples/deepbook-spot/src/place-order.ts" mode="code" tag="place-maker" />
 
 **Observe:** the transaction emits an `OrderPlaced` event, and the order rests on the book.
 
-## Read status and fills
+## Step 5: Read status and fills {#read-status-and-fills}
 
-Read the manager's open orders and account state. Open orders list resting order IDs, `getOrder` returns each order's `quantity` and `filled_quantity`, and `account` returns settled and locked balances. A fill moves funds into settled balances until you withdraw them.
+Read the manager's open orders and account state. Open orders list resting order IDs, `getOrder` returns each order's `quantity` and `filled_quantity`, and `account` returns settled and locked balances. Locked balances are the funds your open orders reserve. A fill moves funds into settled balances until you withdraw them. A `filled_quantity` above 0 but below `quantity` means a partial fill.
 
 <ImportContent source="examples/deepbook-spot/src/read-orders.ts" mode="code" tag="read-orders" />
 
 **Observe:** the order appears in `openOrderIds` with `filled_quantity` 0, because it rests unfilled.
 
-## Cancel the order
+## Step 6: Cancel the order {#cancel-the-order}
 
 Cancel the resting order by its ID. Cancelling returns the order's locked funds to the manager's settled balances.
 
@@ -139,9 +139,9 @@ Cancel the resting order by its ID. Cancelling returns the order's locked funds 
 
 **Observe:** the transaction emits an `OrderCanceled` event, and the order no longer appears in `accountOpenOrders`.
 
-## Fill your own order
+## Step 7: Fill your own order {#fill-your-own-order}
 
-To watch a fill settle, place a fresh maker ask, then place a taker bid that crosses it. Because this workflow trades from a single manager, both orders belong to it, so this is a self-trade.
+To watch a fill settle, place a fresh maker ask, then place a taker bid that crosses it. Because this workflow trades from a single manager, both orders belong to it, so this is a self-trade. If the book holds no order for the taker to cross, the taker fills nothing; see the empty-book zero-fill entry in [Fees and Funding troubleshooting](/onchain-finance/deepbook/deepbookv3/fees-and-funding#troubleshooting).
 
 :::caution
 
@@ -155,7 +155,7 @@ Place the crossing taker bid. It trades from the same manager with `selfMatching
 
 **Observe:** after the taker order, the maker order leaves `accountOpenOrders` because it filled fully, and the account's `taker_volume` and `maker_volume` both increase by the traded quantity. Because this is a self-trade at one price, the settled balances net to about zero (you sold and bought the same amount), so the fill shows up in the volumes rather than the balances.
 
-## Withdraw
+## Step 8: Withdraw {#withdraw}
 
 Funds you deposit or earn live in the manager, a shared object, until you withdraw them. Withdraw the settled balances back to your wallet.
 
