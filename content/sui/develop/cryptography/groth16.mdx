@@ -53,7 +53,7 @@ Groth16 requires a trusted setup for each circuit to generate the verification k
 
 :::danger
 
-The randomly generated proving and verifying keys used in the following example (through `generate_random_parameters_with_reduction` with a fixed seed) are for testing only and are **not secure**. In production, proving and verifying keys must come from a proper trusted setup ceremony. Because the Sui API does not pin any verification key, your contract must pin or verifiably identify the expected verifying key it accepts; otherwise your contract could accept a proof generated against an attacker-chosen key as valid.
+The randomly generated proving and verifying keys used in the following example (through `generate_random_parameters_with_reduction` with a fixed seed) are for testing only and are **not secure**. In production, proving and verifying keys must come from a proper trusted setup ceremony. Because the Sui API does not pin any verification key, your contract must pin or verifiably identify the expected verifying key it accepts; otherwise your contract could accept a proof generated against an attacker-chosen key as valid. Pinning means your contract fixes the verifying key it checks proofs against, instead of accepting a key from the caller. The Move example in [How do I verify a zk-SNARK proof in Move?](#how-do-i-verify-a-zk-snark-proof-in-move) embeds the verifying key bytes as a literal in the function.
 
 :::
 
@@ -83,7 +83,7 @@ Assuming that you have [installed the Circom compiler](https://docs.circom.io/ge
 $ circom main.circom --r1cs --wasm
 ```
 
-This outputs the constraints in R1CS format and the circuit in Wasm format.
+This outputs the constraints in R1CS format and the circuit in Wasm format. The proof generation code in the next section loads both files through `CircomConfig::new`.
 
 ### How do I generate a Groth16 proof with Circom?
 
@@ -148,6 +148,8 @@ fn main() {
 ```
 Recall that this creates a proof that the prover knows a factorization, in this case of the [5th Fermat number](https://en.wikipedia.org/wiki/Fermat_number#Factorization) (2<sup>32</sup> + 1 = 4294967297 = 641 * 6700417).
 
+The proving key `pk` contains the verifying key as `pk.vk`. The program serializes only `pk.vk` into `pk_bytes` and prints it as the `Verifying key` output.
+
 The output of the above function is:
 ```
 Verifying key: 94d781ec65145ed90beca1859d5f38ec4d1e30d4123424bb7b0c6fc618257b1551af0374b50e5da874ed3abbc80822e4378fdef9e72c423a66095361dacad8243d1a043fc217ea306d7c3dcab877be5f03502c824833fc4301ef8b712711c49ebd491d7424efffd121baf85244404bded1fe26bdf6ef5962a3361cef3ed1661d897d6654c60dca3d648ce82fa91dc737f35aa798fb52118bb20fd9ee1f84a7aabef505258940dc3bc9de41472e20634f311e5b6f7a17d82f2f2fcec06553f71e5cd295f9155e0f93cb7ed6f212d0ccddb01ebe7dd924c97a3f1fc9d03a9eb915020000000000000072548cb052d61ed254de62618c797853ad3b8a96c60141c2bfc12236638f1b0faf9ecf024817d8964c4b2fed6537bcd70600a85cdec0ca4b0435788dbffd81ab
@@ -155,6 +157,8 @@ Proof: 212d4457550f258654a24a6871522797ab262dee4d7d1f89af7da90dc0904eac57ce183e6
 Public inputs: 0100000001000000000000000000000000000000000000000000000000000000
 ```
 You need all these outputs to verify the proof.
+
+The `Public inputs` value encodes the public output `c` = 4294967297 (2<sup>32</sup> + 1) as 32 bytes in little-endian order. The first and fifth bytes are `01`, and every other byte is `00`.
 
 ### How do I verify a zk-SNARK proof in Move?
 
@@ -164,7 +168,11 @@ The output of the `prepare_verifying_key` function is a vector with four byte ar
 
 To verify a proof, you also need two more inputs, `public_inputs_bytes` and `proof_points_bytes`, which the program above prints.
 
-The following example passes the `Verifying key` output to `prepare_verifying_key`, the `Proof` output to `proof_points_from_bytes`, and the `Public inputs` output to `public_proof_inputs_from_bytes`, each as a hex byte literal (`x"..."`).
+The following example passes each output of the Rust program to a Move function as a hex byte literal (`x"..."`):
+
+- `Verifying key`: passed to `prepare_verifying_key`
+- `Proof`: passed to `proof_points_from_bytes`
+- `Public inputs`: passed to `public_proof_inputs_from_bytes`
 
 The following example smart contract uses the output from the program above. It first prepares a verification key and verifies the corresponding proof. This example uses the BN254 elliptic curve construction, which the example passes as the first parameter to the `prepare_verifying_key` and `verify_groth16_proof` functions. You can use the `bls12381` function instead for BLS12-381 construction.
 
