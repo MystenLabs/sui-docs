@@ -62,7 +62,7 @@ The surface spans 2 modules:
 - `deepbook_sessions::sessions`: Grant storage, the lifecycle calls, and every trading wrapper ([source](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/sessions/sources/sessions.move)).
 - `deepbook_sessions::session_config`: The shared `SessionsConfig` object and the package version floor ([source](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/sessions/sources/session_config.move)).
 
-Sui Mainnet and Sui Testnet each run a separate deployment of the package, and the Move snippets on this page pin DeepBookV3 at `29117434`. Both networks run `sessions` protocol version 3, which adds the [queued-order wrappers](#queued-wrappers) and links Predict protocol version 4, where the immediate trade wrappers abort. Because of an upgrade, the package carries a call target and an original ID that differ, and the following table gives both. In TypeScript, `getSessionsConfig(network)` from `@mysten/deepbook-v3/sessions` returns the package call target and its original ID, the shared config, the account registry that authorizes the app, the Predict protocol config, and the 2 extra IDs the DeepBook spot wrappers take. Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The full tables are on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#packages):
+Sui Mainnet and Sui Testnet each run a separate deployment of the package, and the Move snippets on this page pin DeepBookV3 at `29117434`. Both networks run `sessions` protocol version 3, which adds the [queued-order wrappers](#queued-wrappers) and links Predict protocol version 4, where the immediate trade wrappers abort. Because of an upgrade, the package carries a call target and an original ID that differ. Call the call target, and build `SessionGrant` and every dynamic-field key, including `DataKey<…::sessions::SessionsApp>`, from the original ID. The following table gives both. In TypeScript, `getSessionsConfig(network)` from `@mysten/deepbook-v3/sessions` returns the package call target and its original ID, the shared config, the account registry that authorizes the app, the Predict protocol config, and the 2 extra IDs the DeepBook spot wrappers take. Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The full tables are on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information):
 
 | **Object** | **Mainnet** | **Testnet** |
 |---|---|---|
@@ -70,7 +70,7 @@ Sui Mainnet and Sui Testnet each run a separate deployment of the package, and t
 | `sessions` package, original ID (`SessionGrant` and dynamic-field key types) | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | `0x1908eee49d7a08d74a537d7f23766b363a145517fe0d3e0d85635d1682831ffd` |
 | `SessionsConfig` | `0xb2fba483748aac7508676020d4e691d68239b66f8bf7c5e7634dd1a76a329317` | `0xc096b97289821b27badfdf758d614bbbfa386f93d3faa409ecc1fcc6075d1186` |
 
-Call the call target, and build `SessionGrant` and every dynamic-field key, including `DataKey<…::sessions::SessionsApp>`, from the original ID. The 2 differ on both networks. [Upgraded packages carry 2 IDs](/onchain-finance/deepbook/deepbook-predict/contract-information) explains the rule.
+The 2 differ on both networks. [Upgraded packages carry 2 IDs](/onchain-finance/deepbook/deepbook-predict/contract-information) explains the rule.
 
 A grant lives on one network's account. Sessions that an owner authorized on an earlier deployment are not visible on either current deployment.
 
@@ -117,32 +117,15 @@ Each trading wrapper resolves authority through one private helper before it tou
 
 The helper mints the `Auth` value and the wrapper consumes it inside the same call, so the session key never holds a value it could reuse in a later command or a later transaction.
 
-## Deauthorizing the app is a pause, not a kill switch {#deauthorize-is-a-pause}
-
-The registry administrator must authorize `SessionsApp` on the account registry before any trading wrapper can generate account authorization. That authorization is package-wide, held by the registry administrator, and it is the emergency stop for the whole lineage (the original sessions package and every upgraded version of it): `deauthorize_app` removes the allowlist entry, and from that moment every version of the sessions package fails inside the trading wrappers, aborting `EAppNotAuthorized` once a call clears the version and session checks ahead of it.
-
-:::danger
-
-`deauthorize_app` does not clear stored grants. Every `SessionsData` slot survives untouched, so re-authorizing `SessionsApp` makes every still-unexpired grant live again at once, with no further owner action. Treat deauthorization as a pause. To end a specific delegation, the account owner must call `revoke_session`.
-
-:::
-
-The following account registry source shows `deauthorize_app`, which removes the allowlist entry, and `generate_auth_as_app`, which the trading wrappers use to generate account authorization:
-
-<ImportContent
-	source="packages/account/sources/account_registry.move"
-	mode="code"
-	org="MystenLabs"
-	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
-	fun="deauthorize_app,generate_auth_as_app"
-/>
-
-Until the administrator authorizes `SessionsApp`, and again after a deauthorization, the split is clean: the trading wrappers abort, while `authorize_session`, `revoke_session`, and `session_expiration_ms` keep working, because they run on owner authority or no authority at all. An owner can therefore still inspect and clean up grants while the pause lasts.
-
 ## How do I authorize and revoke a session? {#lifecycle}
 
 The whole lifecycle takes 3 calls. Owner authority derives from the transaction sender, so the account owner signs `authorize_session` and `revoke_session`. That derivation is what makes the flow work for accounts owned by an external address and not for object-owned accounts.
+
+To delegate trading to a session key and end the delegation:
+
+1. As the account owner, sign `authorize_session` for the session address with a duration greater than zero and at most 30 days.
+2. With the session key, sign calls to the [Predict wrappers](#predict-wrappers) or the [DeepBook spot wrappers](#spot-wrappers) until the grant expires.
+3. As the account owner, sign `revoke_session` for the session address, then call `session_expiration_ms` and confirm that it returns `none`.
 
 <ImportContent
 	source="packages/sessions/sources/sessions.move"
@@ -199,9 +182,32 @@ There is no bulk onchain read. `session_expiration_ms` answers one address at a 
 
 Nothing prunes expired grants. Time passing executes no Move code, so a dead grant counts toward the 20-address limit until the owner revokes it, and the 21st `authorize_session` aborts `ESessionLimitExceeded` even when every stored grant is long dead. List, revoke what has expired, then grant.
 
+## Deauthorizing the app is a pause, not a kill switch {#deauthorize-is-a-pause}
+
+The registry administrator must authorize `SessionsApp` on the account registry before any trading wrapper can generate account authorization. That authorization is package-wide, held by the registry administrator, and it is the emergency stop for the whole lineage (the original sessions package and every upgraded version of it): `deauthorize_app` removes the allowlist entry, and from that moment every version of the sessions package fails inside the trading wrappers, aborting `EAppNotAuthorized` once a call clears the version and session checks ahead of it.
+
+:::danger
+
+`deauthorize_app` does not clear stored grants. Every `SessionsData` slot survives untouched, so re-authorizing `SessionsApp` makes every still-unexpired grant live again at once, with no further owner action. Treat deauthorization as a pause. To end a specific delegation, the account owner must call `revoke_session`.
+
+:::
+
+The following account registry source shows `deauthorize_app`, which removes the allowlist entry, and `generate_auth_as_app`, which the trading wrappers use to generate account authorization:
+
+<ImportContent
+	source="packages/account/sources/account_registry.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	fun="deauthorize_app,generate_auth_as_app"
+/>
+
+Until the administrator authorizes `SessionsApp`, and again after a deauthorization, the split is clean: the trading wrappers abort, while `authorize_session`, `revoke_session`, and `session_expiration_ms` keep working, because they run on owner authority or no authority at all. An owner can therefore still inspect and clean up grants while the pause lasts.
+
 ## Predict wrappers {#predict-wrappers}
 
-An active session can call 4 queued Predict wrappers and the settled redeem. The immediate wrappers `mint_exact_quantity`, `mint_exact_amount`, `mint_exact_cost`, and `redeem_live` keep their signatures and abort, as [Retired immediate trades](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) describes. The 5 wrappers that work are:
+An active session can call 4 queued Predict wrappers and the settled redeem. The immediate wrappers `mint_exact_quantity`, `mint_exact_amount`, `mint_exact_cost`, and `redeem_live` keep their signatures and abort, as [Retired immediate trades](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) describes. The 5 wrappers that work are:
 
 | **Wrapper** | **Predict call** | **Returns** | **Available** |
 |---|---|---|---|
@@ -217,7 +223,7 @@ The queued wrappers take no `pricer`, because placement reads the oracle objects
 
 ### Slippage bounds {#slippage-bounds}
 
-The `@mysten/deepbook-v3/sessions` queued builders require their bounds: a queued mint needs a finite `maxCost`, and `enqueueRedeemOpen` needs `minProbability` and `minProceeds`. [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions#slippage-bounds) describes both.
+The `@mysten/deepbook-v3/sessions` queued builders require their bounds: a queued mint needs a finite `maxCost`, and `enqueueRedeemOpen` needs `minProbability` and `minProceeds`. [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) describes both.
 
 <details>
 <summary>Retired immediate and settled wrapper source</summary>
@@ -234,7 +240,7 @@ The `@mysten/deepbook-v3/sessions` queued builders require their bounds: a queue
 
 </details>
 
-[Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions#trade) shows how to queue orders and claim as a session key with the TypeScript SDK.
+[Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) shows how to queue orders and claim as a session key with the TypeScript SDK.
 
 ### Queued-order wrappers {#queued-wrappers}
 
