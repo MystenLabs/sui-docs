@@ -55,6 +55,8 @@ The `BalanceManager` is a core component of DeepBookV3 that holds all asset bala
 
 Most functions on this page identify a balance manager by `managerKey`, a string that identifies the balance manager. The trade proof functions `generateProofAsOwner` and `generateProofAsTrader` instead take `managerId`, the ID of the balance manager. Use `id` to get the ID of a balance manager from its `managerKey`.
 
+A `tradeCap` is a capability object that you mint for a balance manager with `mintTradeCap` and transfer to a trader, as in the [Mint and use capabilities](#mint-and-use-capabilities) example. The holder uses it to generate trade proofs with `generateProofAsTrader`. The referral functions also require a `tradeCap` for permission checking. Similarly, you use a `depositCap` with `depositWithCap` and a `withdrawCap` with `withdrawWithCap`.
+
 ## Balance manager functions
 
 The DeepBookV3 SDK provides the following functions for managing balance managers.
@@ -259,6 +261,8 @@ Use `depositWithCap` to deposit funds into a balance manager using a `depositCap
 
 Use `withdrawWithCap` to withdraw funds from a balance manager using a `withdrawCap`. The call returns a function that takes a `Transaction` object.
 
+Unlike `withdrawFromManager`, `withdrawWithCap` takes no `recipient`. When you add the call to a transaction, the result is the withdrawn coin, which you transfer yourself, as in the [Mint and use capabilities](#mint-and-use-capabilities) example.
+
 **Parameters**
 
 - `managerKey`: String that identifies the balance manager.
@@ -293,7 +297,7 @@ Use `setBalanceManagerReferral` to set a pool-specific referral for the balance 
 **Parameters**
 
 - `managerKey`: String that identifies the balance manager.
-- `referral`: String representing the ID of the pool referral (`DeepBookPoolReferral`). Pass the ID string, as in the Set and manage referrals example.
+- `referral`: String representing the ID of the pool referral (`DeepBookPoolReferral`). Pass the ID string, as in the [Set and manage referrals](#set-and-manage-referrals) example.
 - `tradeCap`: `TransactionArgument` representing the trade cap for permission.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/balanceManager.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="setBalanceManagerReferral" signatureOnly/>
