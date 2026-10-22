@@ -69,7 +69,7 @@ Use `placeLimitOrder` to place a limit order through a margin manager. The call 
   - `price`: Number representing the order price
   - `quantity`: Number representing the order quantity
   - `isBid`: Boolean indicating if this is a buy order
-  - `expiration`: Optional number for order expiration timestamp
+  - `expiration`: Optional number or `bigint` for order expiration timestamp
   - `orderType`: Optional `OrderType` enum
   - `selfMatchingOption`: Optional `SelfMatchingOptions` enum
   - `payWithDeep`: Optional boolean to pay fees with DEEP tokens
@@ -116,6 +116,8 @@ The `orderId` is the protocol `orderId` generated during order placement, which 
 
 **Parameters**
 
+Pass these as positional arguments in the listed order, not as a `params` object. See [How do I modify and cancel orders?](#how-do-i-modify-and-cancel-orders) for an example.
+
 - `marginManagerKey`: String that identifies the margin manager.
 - `orderId`: String of the protocol order ID.
 - `newQuantity`: Number representing the new order quantity.
@@ -136,7 +138,7 @@ Use these functions to cancel orders for a margin manager. The call returns a fu
 
 ### `withdrawSettledAmounts`
 
-Use `withdrawSettledAmounts` to withdraw settled amounts from completed trades. The call returns a function that takes a `Transaction` object.
+Use `withdrawSettledAmounts` to withdraw settled amounts from completed trades. This function requires ownership of the margin manager. To withdraw settled amounts for a margin manager you do not own, use `withdrawMarginSettledAmounts`. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 
@@ -162,7 +164,7 @@ Use these functions to participate in pool governance through the margin manager
 **Parameters**
 
 - `marginManagerKey`: String that identifies the margin manager.
-- `params` (submitProposal): `MarginProposalParams` object with `takerFee`, `makerFee`, and `stakeRequired`.
+- `params` (submitProposal): `MarginProposalParams` object with `takerFee`, `makerFee`, and `stakeRequired`. Express `takerFee` and `makerFee` as decimal fractions: `0.0005` equals 5 basis points (bps).
 - `proposalId` (vote): String representing the proposal ID.
 
 <ImportContent source="packages/deepbook-v3/src/transactions/poolProxy.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="submitProposal,vote" signatureOnly />
@@ -182,6 +184,8 @@ Use `claimRebate` to claim trading rebates earned through the margin manager. Th
 Use `withdrawMarginSettledAmounts` to permissionlessly withdraw settled amounts for any margin manager by its object ID. Unlike `withdrawSettledAmounts` which requires ownership, this can be called by anyone. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
+
+This function takes the object ID of the margin manager (`marginManagerId`) instead of the `marginManagerKey` string that the other functions use.
 
 - `poolKey`: String that identifies the DeepBook pool.
 - `marginManagerId`: String representing the object ID of the margin manager.
