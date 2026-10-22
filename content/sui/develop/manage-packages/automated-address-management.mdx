@@ -52,7 +52,7 @@ answer: >-
 ---
 
 <AgentPrompt
-  prompt={"Migrate this package to current Sui package address management using Move.lock / Published.toml conventions, then verify build and publish/test-publish behavior."}
+  prompt={"Migrate this package from the legacy pre-v1.63 address tracking described on this page to current Sui package address management using Move.lock / Published.toml conventions. Follow the migration guide at /references/package-managers/package-manager-migration, then verify build and publish/test-publish behavior."}
 />
 
 :::warning Legacy documentation
@@ -74,7 +74,7 @@ Previously, a `published-at` entry in `Move.toml` was **mandatory**. You no long
 1. Switch to your active environment for the chain where your package is published:
 
 ```sh
-sui client --switch --env <YOUR-CHAIN-ENVIRONMENT>
+sui client switch --env <YOUR-CHAIN-ENVIRONMENT>
 ```
 
 2. Run the `manage-package` command with details of your published package:
@@ -91,7 +91,7 @@ sui move manage-package --environment "$(sui client active-env)" \
 
    - `LATEST-ADDRESS`: The latest package address. If you never upgraded, this matches `ORIGINAL-ADDRESS`. If you upgraded, it matches the current `published-at` address.
 
-   - `VERSION-NUMBER`: `1` if you never upgraded. Otherwise, set to the upgrade count. Look up the package at `LATEST-ADDRESS` to confirm the version number.
+   - `VERSION-NUMBER`: The onchain version of the package object. `1` if you never upgraded. Otherwise, set to the upgrade count. Look up the package at `LATEST-ADDRESS` to confirm the version number.
 
    - Shell substitution fills in `--environment` and `--network-id` from `sui client active-env` and `sui client chain-identifier`. `sui client chain-identifier` returns the chain ID of the active network, which `Move.lock` stores as `chain-id` (for example, `4c78adac` in the Testnet entry under [Internal reference](#internal-reference)). If your shell does not support `$(...)`, run the two commands separately and paste their output in place of the substitutions.
 
@@ -114,9 +114,15 @@ kiosk = "0x0"
 
 ## How do I upgrade a tracked package? {#package-upgrade-guidance}
 
-When [upgrading](/develop/publish-upgrade-packages/upgrade#how-do-i-upgrade-a-package), you need the `UpgradeCap` ID of your package. Automated address management does not track `UpgradeCap`.
+Automated address management does not track the `UpgradeCap` of your package. To [upgrade](/develop/publish-upgrade-packages/upgrade#how-do-i-upgrade-a-package) a tracked package:
 
-You must also set the `[addresses]` value for your package to `0x0` in `Move.toml`, and restore it with the `ORIGINAL-ADDRESS` after upgrading.
+1. Find the `UpgradeCap` ID of your package. You need it for the upgrade.
+
+2. Set the `[addresses]` value for your package to `0x0` in `Move.toml`.
+
+3. Upgrade the package.
+
+4. Restore the `[addresses]` value with the `ORIGINAL-ADDRESS`.
 
 ## How do I fix conflicting addresses? {#troubleshooting}
 
@@ -160,7 +166,7 @@ published-version = "1"
 
 - Each `[env]` table entry represents an environment. When you publish a package, the Sui CLI adds or updates its entry.
 
-- The `chain-id` keys each entry, not the `[env.NAME]`. This ensures that addresses resolve consistently even if you assign arbitrary environment names.
+- The table name in `[env.NAME]` (`testnet` and `mainnet` in the example) is only a label. The `chain-id` value identifies each entry. This ensures that addresses resolve consistently even if you assign arbitrary environment names.
 
 - Key-value pairs correspond to the data described in [adopting automated address management](#adopting-automated-address-management). Use the `sui move manage-package` command as the frontend to modify these values.
 
