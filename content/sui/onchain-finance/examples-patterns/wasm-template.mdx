@@ -8,6 +8,15 @@ keywords:
   - asset tokenization
   - WASM
   - bytecode template
+  - WebAssembly
+  - Move bytecode
+  - bytecode serialization
+  - bytecode deserialization
+  - bytecode manipulation
+  - template module
+  - CompiledModule
+  - TypeScript
+  - publish Move package
 goal:
   description: >-
     Reader understands how this feature was developed to enable Move bytecode
@@ -40,11 +49,11 @@ This feature was developed to enable Move bytecode serialization and deserializa
 
 In the case of asset tokenization, these edits allow you to create and publish new types that represent physical or digital assets that you want to tokenize.
 
-## Bytecode manipulation {#bytecode-manipulation}
+## How to retrieve the template bytecode {#bytecode-manipulation}
 
 :::caution
 
-When you make modifications to the template package, you must repeat this process. Some alterations, like changing a constant name, do not affect the produced bytecode, because the library addresses a constant by the position it has in the constant pool rather than by its name.
+When you modify the template package, you must repeat the steps in this section to rebuild the package and retrieve its bytecode. Some alterations, like changing a constant name, do not affect the produced bytecode, because the library addresses a constant by the position it has in the constant pool rather than by its name.
 
 :::
 
@@ -87,7 +96,7 @@ a6563740f7075626c69635f7472616e736665720673656e64657204736f6d6506737472696e
 
 </details>
 
-Copy the output you receive and paste it in the return instruction of the `getBytecode` method, which is located inside the [bytecode-template.ts](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/bytecode-template.ts) file.
+Copy the output you receive and paste it in the return instruction of the `getBytecode` method in the [bytecode-template.ts](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/bytecode-template.ts) file (`setup/src/utils/bytecode-template.ts` in the asset-tokenization repository).
 
 Because the template package contains two modules and therefore has another dependency, you also need to retrieve the bytecode of the genesis module in a similar fashion. This module bytecode is not edited and is used as-is. This operation is not directly relevant to the WASM library but is necessary to successfully deploy the edited template module. To acquire the bytecode for genesis, navigate to the `template` folder and run:
 
@@ -95,11 +104,11 @@ Because the template package contains two modules and therefore has another depe
 $ xxd -c 0 -p build/template/bytecode_modules/genesis.mv | head -n 1
 ```
 
-The output format is similar to the template module but smaller in length. Copy this output and paste it in the bytecode constant variable located in the [genesis_bytecode.ts](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/genesis_bytecode.ts) file.
+The output format is similar to the template module but smaller in length. Copy this output and paste it in the bytecode constant variable in the [genesis_bytecode.ts](https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/genesis_bytecode.ts) file (`setup/src/utils/genesis_bytecode.ts` in the asset-tokenization repository).
 
 With the above setup, the library can now manipulate the bytecode by deserializing it, editing it, and serializing it again so that you can publish it.
 
-### Closer view of the template module
+### How does the library edit the template module?
 
 Taking a look at the template module, you should see that a few constants have been defined:
 
@@ -140,14 +149,14 @@ const bytesToPublish = wasm.serialize(JSON.stringify(compiledModule));
 
 The `updateConstant` method updates constants and takes four arguments:
 
-- `idx` (index): The position the declared constant has in the constant pool. The order is sequential, starting from 0 for the first constant defined in the Move file and incrementing by one for each consecutive constant. In the template module, `TOTAL_SUPPLY` is the first constant declared, which is why it is updated at index `0`, `SYMBOL` at index `1`, and so on. In the template module, `TOTAL_SUPPLY` is the first constant declared, which is why it is updated at index `0`, `SYMBOL` at index `1`, and so on.
+- `idx` (index): The position the declared constant has in the constant pool. The order is sequential, starting from 0 for the first constant defined in the Move file and incrementing by one for each consecutive constant. In the template module, `TOTAL_SUPPLY` is the first constant declared, which is why it is updated at index `0`, `SYMBOL` at index `1`, and so on.
 - `value`: The updated value of the constant you want to change.
 - `expectedValue`: The current value of the constant.
 - `expectedType`: The current type of the constant.
 
 The last two arguments are required to minimize the risk of accidentally updating the wrong constant because this library directly manipulates compiled bytecode.
 
-The `changeIdentifiers` method updates identifiers, which in this case are the module name and the struct name. This method takes a JSON object as an argument with keys of the current identifier names in the module and values being the desired names you want to change them to. Identifiers are matched by name, unlike constants, which the library addresses by the position they have in the constant pool rather than by their name. Identifiers are matched by name, unlike constants, which the library addresses by the position they have in the constant pool rather than by their name.
+The `changeIdentifiers` method updates identifiers, which in this case are the module name and the struct name. This method takes a JSON object as an argument with keys of the current identifier names in the module and values being the desired names you want to change them to. Identifiers are matched by name, unlike constants, which the library addresses by the position they have in the constant pool rather than by their name.
 
 To deploy the changed template module, build and publish:
 
@@ -171,4 +180,4 @@ const tx = new Transaction();
 ...
 ```
 
-As mentioned in the [Bytecode manipulation](#bytecode-manipulation) section, the modules that you need to publish are the template and the genesis, which is why the `modules` array has 2 elements. It is also important to include any dependencies defined in the `Move.toml` file of the involved packages. The `packageId` used is the address the `asset_tokenization` package has been deployed to.
+As mentioned in [How to retrieve the template bytecode](#bytecode-manipulation), the modules that you need to publish are the template and the genesis, which is why the `modules` array has 2 elements. It is also important to include any dependencies defined in the `Move.toml` file of the involved packages. The `packageId` used is the address the `asset_tokenization` package has been deployed to.
