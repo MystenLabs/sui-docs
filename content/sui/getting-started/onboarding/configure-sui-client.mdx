@@ -49,7 +49,7 @@ answer: >-
   network, and verify your setup is working.
 ---
 
-The Sui client configuration specifies which network to connect to and which address to send transactions. When you run `sui client` for the first time, it generates a key pair, writes a `client.yaml` file to your local config directory, and sets Testnet as the active environment (the network the CLI uses when you don't explicitly specify one). You can switch networks, add custom RPC endpoints, and manage multiple environments using the `sui client new-env` and `sui client switch` subcommands.
+The Sui client configuration specifies which network to connect to and which address to send transactions. When you run `sui client` for the first time, it generates a [key pair](/getting-started/onboarding/get-address) for a new Sui address, writes a `client.yaml` configuration file to your local config directory, and sets Testnet as the active environment (the network the CLI uses when you don't explicitly specify one). You can switch networks, add custom RPC endpoints, and manage multiple environments using the `sui client new-env` and `sui client switch` subcommands.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -73,12 +73,6 @@ Run the Sui CLI with the command:
 $ sui client
 ```
 
-:::info
-
-If a previous Sui installation stored a `client.yaml` file locally, you receive the `sui client --help` output in the console. You can delete the existing `~/.sui/sui_config/client.yaml` file if you'd like to start fresh, or you can continue using the existing configuration.
-
-:::
-
 The prompt asks if you want to create the `client.yaml` file, select `Y` or press enter. You can skip the prompt with `sui client -y`.
 
 ```
@@ -93,6 +87,12 @@ Generated new keypair ...
 Created "~/.sui/sui_config/client.yaml"
 Set active environment to testnet
 ```
+
+:::info
+
+If a previous Sui installation stored a `client.yaml` file locally, you receive the `sui client --help` output in the console. You can delete the existing `~/.sui/sui_config/client.yaml` file if you'd like to start fresh, or you can continue using the existing configuration.
+
+:::
 
 :::caution
 
@@ -127,7 +127,7 @@ testnet => https://fullnode.testnet.sui.io:443
 mainnet => https://fullnode.mainnet.sui.io:443
 ```
 
-The environment marked `(active)` is the network the CLI currently uses. After running `sui client switch`, run `sui client envs` again to confirm that the environment you selected is marked `(active)`.
+The environment marked `(active)` is the network the CLI currently uses. In this sample output, `localnet` is active. If you switched to Testnet with the previous command, your output marks `testnet` as `(active)` instead. After running `sui client switch`, run `sui client envs` again to confirm that the environment you selected is marked `(active)`.
 
 To add a new environment, use `sui client new-env`. For example, to add a custom RPC endpoint:
 
@@ -135,11 +135,11 @@ To add a new environment, use `sui client new-env`. For example, to add a custom
 $ sui client new-env --alias custom --rpc https://your-custom-rpc-url
 ```
 
-After adding the environment, switch to it with `sui client switch --env custom`.
+Replace `https://your-custom-rpc-url` with the URL of your RPC endpoint. After adding the environment, switch to it with `sui client switch --env custom`.
 
 ## What is client.yaml and how do I edit it?
 
-Your Sui client is now configured. By default, Sui stores this information in either the `~/.sui/sui_config/client.yaml` file (macOS/Linux) or `%USERPROFILE%\.sui\sui_config\client.yaml` file (Windows). You can store a `client.yaml` file in a different location, if preferred, and specify its location with the `--client.config` flag.
+Your Sui client is now configured. By default, Sui stores this information in either the `~/.sui/sui_config/client.yaml` file (macOS/Linux) or `%USERPROFILE%\.sui\sui_config\client.yaml` file (Windows). Both `~` and `%USERPROFILE%` refer to your home directory. You can store a `client.yaml` file in a different location, if preferred, and specify its location with the `--client.config` flag.
 
 The `client.yaml` contains the configuration for connecting to different Sui networks (Testnet, Mainnet, Devnet, and Localnet), as well as your current active environment, which tells the CLI which network to use when you don't explicitly specify one.
 
