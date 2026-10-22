@@ -54,7 +54,7 @@ The DeepBook Margin TypeScript SDK abstracts away the transaction calls, allowin
 
 ## How do I install the DeepBook Margin SDK? {#install}
 
-To use the SDK in your projects, install the `@mysten/deepbook-v3` package, which includes the margin trading functionality.
+To use the SDK in your projects, install the `@mysten/deepbook-v3` package, which includes the margin trading functionality. DeepBook Margin does not have a separate SDK package. The margin functions are part of the DeepBook TypeScript SDK, and you access them through the same `deepbook` client extension.
 
 ```sh npm2yarn
 npm install @mysten/deepbook-v3
@@ -132,7 +132,7 @@ Functions that require the input of a coin, pool, or a margin manager require th
 
 ### Margin manager
 
-Before placing any margin trade, you must supply a margin manager address to the client. The manager key points to an object defined by the `MarginManager` interface in the client. [MarginManager docs](/onchain-finance/deepbook/deepbook-margin/contract-information/margin-manager). Initialize the margin manager with the client. If you don't create a margin manager, you can rely on the client to create one, but then you must reinitialize the client.
+Before placing any margin trade, you must supply a margin manager address to the client. The manager key points to an object defined by the `MarginManager` interface in the client. To learn what a margin manager is, see the [MarginManager docs](/onchain-finance/deepbook/deepbook-margin/contract-information/margin-manager). Initialize the margin manager with the client. If you don't create a margin manager, you can rely on the client to create one, but then you must reinitialize the client.
 
 Example using an existing margin manager:
 
@@ -285,6 +285,8 @@ class DeepBookMarginTrader {
 }
 ```
 
+In this example, `createMarginManagerAndReinitialize()` checks `result.$kind` after the transaction runs and throws an error if the value is `FailedTransaction`. It requests `objectTypes: true` in the `include` options because it reads `result.Transaction?.objectTypes` to find the created object whose type includes `MarginManager`. It then rebuilds the client with that address under the `MARGIN_MANAGER_1` key. The `signAndExecute()` method in the [Pool](#pool) example requests only `effects`, so add `objectTypes: true` there if your code reads object types from the result.
+
 ### Coin
 
 The SDK comes with 4 default coins on Testnet and 5 default coins on Mainnet.
@@ -378,7 +380,7 @@ export class DeepBookMarginTrader {
 
 ### Example setup
 
-The following example uses the default pools and coins provided, and demonstrates margin trading operations. It imports the `DeepBookMarginTrader` class from the previous section. Each SDK call returns a function that takes the transaction: you can call it directly with `tx`, or pass it to `tx.add()`, as the example does with `mintSupplierCap()` to capture its result in `supplierCap`. These calls only build the transaction; nothing executes until you call `signAndExecute()` at the end.
+The following example uses the default pools and coins provided, and demonstrates margin trading operations. It imports the `DeepBookMarginTrader` class from the [Pool](#pool) example. That class is the only one you need: it accepts margin managers in its constructor and defines `signAndExecute()`. Each SDK call returns a function that takes the transaction. Use `tx.add()` when you need the call's result for a later call in the same transaction, as the example does with `mintSupplierCap()` to capture its result in `supplierCap`. Otherwise, call the function directly with `tx`. These calls only build the transaction; nothing executes until you call `signAndExecute()` at the end.
 
 ```tsx
 import { Transaction } from '@mysten/sui/transactions';
