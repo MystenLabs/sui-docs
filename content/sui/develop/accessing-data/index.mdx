@@ -50,10 +50,12 @@ Data access on Sui is the process of reading onchain state, including [transacti
 
 Use these rules to pick a method:
 
-- For most applications, start with [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc).
-- If you need real-time streaming or higher throughput, use [gRPC](/develop/accessing-data/grpc).
-- If you need a custom data model or application-specific indexes, build a [custom indexing pipeline](/develop/accessing-data/custom-indexer/custom-indexers).
-- If you need historical data beyond what full nodes retain, use the [Archival Store](/develop/accessing-data/archival-store).
+| If you need | Use |
+| --- | --- |
+| A starting point for most applications | [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc) |
+| Real-time streaming or higher throughput | [gRPC](/develop/accessing-data/grpc) |
+| A custom data model or application-specific indexes | A [custom indexing pipeline](/develop/accessing-data/custom-indexer/custom-indexers) |
+| Historical data beyond what full nodes retain | [Archival Store](/develop/accessing-data/archival-store) |
 
 You can also subscribe to onchain activity through [events](/develop/accessing-data/using-events), which Move modules emit during transaction execution. [Authenticated events](/develop/accessing-data/authenticated-events) provide cryptographic proof of event origin for cross-system verification.
 
