@@ -46,7 +46,7 @@ Asset tokenization is the process of representing real-world assets, such as rea
 
 The core idea behind asset tokenization is fractionalization: dividing a high-value asset into smaller units, each representing a share of the whole. This makes assets more accessible by allowing investors to hold a fraction rather than the entire asset. Common use cases include real estate, where a single property can be divided into thousands of tradeable shares, or fine art and collectibles, where fractional ownership allows multiple investors to hold a stake in a single high-value item.
  
-On Sui, the `tokenized_asset` module handles this. It operates similarly to the `coin` library: when it receives a new [One-Time Witness (OTW)](https://move-book.com/programmability/one-time-witness/) type, it creates a unique onchain representation of a fractional asset. Each fraction is a `TokenizedAsset<T>` object with a balance that counts toward the asset's total supply.
+On Sui, the `tokenized_asset` module handles this. It operates similarly to the `coin` library: when it receives a new [One-Time Witness (OTW)](https://move-book.com/programmability/one-time-witness/) type, it creates a unique onchain representation of a fractional asset and returns an `AssetCap<T>` and an `AssetMetadata<T>`. Each fraction is a `TokenizedAsset<T>` object with a balance that counts toward the asset's total supply.
  
 This pattern is similar to the [ERC1155](https://eips.ethereum.org/EIPS/eip-1155) multi-token standard, with additional functionality. It is a suitable starting point for Solidity-based use cases you want to implement on Sui.
 
@@ -93,6 +93,8 @@ If Kiosk is not a requirement, you can exclude the `unlock` module and the trans
 
 The `asset_tokenization` package contains 3 modules: `tokenized_asset`, `proxy`, and `unlock`.
 
+The `tokenized_asset` module handles asset creation, minting, splitting, joining, and burning. The `proxy` module manages publisher and transfer policy operations, and stores an empty transfer policy in a shared `ProtectedTP<T>` object. The `unlock` module uses the `ProtectedTP<T>` object that `proxy` creates, and handles burning and joining for assets locked in a kiosk.
+
 #### `tokenized_asset`
  
 The `tokenized_asset` module is the core of the implementation. It handles asset creation, minting, splitting, joining, and burning. It operates similarly to the `coin` library on Sui:
@@ -128,7 +130,7 @@ For full struct and function details, see the [`unlock` source](https://github.c
 
 ### `template` package
 
-The `template` package is an example use case package that enables asset creation through a browser using Rust WebAssembly (WASM). It serves as a starting point whenever a new asset type needs to be represented as a tokenized asset.
+The `template` package is an example use case package that enables asset creation through a browser using Rust WebAssembly (WASM). The WASM library modifies the asset constants in the `template` module at publish time, which lets you define a new asset from the browser. The package serves as a starting point whenever a new asset type needs to be represented as a tokenized asset.
 
 The package contains 2 modules:
 
