@@ -53,7 +53,7 @@ answer: >-
 
 `deepbook_predict::registry::Registry` is the shared object that holds the market catalog and the cadence configuration for every registered underlying. It also holds the allowlists that decide which `PauseCap`, which `MarketLifecycleCap`, and which `PoolValuationCap` still carry authority.
 
-Publishing the Predict package creates `Registry` and `ProtocolConfig` together and transfers the single `AdminCap` to the publisher at that moment. The registry object ID for each deployment is on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information), and `getConfig(network).objects.registry` in the SDK resolves the same ID. The Move snippets on this page pin DeepBookV3 at `29117434`, the protocol version 4 source that both networks run.
+Publishing the Predict package creates `Registry` and `ProtocolConfig` together and transfers the single `AdminCap` to the publisher at that moment. `ProtocolConfig` is the registry's sibling shared object and holds the pause and freeze flags and the fee and timing settings that [Protocol configuration](#protocol-config) covers. The registry object ID for each deployment is on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information), and `getConfig(network).objects.registry` in the SDK resolves the same ID. The Move snippets on this page pin DeepBookV3 at `29117434`, the protocol version 4 source that both networks run.
 
 Most application integrations call only the read functions here. The rest are operator and governance surfaces. None of them is an `entry fun`: every function on this page is a `public fun` invoked as a `moveCall`. The capability-minting functions and `generate_pool_valuation_proof` return values that a later command in the same transaction must consume, because Sui lets a transaction leave a return value unused only when its type has `drop`. The 2 creation functions each return an `ID`, which has `drop`, so a transaction can leave it unused.
 
@@ -148,18 +148,18 @@ Read the terms with the accessors rather than by field:
 | `1` 5m | Yes | `10000000` (0.01 USD) | `1000000000` (1 USD) | `2000000000` (2,000 USDC) | `2000000000` (2,000 USDC) | `2` |
 | `2` 1h, `3` 1d, `4` 1w, `5` 1mo | No | `0` | `0` | `0` | `0` | `0` |
 
-A window size of `2` means the registry can hold 2 open markets per enabled cadence at once, 4 in total. These are mutable protocol state: `CadenceConfigUpdated` fired once per cadence at deployment on each network, and a later update changes the grid for markets created afterward. Read them onchain before sizing a strike. The same table with the underlying and oracle IDs is on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).
+A window size of `2` means the registry can hold 2 open markets per enabled cadence at once, so the 2 enabled cadences hold 4 in total. These are mutable protocol state: `CadenceConfigUpdated` fired once per cadence at deployment on each network, and a later update changes the grid for markets created afterward. Read them onchain before sizing a strike. The same table with the underlying and oracle IDs is on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).
 
 ## Which capability gates each function? {#capabilities}
 
 Privileged functions sit behind 4 capability types, and each one is a distinct owned object:
 
-| **Capability** | **Module** | **Gates** |
+| **Capability** | **Type** | **Gates** |
 | --- | --- | --- |
-| `AdminCap` | `deepbook_predict::admin` | Protocol configuration, underlying and cadence configuration, per-market mint pause and unpause, and the minting and revocation of the other 3 capabilities |
-| `PauseCap` | `deepbook_predict::pause_cap` | The 3 one-way emergency stops |
-| `MarketLifecycleCap` | `deepbook_predict::market_lifecycle_cap` | Market creation |
-| `PoolValuationCap` | `deepbook_predict::pool_valuation_cap` | Starting a pool flush, through `generate_pool_valuation_proof` |
+| `AdminCap` | `deepbook_predict::admin::AdminCap` | Protocol configuration, underlying and cadence configuration, per-market mint pause and unpause, and the minting and revocation of the other 3 capabilities |
+| `PauseCap` | `deepbook_predict::pause_cap::PauseCap` | The 3 one-way emergency stops |
+| `MarketLifecycleCap` | `deepbook_predict::market_lifecycle_cap::MarketLifecycleCap` | Market creation |
+| `PoolValuationCap` | `deepbook_predict::pool_valuation_cap::PoolValuationCap` | Starting a pool flush, through `generate_pool_valuation_proof` |
 
 The `MarketLifecycleCap` and `PoolValuationCap` structs are the objects an admin mints and the registry allowlists by ID:
 
@@ -267,6 +267,8 @@ Reversal is an `AdminCap` surface, not a `PauseCap` one. `protocol_config::set_t
 	noComments
 />
 
+Both setters take a boolean, so the same call engages or clears its flag on `ProtocolConfig`.
+
 ## Underlying and cadence administration
 
 An admin must register an underlying before any market on it can exist:
@@ -283,7 +285,7 @@ An admin must register an underlying before any market on it can exist:
 
 Registering the same underlying twice aborts with `EUnderlyingAlreadyRegistered`. Registration creates the row with all 6 cadences disabled, so a follow-up `set_template_cadence_config` call per cadence actually turns a schedule on.
 
-`set_template_cadence_config` validates the whole cadence as a unit. All 5 terms at zero disable the cadence. Otherwise every term must be nonzero, and the call aborts with `EInvalidCadenceConfig` when the terms mix zero and nonzero values, when the admission tick size is smaller than the tick size or not a whole multiple of it, when `initial_expiry_cash` is below the `expiry_cash_floor` of 1,000 USDC, or when it exceeds `max_expiry_allocation`. Both tick sizes must also pass the market tick bounds in the configuration constants: a tick that is not a positive multiple of `10000` aborts with `EInvalidMarketTickSize`, and one too large to multiply by the top tick aborts with `EMarketTickSizeTooLarge`. A window size above the maximum of `10` aborts with `EInvalidCadenceWindowSize`. A successful update emits `CadenceConfigUpdated`.
+`set_template_cadence_config` validates the whole cadence as a unit. All 5 terms at zero disable the cadence. Otherwise every term must be nonzero, and the call aborts with `EInvalidCadenceConfig` when the terms mix zero and nonzero values, when the admission tick size is smaller than the tick size or not a whole multiple of it, when `initial_expiry_cash` is below the `expiry_cash_floor` of `1000000000` (1,000 USDC), or when it exceeds `max_expiry_allocation`. Both tick sizes must also pass the market tick bounds in the configuration constants: a tick that is not a positive multiple of `10000` aborts with `EInvalidMarketTickSize`, and one too large to multiply by the top tick aborts with `EMarketTickSizeTooLarge`. A window size above the maximum of `10` aborts with `EInvalidCadenceWindowSize`. A successful update emits `CadenceConfigUpdated`.
 
 Changing a cadence does not touch markets that already exist. Each market snapshots its terms at creation, so the grid an open market admits is the grid from its creation.
 
@@ -371,7 +373,7 @@ Protocol version 4 also retires the EWMA congestion penalty: `set_ewma_params` a
 
 ## Errors
 
-Abort codes restart at `0` in each module, so match a code together with the module that raised it. The tables in this section group the codes by module.
+Abort codes restart at `0` in each module, so match a code together with the module that raised it. For example, code `0` is `EPauseCapNotValid` in `registry`, `EUnderlyingNotRegistered` in `market_manager`, and `ETradingPaused` in `protocol_config`. The tables in this section group the codes by module.
 
 `deepbook_predict::registry` raises 5 capability errors:
 
