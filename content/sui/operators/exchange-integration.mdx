@@ -48,7 +48,7 @@ answer: >-
 
 Integrating SUI into a cryptocurrency exchange involves infrastructure, API access, balance tracking, transactions, transfers, and staking. Specific requirements and processes vary between exchanges. Before you ship an integration to production, confirm the API and SDK examples you use against the current references linked from each section.
 
-## Requirements to configure a SUI integration
+## What do you need to configure a SUI integration?
 
 Sui's primary data access APIs are [gRPC](/develop/accessing-data/grpc) and [GraphQL RPC](/develop/accessing-data/graphql/graphql-rpc). Sui has deprecated JSON-RPC. New integrations should use gRPC or GraphQL.
 
@@ -64,7 +64,7 @@ The requirements to configure a SUI integration include:
 
 For software prerequisites, snapshots, observability, and the full setup walkthrough, see [Run a Sui Full Node](/operators/full-node/sui-full-node).
 
-## Infrastructure
+## Should you run a full node or use a provider?
 
 An exchange integration needs reliable access to Sui network data and the ability to submit transactions. You have two options:
 
@@ -78,7 +78,7 @@ The public endpoints at `https://fullnode.<network>.sui.io` and `https://graphql
 
 :::
 
-## Sui APIs
+## Which Sui APIs should you use?
 
 Sui provides gRPC and GraphQL RPC for data access. Sui has deprecated JSON-RPC.
 
@@ -96,7 +96,7 @@ GraphQL exposes a single endpoint where you select exactly the fields you need a
 
 Existing integrations should plan a migration to gRPC or GraphQL. New integrations should not adopt JSON-RPC.
 
-## Sui addresses
+## How does Sui derive addresses?
 
 Sui addresses do not need onchain initialization. You can spend from an address as soon as it corresponds to a private key you control.
 
@@ -123,11 +123,11 @@ Sui currently supports the following schemes and flag bytes:
 
 For full details on address derivation, signature formats, and key derivation paths (BIP-32, BIP-39, BIP-44, SLIP-0010), see [Signing and Sending Transactions](/develop/transactions/transaction-auth/auth-overview).
 
-### Displaying addresses
+### How should you display addresses?
 
 Sui accepts addresses with or without the `0x` prefix. Always include the `0x` prefix when you display addresses to users and when you pass them to API calls.
 
-## Tracking balances
+## How do you track balances?
 
 Sui supports two ways to hold fungible value at an address:
 
@@ -145,17 +145,17 @@ Exchange ledgers must account for both coin objects and address-balance accumula
 
 Query balances for an address using the `address(address:).balances(...)` connection in GraphQL. The [GraphQL query guide](/develop/accessing-data/graphql/query-with-graphql) shows the pagination pattern and how to scope queries to a specific checkpoint for consistent reads. For a typed client, use `StateService.GetBalance` for a single coin type or `StateService.ListBalances` for all balances over [gRPC](/develop/accessing-data/grpc/using-grpc). Both return the `balance`, `coinBalance`, and `addressBalance` fields.
 
-## Blocks vs checkpoints {#blocks-vs-checkpoints}
+## How do checkpoints differ from blocks? {#blocks-vs-checkpoints}
 
 Sui is a blockchain based on a directed acyclic graph (DAG) and uses checkpoints for node synchronization and global transaction ordering. Checkpoints differ from blocks in the following ways:
 
-- Sui creates checkpoints and adds finalized transactions. Transactions reach finality before Sui includes them in a checkpoint.
+- Sui creates checkpoints and adds finalized transactions. Transactions reach finality before Sui includes them in a checkpoint. For crediting deposits, treat inclusion in a finalized checkpoint as the point of finality, as the [finality policy for deposits and withdrawals](#designing-deposits-and-withdrawals) describes.
 
 - Checkpoints do not fork, roll back, or reorganize.
 
 - Sui creates about 4 checkpoints every second. Find the most current statistic on the [Sui public dashboard](https://metrics.sui.io/public-dashboards/4ceb11cc210d4025b122294586961169).
 
-### Checkpoint API operations {#checkpoint-api-operations}
+### How do you read checkpoints? {#checkpoint-api-operations}
 
 Read checkpoints through the current gRPC or GraphQL APIs:
 
@@ -163,7 +163,7 @@ Read checkpoints through the current gRPC or GraphQL APIs:
 
 - **GraphQL:** Query the `checkpoint(sequenceNumber:)` field for a specific checkpoint, or paginate `checkpoints` for a range. See [Querying Data with GraphQL RPC](/develop/accessing-data/graphql/query-with-graphql).
 
-## Tracking transactions and events
+## How do you track transactions and events?
 
 Use checkpoints as the canonical, ordered stream of finalized activity:
 
@@ -175,7 +175,7 @@ For real-time pipelines, subscribe to the checkpoint stream over [gRPC](/develop
 
 For event consumption patterns, including filtering by sender, package, or event type, see [Using Events](/develop/accessing-data/using-events).
 
-## SUI transfers
+## How do you transfer SUI?
 
 Build transfers as [programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks) using the SDK of your choice. PTBs let you split, merge, and transfer coins in a single atomic transaction.
 
@@ -187,7 +187,7 @@ A few points that matter for exchange flows:
 
 - **Sponsored transactions.** For user-facing flows, you can sponsor a user's transaction so they pay no gas. See [Sponsored Transactions](/develop/transaction-payment/sponsor-txn).
 
-## Signing transactions
+## How do you sign transactions?
 
 Sui signs over the Blake2b-256 hash of the BCS serialization of an `IntentMessage` that wraps the transaction data. The supported signature schemes are pure Ed25519, ECDSA Secp256k1, and ECDSA Secp256r1, along with multisig, zkLogin, and passkey.
 
@@ -204,7 +204,7 @@ Custody keys and privileged capabilities are the highest-value assets in an exch
 
 :::
 
-## SUI staking
+## How does SUI staking work?
 
 The Sui blockchain uses a delegated proof-of-stake (DPoS) mechanism. SUI token holders stake to a validator's staking pool. When a user stakes, the network locks those tokens for the duration of the epoch in which the user adds the stake. New staking requests become active at the start of the next epoch. A user can request a withdrawal at any time. Stake withdrawals process immediately using the previous epoch's exchange rate and include the principal plus rewards accumulated through the previous epoch. The withdrawn stake stops contributing starting the next epoch.
 
@@ -255,7 +255,7 @@ To build staking and unstaking transactions, assemble a PTB that calls one of th
 
 To read stake state for an address, list owned `StakedSui` objects through `StateService.ListOwnedObjects` with a type filter on [gRPC](/develop/accessing-data/grpc/using-grpc), or through the `address.objects(filter: { type: ... })` connection on [GraphQL](/develop/accessing-data/graphql/query-with-graphql). The current schema exposes balance, transaction, and object access; it does not yet expose a first-class staking-state field that returns active stakes, pending stakes, and accrued rewards together. To compute accrued rewards, read the `StakedSui` object's stake activation epoch and principal, then compute the current value against the validator's exchange rate, or use the [TypeScript SDK](https://sdk.mystenlabs.com/typescript) staking helpers if available for your use case.
 
-## Designing deposits and withdrawals
+## How do you design deposits and withdrawals? {#designing-deposits-and-withdrawals}
 
 Treat deposit and withdrawal pipelines as event-driven and idempotent. The following checklist covers the design points that matter most for an exchange:
 
@@ -273,14 +273,14 @@ Treat deposit and withdrawal pipelines as event-driven and idempotent. The follo
 
 - **Validate addresses on input.** Reject malformed addresses early, and confirm `0x` prefix handling matches your display layer.
 
-## Production considerations
+## What matters in production?
 
 - **Endpoints.** Use your own full node or a contracted provider endpoint. Do not rely on the public `fullnode.<network>.sui.io` or `graphql.<network>.sui.io` URLs for production traffic.
 
-- **Observability.** Configure full node [logging](/operators/observability#logging-levels) and [metrics monitoring](/operators/full-node/monitoring) so you can detect lag or failures quickly.
+- **Observability.** Configure full node [logging](/operators/observability) and [metrics monitoring](/operators/full-node/monitoring) so you can detect lag or failures quickly.
 
 - **Snapshots.** Start a new full node from a recent snapshot rather than syncing from genesis. See [Sui Snapshots](/operators/snapshots).
 
 - **Custody and key management.** Treat exchange custody keys and any administrative capabilities (for example, capability objects governing your deposit or withdrawal flow) as high-value assets. Separate hot, warm, and cold keys by role, so an online compromise does not expose the keys with the most privilege. Hold warm and cold keys in a [multisig](/develop/transactions/transaction-auth/multisig) address or hardware custody, and sign cold-key transactions using [Offline Signing](/develop/transactions/transaction-auth/offline-signing). Keep Testnet and Mainnet keys strictly separate, so a test key can never sign a production transaction.
 
-- **API stability.** Pin SDK versions for the HTTP APIs and verify your code against the linked references each time you upgrade. Watch the [release notes](/references/release-notes) for breaking changes that affect balances, events, or transaction shapes. Code that deserializes checkpoint data is the exception: pinning it is what breaks, because Binary Canonical Serialization (BCS) cannot skip a type it does not recognize. Track the `testnet` branch for those dependencies, as [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers#dependency-currency) describes.
+- **API stability.** Pin SDK versions for the HTTP APIs and verify your code against the linked references each time you upgrade. Watch the release notes for breaking changes that affect balances, events, or transaction shapes. Code that deserializes checkpoint data is the exception: pinning it is what breaks, because Binary Canonical Serialization (BCS) cannot skip a type it does not recognize. Track the `testnet` branch for those dependencies, as [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers) describes.
