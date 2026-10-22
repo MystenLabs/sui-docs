@@ -55,7 +55,7 @@ A payment intent collapses the same flow into one signed transaction with the fo
 
 - **One gas payment:** The whole batch shares a gas budget. The transaction sponsor pays once. The sponsor can be your app, a relayer, or the user.
 
-- **Parallel reads:** Resolution steps that do not depend on each other run concurrently before the app builds the payment intent. These include balance lookups, route quotes, and contact resolution.
+- **Parallel reads:** Resolution steps that do not depend on each other run concurrently before the app builds the payment intent. These include balance lookups, route quotes, and contact resolution, which maps a contact name to an onchain address.
 
 The underlying PTB gives a payment intent the following guarantees:
 
@@ -87,7 +87,7 @@ Starting balance: 2,000 USDC.
 
 ### Resolution
 
-The app dispatches five reads in parallel:
+The app dispatches five reads in parallel. In this example, Cetus provides the swap route and NAVI provides the yield pool. The values in the following table are illustrative example data, not live quotes. Route pricing, pool APY and TVL, and gas costs change with market and network conditions.
 
 | **Read** | **Result** |
 |---|---|
@@ -97,7 +97,7 @@ The app dispatches five reads in parallel:
 | Contact resolution for Alice | `0xa4bb…b27c`, verified |
 | Gas estimate | 0.005 USD, sponsored |
 
-The values in this table are illustrative example data, not live quotes. Route pricing, pool APY and TVL, and gas costs change with market and network conditions. Slippage is the difference between the quoted price and the price the swap executes at.
+Slippage is the difference between the quoted price and the price the swap executes at.
 
 ### Plan
 
@@ -113,7 +113,7 @@ If you reorder these operations, you get a different result. Computing the 50% b
 
 ### Execute
 
-The three operations compile into one payment intent. You sign once and the network commits the batch in roughly 0.6 seconds. The final balances are:
+The three operations compile into one payment intent. You sign once and the network commits the batch. In this example, the commit takes roughly 0.6 seconds. The final balances are:
 
 - **Available USDC:** 800 USD, instantly spendable.
 
@@ -149,7 +149,7 @@ Three transfers to three resolved contacts, batched atomically. If any recipient
 
 > Sell enough SUI to bring my portfolio back to 70% USDC, 30% SUI.
 
-The payment intent reads current balances and prices, computes the delta, and executes a single swap. The read and the swap are part of the same atomic unit, so the price you swap at is the price you read.
+The app reads current balances and prices during resolution and computes the delta, and the payment intent executes a single swap. The read happens before you sign, so the executed price can differ from the price the app read. A slippage breach reverts the whole payment intent.
 
 ### Conditional send
 
