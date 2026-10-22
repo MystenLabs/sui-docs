@@ -62,6 +62,8 @@ answer: >-
 
 A Sui transaction must pay for both the computational cost of execution and the long-term cost of storing the objects a transaction creates or mutates. 
 
+## What does the Sui gas pricing mechanism achieve? {#mechanism-outcomes}
+
 The Sui gas pricing mechanism achieves three outcomes: 
 
 1. Deliver predictable transaction fees.
@@ -72,7 +74,7 @@ The Sui gas pricing mechanism achieves three outcomes:
 
 This pricing mechanism gives you the best user experience without needing to forecast the current market price of gas fees. Because validators agree on a network-wide reference price at the start of each epoch, you can use the reference price as a credible anchor when submitting transactions. Moreover, the price setting mechanism rewards good validator behavior, thus aligning incentives between SUI token holders, validators, and users.
 
-## Gas fee structure
+## How are gas fees calculated? {#gas-fee-structure}
 
 Gas fees for any transaction equal:
 
@@ -80,7 +82,7 @@ Gas fees for any transaction equal:
 total_gas_fees = computation_units × reference_gas_price + storage_units × storage_price
 ```
 
-A unique feature of the Sui gas price mechanism is that users pay separate fees for transaction execution and for storing the data associated with each transaction. The gas fees associated with an arbitrary transaction τ equal:
+A unique feature of the Sui gas price mechanism is that users pay separate fees for transaction execution and for storing the data associated with each transaction. In the following formula, τ (the Greek letter tau) stands for an arbitrary transaction, and a term such as $ComputationUnits[\tau]$ means the computation units that transaction τ requires. The gas fees associated with an arbitrary transaction τ equal:
 
 $$
 GasFees[\tau] = ComputationUnits[\tau] \times ComputationPrice[\tau] + StorageUnits[\tau] \times StoragePrice
@@ -92,13 +94,15 @@ The gas functions $ComputationUnits[\tau]$ and $StorageUnits[\tau]$ measure the 
 
 Different Sui transactions require varying amounts of computational time for processing and execution. Sui translates these varying operational loads into transaction fees by measuring each transaction in terms of computation units. In general, more complex transactions require more computation units.
 
-Sui's computation gas schedule is built coarsely with a bucketing approach. Two relatively similar transactions translate into the exact same amount of computation units if they are in the same bucket, whereas two relatively different transactions translate into different amounts of computation units if they fall in separate buckets. The smallest bucket maps into 1,000 computation units, meaning that all transactions that fall into the smallest bucket cost 1,000 computation units. The largest bucket maps into 5,000,000 computation units; if a transaction requires more computation units, it aborts.
+Sui builds its computation gas schedule coarsely with a bucketing approach: it groups transactions that need similar amounts of computation into the same bucket, and every transaction in a bucket costs the same number of computation units. Two relatively similar transactions translate into the exact same amount of computation units if they are in the same bucket, whereas two relatively different transactions translate into different amounts of computation units if they fall in separate buckets. The smallest bucket maps into 1,000 computation units, meaning that all transactions that fall into the smallest bucket cost 1,000 computation units. The largest bucket maps into 5,000,000 computation units; if a transaction requires more computation units, it aborts.
 
 Using coarse bucketing accomplishes two important goals:
 
-- Frees you from optimizing your smart contracts to deliver marginal gains in gas costs through gas golfing. Instead, you can focus on step-function improvements in your products and services.
+- Frees you from gas golfing, which means optimizing your smart contracts to deliver marginal gains in gas costs. Instead, you can focus on step-function improvements in your products and services.
 
 - Gives you the freedom to adjust per-instruction gas costs and experiment with new gas metering schemes without creating significant development disruption. This can happen frequently, so it is important that you do not rely on per-instruction gas costs remaining stable over time.
+
+In the following table, both thresholds of each bucket are inclusive. Every transaction that falls within a bucket costs the computation units in the right column. For example, a transaction that falls between 1,001 and 5,000 costs 5,000 computation units.
 
 | Bucket lower threshold | Bucket upper threshold | Computation units      |
 | ---------------------- | ---------------------- | ---------------------- |
@@ -116,9 +120,9 @@ Using coarse bucketing accomplishes two important goals:
 
 Similarly, Sui transactions vary depending on the amount of new data written into onchain storage. The variable storage units capture these differences by mapping the amount of bytes held in storage into storage units. The current Sui schedule is linear and maps each byte into 100 storage units. For example, a transaction that stores 25 bytes costs 2,500 storage units, while a transaction that stores 75 bytes costs 7,500 units.
 
-In the Sui [storage fund](/develop/sui-architecture/tokenomics-overview#storage-fund) model, users pay up front for the cost of storing data in perpetuity but can also get a partial rebate on previously stored data if that data is deleted. Hence, the amount of storage fees that you pay can be split into a rebateable and non-rebateable amount. Initially, the rebateable amount equals 99% of the storage fees, while the non-rebateable amount equals the remaining 1%.
+In the Sui [storage fund](/develop/sui-architecture/tokenomics-overview) model, users pay up front for the cost of storing data in perpetuity but can also get a partial rebate on previously stored data if that data is deleted. The storage fund holds the storage fees you pay and redistributes them to future validators. Hence, the amount of storage fees that you pay can be split into a rebateable and non-rebateable amount. Initially, the rebateable amount equals 99% of the storage fees, while the non-rebateable amount equals the remaining 1%.
 
-### Storage rebates 
+### What is a storage rebate? {#storage-rebates}
 
 Sui storage mechanics provide storage fee rebates whenever a transaction deletes previously stored objects. Hence, the net fees that a user pays equals gas fees minus the rebates associated with data deletion:
 ```
@@ -141,7 +145,7 @@ On the Sui network, a single $ReferencePrice$ exists throughout each epoch, with
 
 The Sui gas price mechanism makes the $ReferencePrice$ a credible anchor for you to reference when submitting transactions to the network, providing reasonable confidence that transactions submitted with gas prices at or close to the reference price are executed in a timely manner. This is achieved through three core steps.
 
-### Gas price survey
+### How is the reference gas price set? {#gas-price-survey}
 
 All validators are surveyed at the start of each epoch, and every validator submits their reservation price. That is, each validator states the minimum gas price at which they are willing to process transactions. The protocol orders these quotes and chooses the 2/3 percentile by stake as the reference price. The gas price survey goal is to set a reference price under which a quorum of validators are willing to promptly process transactions.
 
@@ -167,13 +171,15 @@ After Sui enables horizontal scaling, validators can add more workers as demand 
 
 In the long run, the Sui gas price mechanism creates incentives for validators to optimize their hardware and operations. Validators that invest in becoming more efficient are able to honor lower gas prices and obtain a stake reward boost. Sui validators are thus encouraged to innovate and improve the experience of end users.
 
-## Gas budgets {#gas-budgets}
+## What is a gas budget? {#gas-budgets}
 
 You must submit all transactions together with a gas budget. This provides a cap to the amount of gas fees you pay, especially because sometimes it might be hard to perfectly forecast how much a transaction costs before you submit it to the Sui network.
 
-The gas budget for a Sui transaction is defined in SUI units and transactions are successfully executed if:
+The gas budget must cover the larger of two amounts: the transaction's computation fees and its total gas fees. The gas budget for a Sui transaction is defined in SUI units and transactions are successfully executed if:
 
-`gas_budget >= max{computation_fees, total_gas_fees}`
+```
+gas_budget >= max{computation_fees, total_gas_fees}
+```
 
 If the gas budget does not fulfill this condition, then the transaction fails and a portion of the gas budget is charged. In cases where the `gas_budget` is insufficient for covering `computation_fees`, then the entirety of the `gas_budget` is charged. In cases where `gas_budget` is sufficient for covering `computation_fees` but not the `total_gas_fees`, then a portion of the `gas_budget` corresponding to `computation_fees` and the fees associated with mutating the transaction's input objects are charged.
 
