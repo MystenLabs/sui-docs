@@ -46,7 +46,7 @@ To integrate with the Permissioned Assets Standard (PAS), you must:
 
 3. Build your approval logic using a function that takes `&mut Request<...>`, validates, and calls `request.approve(MyApproval())`. See [How do I define approval logic?](#how-do-i-define-approval-logic).
 
-4. Set template commands so clients can build programmable transaction blocks (PTBs) automatically. See [How do I set template commands?](#how-do-i-set-template-commands).
+4. Set template commands so clients can build [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks) (PTBs) automatically. See [How do I set template commands?](#how-do-i-set-template-commands).
 
 These pieces fit together as follows: the policy names which approval witness each action requires, your approval function checks a `Request` and stamps it with that witness, and the template tells clients which approval function to call. Clients then build a PTB that creates the request, runs your approval, and resolves it (see [How clients use templates](#how-clients-use-templates)).
 
@@ -89,6 +89,8 @@ policy.set_required_approval<Balance<T>, MyClawbackApproval>(&policy_cap, "clawb
 
 policy.share();
 ```
+
+In this example, `T` is your currency type, the same type as `C` in `Policy<Balance<C>>`.
 
 Supported actions are `"send_funds"`, `"unlock_funds"`, and `"clawback_funds"`.
 
