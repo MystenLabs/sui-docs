@@ -269,7 +269,7 @@ In checkpoint data, these events arrive as **raw BCS bytes** that your indexer n
 
 ### Step-by-step deserialization
 
-1. Add BCS dependency. Because BCS cannot skip a value it does not recognize, keep this dependency and the framework dependency current rather than pinning an old version. See [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers), which applies to any code that performs BCS deserialization.
+1. Add BCS dependency. Because BCS cannot skip a value it does not recognize, keep this dependency and the framework dependency current rather than pinning an old version. See [Keep the framework dependency current](/develop/accessing-data/custom-indexer/custom-indexers), which applies to any code that performs BCS deserialization. The `bcs` version in the following example is illustrative. Replace it with the current release.
 
     ```rust
     [dependencies]
