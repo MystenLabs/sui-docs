@@ -44,9 +44,9 @@ answer: >-
 
 ## What is a margin manager?
 
-The `MarginManager` is a shared object that wraps a `BalanceManager` and provides the necessary capabilities to deposit, withdraw, trade, and manage leveraged positions. It enables users to borrow assets from margin pools to amplify their trading positions while managing risk through collateralization.
+The `MarginManager` is a shared object that wraps a `BalanceManager` and provides the necessary capabilities to deposit, withdraw, trade, and manage leveraged positions. It enables users to borrow assets from margin pools to amplify their trading positions while managing risk through collateralization. Access is owner-gated: only the owner can deposit funds into the `MarginManager` or withdraw funds from it, and you can read the current owner with the `owner` read endpoint.
 
-Each `MarginManager` is associated with a specific DeepBook pool and can borrow from margin pools that allow trading on that pool. The margin manager tracks borrowed positions and enforces risk ratio limits to maintain system solvency. The risk ratio represents the ratio of assets to debt, and higher ratios indicate healthier positions. See **Calculate risk ratio** in the API section.
+Each `MarginManager` is associated with a specific DeepBook pool and can borrow from margin pools that allow trading on that pool. The margin manager tracks borrowed positions and enforces risk ratio limits to maintain system solvency: borrowing is subject to risk ratio limits and requires that the margin pool allows trading on the manager's DeepBook pool, and withdrawals are subject to risk ratio limits when the manager has active loans. If a margin manager becomes undercollateralized, a liquidator can provide repayment and receive collateral assets plus a liquidation reward, and the margin pool might also receive a reward or incur bad debt depending on the position's health. The risk ratio represents the ratio of assets to debt, and higher ratios indicate healthier positions. See **Calculate risk ratio** in the API section.
 
 ## API
 
