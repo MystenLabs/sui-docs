@@ -53,6 +53,8 @@ Sui includes a built-in test framework for Move smart contracts. You write tests
 
 A unit test is a Move function annotated with `#[test]`. The test runner executes each test function in isolation. If the function completes without aborting, the test passes.
 
+The examples on this page test a `Sword` object that the module under test defines, with `id`, `magic`, and `strength` fields and `magic()` and `strength()` accessor functions.
+
 ```move
 #[test]
 fun test_sword_create() {
@@ -179,6 +181,8 @@ Key operations:
 | `test_scenario::return_shared(obj)` | Return a shared object to the virtual store |
 | `scenario.ctx()` | Get the current transaction context |
 | `scenario.end()` | End the scenario and clean up |
+
+Use `take_from_sender` for objects that the current sender owns, and `take_shared` for shared objects, which no single address owns.
 
 Always pair `take_shared` with `return_shared` within the same transaction block. Owned objects taken with `take_from_sender` can be returned, transferred, or destroyed; they do not need to be returned to the sender.
 
