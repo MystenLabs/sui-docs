@@ -109,6 +109,17 @@ A few details of note for the preceding code:
 
 To construct a correct sponsored transaction, you must first build a `TransactionData` object. If you are neither the user or the sponsor, you pass the transaction to both parties to sign. If you're the sponsor, you sign the transaction and then pass it and the signature to the other party (in the form of `SenderSignedTransaction`) for them to sign. In practice, the latter is the more common scenario. 
 
+## Which sponsorship flow should I use?
+
+Choose a flow based on who proposes the transaction and how much you restrict it:
+
+| **Flow** | **Use it when** |
+|---|---|
+| [`GasData` object](#how-do-i-create-a-sponsored-transaction-using-a-gasdata-object) | You provide a `GasData` object and the user doesn't need to know the fee or approve it. |
+| [User proposed transaction](#user-proposed-transaction) | The user proposes the transaction and you verify it's within your approved applications before providing gas payment. |
+| [Sponsor proposed transaction](#sponsor-proposed-transaction) | You propose the transaction (such as a rewards claim or promotional offer) and the user decides whether to execute it. |
+| [Wildcard gas payment](#what-is-wildcard-gas-payment) | You sponsor any valid transaction with few restrictions, such as for gasless wallets or rewards within a budget. |
+
 ## How do I create a sponsored transaction using a `GasData` object?
 
 To use a `GasData` object to sponsor the gas fees for a transaction, create a `GasData` object that covers the fees determined for the transaction. The user doesn't need to know how much the fee is or approve it.
@@ -155,7 +166,7 @@ A user-proposed sponsored transaction involves the following steps:
 
 1. The user verifies and then signs `TransactionData` and sends the dual-signed transaction to Sui network through a full node or the sponsor.
 
-([swimlane link](https://swimlanes.io/d/wAcnOpA_h))
+The following diagram shows the user-proposed flow. You can also [view the user-proposed sequence on swimlanes.io](https://swimlanes.io/d/wAcnOpA_h).
 
 ![User-proposed sponsored transaction sequence](./images/sequence_sponsor-txn-user-proposed_v1.png)
 
@@ -171,7 +182,7 @@ You propose a transaction (such as a rewards claim or promotional offer) and the
 
 You can use a sponsor proposed transaction to propose rewards claims, promotional offers, or to incentivize specific user actions without requiring the user to pay for gas fees.
 
-([swimlane link](https://swimlanes.io/#ZZE9T8QwDIb3/ApvLIWBsQMSEh8DEkI6mInb+O6itk4VOxInxH8nqe76AVki+X392G+iXnuq4fYGdmNgCRHeYhiDkIP3iCzYqg9syuGg2WmstWZMDYjG1Ora9YCK8G0gn2LoPLt6rb/kQjXLQuwo1rBL/t65SCKLdkD5dJlWwzNKwS4SfY0+YsFt2I9zuTI/047mEuj67pKthjmlHj13ki+CD6EIA56gIfCslFfRHN8zIOgyoQJkB2G/pyhZsefNLKDAiKeBWDczC7YG++d97EQ5264ExB8YNUUyZtpjbmyP1Hbb+cX7H7g0PqW+fw0uf5KkZvAKLmE/deU4K9Iv))
+The following diagram shows the sponsor-proposed flow. You can also [view the sponsor-proposed sequence on swimlanes.io](https://swimlanes.io/#ZZE9T8QwDIb3/ApvLIWBsQMSEh8DEkI6mInb+O6itk4VOxInxH8nqe76AVki+X392G+iXnuq4fYGdmNgCRHeYhiDkIP3iCzYqg9syuGg2WmstWZMDYjG1Ora9YCK8G0gn2LoPLt6rb/kQjXLQuwo1rBL/t65SCKLdkD5dJlWwzNKwS4SfY0+YsFt2I9zuTI/047mEuj67pKthjmlHj13ki+CD6EIA56gIfCslFfRHN8zIOgyoQJkB2G/pyhZsefNLKDAiKeBWDczC7YG++d97EQ5264ExB8YNUUyZtpjbmyP1Hbb+cX7H7g0PqW+fw0uf5KkZvAKLmE/deU4K9Iv).
 
 ![Sponsor-proposed sponsored transaction sequence](./images/sequence_sponsor-txn-sponsor-proposed_v1.png)
 
@@ -183,15 +194,17 @@ You sponsor any valid transaction with few restrictions.
 
 - **Rewards or discounts:** You offer a wildcard gas payment that executes any transaction within the budget.
 
-([swimlane link](https://static.swimlanes.io/ee3962b3ac3cc5d34f317cecdde125b0.png))
+The following diagram shows the wildcard flow. You can also [view the wildcard sequence on swimlanes.io](https://static.swimlanes.io/ee3962b3ac3cc5d34f317cecdde125b0.png).
 
 ![Wildcard gas payment sponsored transaction sequence](./images/sequence_sponsor-txn-wildcard_v1.png)
 
 ## Example API endpoints
 
+The following Rust signatures sketch the endpoints a gas station might expose for each flow. They omit implementation bodies, so you implement them in your own service.
+
 ```rust
-// User-initiated: receive GaslessTransaction, return signed TransactionData
-pub fn request_gas_and_signature(gasless_tx: GaslessTransaction) -> Result<SenderSignedData, Error>;
+// User-initiated: receive GasLessTransactionData, return signed TransactionData
+pub fn request_gas_and_signature(gasless_tx: GasLessTransactionData) -> Result<SenderSignedData, Error>;
 
 // Wildcard: return a GasData object for the user
 pub fn request_gas(/* requirements */) -> Result<GasData, Error>;
