@@ -66,7 +66,7 @@ Three shared objects sit on top of the spot order book:
 | `MarginPool` | The lending pool for a single asset. Your borrow draws from it, and your interest accrues to it. |
 | `MarginRegistry` | Governance state. It stores each pool's risk parameters and tracks which DeepBook pools have margin enabled. |
 
-Each `MarginManager` borrows from one margin pool at a time, base or quote. That is isolated margin, not a cross-pool account: the manager's collateral and borrow are tied to its one DeepBook pool rather than shared across pools, which keeps risk on a single axis. See [Design](/onchain-finance/deepbook/deepbook-margin/design) for the full object model.
+Each `MarginManager` borrows from one margin pool at a time, base or quote. That is isolated margin. A cross-margin account shares its collateral and borrows across pools. A `MarginManager` instead ties its collateral and borrow to its one DeepBook pool, which keeps risk on a single axis. See [Design](/onchain-finance/deepbook/deepbook-margin/design) for the full object model.
 
 One number governs everything you can do with a position:
 
@@ -89,7 +89,7 @@ The min borrow risk ratio determines how much leverage a pair allows:
 max_leverage ≈ 1 / (1 - 1 / min_borrow_risk_ratio)
 ```
 
-A min borrow ratio of 1.25 permits roughly 5x, and 1.5 permits roughly 3x. Higher-volatility assets carry stricter parameters and therefore less leverage. [Risk Ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio) works a full position lifecycle through with numbers.
+A min borrow ratio of 1.25 permits roughly 5x: 1 / (1 - 1 / 1.25) = 1 / 0.2 = 5. A min borrow ratio of 1.5 permits roughly 3x: 1 / (1 - 1 / 1.5) = 1 / 0.333 = 3. Higher-volatility assets carry stricter parameters and therefore less leverage. [Risk Ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio) works a full position lifecycle through with numbers.
 
 ## Open a leveraged position {#open-a-position}
 
@@ -100,9 +100,13 @@ The path from an empty wallet to an open leveraged position is six steps. Each n
 1. **Check borrow liquidity** in the margin pool you intend to borrow from. A pool with no headroom under its max utilization rate rejects the borrow, and a nearly full pool charges a high [interest rate](/onchain-finance/deepbook/deepbook-margin/contract-information/interest-rates).
 1. **Deposit collateral** with `marginManager.depositBase` or `depositQuote`. The more you deposit before borrowing, the higher your starting risk ratio.
 1. **Borrow** with `marginManager.borrowBase` or `borrowQuote`. The call aborts unless the resulting ratio stays at or above the min borrow risk ratio, so size the borrow from the parameters you read rather than by trial and error.
-1. **Trade** through the pool proxy with `poolProxy.placeLimitOrder`. Margin orders never use the spot order entry, because the proxy applies the risk checks that keep a borrow safe.
+1. **Trade** through the pool proxy with `poolProxy.placeLimitOrder`. The pool proxy is the order entry for margin trades, and it applies the risk checks that keep a borrow safe. Margin orders never use the spot order entry.
 
-Closing reverses the sequence. Reduce exposure with `poolProxy.placeReduceOnlyLimitOrder`, repay the borrow plus accrued interest with `marginManager.repayBase` or `repayQuote`, then withdraw your collateral.
+To close a position, reverse the sequence:
+
+1. **Reduce exposure** with `poolProxy.placeReduceOnlyLimitOrder`.
+1. **Repay the borrow** plus accrued interest with `marginManager.repayBase` or `repayQuote`.
+1. **Withdraw your collateral.**
 
 ### Read the parameters before you borrow {#read-parameters}
 
@@ -114,7 +118,7 @@ Confirm the pool supports margin at all with `isPoolEnabledForMargin`, and monit
 
 ## Interest and liquidation {#interest-and-liquidation}
 
-Your borrow accrues interest under a kinked utilization model. Rates rise gently below the kink and steeply above it, which discourages borrowing from a nearly exhausted pool. The pool applies that interest whenever its state changes, so your debt grows on its own and your risk ratio drifts down even when prices hold flat. Suppliers receive most of the interest, and a protocol spread splits the rest between referrals, the treasury, and the pool maintainer. [Interest Rates](/onchain-finance/deepbook/deepbook-margin/contract-information/interest-rates) covers the formulas and the accrual mechanics.
+Your borrow accrues interest under a kinked utilization model. Utilization is the share of a pool's supply that borrowers hold, and the kink is the utilization level where the rate curve bends. Rates rise gently below the kink and steeply above it, which discourages borrowing from a nearly exhausted pool. The pool applies that interest whenever its state changes, so your debt grows on its own and your risk ratio drifts down even when prices hold flat. Suppliers receive most of the interest, and a protocol spread splits the rest between referrals, the treasury, and the pool maintainer. [Interest Rates](/onchain-finance/deepbook/deepbook-margin/contract-information/interest-rates) covers the formulas and the accrual mechanics.
 
 If your risk ratio falls to the liquidation threshold, a liquidator repays part of your debt and takes a reward from your collateral, sized to restore your position to the target liquidation ratio rather than to close it entirely. You keep a smaller, healthier position, minus the reward. A deeply underwater position can be fully liquidated, and the lending pool can absorb bad debt. Monitoring your ratio and acting early, by adding collateral or reducing the position, is the only defense.
 
