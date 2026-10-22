@@ -40,8 +40,10 @@ questions:
   - Which wallet option should I use for a SuiPlay0X1 game?
   - Can I use a custodial wallet on SuiPlay0X1?
 answer: >-
-  You have several options for what wallet you develop for on the SuiPlay0X1.
-  There are some concepts to keep in mind when deciding which wallets to target.
+  SuiPlay0X1 games can integrate with self-custodial wallets, zkLogin wallets,
+  the Playtron zkLogin wallet, or custodial wallets. Games that run on the
+  SuiPlay0X1 device must support the Playtron zkLogin wallet as the default
+  option.
 ---
 
 <ImportContent source="suiplay" mode="snippet" />
@@ -65,7 +67,7 @@ Self-custodial wallets have the most portability in terms of being able to inter
 
 zkLogin wallets are a unique wallet type to Sui. These wallets provide familiar login methods from Web2 authorization providers (such as Google, Facebook, or Twitch OAuth). The user authenticates with their chosen provider, then zkLogin attaches onchain wallet credentials to that account.
 
-The zkLogin wallet uses an ephemeral key pair that does not correlate user metadata from authorization providers to onchain wallets. Ephemeral key pairs reside on the client side, making zkLogin wallets self-custodial. This eliminates the need for your users to write down seed phrases or otherwise securely store private keys.
+The zkLogin wallet uses an ephemeral key pair that does not correlate user metadata from authorization providers to onchain wallets. When the ephemeral key pair resides on the client side, the zkLogin wallet is self-custodial. This eliminates the need for your users to write down seed phrases or otherwise securely store private keys.
 
 In their most basic form, zkLogin wallets are siloed to the app that creates them. Users essentially create a new wallet for each application that supports zkLogin. This model is intentional to prevent users from having to remember passports for each wallet instance, and to match their expectations for Web2. If your intent is to keep your users in your game without the need to connect their wallet to another application, the basic zkLogin is a good choice.
 
@@ -77,7 +79,7 @@ The Playtron wallet is a type of zkLogin wallet that offers a few unique feature
 - Direct integrations with the GameOS running on the SuiPlay0X1, which enables users to sign transactions seamlessly on the device.
 - Support for Enoki Connect out of the box, making it portable across apps.
 
-A companion web application is in development to support linking the Playtron wallet to other self-custody wallets using SuiLink, enabling read-access of associated wallets while on the device.
+A companion web application is in development to support linking the Playtron wallet to other self-custody wallets using [SuiLink](#suilink), enabling read-access of associated wallets while on the device.
 
 ### Custodial wallets {#custodial-wallets}
 
@@ -105,7 +107,18 @@ Be careful when selecting a third-party custodial wallet provider as this might 
 
 The best wallet to select for your app depends on the goals of your project. There is usually not a single, best solution, but some choices are better than others when weighing the tradeoffs between different approaches.
 
-## Requirements
+Start with the [SuiPlay0X1 wallet requirements](#requirements), then compare the [wallet strategies](#wallet-strategies). Option 1, the Playtron zkLogin wallet plus dApp Kit combo, is the recommended strategy.
+
+The following table summarizes how the wallet types compare:
+
+| **Wallet type** | **Control** | **Portability** |
+|---|---|---|
+| Self-custodial | The user controls the private keys | Most portable across onchain apps |
+| zkLogin | Self-custodial when the ephemeral key pair resides on the client side | Siloed to the app that creates it, unless you add Enoki Connect |
+| Playtron zkLogin | Tied to the user's Playtron credentials, and the default wallet on the SuiPlay0X1 device | Portable across apps through Enoki Connect |
+| Custodial | You manage the wallet on behalf of the user | Users can't interact with third-party apps onchain |
+
+## What are the SuiPlay0X1 wallet requirements? {#requirements}
 
 As the developer, you choose the wallet strategy, but working with the SuiPlay0X1 has some requirements:
 
@@ -163,7 +176,7 @@ This option is effectively a special case of the recommended approach. If your g
 - Use game-specific zkLogin wallets as the primary wallet when playing off-device.
 - If new users start on-device, use the Playtron zkLogin wallet.  
 - If users have initially played the game off-device using your game-specific zkLogin wallet, they can use the Playtron companion app to link their wallet and transfer assets from that wallet to their Playtron zkLogin wallet to continue playing on-device. See [Cross-Platform Migration Strategies](/sui-stack/suiplay0x1/migration-strategies) to learn more.
-  - Connecting your zkLogin wallet to the companion app requires you to upgrade your wallet to Enoki Connect (see the [Enoki Connect section](#enoki-connect) that follows).  
+  - Connecting your zkLogin wallet to the companion app requires you to upgrade your wallet to Enoki Connect (see [Enoki Connect](#enoki-connect)).  
   - After users connect their wallet to the companion app, they can link their game-specific zkLogin wallet to the Playtron wallet. If your game requires read-only access, then this link should be sufficient. If your game requires full asset access, on the other hand, players need to transfer assets from their game-specific wallet to the Playtron wallet.
 
 **Tradeoffs**
@@ -193,7 +206,7 @@ SuiPlay integration does not require Enoki Connect. In other words, your game wa
 
 :::
 
-## SuiLink {#suilink}
+## What is SuiLink? {#suilink}
 
 [SuiLink](https://www.suilink.io/) is a Mysten Labs product that connects wallets across chains to support use cases such as cross chain wallet verification, asset ownership verification, and asset distributions across chains. 
 
