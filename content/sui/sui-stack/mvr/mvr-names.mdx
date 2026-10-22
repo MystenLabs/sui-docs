@@ -28,7 +28,13 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-MVR names let you register Move packages under human-readable names in the Move Registry (MVR). Each name maps to a SuiNS name and a package name. You manage names by creating applications, attaching packages, and setting metadata. On Mainnet, package attachment is permanent. On other networks, you attach a pointer you can update later.
+You manage MVR names in the Move Registry (MVR) by creating an application with a SuiNS name, setting its metadata, and attaching packages. MVR names let you register Move packages under human-readable names. Each name maps to a SuiNS name and a package name. On Mainnet, package attachment is permanent. On other networks, you attach a pointer you can update later.
+
+To manage an MVR name:
+
+1. [Create an application](#how-do-i-create-a-new-mvr-application) with the `register` call, which returns an `AppCap` object.
+1. [Set metadata](#how-do-i-set-metadata-on-an-mvr-application) on the application using the `AppCap`.
+1. Attach a [Mainnet package](#how-do-i-attach-a-mainnet-package-to-an-application), a [non-Mainnet package](#how-do-i-attach-a-non-mainnet-package-to-an-application), or both.
 
 :::caution
 
@@ -106,7 +112,7 @@ sui client ptb --move-call @mvr/core::move_registry::set_metadata \
 
 ## How do I attach a Mainnet package to an application?
 
-When attaching a Mainnet package to an application, you must provide the `PackageInfo` object. This call is permanent, so after you attach a `PackageInfo` object to an application, you cannot detach it in the future. Consequently, an app is always linked to a specific package.
+A `PackageInfo` object accompanies a published package on Mainnet (see [Key concepts](#key-concepts)). When attaching a Mainnet package to an application, you must provide the `PackageInfo` object. This call is permanent, so after you attach a `PackageInfo` object to an application, you cannot detach it in the future. Consequently, an app is always linked to a specific package.
 
 <Tabs groupId='language'>
   <TabItem label="TypeScript" value='typescript'>
@@ -138,7 +144,7 @@ sui client ptb --move-call @mvr/core::move_registry::assign_package \
 
 ## How do I attach a non-Mainnet package to an application?
 
-For non-Mainnet networks, you only attach a pointer to the package, instead of strict binding (which would not be possible). You identify the target network by its chain ID, for example `4c78adac` for Testnet. You identify the target network by its chain ID, for example `4c78adac` for Testnet.
+For non-Mainnet networks, you only attach a pointer to the package, instead of strict binding (which would not be possible). You identify the target network by its chain ID, for example `4c78adac` for Testnet.
 
 :::info
 
