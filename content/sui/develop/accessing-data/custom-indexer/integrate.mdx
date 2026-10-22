@@ -109,6 +109,8 @@ Generate the matching Rust schema with `diesel print-schema --database-url $DATA
 
 <ImportContent source="examples/rust/basic-sui-indexer/src/schema.rs" mode="code" />
 
+These steps assume PostgreSQL and Diesel. To write to a different store, implement the framework's `Store` and `Connection` traits instead. [Bring Your Own Store](/develop/accessing-data/custom-indexer/bring-your-own-store) covers that path.
+
 ## Define your row type
 
 Define a struct that represents 1 record in your destination table:
@@ -211,7 +213,7 @@ Build an `IndexerCluster` and register your pipeline on it. The example project 
 
 The key components:
 
-- `embed_migrations!`: Bundles your migration files into the binary so the indexer updates the database schema on startup.
+- `embed_migrations!`: Bundles your migration files into the binary so the indexer can run them against the database at startup.
 - `Args::parse()`: Supplies command-line configuration such as `--first-checkpoint` and `--remote-store-url`.
 - `IndexerCluster::builder()`: Sets up database connections, checkpoint streaming, and monitoring.
 - `sequential_pipeline()`: Registers a sequential pipeline that processes checkpoints in order with batching.
