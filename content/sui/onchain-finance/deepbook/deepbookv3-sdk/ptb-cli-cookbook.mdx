@@ -55,7 +55,7 @@ CLI examples are verified against `sui` version 1.62.0. DeepBook Move argument o
 
 :::tip
 
-Use `sui client ptb --preview` to print the PTB commands without executing, and `--dry-run` to estimate gas and catch errors before you sign.
+Use `sui client ptb --preview` to print the PTB commands without executing, and `--dry-run` to estimate gas and catch errors before you sign. The `--gas-budget` values in these templates are examples. Use the `--dry-run` estimate to set your own budget.
 
 :::
 
@@ -63,7 +63,7 @@ Use `sui client ptb --preview` to print the PTB commands without executing, and 
 
 Most `sui client ptb` failures come from 3 formatting rules. Get these right and the rest follows.
 
-The examples use shell variables such as `$OBJECT_ID` and `$RECIPIENT`. Replace them with your own values before you run a command. For DeepBook package IDs, pools, and coin types, see [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information).
+The examples use shell variables such as `$OBJECT_ID` and `$RECIPIENT`. Set each one in your shell before you run a command, for example `export RECIPIENT=0x...`. Object ID, address, and package variables such as `$OBJECT_ID`, `$RECIPIENT`, and `$DEEPBOOK` hold `0x`-prefixed hex values. Type variables such as `$BASE`, `$QUOTE`, and `$COIN_TYPE` hold full Move types, such as `0x2::sui::SUI`. For DeepBook package IDs, pools, and coin types, see [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information).
 
 ### Object IDs need an `@` prefix
 
@@ -230,7 +230,7 @@ Placing an order from the CLI is impractical: `pool::place_limit_order` needs a 
 
 ## How do I write a DeepBook flash loan PTB?
 
-A flash loan returns a `FlashLoan` hot potato: a value that you must pass back to the pool in the same transaction, or the whole transaction aborts. `borrow_flashloan_base` returns `(Coin<Base>, FlashLoan)`. `return_flashloan_base` takes the pool, the repaid coin, and the `FlashLoan`.
+A flash loan returns a `FlashLoan` hot potato: a value that you must pass back to the pool in the same transaction, or the whole transaction aborts. `borrow_flashloan_base` returns 2 values: the borrowed `Coin<Base>` and the `FlashLoan`. In the CLI, `--assign` names both values together, and you index them as `.0` and `.1`. `return_flashloan_base` takes the pool, the repaid coin, and the `FlashLoan`.
 
 <Tabs groupId="ptb-interface">
 <TabItem value="ts" label="TypeScript (SDK)">
@@ -251,6 +251,8 @@ const remainder = tx.add(
 );
 tx.transferObjects([remainder], SENDER);
 ```
+
+`returnBaseAsset` repays the borrowed amount from `base`. `remainder` holds whatever is left of `base` after repayment, and the last line transfers it to `SENDER`.
 
 See [Flash Loans](/onchain-finance/deepbook/deepbookv3-sdk/flash-loans) for the quote-asset variants.
 
