@@ -127,13 +127,17 @@ Both models use the same objects and the same fee rules:
 - **Swaps without a balance manager:** The swap endpoints accept coins directly and return coins, so routers and aggregators can trade without creating a `BalanceManager`. See [Swaps](/onchain-finance/deepbook/deepbookv3/contract-information/swaps).
 - **Fees:** Fee rules and DEEP staking benefits apply the same way, regardless of how you build the transaction.
 
+### How do I read DeepBookV3 data without trading?
+
+Query the [DeepBookV3 Indexer](/onchain-finance/deepbook/deepbookv3/deepbookv3-indexer) or a Sui RPC endpoint. Choose this model when you display prices, order books, or trade history and you never sign a transaction. The SDK also ships read helpers that you can use for these queries.
+
 ## How does DEEP work in DeepBookV3 tokenomics?
 
 The DEEP token pays for trading fees on the exchange. Users can pay trading fees using DEEP tokens or input tokens, but owning, using, and staking DEEP continues to provide the most benefits to active DeepBookV3 traders on the Sui network.
 
 As an example, governance determines the fee for paying in DEEP tokens, which costs 20% less than the fee for using input tokens.
 
-Users that stake DEEP can enjoy taker and maker incentives. Taker incentives can reduce trading fees by half, dropping them to as low as 0.25 basis points (bps) on stable pairs and 2.5 bps on volatile pairs. Maker incentives provide rebates based on the maker volume you generate.
+Users that stake DEEP can enjoy taker and maker incentives. Taker incentives can reduce trading fees by half, dropping them to as low as 0.25 basis points (bps) on stable pairs and 2.5 bps on volatile pairs. Maker incentives provide rebates based on the maker volume you generate. Because governance determines these fees, these figures might change.
 
 ## Liquidity support
 
