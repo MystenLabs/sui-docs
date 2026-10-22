@@ -37,7 +37,7 @@ The supply referral system allows users to earn a portion of the protocol fees g
 
 ## How it works
 
-1. **Create a referral**: Mint a `SupplyReferral` object for a specific margin pool with `mint_supply_referral`
+1. **Create a referral**: Mint a `SupplyReferral` object for a specific margin pool with `mint_supply_referral`, which returns the transferable `SupplyReferral` object you use to claim fees
 2. **Referral ID**: Suppliers include your referral ID when supplying liquidity with `supply`. The referral ID is optional; suppliers can supply without one, in which case all protocol fees from that position go to the protocol
 3. **Earn fees**: As referred suppliers earn interest, a portion of protocol fees accrues to your referral
 4. **Claim fees**: Withdraw accumulated referral fees at any time with `withdraw_referral_fees`
@@ -131,7 +131,7 @@ The system emits this event when you create a new supply referral.
 </details>
 
 <details>
-<summary>`ReferralFeesClaimed`</summary>
+<summary>`ReferralFeesClaimedEvent`</summary>
 
 The system emits this event when the referral owner claims referral fees.
 
