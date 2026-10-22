@@ -182,7 +182,7 @@ $ sui-indexer-alt indexer \
 
 #### Phase 2: steady state
 
-After a backfill process reaches the network tip, stop it and restart the same configuration against a production-grade fullnode gRPC endpoint from an RPC provider. Existing pipelines resume from their committed watermarks. Use `--rpc-api-url` for polling and `--streaming-url` for low-latency checkpoint streaming:
+After a backfill process reaches the network tip, stop it and restart the same configuration against a production-grade fullnode gRPC endpoint from an RPC provider. Existing pipelines resume from their committed watermarks. Use `--rpc-api-url` for polling, which catches up from the committed watermarks, and `--streaming-url` for low-latency checkpoint streaming at the network tip:
 
 ```sh
 $ export FULLNODE_GRPC_URL=https://your-rpc-provider.example:443
@@ -207,7 +207,7 @@ For checkpoint ingestion, the public `https://checkpoints.mainnet.sui.io` and `h
 
 Use the following TOML files, which group pipelines by speed. The slowest pipeline in an instance limits all pipelines in that instance, so each file contains pipelines that run at approximately the same speed.
 
-You can include an optional `[ingestion]` section in each TOML file to tune checkpoint ingestion. The `min-cohort-boundary` setting controls how the indexer groups pipelines into ingestion cohorts based on their distance from the tip. The default is `25000` checkpoints. A higher value prevents the indexer from fragmenting nearly caught-up pipelines into many small cohorts. You do not need to set this for most deployments.
+You can include an optional `[ingestion]` section in each TOML file to tune checkpoint ingestion. The indexer groups pipelines into ingestion cohorts, which are sets of pipelines at a similar distance from the network tip. The `min-cohort-boundary` setting controls this grouping. The default is `25000` checkpoints. A higher value prevents the indexer from fragmenting nearly caught-up pipelines into many small cohorts. You do not need to set this for most deployments.
 
 ```toml
 [ingestion]
@@ -385,7 +385,7 @@ All 4 pipelines run in 1 process. Their watermarks are independent from the Post
 
 ### Restore from a formal snapshot
 
-Without a restore, a new consistent store must process checkpoints from genesis. For production, restore the latest formal snapshot into an empty RocksDB path before starting the service.
+Without a restore, a new consistent store must process checkpoints from genesis. For production, restore the latest [formal snapshot](/operators/snapshots#mysten-labs-managed-snapshots) into an empty RocksDB path before starting the service.
 
 The restore command reads from 2 distinct sources:
 
@@ -417,7 +417,7 @@ $ sui-indexer-alt-consistent-store restore \
 | `--http`, `--gcs`, `--azure`, `--s3`, or `--local` | Formal snapshot source. Specify exactly one. See [managed snapshots](/operators/snapshots#mysten-labs-managed-snapshots). |
 | `--remote-store-url` | Public HTTPS checkpoint store used to read the epoch mapping and selected end-of-epoch checkpoint during restore. |
 | `--object-file-concurrency` | Number of formal-snapshot object files to download concurrently. |
-| `--pipeline` | Runtime pipeline name to restore. Repeat once for each required pipeline. |
+| `--pipeline` | Runtime pipeline name to restore. Repeat once for each required pipeline. For runtime names and their TOML keys, see [Run config recommendations](#consistent-store-run-config). |
 | `--config` | Consistent-store TOML configuration. Restore uses only its RocksDB settings. |
 
 Each `--pipeline` is required because restore materializes only explicitly selected pipelines. Let the command exit successfully before starting `run`.
@@ -460,7 +460,7 @@ To build a consistent store without a formal snapshot, run from an empty path ag
 
 For Testnet, use `https://formal-snapshot.testnet.sui.io`, `https://checkpoints.testnet.sui.io`, and a production-grade Testnet fullnode endpoint from an RPC provider. Use the `mysten-testnet-checkpoints-use4` bucket when GCS catch-up is necessary. Keep every source on the same network and use a separate RocksDB path per source.
 
-### Run config recommendations
+### Run config recommendations {#consistent-store-run-config}
 
 The CLI runtime pipeline names use underscores, while the corresponding TOML keys use hyphens:
 
@@ -566,11 +566,11 @@ $ sui-indexer-alt-graphql rpc \
     --metrics-address 127.0.0.1:9185
 ```
 
-With these addresses, GraphQL is available at `http://127.0.0.1:7000/graphql`, its health check is at `http://127.0.0.1:7000/health`, and Prometheus metrics are at `http://127.0.0.1:9185/metrics`. Assign a different metrics address to every co-located indexer process; all 3 binaries otherwise default to **port 9184**.
+With these addresses, GraphQL is available at `http://127.0.0.1:7000/graphql`, its health check is at `http://127.0.0.1:7000/health`, and Prometheus metrics are at `http://127.0.0.1:9185/metrics`. Assign a different metrics address to every co-located process, because `sui-indexer-alt`, `sui-indexer-alt-consistent-store`, and `sui-indexer-alt-graphql` all default to **port 9184** when you omit `--metrics-address`. The examples on this page use ports 9184 through 9187 for this reason.
 
 To verify that the server is connected to its backends after startup, query the health check; it reports lag broken down by data source and pipeline.
 
-### Generating configuration
+### How to generate a configuration file {#generating-configuration}
 
 You can run the GraphQL RPC server without a configuration file, which uses default values. To customize settings, generate a configuration file using the following command and edit it as needed:
 
@@ -585,7 +585,7 @@ This produces output similar to the following:
 	<ImportContent source="examples/prod-config/graphql.toml" mode="code" />
 </details>
 
-## Indexer/GraphQL Postgres-compatible database setup
+## How to set up the Postgres-compatible database {#indexergraphql-postgres-compatible-database-setup}
 
 Both the indexer and GraphQL server require a Postgres-compatible database shared between them.
 
@@ -611,7 +611,7 @@ You can also use a standard Postgres installation.
 - **CPU:** 6 cores
 - **Memory:** 48GB
 
-## Watermark debugging
+## How to debug watermarks {#watermark-debugging}
 
 The indexer tracks progress for each pipeline using watermark records in the `watermarks` table. Each record stores the last successfully processed checkpoint for that pipeline. Use these queries to diagnose indexer health:
 
@@ -627,7 +627,7 @@ ORDER BY pipeline;
 
 If a pipeline's `checkpoint_hi_inclusive` is significantly behind the network tip, that pipeline is lagging. Compare against the current network checkpoint (visible on [SuiVision](https://suivision.xyz/) or through `curl -s http://localhost:9184/metrics | grep watermark_checkpoint`). The [`watermark_checkpoint` metric](https://github.com/MystenLabs/sui/blob/main/crates/sui-indexer-alt-framework/src/metrics.rs) tracks each pipeline's current position; `watermark_checkpoint_in_db` shows the last position persisted to the database.
 
-If you also run the GraphQL RPC server, its health endpoint (for example, `http://localhost:7000/health`) reports lag broken down by data source and pipeline.
+If you also run the GraphQL RPC server, its health endpoint on the address you set with `--rpc-listen-address` (for example, `http://localhost:7000/health`) reports lag broken down by data source and pipeline.
 
 ### Diagnose a stalled pipeline
 
@@ -660,7 +660,7 @@ The following table lists common starting points for investigation. Most symptom
 | Watermark not advancing after restart | Pipeline resuming from its last committed watermark, which is expected behavior | Investigate using the three categories above (upstream, processing, downstream). Only delete the watermark record as a last resort (see [re-indexing](#re-indexing-from-a-different-checkpoint)). |
 | Postgres table bloat after enabling pruning | Dead rows accumulating faster than autovacuum | Apply the [autovacuum tuning settings](#reducing-indexer-pipeline-table-and-index-bloat). |
 
-## Adding a new pipeline
+## How to add a new pipeline {#adding-a-new-pipeline}
 
 Adding a new pipeline to an existing indexer currently requires these steps:
 
@@ -668,13 +668,13 @@ Adding a new pipeline to an existing indexer currently requires these steps:
    * The indexer only respects the `--first-checkpoint` flag if no watermark record exists for the pipeline (the pipeline has not run before). You must manually remove the watermark record if you want to run the pipeline with a different value of `--first-checkpoint`, or the indexer ignores it.
 2. After the new pipeline catches up to the tip of the network, you can optionally merge it into another indexer instance.
 
-## Re-indexing from a different checkpoint
+## How to re-index from a different checkpoint {#re-indexing-from-a-different-checkpoint}
 
 Once the pipeline starts indexing data and the indexer starts recording watermarks, future runs of the pipeline ignore the `--first-checkpoint` flag and always resume from the last recorded checkpoint.
 
 To restart and index from a different initial checkpoint, delete the watermark record for that pipeline. Delete the existing data for that pipeline as well to avoid any data inconsistencies.
 
-Use the following template for the general-purpose indexer to write to Postgres.
+Use the following template for the general-purpose indexer to write to Postgres. The template re-indexes `ev_emit_mod` only. To re-index more pipelines, add 1 `TRUNCATE TABLE` statement for each pipeline's table and list every pipeline name in the `DELETE` statement.
 ```sql
 BEGIN;
 
@@ -695,7 +695,7 @@ SELECT * FROM WATERMARKS; -- Verify that the watermark record(s) have been delet
 COMMIT;
 ```
 
-## Reducing indexer pipeline table and index bloat
+## How to reduce indexer pipeline table and index bloat {#reducing-indexer-pipeline-table-and-index-bloat}
 
 Bloat occurs when dead rows from deletes accumulate faster than autovacuum can reclaim them. This happens in 2 cases:
 
