@@ -68,7 +68,7 @@ To use Ledger with Sui, install the Sui app on your Ledger device through [Ledge
 
 ## How do I add wallet connection to my app?
 
-The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) is the official SDK for building Sui apps. Any wallet that implements the Wallet Standard, including Ledger, is detected automatically and appears in the connection UI without any wallet-specific configuration.
+The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) is the official SDK for building Sui apps. dApp Kit automatically detects any wallet that implements the Wallet Standard and shows it in the connection UI without any wallet-specific configuration. To use a Ledger device, connect it through a host wallet such as Slush, as described in [Does Sui work with a Ledger device?](#does-sui-work-with-a-ledger-device)
 
 Sui dApp Kit 2.0 consists of two packages:
 
@@ -201,7 +201,7 @@ When the user is connected through a hardware wallet such as Ledger, `signAndExe
 
 ### Preferred wallets
 
-Use `preferredWallets` in `createDAppKit` to sort specific wallets to the top of the connection UI. Wallets are matched by name:
+Use `preferredWallets` in `createDAppKit` to sort specific wallets to the top of the connection UI. dApp Kit matches wallets by name. The following snippet shows a base `createDAppKit` configuration without the `preferredWallets` field. Add `preferredWallets` to this configuration object to set the order:
 
 ```typescript
 export const dAppKit = createDAppKit({
