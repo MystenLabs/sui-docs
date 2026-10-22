@@ -125,7 +125,7 @@ flowchart LR
     LEAF -->|"resolves onchain"| REG
 ```
 
-## Resolution types
+## What types of resolution does SuiNS support?
 
 SuiNS supports 2 types of resolution:
 
@@ -134,7 +134,7 @@ SuiNS supports 2 types of resolution:
 
 Both resolution types are available onchain in Move and offchain through the Sui RPC.
 
-## Address types
+## Which address types do lookups use?
 
 Lookups work with 2 types of addresses:
 
@@ -143,7 +143,7 @@ Lookups work with 2 types of addresses:
 
 When you display names in your UI, use the default address (reverse lookup) rather than the target address. The onchain record guarantees the default address because the wallet owner explicitly signed a transaction to set it.
 
-### Default address reset behavior
+### When does a default name reset?
 
 The default name for a wallet address resets automatically any time the target address of that name changes. This prevents stale mappings where a name displays for an address it no longer points to.
 
@@ -343,13 +343,13 @@ For offchain verification (for example, in a backend service), combine the SuiNS
 
 When you display a name for an address in your UI, use reverse lookup (`defaultNameServiceName`) rather than scanning all names that point to that address. The reverse lookup returns only the name that the address owner has explicitly set as their default through a signed transaction. This guarantees that the address owner consented to being identified by that name ([SuiNS developer reference](https://docs.suins.io/developer)).
 
-## Indexing
+## When to run a SuiNS indexer
 
 For queries beyond a single name or address lookup (for example, all subnames under a parent domain, or all names pointing to a given address), run your own instance of the [`suins-indexer`](https://github.com/MystenLabs/sui/tree/main/crates/suins-indexer). See the [custom indexer documentation](/develop/accessing-data/custom-indexer) for setup instructions.
 
-## Subnames
+## What are subnames?
 
-Subnames are nested names under a parent name. For example, `alice.myapp.sui` is a subname under `myapp.sui`. Creating subnames has no cost. The maximum nesting depth is 8 subname levels below the second-level domain (SLD), or 10 levels in total when you count the SLD and the top-level domain (TLD).
+Subnames are nested names under a parent name. For example, `alice.myapp.sui` is a subname under `myapp.sui`. SuiNS charges no fee to create subnames, but onchain creation transactions still require gas. The maximum nesting depth is 8 subname levels below the second-level domain (SLD), or 10 levels in total when you count the SLD and the top-level domain (TLD).
 
 Parent rules control whether you can create children and whether subnames can extend their expiration to match the parent.
 
@@ -379,7 +379,7 @@ Choose the subname type based on how you want to manage ownership and lifecycle:
 - **Use leaf subnames** when your app creates and manages subnames on behalf of users. Leaf subnames are lighter (no NFT overhead), the parent holder controls them fully, and you can revoke them at any time. This is the right choice for app-assigned identities.
 - **Use node subnames** when you want the subname holder to have independent control. Node subnames have their own NFT, so the holder can update the target address, create child subnames, and transfer ownership without the parent's involvement.
 
-### Creating subnames
+### How to create subnames
 
 You can create subnames through 3 methods:
 
