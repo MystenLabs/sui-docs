@@ -40,7 +40,7 @@ answer: >-
 Sui provides multiple primitives for building payment flows, from reading balances and constructing multi-step transactions to sponsoring gas fees on behalf of your users. The approach you choose depends on your use case:
 
 - **Reading balances:** Query [address balances](/onchain-finance/asset-custody/address-balances) to display a user's holdings or verify sufficient funds before processing a payment.
-- **Constructing payments:** Use [payment intents](/onchain-finance/payment-intents) to compose multi-step payment workflows (split coins, transfer, merge) into a single atomic [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB), a transaction that runs several commands together and succeeds or fails as a whole.
+- **Constructing payments:** Use [payment intents](/onchain-finance/payment-intents) to compose multi-step payment workflows (split coins, transfer, merge) into a single atomic [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB), a transaction that runs several commands together and succeeds or fails as a whole, so a payment never ends half-finished.
 - **Sponsoring gas:** Use [sponsored transactions](/develop/transaction-payment/sponsor-txn) so your users pay no gas fees. This is common for onboarding flows and stablecoin transfers where you want a Web2-like experience.
 - **Gasless stablecoin transfers:** Sui supports [zero-fee stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers) for eligible transactions, removing gas costs entirely for supported assets.
 - **Recurring and delegated spending:** Use [allowances](/onchain-finance/allowances) to let a service, agent, or team member pull from a user's address balance within limits the user sets and can revoke.
@@ -62,7 +62,9 @@ Sui provides multiple primitives for building payment flows, from reading balanc
 A new user starts out holding nothing: they can't pay gas, so they can't transact, so they can't acquire the asset they need to pay gas. There are two ways out of this cold-start problem:
 
 - **Someone else pays gas:** With [sponsored transactions](/develop/transaction-payment/sponsor-txn), your application or another sponsor pays the gas fee for the user's transaction.
-- **The transaction qualifies for a gas waiver:** With [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers), eligible transfers of supported assets carry no gas cost at all, so no one needs to pay gas.
+- **The transaction qualifies for a gas waiver:** A gas waiver removes the gas cost from an eligible transaction. With [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers), eligible transfers of supported assets carry no gas cost at all, so no one needs to pay gas.
+
+Before you launch, also review the legal requirements that apply to your payment product.
 
 :::info Regulatory considerations
 
