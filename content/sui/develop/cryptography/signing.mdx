@@ -69,6 +69,24 @@ The examples use the [`fastcrypto`](https://github.com/MystenLabs/fastcrypto) CL
 
 :::
 
+## Which signature schemes can I verify in Move?
+
+Each scheme maps to a `sigs-cli` scheme name, a Move module, and a Move function:
+
+| **Scheme** | **Signature size** | **CLI scheme** | **Move module** | **Move function** |
+|---|---|---|---|---|
+| Ed25519 | 64 bytes | `ed25519` | `sui::ed25519` | `ed25519_verify` |
+| Secp256k1 non-recoverable | 64 bytes | `secp256k1` | `sui::ecdsa_k1` | `secp256k1_verify` |
+| Secp256k1 recoverable | 65 bytes | `secp256k1-rec` | `sui::ecdsa_k1` | `secp256k1_ecrecover` |
+| Secp256r1 non-recoverable | 64 bytes | `secp256r1` | `sui::ecdsa_r1` | `secp256r1_verify` |
+| Secp256r1 recoverable | 65 bytes | `secp256r1-rec` | `sui::ecdsa_r1` | `secp256r1_ecrecover` |
+| BLS G1 (minSig setting) | 48 bytes | `bls12381-minsig` | `sui::bls12381` | `bls12381_min_sig_verify` |
+| BLS G2 (minPk setting) | 96 bytes | `bls12381-minpk` | `sui::bls12381` | `bls12381_min_pk_verify` |
+
+With a non-recoverable signature, you pass the public key to a verify method. With a recoverable signature, you pass only the signature and the message to an ecrecover method. The method returns the signer's public key, and you compare it with the expected public key.
+
+For BLS12-381, the minSig setting uses a 48-byte signature in G1, and the minPk setting uses a 96-byte signature in G2 with a public key in G1.
+
 ## How do I set up the `fastcrypto` CLI binary?
 
 ```sh
@@ -260,9 +278,9 @@ Public key in hex: $PK
     assert!(verified == true, 0);
 ```
 
-### BLS G1 signature (96 bytes, minPk setting)
+### BLS G2 signature (96 bytes, minPk setting)
 
-Follow these steps to verify a BLS G1 signature with the minPk setting in Move.
+Follow these steps to verify a BLS G2 signature with the minPk setting in Move.
 
 #### Step 1: Generate a key and sign a message
 
