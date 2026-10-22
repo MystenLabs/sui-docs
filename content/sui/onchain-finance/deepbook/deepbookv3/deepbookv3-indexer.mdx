@@ -128,7 +128,7 @@ To convert the returned volume to the standard asset unit, divide the value by 1
 
 In a pool name such as `SUI_USDC`, the first asset (SUI) is the base asset and the second asset (USDC) is the quote asset.
 
-If the volume returned in the base asset for the SUI/USDC pool is 1,000,000,000 SUI UNIT, the correct volume in SUI is 1,000,000,000 / 10^(SUI_SCALAR) = 1 SUI. Similarly, if the volume returned in the quote asset for the SUI/USDC pool is 1,000,000,000 USDC UNIT, the correct volume is  1,000,000,000 / 10^(USDC_SCALAR) = 1,000 USDC.
+If the volume returned in the base asset for the SUI/USDC pool is 1,000,000,000 SUI UNIT, the correct volume in SUI is 1,000,000,000 / 10^(SUI_SCALAR) = 1 SUI. Similarly, if the volume returned in the quote asset for the SUI/USDC pool is 1,000,000,000 USDC UNIT, the correct volume is 1,000,000,000 / 10^(USDC_SCALAR) = 1,000 USDC. In this example, SUI_SCALAR is 9 and USDC_SCALAR is 6. Native USDC and Wormhole USDC (WUSDC) both use a scalar of 6.
 
 Use these conversions to interpret the volumes correctly across all pools and assets.
 
@@ -375,7 +375,7 @@ produces a response similar to
 /historical_volume_by_balance_manager_id_with_interval/:pool_names/:balance_manager_id?start_time=<UNIX_TIMESTAMP_SECONDS>&end_time=<UNIX_TIMESTAMP_SECONDS>&interval=<UNIX_TIMESTAMP_SECONDS>&volume_in_base=<BOOLEAN>
 ```
 
-Get historical volume by `BalanceManager` for a specific time range with intervals. Delimit `pool_names` with commas and use Unix timestamp seconds for the optional `start_time` and `end_time` values. Use number of seconds for the `interval` value. As a simplified interval example, if `start_time` is 5, `end_time` is 10, and `interval` is 2, then the response includes volume from 5 to 7 and 7 to 9, with start time of the periods as keys.
+Get historical volume by `BalanceManager` for a specific time range with intervals. Delimit `pool_names` with commas and use Unix timestamp seconds for the optional `start_time` and `end_time` values. Use number of seconds for the `interval` value. As a simplified interval example, if `start_time` is 5, `end_time` is 10, and `interval` is 2, then the response includes volume from 5 to 7 and 7 to 9, with start time of the periods as keys. The example request in this section uses real Unix timestamps with an `interval` of 86400 seconds (24 hours).
 
 By default, this endpoint retrieves the last 24-hour trading volume for the balance manager in the quote asset for specified pools. If you want to query the base asset instead, set `volume_in_base` to `true`.
 
@@ -897,6 +897,8 @@ Returns OHLCV (Open, High, Low, Close, Volume) candlestick data for a pool. Vali
     ]
 }
 ```
+
+Each candle is an array of 6 values in this order: timestamp, open, high, low, close, and volume.
 
 #### Example
 
