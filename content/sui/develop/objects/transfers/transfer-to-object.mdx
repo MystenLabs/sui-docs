@@ -299,12 +299,6 @@ This coupled with the fact that the parent object can always define custom rules
 | `key`           | Yes                        | Yes                       |
 | `key` + `store` | Yes                        | No                        |
 
-Read the table as decision rules:
-
-- If the child object has `key` only, both the parent's module and the child's module can restrict receiving, because only the child's defining module can call `transfer::receive` on it.
-
-- If the child object has `key` and `store`, only the parent's module can restrict receiving, because anyone can call `transfer::public_receive` on it.
-
 You can use and couple these restrictions to create powerful expressions. For example, you can implement [soul-bound objects](#soul-bound-example) using both custom transfer and receivership rules, that is, restricting `transfer::transfer` and `transfer::receive` to the module that defines a `key`-only object.
 
 ## TypeScript and Rust SDKs
@@ -366,7 +360,7 @@ You can implement a basic version of this with the following module where the `g
 ```move
 module examples::soul_bound;
 
-use sui::transfer::{Self, Receiving};
+use sui::transfer::Receiving;
 
 /// Tried to return the wrong object.
 const EWrongObject: u64 = 0;
