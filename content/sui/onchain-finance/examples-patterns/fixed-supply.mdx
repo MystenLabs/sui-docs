@@ -2,7 +2,7 @@
 title: Fixed Supply
 description: >-
   Initialize a coin with a fixed total supply, then lock the supply to prevent
-  further minting using dynamic fields and freezing.
+  further minting by storing the TreasuryCap as a dynamic object field.
 keywords:
   - fixed supply
   - fixed total supply
@@ -40,14 +40,14 @@ A fixed-supply coin has a predetermined total supply that cannot increase after 
 This pattern involves 3 steps during the module's `init` function:
 
 1. **Create the currency:** Call `coin::create_currency` with a [One-Time Witness](https://move-book.com/programmability/one-time-witness/) to create the `TreasuryCap` and `CoinMetadata`. The `create_currency` function takes parameters for the coin's decimals, symbol, name, description, and icon URL.
-2. **Mint the total supply:** Call `coin::mint` with the `TreasuryCap` to create all tokens at once. The amount is specified in the smallest unit (base units). For example, if your coin has 9 decimals, a supply of `10_000_000_000_000_000_000` (10 billion × 10^9 base units) represents 10 billion coins.
+2. **Mint the total supply:** Call `coin::mint` with the `TreasuryCap` to create all tokens at once. The amount is specified in the smallest unit (base units). For example, if your coin has 9 decimals, a supply of `10_000_000_000_000_000_000` (10 billion × 10^9 base units) represents 10 billion coins. To calculate the amount for any configuration, multiply the number of coins you want by 10^decimals.
 3. **Lock the `TreasuryCap`:** Store the `TreasuryCap` as a [dynamic object field](/develop/objects/dynamic-fields) on a permanent object. This prevents further minting because `coin::mint` requires the `TreasuryCap`, and the `TreasuryCap` is no longer directly accessible. You can also freeze or destroy the `TreasuryCap` depending on your requirements.
 
 <ImportContent source="I2/fixed_supply/sources/silver.move" mode="code" org="MystenLabs" repo="sui-move-bootcamp" branch="solution" noComments />
 
 ### Why lock the `TreasuryCap`
 
-The `TreasuryCap` is the [capability](/develop/objects/transfers/custom-rules) that authorizes minting and burning. If you transfer it to the deployer's address instead of locking it, anyone who gains access to that address (through key compromise or social engineering) can mint unlimited tokens. Locking the `TreasuryCap` as a dynamic object field makes it inaccessible to any function call, including `coin::mint` ([Security Best Practices](/develop/security/best-practices)).
+The `TreasuryCap` is the [capability](/develop/objects/transfers/custom-rules) that authorizes minting and burning. If you transfer it to the deployer's address instead of locking it, anyone who gains access to that address (through key compromise or social engineering) can mint unlimited tokens. Locking the `TreasuryCap` as a dynamic object field removes direct access to it. Only a function in your package that has the parent object can retrieve it, so no external caller can pass it to `coin::mint` ([Security Best Practices](/develop/security/best-practices)).
 
 ### Why burn the `UpgradeCap`
 
