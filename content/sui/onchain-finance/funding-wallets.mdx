@@ -44,9 +44,11 @@ Before users or agents can transact on Sui, their wallets need tokens. A new wal
 
 ## Which funding method should I use?
 
-- **Exchange withdrawal:** Use when users already hold SUI on a centralized exchange. It needs no integration in your app, so it is the first path to support.
-- **Cross-chain bridge:** Use when users hold assets on Ethereum, Solana, or other blockchains.
-- **Testnet and Devnet faucets:** Use for development and testing only. Faucet tokens have no monetary value.
+| **Method** | **Use when** | **Notes** |
+|---|---|---|
+| [Exchange withdrawal](#how-do-i-withdraw-sui-from-an-exchange) | Users already hold SUI on a centralized exchange. | It needs no integration in your app, so it is the first path to support. |
+| [Cross-chain bridge](#how-do-i-bridge-tokens-from-other-chains-to-sui) | Users hold assets on Ethereum, Solana, or other blockchains. | Sui Bridge connects Sui and Ethereum. Wormhole supports multiple chains. |
+| [Testnet and Devnet faucets](#how-do-i-get-sui-on-testnet-and-devnet) | You develop and test only. | Faucet tokens have no monetary value. |
 
 ## How do I withdraw SUI from an exchange?
 
@@ -65,7 +67,7 @@ To move assets from Ethereum, Solana, or other blockchains to Sui, use a cross-c
 
 - [Sui Bridge](https://bridge.sui.io/): Native bridge between Sui and Ethereum.
 
-Bridged assets arrive as wrapped tokens on Sui. The wrapped token's coin type address differs from the native token's address on the source chain.
+Bridged assets arrive as wrapped tokens on Sui. A wrapped token is a token on Sui that represents the original asset from the source chain. The wrapped token's coin type address differs from the native token's address on the source chain, so use the wrapped token's coin type, not the source chain address, to identify the token on Sui.
 
 ## How do I get SUI on Testnet and Devnet?
 
