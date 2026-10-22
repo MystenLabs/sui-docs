@@ -36,9 +36,9 @@ answer: >-
   Mainnet.
 ---
 
-DeepBookV3 on Sui Mainnet uses the following contract addresses, supported coins, and pools.
+DeepBookV3 on Sui Mainnet uses package ID `0x337f4f4f6567fcd778d5454f27c16c70e2f274cc6377ea6249ddf491482ef497` (version 6) and registry ID `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`. Each supported coin lists its type and decimals, and each pool lists its pool ID, tick size, lot size, minimum size, and fees.
 
-## Contract versions
+## What are the DeepBookV3 contract addresses?
 
 DeepBookV3 uses upgradeable contracts. When a contract upgrades, you only need to update `DEEPBOOK_PACKAGE_ID`. Previous versions remain compatible unless noted. A redeployment requires updating `DEEPBOOK_PACKAGE_ID`, `REGISTRY_ID`, and all pool IDs.
 
@@ -61,7 +61,7 @@ DeepBookV3 uses upgradeable contracts. When a contract upgrades, you only need t
 | 2 | Apr 16, 2025 | `0xcaf6ba059d539a97646d47f0b9ddf843e138d215e2a12ca1f4585d386f7aec3a` | Input token fees, permissionless pool creation, gas improvements |
 | 1 | Oct 10, 2024 | `0x2c8d603bc51326b8c13cef9dd07031a408a48dddb541963357661df5d3204809` | Original deployment |
 
-## Supported coins
+## Which coins does DeepBookV3 support?
 
 <details>
 <summary>DEEP Token</summary>
@@ -243,13 +243,15 @@ DeepBookV3 uses upgradeable contracts. When a contract upgrades, you only need t
 
 </details>
 
-## Pools
+## Which pools does DeepBookV3 support?
 
 Version 2 introduced permissionless pool creation, so pools other than those listed on this page can exist on Mainnet.
 
+The pool tables list taker and maker fees in basis points (bps), where 1 bps = 0.01%.
+
 :::info
 
-The pool tables list taker and maker fees in basis points (bps), where 1 bps = 0.01%. Taker and maker fees are subject to change based on governance proposals. See [Staking and Governance](/onchain-finance/deepbook/deepbookv3/contract-information/staking-governance) for more information on how the governance process adjusts fees.
+Taker and maker fees are subject to change based on governance proposals. See [Staking and Governance](/onchain-finance/deepbook/deepbookv3/contract-information/staking-governance) for more information on how the governance process adjusts fees.
 
 :::
 
