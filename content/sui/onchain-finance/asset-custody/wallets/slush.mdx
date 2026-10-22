@@ -44,7 +44,7 @@ answer: >-
 
 Slush is the official Sui wallet built by Mysten Labs, available as a Chrome browser extension, an iOS app, an Android app, and a web app at [slush.app](https://slush.app).
 
-## Slush basics
+## What does Slush Wallet offer?
 
 Slush Wallet gives users two ways to create and access an account:
 
@@ -83,7 +83,7 @@ Call `registerSlushWallet` once, as early as possible in your application's life
   noComments
 />
 
-### Supported features
+### Which features does Slush support?
 
 The Slush wallet supports the following Wallet Standard features:
 
@@ -91,7 +91,7 @@ The Slush wallet supports the following Wallet Standard features:
 - `signAndExecuteTransaction`
 - `signPersonalMessage`
 
-### Detect the Slush wallet
+### How to detect Slush Wallet
 
 To check whether the connected wallet is Slush Wallet, compare the wallet name against the `SLUSH_WALLET_NAME` constant.
 
@@ -103,7 +103,7 @@ To check whether the connected wallet is Slush Wallet, compare the wallet name a
   variable="SLUSH_WALLET_NAME"
 />
 
-## Sui dApp Kit integration
+## How to integrate Slush with Sui dApp Kit
 
 The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) provides built-in opt-in support for Slush Wallet. Pass `slushWalletConfig` to `createDAppKit` to enable it. The `name` field is required, but it is not shown to the user during the connection flow.
 
@@ -118,7 +118,7 @@ The [Sui dApp Kit](https://sdk.mystenlabs.com/dapp-kit) provides built-in opt-in
 
 Users who have the Slush browser extension installed see only the extension in the connection modal. Users without the extension can use a delegated session key instead.
 
-## Deep linking
+## How does deep linking work in Slush?
 
 Deep linking lets external apps, websites, and services open Slush Wallet directly to a specific screen or trigger a specific action, such as a token swap, a payment, or an app browser session. Slush supports universal links through the `my.slush.app` domain and custom URL scheme links through `slush://`. Deep linking is not supported for the Slush browser extension.
 
