@@ -443,3 +443,18 @@ The cheat sheet highlights common Sui CLI commands.
 		</tr>
 	</tbody>
 </table>
+
+## How do I pass multiple type arguments to `--move-call`?
+
+The `--move-call` option of `sui client ptb` takes its values in this order: the function as `PACKAGE::MODULE::FUNCTION`, then the type arguments, and then the function arguments. All type arguments for 1 call go inside a single pair of angle brackets, separated by commas. Quote the whole type argument value so your shell does not interpret the brackets.
+
+The value format by number of type arguments:
+
+- 1 type argument: `"<0x2::sui::SUI>"`
+- 2 type arguments: `"<0x2::sui::SUI, $QUOTE_TYPE>"`
+
+For example, a call to a generic `deposit` function with 1 type argument looks like `--move-call "$PACKAGE::vault::deposit" "<0x2::sui::SUI>" @$VAULT @$COIN`. To pass a second type argument, add it inside the same brackets after a comma. Do not repeat the angle brackets for each type.
+
+A type argument can itself be generic. Write the full type with its own nested angle brackets, as in the `--make-move-vec` help example `<sui::coin::Coin<sui::sui::SUI>>`.
+
+Use `--preview` to print the PTB commands and confirm that the CLI parsed your type arguments as you expect before you execute the transaction.
