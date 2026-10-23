@@ -443,3 +443,16 @@ The cheat sheet highlights common Sui CLI commands.
 		</tr>
 	</tbody>
 </table>
+
+## How do you create an object owned by another object?
+
+An object with the `ObjectOwner` kind belongs to exactly one other object instead of to an address. The Sui type definition describes it as an object that is exclusively owned by a single object and is mutable. Sui stores the parent object ID as a `SuiAddress`. You can produce this owner kind in Move in 2 ways:
+
+- **Dynamic fields:** Add the object as a dynamic field or dynamic object field of a parent. The child takes the parent as its owner, and every dynamic field carries an `ObjectOwner`.
+- **Transfer-to-object:** Transfer the object to the parent's object ID the same way you transfer to an address.
+
+Transfer-to-object has rules for both sides. The child must currently have the `AddressOwner` kind. The parent can have any mutable owner kind: `AddressOwner`, `Shared`, `ConsensusAddressOwner`, or `ObjectOwner`. An `Immutable` object cannot receive transfers.
+
+After the transfer, the parent controls access. Sui does not grant read, write, delete, or transfer rights on an `ObjectOwner` object based on the transaction sender. The parent determines those rights instead.
+
+An object-owned object is not stuck with that owner kind. Objects with the `AddressOwner`, `ObjectOwner`, and `ConsensusAddressOwner` kinds can move freely between these 3 kinds or become `Immutable`. To inspect the result, run `sui client object` on the child and check the owner field, or run `sui client dynamic-field` on the parent to list its dynamic fields.
