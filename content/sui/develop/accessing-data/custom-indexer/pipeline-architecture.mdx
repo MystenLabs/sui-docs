@@ -373,7 +373,7 @@ The primary responsibility of the `Collector` is to buffer processed data and cr
 
 The `Collector` receives out-of-order processed data from multiple `Processor` workers. It then buffers data until reaching optimal batch size (`MIN_EAGER_ROWS`) or until a timeout is met (to preserve forward progress for quiet pipelines).
 
-<ImportContent mode="code" source="crates/sui-indexer-alt-framework/src/pipeline/concurrent/mod.rs" variable="MIN_EAGER_ROWS" />
+
     
 The `Collector` combines data from multiple checkpoints into single database write batches and applies backpressure when too much data is pending (`MAX_PENDING_ROWS`).
 
@@ -546,7 +546,7 @@ impl concurrent::Handler for MyHandler {
     type Store = Db;
 
     // Minimum rows to trigger eager commit for committer (default: 50)
-    const MIN_EAGER_ROWS: usize = 100;
+
 
     // Backpressure threshold on collector (default: 5000)
     const MAX_PENDING_ROWS: usize = 10000;
@@ -596,7 +596,7 @@ Tuning guidelines:
 - **`collector_channel_size`:** Controls the size of the channel between the collector and the committer. Defaults to `num_cpus / 2`. This is a separate channel from the processor-to-collector channel, and its size is set independently of `processor_channel_size`. Increase if the committer drains batches faster than the collector can supply them.
 - **`committer_channel_size`:** Controls the size of the channel between the committer and the watermark updater. Defaults to `num_cpus`. Rarely needs tuning.
 - **`ingestion.subscriber_channel_size`:** Capacity of the bounded broadcaster-to-processor channel. Defaults to `max(num_cpus / 2, 4)` when `None`. Raise it for a pipeline that needs more headroom against ingestion bursts. A larger value means this pipeline triggers the adaptive ingest controller's throttling later than its peers.
-- **`MIN_EAGER_ROWS`:** Lower values reduce data commit latency (individual data appears in database sooner), higher values improve overall throughput (more efficient larger batches).
+
 - **`MAX_PENDING_ROWS`:** Controls how much data can accumulate when the committer falls behind. Higher values provide more buffer space but use more memory during bottlenecks.
 - **`MAX_WATERMARK_UPDATES`:** Lower for sparse pipelines (rare events), keep default for dense pipelines.
 
