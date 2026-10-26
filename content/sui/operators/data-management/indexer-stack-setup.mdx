@@ -108,7 +108,7 @@ A 30-day retention adds 1.8TB on top, while a 90-day retention contributes up to
 
 ### Run `sui-indexer-alt`
 
-Run production ingestion in 2 phases:
+Run production ingestion in 2 phases, backfill and steady state, with the following steps:
 
 1. Backfill from the full-retention Requester Pays GCS bucket.
 2. When the backfill process reaches the network tip, stop it.
