@@ -55,7 +55,7 @@ If no Display is defined for a type, clients fall back to rendering raw object d
 
 Object Display V2 is the current Object Display standard. Use the `sui::display_registry` APIs when creating or updating displays from Move code.
 
-Object Display V1 is legacy. Existing V1 displays were migrated to V2 in a system snapshot migration. If you need to manage a migrated display, claim its `DisplayCap<T>` when you are ready (see [Migrating to V2](/develop/objects/display/using-display#migrating-to-v2)).
+Object Display V1 is legacy. Existing V1 displays were migrated to V2 in a system snapshot migration. To manage a migrated display, you need its `DisplayCap<T>`. Claim the `DisplayCap<T>` when you are ready to manage the display. For details, see [Migrating to V2](/develop/objects/display/using-display#migrating-to-v2).
 
 :::
 
