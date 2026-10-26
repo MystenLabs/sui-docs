@@ -65,7 +65,7 @@ On Sui specifically, other core components include:
 
 - [**Move**](/develop/write-move/sui-move-concepts), the programming language used to create smart contracts on Sui.
 
-## Networks
+## What networks does Sui operate?
 
 Sui operates multiple networks that are comprised of these essential components. Each network serves a different purpose:
 
@@ -79,7 +79,7 @@ Sui operates multiple networks that are comprised of these essential components.
 
 Learn more about the [Sui networks](/develop/sui-architecture/networks).
 
-### Nodes
+### What types of nodes does Sui have?
 
 On Sui, validator nodes run the consensus mechanism that orders and commits all onchain activity. Full nodes do not take part in consensus. They verify the committed state independently and locally, then serve queries about it.
 
@@ -87,7 +87,7 @@ There are 2 types of nodes on Sui:
 
 - **Full node:** Responsible for verifying committed blockchain activity, such as transactions, checkpoints, and [epoch](/develop/sui-architecture/epochs) changes (when the validator set can change), independently and locally without taking part in consensus. Each full node stores the blockchain's state and history to serve queries.
 
-- **Validator node:** Responsible for executing more tasks than full nodes, such as staking, gas price references, and tallying rules.
+- **Validator node:** Responsible for running the consensus mechanism that orders and commits all onchain activity. Validator nodes also execute more tasks than full nodes, such as staking, gas price references, and tallying rules.
 
 Learn more about [nodes on Sui](/operators).
 
@@ -101,7 +101,7 @@ To learn more about consensus on Sui, see:
 
 - [Epochs and reconfiguration](/develop/sui-architecture/epochs), which is when the validator set can change
 
-## Transactions
+## What are transactions on Sui?
 
 Transactions on Sui consist of several commands that execute on inputs. These inputs define the result of the transaction. All updates to the Sui network happen through transactions. There are only 2 types of transactions on Sui:
 
@@ -111,7 +111,7 @@ Transactions on Sui consist of several commands that execute on inputs. These in
 
 Learn more about both types of [transactions](/develop/transactions/txn-overview), or learn more about [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks).
 
-## Tokens
+## What tokens does Sui use?
 
 The native token for Sui is **SUI**. Transactions on Sui often deal with small fractions of the value of 1 SUI. To make it easier to work with transactions, Sui also provides the token **MIST**. 1 billion MIST equals 1 SUI.
 
@@ -127,15 +127,25 @@ To learn more about the tokenomics of Sui, see the following topics:
 
 - [Sui Bridging](/onchain-finance/fungible-tokens/sui-bridging)
 
-## Objects
+## What are objects on Sui?
 
 The basic unit of storage in Sui is the object. Sui's storage is centered around objects that are addressable onchain by unique IDs. Smart contracts are published as Sui Move packages, which are stored onchain as objects, and these smart contracts manipulate objects on the Sui network.
 
-Every object has an owner field that dictates how you can use it in transactions. Objects can have different ownership states that affect their usage. Objects can be owned by an address or party, or they can be immutable, shared, or wrapped.
+Every object has an owner field that dictates how you can use it in transactions. Objects can have the following ownership states, which affect their usage:
+
+- Owned by an address
+
+- Owned by a party
+
+- Immutable
+
+- Shared
+
+- Wrapped
 
 Learn more about the [Sui Object Model](/develop/sui-architecture/object-model) or [Object Ownership](/develop/objects/object-ownership).
 
-## Move
+## What is Move?
 
 Move is an open source programming language that is used for all activity on Sui, such as creating or trading NFTs, using apps, and all other transaction-based events. It is used for writing safe packages that can create and manipulate objects onchain.
 
