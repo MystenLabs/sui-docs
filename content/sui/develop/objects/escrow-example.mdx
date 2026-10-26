@@ -47,8 +47,8 @@ Both implementations use a locking primitive:
 
 ```move
 module escrow::lock {
-    public fun lock<T: store>(obj: T, ctx: &mut TxContext): (Locked<T>, Key);
-    public fun unlock<T: store>(locked: Locked<T>, key: Key): T
+    public fun lock<T: key + store>(obj: T, ctx: &mut TxContext): (Locked<T>, Key);
+    public fun unlock<T: key + store>(locked: Locked<T>, key: Key): T
 }
 ```
 
@@ -61,7 +61,7 @@ View the [complete code](https://github.com/MystenLabs/sui/blob/main/examples/tr
 The address-owned flow has 4 steps:
 
 1. Both parties lock their objects with `escrow::lock`.
-2. The parties swap keys.
+2. The parties exchange the IDs of their keys.
 3. Each party calls `create` to send an `Escrow` request to the custodian.
 4. The custodian calls `swap` to match the requests and send each object to its recipient.
 
