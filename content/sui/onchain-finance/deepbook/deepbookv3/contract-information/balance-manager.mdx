@@ -46,6 +46,8 @@ questions:
 answer: Learn about the balance manager and how it works.
 ---
 
+A `BalanceManager` is a shared object that holds all your balances for different assets on DeepBookV3. Most DeepBookV3 interactions other than swaps and flash loans require one, and you pass it with a `TradeProof` into a pool to trade.
+
 ## What is a BalanceManager?
 
 The `BalanceManager` shared object holds all balances for different assets. To perform trades, pass a combination of `BalanceManager` and `TradeProof` into a [pool](/onchain-finance/deepbook/deepbookv3/design#pool). You must provide a `TradeProof` along with your `BalanceManager` to call any function that requires a balance check or transfer. One of two parties generates a `TradeProof`: either the `BalanceManager` owner directly (`generate_proof_as_owner`), or any `TradeCap` owner (`generate_proof_as_trader`). The owner can generate a `TradeProof` without the risk of equivocation. The `TradeCap` owner, because it's an owned object, risks equivocation when generating a `TradeProof`. Generally, a high frequency trading engine trades as the default owner.
@@ -121,7 +123,7 @@ The `new_with_custom_owner_caps<App>()` function creates a `BalanceManager` with
 <details>
 <summary>Mint a `TradeCap`</summary>
 
-The owner of a `BalanceManager` can mint a `TradeCap` and send it to another address. Upon receipt, that address has the capability to place orders with this `BalanceManager`. The address owner cannot deposit or withdraw funds, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that you can assign for a `BalanceManager` is `1000`. If you reach this limit, you must revoke one or more existing caps before minting new ones. You can also use `revoke_trade_cap` to revoke `DepositCap` and `WithdrawCap`.
+The owner of a `BalanceManager` can mint a `TradeCap` and send it to another address. Upon receipt, that address has the capability to place orders with this `BalanceManager`. The address owner cannot deposit or withdraw funds, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that you can assign for a `BalanceManager` is `1000`, combined across all three types. If you reach this limit, you must revoke one or more existing caps before minting new ones. You can also use `revoke_trade_cap` to revoke `DepositCap` and `WithdrawCap`.
 
 <ImportContent
 	source="packages/deepbook/sources/balance_manager.move"
@@ -136,7 +138,7 @@ The owner of a `BalanceManager` can mint a `TradeCap` and send it to another add
 <details>
 <summary>Mint a `DepositCap` or `WithdrawCap`</summary>
 
-The owner of a `BalanceManager` can mint a `DepositCap` or `WithdrawCap` and send it to another address. Upon receipt, that address has the capability to deposit in or withdraw from `BalanceManager`. The address owner cannot execute trades, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that you can assign for a `BalanceManager` is `1000`. If you reach this limit, you must revoke one or more existing caps before minting new ones.
+The owner of a `BalanceManager` can mint a `DepositCap` or `WithdrawCap` and send it to another address. Upon receipt, that address has the capability to deposit in or withdraw from `BalanceManager`. The address owner cannot execute trades, however. The maximum total number of `TradeCap`, `WithdrawCap`, and `DepositCap` that you can assign for a `BalanceManager` is `1000`, combined across all three types. If you reach this limit, you must revoke one or more existing caps before minting new ones.
 
 <ImportContent
 	source="packages/deepbook/sources/balance_manager.move"
