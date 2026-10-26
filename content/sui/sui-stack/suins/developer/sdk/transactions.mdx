@@ -88,11 +88,13 @@ Either way, pass the resulting `priceInfoObjectId` to the `register` and `renew`
 
 This is a list of all the available PTB commands supported through the SDK.
 
-Replace placeholder values such as `0xMyAddress`, `0xMyNftObject`, and `0xMyCoinObject` with your own addresses and object IDs.
+The examples use placeholder values such as `0xMyAddress`, `0xMyNftObject`, and `0xMyCoinObject`. Replace them with your own addresses and object IDs.
 
 ### How to register a name
 
 `register` returns the name's NFT. Transfer it to an address or pass it to other commands in the same PTB, as the combined example later on this page shows.
+
+The example pays in USDC, which doesn't need a price info object, so you can omit the `getPriceInfoObject` call and the `priceInfoObjectId` argument. Keep them when you pay in SUI or NS.
 
 ```js
 
@@ -198,7 +200,7 @@ For subname operations (create, edit, extend, and remove subnames), see [Subname
 Currently supports AVATAR and IPFS hash.
 
 ```js
-const setUserData = async (nft: string, avatar: string, contentHash: string) => {
+const setUserData = async (nft: string, avatar: string, contentHash: string, walrusSiteId: string) => {
     // Create a transaction block as usual in your PTBs.
     const transaction = new Transaction();
     // Pass in the transaction block & the app's global SuinsClient.
@@ -259,7 +261,7 @@ The following code snippet registers a SuiNS name using NS, sets its target addr
 
 ```js
 // Years must be between 1-5.
-const composedExample = async (name: string, years: number) => {
+const composedExample = async (name: string, years: number, address: string) => {
     // Create a transaction block as usual in your PTBs.
     const transaction = new Transaction();
     // Pass in the transaction block & the app's global SuinsClient.
