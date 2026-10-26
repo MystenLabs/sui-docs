@@ -67,11 +67,11 @@ Every Sui address is a unique 32-byte identifier and appears in hexadecimal enco
 0x02a212de6a9dfa3a69e22387acfbafbb1a9e591bd9d636e7895dcfc8de05f331
 ```
 
-A cryptographic hash function generates a public key from which every address derives. Each public key has a corresponding private key that accesses the address and the objects that it owns. An address and its associated key pair together is an account. 
+Sui derives every address from a public key using a cryptographic hash function. Each public key has a corresponding private key that accesses the address and the objects that it owns. An address and its associated key pair together is an account. 
 
 [Learn more](/develop/transactions/transaction-auth/auth-overview) about how a Sui address is derived and other cryptography related topics.
 
-## Obtain a Sui address 
+## How do I create a Sui address?
 
 :::caution 
 
@@ -101,7 +101,7 @@ This command specifies the key pair scheme to be of type `ed25519`.
 
 <ImportContent source="crypto-schemes" mode="snippet" />
 
-### Recovery phrases
+### What is a recovery phrase?
 
 Every Sui address has a recovery phrase. Recovery phrases are a series of 12 randomly generated words that you use to recover the address if you lose access to the address's key pair. 
 
@@ -127,7 +127,17 @@ If successful, the CLI restores your address and prints it in the CLI output.
 
 ## `sui.keystore`
 
-Sui stores a private key for every address in either the  `~/.sui/sui_config/sui.keystore` or `%USERPROFILE/.sui/sui_config/sui.keystore` file on macOS/Linux or Windows systems, respectively.
+Sui stores a private key for every address in the `sui.keystore` file. The file location depends on your operating system:
+
+- macOS and Linux: `~/.sui/sui_config/sui.keystore`
+
+- Windows: `%USERPROFILE%/.sui/sui_config/sui.keystore`
+
+:::danger 
+
+The `sui.keystore` file is **not** the same as your machine's local keystore that contains passwords for websites, biometric data like fingerprints, or other authentication credentials. Your machine's local keystore cannot sign and submit transactions on Sui. Only addresses with their associated keys included in the `sui.keystore` file can sign and submit transactions.
+
+:::
 
 This file contains content similar to the following:
 
@@ -141,12 +151,6 @@ This file contains content similar to the following:
 ```
 
 When you create a new address on your system, a new line is added to this file that consists of the address's private key. Make sure you do not expose this to anyone, as they can use it to get access to your account.
-
-:::danger 
-
-The `sui.keystore` file is **not** the same as your machine's local keystore that contains passwords for websites, biometric data like fingerprints, or other authentication credentials. Your machine's local keystore cannot sign and submit transactions on Sui. Only addresses with their associated keys included in the `sui.keystore` file can sign and submit transactions.
-
-:::
 
 ## Address aliases 
 
@@ -180,7 +184,7 @@ You can now use the alias in place of the address in commands, such as:
 $ sui client objects <NEW-ALIAS>
 ```
 
-## View all local Sui addresses
+## How do I view all local Sui addresses?
 
 The active address is the address that the Sui client is currently using. This address owns any objects you create and transactions you submit, unless you specify otherwise with the `--address` flag in a command. 
 
@@ -247,7 +251,7 @@ From the CLI, you can view all objects an address owns with the command:
 $ sui client objects <ADDRESS>
 ```
 
-If you do not provide an address, this command returns all objects owned by the active address.
+If you omit `<ADDRESS>`, this command returns all objects that the active address owns.
 
 <div className="next-steps-module">
   <div className="next-steps-header">
