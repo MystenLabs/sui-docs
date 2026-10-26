@@ -41,12 +41,12 @@ questions:
   - What are the common use cases for NFTs on Sui?
   - How do I set up Object Display for an NFT?
 answer: >-
-  On Sui, every object is unique and has an owner, properties that other
+  On Sui, every object is unique and can have an owner, properties that other
   blockchains like Ethereum require a dedicated standard such as
   [ERC-721](https://erc721.org/) to achieve.
 ---
 
-On Sui, every object is unique and has an owner, properties that other blockchains like Ethereum require a dedicated standard such as [ERC-721](https://erc721.org/) to achieve.
+On Sui, every object is unique and can have an owner, properties that other blockchains like Ethereum require a dedicated standard such as [ERC-721](https://erc721.org/) to achieve.
 
 The following diagram shows how a caller gets an NFT attribute, such as its name, on a blockchain that is not object based. The smart contract must fetch the metadata from offchain storage before it can return the value.
 
@@ -64,6 +64,20 @@ sequenceDiagram
  
 Imagine you create a Rare Reef Shark NFT collection on Sui and another blockchain that is not object based. To get an attribute like the shark's name on the other blockchain, you would need to interact with the smart contract that created the NFT to get that information (typically from offchain storage) using the NFT ID. On Sui, the name attribute is a field on the object that defines the NFT itself. This construct provides a more direct process for accessing NFT metadata because the smart contract that needs the information can return the name directly from the object.
 
+The following diagram shows the same request on Sui. The smart contract reads the name field directly from the NFT object, with no offchain storage involved.
+
+```mermaid
+
+sequenceDiagram
+    participant C as Caller
+    participant S as Smart contract
+    participant N as NFT object
+    C->>S: NFT object
+    S->>N: Read name field
+    N-->>S: name value
+    S-->>C: name value
+```
+
 ## What are the common use cases for NFTs on Sui?
 
 NFTs on Sui are useful in a wide range of applications:
@@ -71,7 +85,7 @@ NFTs on Sui are useful in a wide range of applications:
 - **Digital collectibles**: Unique items like art, trading cards, or in-game characters with distinct attributes and provenance. [SuiFrens](https://suifrens.com/) is an example of a collectible NFT collection on Sui.
 - **Gaming assets**: In-game items such as weapons, skins, or land parcels, where each asset has unique properties and can be owned, traded, or used across compatible games.
 - **Event tickets and access passes**: Tickets or credentials that grant the holder access to an event, community, or gated experience. Uniqueness and ownership are verifiable onchain.
-- **Identity and credentials**: Soulbound NFTs that represent non-transferable credentials such as certifications, memberships, or reputation scores.
+- **Identity and credentials**: Soulbound NFTs, which the holder cannot transfer, that represent credentials such as certifications, memberships, or reputation scores.
 - **NFT rentals**: NFTs can be rented to other users for a defined period using Kiosk extensions. This enables use cases where a holder wants to monetize an asset without selling it.
 - **Encrypted media**: NFTs can wrap encrypted content so that only the owner can access the underlying asset, which enables freemium and try-before-you-buy models.
 
