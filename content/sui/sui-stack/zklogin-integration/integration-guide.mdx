@@ -288,7 +288,7 @@ curl -X POST https://salt.api.mystenlabs.com/get_salt \
 # Response: {"salt":"129390038577185583942388216820280642146"}
 ```
 
-The service returns the salt as a decimal string. Convert it with `BigInt()` where the SDK expects a BigInt, as in Step 7.
+The service returns the salt as a decimal string. The SDK functions `jwtToAddress` and `genAddressSeed` accept it as a string or a BigInt. Step 7 passes it through `BigInt()`.
 
 The salt's purpose is to disconnect the OAuth identifier (`sub`) from the onchain Sui address. Leaking the salt enables linking Web2 and Web3 identities but does not compromise fund control.
 
@@ -308,7 +308,7 @@ The same `sub` + `iss` + `aud` + `user_salt` always produces the same address. A
 
 ## Step 6: Get the zero-knowledge proof
 
-The zero-knowledge proof attests that the ephemeral key pair is valid and bound to the user's OAuth identity, without revealing the JWT onchain. If you cannot use the Mysten Labs hosted prover through Enoki, run your own prover as described in [Option B: Self-hosted proving service](#option-b-self-hosted-proving-service).
+The zero-knowledge proof attests that the ephemeral key pair is valid and bound to the user's OAuth identity, without revealing the JWT onchain. If you cannot use the Mysten Labs hosted prover, run your own prover as described in [Option B: Self-hosted proving service](#option-b-self-hosted-proving-service).
 
 First, generate the extended ephemeral public key:
 
@@ -501,7 +501,7 @@ The following code uses values from earlier steps:
 
 - `ephemeralKeyPair` and `maxEpoch` from Step 1
 - `decodedJwt` from Step 3
-- `userSalt` from Step 4
+- `userSalt`, the salt value that your salt service returns in Step 4
 - `zkLoginUserAddress` from Step 5
 - `partialZkLoginSignature` from Step 6
 
