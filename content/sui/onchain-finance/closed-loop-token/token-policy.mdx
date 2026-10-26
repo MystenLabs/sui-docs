@@ -139,6 +139,6 @@ public fun flush<T>(
 | disallow                    | Disallow an action in the `TokenPolicy`                                |
 | add_rule_for_action         | Add a rule for an action in the `TokenPolicy`                          |
 | remove_rule_for_action      | Remove a rule for an action in the `TokenPolicy`                       |
-| confirm_request             | Confirm an `ActionRequest` with a `TokenPolicy` (see [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy)) |
+| confirm_request             | Confirm an `ActionRequest` with a `TokenPolicy`. This function is in the `sui::token` module and is a step in the `ActionRequest` confirmation flow (see [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy)). |
 | confirm_request_mut         | Similar to `confirm_request` but only works for `spend` action       |
 | flush                       | Flush the spent balance from the `TokenPolicy` (see [Spending](/onchain-finance/closed-loop-token/spending)) |
