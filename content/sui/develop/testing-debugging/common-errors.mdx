@@ -540,6 +540,8 @@ The Sui RPC layer returns standard error codes. Use the following table to diagn
 | -32050 | Transient Error             | Yes       | Overloaded node; retry with exponential backoff. |
 | -32604 | Timeout Error               | Yes       | Request timed out; retry after backoff.    |
 
+In the TypeScript SDK, read the code from `error.code` on the error that the client throws, as the example in [Error classification](#error-classification) shows. For onchain execution failures, read `result.effects.status.error` on the response instead.
+
 ---
 
 #### Error classification
