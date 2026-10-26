@@ -182,7 +182,14 @@ $ sui validator join-committee
 
 Joining the committee makes you a pending validator. A pending validator becomes active and joins the committee starting from the next epoch.
 
-To summarize the sequence: `become-candidate` makes you a validator candidate, `join-committee` makes you a pending validator, and a pending validator becomes an active validator starting from the next epoch.
+To join the committee from start to finish, follow this sequence:
+
+1. Run `make-validator-info` to generate your `validator.info` file and key pair files.
+2. Run `become-candidate` to become a validator candidate.
+3. Start a full node to catch up with the network.
+4. Stake 30M SUI to your validator staking pool.
+5. Run `join-committee` to become a pending validator.
+6. Wait for the next epoch, when your pending validator becomes an active validator.
 
 
 ### How do I leave the committee?
@@ -223,7 +230,7 @@ $ sui validator display-metadata <validator-address>
 
 ### How do I update validator metadata?
 
-Run the following to see how to update validator metadata. Read the description carefully about when the change takes effect.
+Run the following to see how to update each metadata field. Read the description carefully about when the change takes effect.
 
 ```sh
 $ sui validator update-metadata --help
@@ -247,12 +254,6 @@ Only the first four metadata listed above take effect immediately. The others ch
 
 Make sure the new address is not behind a firewall.
 :::
-
-Run the following to see how to update each metadata field.
-
-```sh
-$ sui validator update-metadata --help
-```
 
 ### Operation Cap
 
