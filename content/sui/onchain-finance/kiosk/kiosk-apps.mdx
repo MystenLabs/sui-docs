@@ -55,7 +55,7 @@ Use a basic app when only the kiosk owner needs to modify the data the app adds,
 
 Basic Kiosk apps do not require Kiosk Apps API to function. They usually serve the purpose of adding custom metadata to a kiosk or wrapping or working with existing objects such as `Kiosk` or `KioskOwnerCap`. An example of an app that does not require the API is the Personal Kiosk app.
 
-### UID access through the uid_mut
+### UID access through `uid_mut_as_owner` {#uid-access-through-the-uid_mut}
 
 Kiosk has an `id: UID` field like all objects on Sui. This field uniquely identifies the object and lets it carry custom dynamic fields and dynamic object fields. Kiosk itself uses dynamic fields, and features like place and list use dynamic object fields.
 
@@ -151,7 +151,7 @@ const PERMISSIONS: u128 = 1;
 /// The Witness struct used to identify and authorize the extension.
 public struct Extension has drop {}
 
-/// Install the Mallbox extension into the Kiosk.
+/// Install the Letterbox extension into the Kiosk.
 public fun add(kiosk: &mut Kiosk, cap: &KioskOwnerCap, ctx: &mut TxContext) {
     kiosk_extension::add(Extension {}, kiosk, cap, PERMISSIONS, ctx)
 }
@@ -165,12 +165,12 @@ Apps can request permissions from the kiosk owner on installation. Permissions f
 
 A `u128` integer storing a bitmap represents permissions. Each of the bits corresponds to a permission. The first bit is the least significant bit. The following table lists all permissions and their corresponding bit:
 
-| Bit |	Decimal	| Permission |
+| Bit | Decimal | Permission |
 | --- | --- | --- |
 | 0000 | 0 | No permissions |
 | 0001 | 1 | App can place |
-| 0010| 2 |	App can place and lock |
-| 0011| 3 |	App can place and lock |
+| 0010 | 2 | App can place and lock |
+| 0011 | 3 | App can place and lock |
 
 :::info
 
@@ -192,7 +192,7 @@ const PERMISSIONS: u128 = 1;
 /// The witness struct used to identify and authorize the app.
 public struct Extension has drop {}
 
-/// Install the Mallbox app into the kiosk and request `place` permission.
+/// Install the Letterbox app into the kiosk and request `place` permission.
 public fun add(kiosk: &mut Kiosk, cap: &KioskOwnerCap, ctx: &mut TxContext) {
     kiosk_extension::add(Extension {}, kiosk, cap, PERMISSIONS, ctx)
 }
@@ -235,8 +235,8 @@ The storage is always available to an installed app. The owner of a kiosk can't 
 
 An installed app can access the storage mutably or immutably using one of the following functions:
 
-- `storage(_ext: Extension {}, kiosk: &Kiosk): Bag`: Returns a reference to the storage of the app. Use the function to read the storage.
-- `storage_mut(_ext: Extension {}, kiosk: &mut Kiosk): &mut Bag`: Returns a mutable reference to the storage of the app. Use the function to read and write to the storage.
+- `storage(_ext: Extension, kiosk: &Kiosk): &Bag`: Returns a reference to the storage of the app. Use the function to read the storage.
+- `storage_mut(_ext: Extension, kiosk: &mut Kiosk): &mut Bag`: Returns a mutable reference to the storage of the app. Use the function to read and write to the storage.
 
 ## Disabling and removing
 
@@ -254,8 +254,8 @@ Use the `disable<Ext>(kiosk: &mut Kiosk, cap: &KioskOwnerCap)` function to disab
 
 ```javascript
 let txb = new TransactionBuilder();
-let kioskArg = tx.object('<ID>');
-let capArg = tx.object('<ID>');
+let kioskArg = txb.object('<ID>');
+let capArg = txb.object('<ID>');
 
 txb.moveCall({
     target: '0x2::kiosk_extension::disable',
@@ -274,8 +274,8 @@ The call fails if the storage is not empty.
 
 ```javascript
 let txb = new TransactionBuilder();
-let kioskArg = tx.object('<ID>');
-let capArg = tx.object('<ID>');
+let kioskArg = txb.object('<ID>');
+let capArg = txb.object('<ID>');
 
 txb.moveCall({
     target: '0x2::kiosk_extension::remove',
