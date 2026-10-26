@@ -295,7 +295,7 @@ In OnlyFins, encryption runs in the backend `encryptImages.ts` script before you
 A few things to note about the OnlyFins encryption setup:
 
 - The `encryptionId` is a hex-encoded string derived from a timestamp and post index. This value becomes the Seal `id` parameter, which you must later pass to `seal_approve_access` during decryption.
-- The `threshold` is 1, meaning a single key server is sufficient to issue decryption keys. This value suits testing only. Do not copy it into production. Use a higher threshold to distribute trust across multiple servers.
+- The `threshold` is 1, meaning a single key server is sufficient to issue decryption keys. That suits a demo. For production, choose a higher threshold, such as 2-of-3 or 3-of-5, based on the sensitivity of the data, so you distribute trust across multiple servers.
 - The `packageId` ties the encrypted object to the specific deployed Move package. Seal prepends this to the `id` to form the full namespaced identity.
 
 When `createPosts.ts` registers the post onchain, it stores the `encryptionId` as the `encryption_id` field on the `Post` Sui object. This links the Walrus blob, the Seal encryption, and the Sui object together.
