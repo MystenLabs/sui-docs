@@ -1,8 +1,7 @@
 ---
 title: Querying Data with GraphQL RPC
 description: >-
-  Practical guide to making queries of the Sui RPC using the GraphQL service,
-  with examples for common tasks.
+  Practical guide to querying the Sui network with GraphQL RPC, with examples for fetching objects, querying transactions and checkpoints, executing and simulating transactions, and using the online IDE with headers, variables, and pagination.
 keywords:
   - rpc
   - sui rpc
@@ -326,7 +325,7 @@ Optionally, the scope provides a **root object** bound that applies only to quer
 
 If a dynamic field's root object has version `v`, its own version, `w` is the latest version such that `w <= v` meaning the latest version of the dynamic field that existed when its root object was at version `v`.
 
-If you do not provide a root object bound, the query fetches dynamic fields at the checkpoint in view, while a checkpoint-based root object bound, if one exists, does not impact the checkpoint in view.
+If you do not provide a root object bound, the query fetches dynamic fields at the checkpoint in view. A checkpoint-based root object bound, if one exists, does not impact the checkpoint in view.
 
 Finally, the GraphQL service treats queries nested under executed `Mutation.executeTransaction` and simulated `Query.simulateTransaction` transactions as being in a special scope that exists just after the transaction that the service executed or simulated, without having indexed that transaction. This means execution-attached or simulation-attached queries can often provide consistent read-after-write results immediately, as long as the requested fields do not require indexed history.
 
@@ -394,7 +393,7 @@ query FirstBalancesPageAtCheckpoint($address: SuiAddress!, $cp: UInt53) {
 
 Responses to these queries are subject to [retention](#retention). If `$cp` is outside the retention window `Query.transactions`, `AtCheckpoint` returns no results, while an attempt to continue paginating `NextBalancesPage` at a checkpoint outside the consistent range returns an error.
 
-### Setting root version scope
+### How do I set root version scope?
 
 A root object bound at the object's version scopes queries nested under the fetch of an object at a specific version. For example, the following query fetches the dynamic field with name `42u64` as it existed when its owning object was at version `$v`:
 
@@ -659,7 +658,7 @@ query {
 
 ### Find a transaction by its digest
 
-Get a transaction by its digest and show information such as the gas sponsor address, the gas price, the gas budget, and the effects from executing that transaction.
+Get a transaction by its digest and show information such as the gas sponsor address, the gas price, the gas budget, and the effects from executing that transaction. Replace `FdK...qK2` with the digest of the transaction you want to fetch.
 
 ```graphql
 query {
@@ -768,6 +767,8 @@ query ($digest: String!) {
 ```
 
 #### Variables
+
+Replace `<TRANSACTION_DIGEST>` with the digest of the transaction to inspect.
 
 ```json
 {
@@ -992,14 +993,17 @@ query ($before: String) {
 }
 ```
 
-### Execute a transaction
+### How do I execute a transaction?
 
-GraphQL is not read-only. Transaction execution takes 2 arguments, `transactionDataBcs` and `signatures`. `transactionDataBcs` is the serialized unsigned transaction data, which the [Sui Client CLI](/references/cli/client) `client call` command can generate. Pass the `--serialize-unsigned-transaction` flag to the command to call a Move function. The [Sui Keytool CLI](/references/cli/keytool) command `sui keytool sign` can generate the `signatures`. Select fields from `effects` in the same mutation to read execution results immediately without waiting for a separate query.
+GraphQL is not read-only. Transaction execution takes 2 arguments, `transactionDataBcs` and `signatures`. To execute a transaction:
+
+1. Generate `transactionDataBcs`, the serialized unsigned transaction data. To call a Move function, run the [Sui Client CLI](/references/cli/client) `client call` command with the `--serialize-unsigned-transaction` flag.
+2. Generate the `signatures` with the [Sui Keytool CLI](/references/cli/keytool) command `sui keytool sign`.
+3. Pass both values to `executeTransaction`, as the following mutation shows. Select fields from `effects` in the same mutation to read execution results immediately without waiting for a separate query.
 
 ```graphql
 mutation ($tx: String!, $sigs: [String!]!) {
   executeTransaction(transactionDataBcs: $tx, signatures: $sigs) {
-    errors
     effects {
       status
       epoch {
@@ -1028,7 +1032,7 @@ When using the online IDE, copy the following JSON to the **Variables** window, 
 }
 ```
 
-### Simulate a transaction
+### How do I simulate a transaction?
 
 Use `simulateTransaction` to preview transaction effects, estimate gas, or test transaction logic without committing the transaction onchain. Simulation accepts a JSON transaction matching the Sui gRPC transaction schema, or a BCS-encoded transaction with `{"bcs": {"value": "<base64>"}}`.
 
@@ -1200,7 +1204,7 @@ query {
 }
 ```
 
-You now pass the cursor in the `after` (or `before`) fields on the connection, and the limit in the `first` or `last` fields.
+You now pass the cursor in the `after` (or `before`) fields on the connection, and the limit in the `first` or `last` fields. The cursor in this example is an example value. The only valid cursor is one from a previous paginated response, as [Cursors](#cursors) describes.
 
 </TabItem>
 </Tabs>
