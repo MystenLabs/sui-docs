@@ -132,7 +132,7 @@ After the checkpoint is produced, the transaction has reached the end of its lif
 
 ## How long does a Sui transaction take to finalize?
 
-End-to-end finality typically takes 400–700 ms, measured from when the user submits the transaction to when the full node returns a finality confirmation. The exact latency depends on the locations of the user and the full node. During an [epoch change](#epoch-change), the network also delays user transactions for a few hundred milliseconds until the new epoch begins. After finality, the user knows the transaction is irreversible and that the network processes it within the epoch.
+End-to-end finality typically takes 400 to 700 ms, measured from when the user submits the transaction to when the full node returns a finality confirmation. The exact latency depends on the locations of the user and the full node. During an [epoch change](#epoch-change), the network also delays user transactions for a few hundred milliseconds until the new epoch begins. After finality, the user knows the transaction is irreversible and that the network processes it within the epoch.
 
 ## Epoch change
 
@@ -160,7 +160,7 @@ To verify whether Sui has finalized a pending transaction:
 
    - If the lookup finds nothing, either Sui never finalized the transaction or this full node does not yet know about it. Resubmit the transaction. Resubmitting is safe because Sui transactions are idempotent.
 
-A full node that does not yet know about a transaction must wait for the transaction to appear in a checkpoint and reach the node through state sync, which normally takes a few seconds. It then executes the transaction and applies the resulting state changes locally. This delay affects only when the transaction appears in that full node's local state, not network finality, which typically takes 400–700 ms.
+A full node that does not yet know about a transaction must wait for the transaction to appear in a checkpoint and reach the node through state sync, which normally takes a few seconds. It then executes the transaction and applies the resulting state changes locally. This delay affects only when the transaction appears in that full node's local state, not network finality, which typically takes 400 to 700 ms.
 
 ## Example: Coffee shop payment
 
