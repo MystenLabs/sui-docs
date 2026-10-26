@@ -41,7 +41,7 @@ Sui provides two standards for creating fungible tokens. Both produce `Coin<T>` 
 | Feature | Coin Standard | Currency Standard |
 |---------|--------------|-------------------|
 | Creation function | `coin::create_currency` | `coin_registry::new_currency` or `coin_registry::new_currency_with_otw` |
-| Metadata storage | Standalone `CoinMetadata` object | Centralized in `CoinRegistry` at `0xc` |
+| Metadata storage | Standalone `CoinMetadata` object | Centralized in `CoinRegistry` at address `0xc` |
 | Supply models | Uncontrolled only | Fixed, burn-only, or uncontrolled |
 | Regulatory support | `create_regulated_currency_v2` | `make_regulated()` during initialization |
 | Metadata updates | Requires `TreasuryCap` | Dedicated `MetadataCap` (can be frozen or deleted) |
