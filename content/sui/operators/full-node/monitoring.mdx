@@ -100,4 +100,21 @@ Set up alerts for the following conditions. Each condition is a PromQL expressio
 - **Node down:** `up{job="sui-fullnode"} == 0` sustained for 2 minutes indicates the node is unreachable.
 - **Execution lag:** `last_executed_checkpoint_timestamp_ms > 0 and time() - last_executed_checkpoint_timestamp_ms / 1000 > 120` sustained for 2 minutes indicates that the node is executing checkpoints more than 2 minutes behind chain time. This alert also fires while a healthy node catches up after an outage or snapshot restore. The `> 0` guard avoids false alerts during startup, before the node populates the timestamp. To detect a stalled executor separately, alert when `last_executed_checkpoint` does not advance over a suitable interval.
 
+The following Prometheus alerting rules file combines these 3 conditions into one rules group. Save it on your Prometheus host and load it from your Prometheus configuration:
+
+```yaml title='sui-alerts.yml'
+groups:
+  - name: sui-fullnode
+    rules:
+      - alert: SuiNodeSyncLag
+        expr: 'highest_known_checkpoint - highest_synced_checkpoint > 100'
+        for: 5m
+      - alert: SuiNodeDown
+        expr: 'up{job="sui-fullnode"} == 0'
+        for: 2m
+      - alert: SuiNodeExecutionLag
+        expr: 'last_executed_checkpoint_timestamp_ms > 0 and time() - last_executed_checkpoint_timestamp_ms / 1000 > 120'
+        for: 2m
+```
+
 
