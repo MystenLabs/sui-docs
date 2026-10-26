@@ -133,7 +133,7 @@ Now the PTB can retrieve the asset, use it in a call to `use_asset`, and return 
 The `Borrow` object is the key to the guarantees the borrow module offers. The definition of `Borrow`, which is part of the borrow module in the Sui framework rather than something you define yourself, is:
 
 ```move
-struct Borrow { ref: address, obj: ID }
+public struct Borrow { ref: address, obj: ID }
 ```
 
 This definition makes it such that you cannot drop or save a `Borrow` instance anywhere, so you must consume it in the same transaction that retrieves it (hot potato). Moreover, fields in the `Borrow` struct make sure that the object returned is for the same `Referent` and the object that was originally held by the `Referent` instance. In other words, there is no way to either keep the object retrieved or to swap it with another object in a different `Referent`.
