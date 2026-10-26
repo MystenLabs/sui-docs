@@ -118,7 +118,7 @@ Neither `tx.createManager` nor `tx.deposit` attaches a referrer, and the contrac
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="608-608" />
 
-The builder returns a new, unsigned `Transaction` for your wallet or signer to execute, and the SDK never signs or holds keys, so sign and execute it first, then decode the result with [`decode.createManager`](#decode-create-manager) to read the new wrapper ID and account ID.
+Sign and execute the transaction, then decode the result with [`decode.createManager`](#decode-create-manager) to read the new wrapper ID and account ID.
 
 ### `tx.deposit` {#deposit}
 
