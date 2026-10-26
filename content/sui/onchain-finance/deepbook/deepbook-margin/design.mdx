@@ -111,7 +111,7 @@ The `MarginManager` wraps a `BalanceManager` and adds margin trading capabilitie
 - **Margin pool ID:** Which margin pool the current loan is from (if any).
 - **DeepBook pool:** Which trading pool this manager is authorized to trade on.
 
-### How does a `MarginManager` measure risk?
+### How does a `MarginManager` measure risk? {#borrowing-and-risk-management}
 
 A `MarginManager` can only borrow from one margin pool at a time (either base or quote asset). This simplifies risk calculations and prevents complex cross-collateral scenarios.
 
@@ -132,7 +132,7 @@ These thresholds are risk parameters set per pool and stored in the [`MarginRegi
 
 For example, a position with assets worth 1,200 and debt worth 1,000 has a risk ratio of 1.2. With the example thresholds, this position cannot withdraw collateral or take out new loans, and it is not yet eligible for liquidation.
 
-### When can a position be liquidated?
+### When can a position be liquidated? {#liquidation-process}
 
 When a `MarginManager` risk ratio falls below the liquidation threshold, anyone can liquidate the position:
 
