@@ -260,11 +260,11 @@ Check if a market order can be placed with the given parameters. Returns `true` 
 
 <ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="can_place_market_order" noComments />
 
-Validate limit order parameters and return detailed error information if invalid.
+Check whether limit order parameters are valid against the pool's book parameters, without checking balances. Returns `true` if the expiration timestamp is in the future, the quantity is at least `min_size` and a multiple of `lot_size`, and the price is a multiple of `tick_size` within the allowed price range, `false` otherwise. `can_place_limit_order` runs this check before it checks balances.
 
 <ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="check_limit_order_params" noComments />
 
-Validate market order parameters and return detailed error information if invalid.
+Check whether a market order quantity is valid against the pool's book parameters, without checking balances. Returns `true` if the quantity is at least `min_size` and a multiple of `lot_size`, `false` otherwise. `can_place_market_order` runs this check before it checks balances.
 
 <ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="check_market_order_params" noComments />
 
@@ -273,7 +273,7 @@ Validate market order parameters and return detailed error information if invali
 <details>
 <summary>Pool status</summary>
 
-Check if the pool is a stable pool (uses stable curve pricing).
+Check if the pool is a stable pool. A pool is stable when both its base and quote assets are registered stablecoins, or when an admin creates it with the stable flag. The flag only selects which taker and maker fee bounds governance proposals must stay within (stable or volatile). It does not change how the order book matches or prices orders.
 
 <ImportContent source="packages/deepbook/sources/pool.move" mode="code" org="MystenLabs" repo="deepbookv3" fun="stable_pool" noComments />
 
