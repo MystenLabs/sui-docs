@@ -73,3 +73,21 @@ The Hashi TypeScript SDK (`@mysten/hashi`) provides programmatic access to depos
 ## Full documentation
 
 For the complete Hashi reference covering committee design, governance, operator runbooks, and protocol flows, see the [Hashi documentation](https://mystenlabs.github.io/hashi/design/).
+
+## How do I deploy an app that uses Hashi to Sui?
+
+Deploying to Sui means publishing a Move package to a Sui network. To build an app that holds or uses `Coin<BTC>` from Hashi, write your logic in a Move package and publish that package with the Sui CLI.
+
+The [Publishing Packages](/develop/publish-upgrade-packages/deploy) guide shows you how to:
+
+- Compile and publish a Move package to a Sui network using the Sui CLI
+- Estimate gas costs with a dry run
+- Verify onchain bytecode
+- Serialize publish transactions for multisig signing
+
+Hashi runs on Testnet, so publish your package to Testnet when you want it to interact with the Hashi Testnet instance.
+
+After your first publish, these guides cover the rest of the package lifecycle:
+
+- **Upgrades:** [Upgrading Packages](/develop/publish-upgrade-packages/upgrade) explains layout-compatibility requirements and how to manage `UpgradeCap` and `UpgradeTicket`.
+- **Automation:** [Deploy Sui Packages with GitHub Actions](/develop/publish-upgrade-packages/deploy-github-actions) builds a CI/CD pipeline that tests every pull request, automates Testnet publishing, and gates Mainnet publishing and upgrades behind manual approval.
