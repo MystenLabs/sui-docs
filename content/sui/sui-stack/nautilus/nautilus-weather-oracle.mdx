@@ -189,7 +189,7 @@ Adapting this to a different data source takes 4 changes:
 1. **Match the structs.** The Rust response struct and the Move struct must have identical field names, in the same order, with compatible types. BCS, the encoding the enclave signs and the contract reconstructs before verifying, is order-sensitive, so a mismatch fails signature verification even when the signature is valid.
 2. **Allowlist the domain.** Add your API host to `allowed_endpoints.yaml`, or the enclave cannot reach it.
 3. **Set an intent constant.** The reference app uses `WEATHER_INTENT` with value `0` as a domain separator. Give each distinct message type its own value so a signature for one cannot be replayed as another.
-4. **Register the enclave.** Publish your package, then call `GET /get_attestation` on the running enclave and submit the attestation to `register_enclave`. This stores the enclave public key onchain. The `init` function ships with placeholder PCR values; replace them with the real hashes from your built enclave image before Mainnet.
+4. **Register the enclave.** Publish your package with `sui client publish`, then call `GET /get_attestation` on the running enclave and submit the attestation to `register_enclave`. This stores the enclave public key onchain. The `init` function ships with placeholder PCR values; replace them with the real hashes from your built enclave image before Mainnet.
 
 Once registered, call the enclave and submit its signed output. Replace `ENCLAVE_URL` with your enclave's address and `London` with the location you want to query:
 
