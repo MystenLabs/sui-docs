@@ -33,7 +33,7 @@ Review security best practices for building on Sui to help protect your smart co
 
 Shared objects are not an authorization boundary. Anyone can submit a transaction that references a shared object, so any privileged code path that touches a shared object must enforce authorization with Move-level checks. For example:
 
-- Require a capability argument (an object that grants authority to whoever holds it, such as the `UpgradeCap` described below).
+- Require a capability argument (an object that grants authority to whoever holds it, such as a package's `UpgradeCap`).
 - Validate `tx_context::sender()`.
 - Check object ownership.
 
