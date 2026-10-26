@@ -58,7 +58,7 @@ At a high level, the DeepBookV3 design follows the following flow, which revolve
 
 <p class="flex justify-center">![1](./images/architecture_deepbook-shared-objects_v1.svg)</p>
 
-## Pool shared object {#pool}
+## What is the Pool shared object? {#pool}
 
 All public facing functions take in the `Pool` shared object as a mutable or immutable reference. `Pool` consists of 3 distinct components:
 
@@ -111,7 +111,13 @@ Every epoch, users with nonzero stake can submit a proposal to change these para
 
 Users can also vote on live proposals. When a proposal exceeds the quorum, DeepBookV3 queues the new trade parameters to go live from the following epoch and onwards. Proposals and votes reset every epoch. Users can start submitting and voting on proposals the epoch following their stake. Quorum is equivalent to half of the total voting power. The following formula calculates a user's voting power, where ${V}$ is the voting power, ${S}$ is the amount staked, and ${V_c}$ is the voting power cutoff. The current value of ${V_c}$ is 100,000 DEEP.
 
-In plain terms, stake counts one-for-one toward voting power up to the cutoff, and any stake above the cutoff adds only the difference between the square root of S and the square root of V_c, so voting power grows more slowly for large stakes. Written as plain text, the formula is `V = min(S, V_c) + max(sqrt(S) - sqrt(V_c), 0)`.
+Written as plain text, the formula is `V = min(S, V_c) + max(sqrt(S) - sqrt(V_c), 0)`, where:
+
+- V is the voting power.
+- S is the amount staked.
+- V_c is the voting power cutoff, currently 100,000 DEEP.
+
+In plain terms, stake counts one-for-one toward voting power up to the cutoff, and any stake above the cutoff adds only the difference between the square root of S and the square root of V_c, so voting power grows more slowly for large stakes.
 
 <p class="flex justify-center">$\LARGE V=\min\lparen S,V_c \rparen + \max\lparen \sqrt{S} - \sqrt{V_c} ,0 \rparen$</p>
 
@@ -172,7 +178,7 @@ The B+ Tree stores its nodes as individual dynamic fields hanging off the `BigVe
 
 The following diagram of the lifecycle of an order placement action helps visualize the book, then state, then vault flow.
 
-<p class="flex justify-center">![Place limit order flow](./images/sequence_deepbook-place-limit-order_v1.svg)</p>
+<p class="flex justify-center">![Sequence diagram of the place limit order flow from Pool to Book, then State, then Vault](./images/sequence_deepbook-place-limit-order_v1.svg)</p>
 
 The sections that follow describe each step of this flow in text.
 
