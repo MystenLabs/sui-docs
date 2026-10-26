@@ -118,7 +118,7 @@ Neither `tx.createManager` nor `tx.deposit` attaches a referrer, and the contrac
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="608-608" />
 
-Decode the result with [`decode.createManager`](#decode-create-manager) to read the new wrapper ID and account ID.
+Sign and execute the transaction, then decode the result with [`decode.createManager`](#decode-create-manager) to read the new wrapper ID and account ID.
 
 ### `tx.deposit` {#deposit}
 
@@ -164,7 +164,7 @@ The account read runs through the Sui client's transaction simulation, so it nee
 
 Use `read.balance` to read the account's USDC custody balance. It returns a `Promise<number>` that holds the balance as a decimal USDC value.
 
-The figure counts the account's stored balance plus funds that reach the wrapper before the account settles them, which is the balance a mint debits. It is not the owner's wallet balance, which sits outside the account in coin objects and the address balance. The read loads the owner's wrapper, so call it for an account that exists.
+The figure counts the account's stored balance plus unsettled funds (funds that reach the wrapper before the account settles them), which is the balance a mint debits. It is not the owner's wallet balance, which sits outside the account in coin objects and the address balance. The read loads the owner's wrapper, so call it for an account that exists.
 
 It takes this parameter:
 
@@ -267,7 +267,7 @@ To read the balance before you claim, simulate `builderCodeMoveCalls.claimableBu
 
 ## Account decoders {#decode}
 
-The account decoders turn an executed transaction result into a typed receipt. They make no network call and read each event's canonical Binary Canonical Serialization (BCS) bytes, so include events when you execute the transaction. [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#decode) describes the `DecodableTransactionResult` input they share.
+The account decoders turn an executed transaction result into a typed receipt. They make no network call and read each event's canonical Binary Canonical Serialization (BCS) bytes, so include events when you execute the transaction. [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#decode) describes the `DecodableTransactionResult` input they share, and the [Example](#example) shows the whole flow, which creates an account, derives its wrapper ID, deposits into it, withdraws from it, decodes the creation receipt, and reads the custody balance.
 
 Each decoder throws `PredictInputError` unless the result holds exactly 1 matching event, and also when a matching event carries no BCS payload. None of the 4 has a plural form.
 
