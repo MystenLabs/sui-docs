@@ -59,7 +59,7 @@ When configuring OAuth clients, register the exact redirect URIs your app uses a
 
 :::
 
-## Domain allowlisting checklist
+## How to allowlist a new domain {#domain-allowlisting-checklist}
 
 Every time you deploy your app to a new frontend domain, you must update your OAuth provider configuration. If you skip this step, the provider rejects the authentication request and your users cannot sign in.
 
@@ -78,12 +78,13 @@ If you use separate OAuth clients per environment (recommended), repeat this che
 :::
 
 ```typescript
+const CLIENT_ID = '<YOUR_CLIENT_ID>';
 const REDIRECT_URI = '<YOUR_SITE_URL>';
 
 const params = new URLSearchParams({
 	// Configure client ID and redirect URI with an OpenID provider
-	client_id: $CLIENT_ID,
-	redirect_uri: $REDIRECT_URI,
+	client_id: CLIENT_ID,
+	redirect_uri: REDIRECT_URI,
 	response_type: 'id_token',
 	scope: 'openid',
 	// See below for details about generation of the nonce
@@ -93,13 +94,13 @@ const params = new URLSearchParams({
 const loginURL = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 ```
 
-## OpenID providers
+## Which OpenID providers work with zkLogin? {#openid-providers}
 
 <ImportContent source="openid-providers" mode="snippet" />
 
-## Configuring an OpenID provider
+## How to configure an OpenID provider {#configuring-an-openid-provider}
 
-Select a tab for instruction on configuring the client ID (`$CLIENT_ID` in the previous example) and redirect URI (`$REDIRECT_URI` in the previous example) with the relevant provider.
+Select a tab for instruction on configuring the client ID (`CLIENT_ID` in the previous example) and redirect URI (`REDIRECT_URI` in the previous example) with the relevant provider.
 
 <Tabs groupId="oauth-providers">
 
