@@ -35,6 +35,8 @@ questions:
 answer: '![image](./images/nautilus-overview_nautilus-design_v1.png).'
 ---
 
+Nautilus runs your offchain computation inside a trusted execution environment (TEE), such as an AWS Nitro Enclave. Move smart contracts on Sui verify the enclave's attestation and signed responses, so users can verify computations without trusting the developer.
+
 ![image](./images/nautilus-overview_nautilus-design_v1.png)
 
 When the enclave starts, it exposes 3 HTTP endpoints:
@@ -45,7 +47,7 @@ When the enclave starts, it exposes 3 HTTP endpoints:
 
 1. `/process_data`: Contains your custom logic. You write the code for this yourself. This is the endpoint that your app frontend calls.
 
-## Platform configuration registers (PCR)
+## What are platform configuration registers (PCRs)?
 
 Three SHA-384 hashes that describe the enclave's code and configuration.
 
@@ -71,7 +73,7 @@ When `process_data` returns `{ response, signature }`, then the enclave signs th
 
 An onchain Move contract checks that the signature matches public key of registered enclave, the PCRs are correct, and the timestamp is recent. If all checks pass, the contract accepts the computation.
 
-## The role of smart contracts
+## What do Move smart contracts do in Nautilus?
 
 Move smart contracts do two things in this process:
 
@@ -117,7 +119,7 @@ As a user or client application, you can verify and interact with a Nautilus enc
 
 1. Submit the signed response onchain for verification before executing the corresponding application logic.
 
-## Trust model
+## What is the Nautilus trust model?
 
 The Nautilus trust model enables you to verify computations without trusting individual developers or service providers. This verification relies on cryptographic attestations and reproducible builds.
 
