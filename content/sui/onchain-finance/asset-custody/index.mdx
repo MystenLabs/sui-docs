@@ -1,19 +1,18 @@
 ---
 title: Asset Custody
 description: >-
-  Explore tools and patterns for managing custody of digital assets on Sui,
-  including fungible tokens, closed-loop tokens, tokenized assets, and wallet
-  integrations.
+  Explore the tools and patterns for holding assets on Sui: address aliases,
+  address balances, fiat on-ramps and off-ramps, and wallets.
 keywords:
   - Sui onchain finance
   - digital assets
-  - DeepBook
   - asset custody
-  - fungible tokens
-  - closed-loop token
-  - kiosk
-  - tokenized assets
-  - payment kit
+  - address aliases
+  - address balances
+  - fiat on-ramps
+  - fiat off-ramps
+  - wallets
+  - zkLogin
 goal:
   description: >-
     Provide a brief introduction to asset custody on Sui and link to
@@ -31,12 +30,14 @@ questions:
   - How should I custody assets on Sui?
   - Which custody pattern fits my application?
 answer: >-
-  Explore tools and patterns for managing custody of digital assets on Sui,
-  including fungible tokens, closed-loop tokens, tokenized assets, and wallet
-  integrations.
+  Asset custody on Sui covers address aliases that let multiple keys act as 1
+  Sui address, address balances that track fungible assets with a single
+  per-address value instead of coin objects, fiat on-ramps and off-ramps that
+  convert between fiat and Sui-native tokens through third-party providers, and
+  wallets, including Slush, self-custodial, and zkLogin wallets.
 ---
 
-Asset custody on Sui covers the tools and patterns for managing custody of digital assets, including fungible tokens, closed-loop tokens, tokenized assets, and wallet integrations.
+Asset custody on Sui covers how applications and users hold and move assets. Address aliases let multiple keys act as 1 Sui address, so you can rotate keys without migrating assets. Address balances track fungible assets with a single per-address value instead of coin objects. Fiat on-ramps and off-ramps convert between fiat currency and Sui-native tokens through third-party providers. Wallets cover how Sui wallets work and the wallet types available, including Slush, self-custodial, and zkLogin wallets.
 
 import DocCardList from '@theme/DocCardList';
 
