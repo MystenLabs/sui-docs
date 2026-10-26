@@ -127,7 +127,7 @@ All of the above is effective immediately and globally.
 - Take or modify items stored in someone else's kiosk
 - Restrict taking items from kiosks if the policy does not set the `locking` rule
 
-## Sui Kiosk guarantees
+## What guarantees does Sui Kiosk provide? {#sui-kiosk-guarantees}
 
 Sui Kiosk provides a set of guarantees that Sui enforces through smart contracts.
 These guarantees include:
@@ -145,7 +145,7 @@ In practice, these guarantees mean that:
 - You can disable any extension at any time (as the owner).
 - The state of an extension state is always accessible to the extension.
 
-### Asset states in Sui Kiosk {#asset-states}
+### What states can an asset have in a kiosk? {#asset-states}
 
 Sui Kiosk is a shared object that can store heterogeneous values, such as different sets of asset collectibles. When you add an asset to your kiosk, it has one of the following states:
 
@@ -198,7 +198,7 @@ tx.transferObjects([kioskOwnerCap], sender);
 tx.moveCall({
 	target: '0x2::transfer::public_share_object',
 	arguments: [kiosk],
-	typeArguments: '0x2::kiosk::Kiosk',
+	typeArguments: ['0x2::kiosk::Kiosk'],
 });
 ```
 
@@ -329,7 +329,7 @@ Sui Kiosk provides basic trading functionality. As a kiosk owner, you can list a
 
 Anyone on the network can purchase an item listed from a Sui Kiosk. To learn more about the purchase flow, see the [Purchase section](#purchase). To learn more about asset states and what you can do with a listed item, see the [Asset States](#asset-states) section.
 
-### List an item from a kiosk
+### How to list an item for sale in a kiosk {#list-an-item-from-a-kiosk}
 
 As a kiosk owner, you can use the `kiosk::list` function to list any asset you added to your kiosk. Include the item to sell and the list price as arguments. All listings on Sui are in SUI tokens.
 When you list an item, Sui emits a `kiosk::ItemListed` event that contains the kiosk ID, item ID, type of the item, and the list price.
@@ -406,7 +406,7 @@ Anyone that has an address on the Sui network can purchase an item listed from a
 
 You can discover the items listed on the network with the `kiosk::ItemListed` event.
 
-When you use the `kiosk::purchase` function, it returns the purchased asset and the `TransferRequest` for the type associated with the asset. To complete the purchase, you must meet the terms defined in the `TransferPolicy` applied to the asset. Transfer policy resolution happens within the same PTB as the purchase, ensuring atomicity; see the [PTB Cookbook](/develop/transactions/ptbs/ptb-cookbook#sponsored-kiosk-purchase) for a complete example. Transfer policy resolution happens within the same PTB as the purchase, ensuring atomicity; see the [PTB Cookbook](/develop/transactions/ptbs/ptb-cookbook#sponsored-kiosk-purchase) for a complete example.
+When you use the `kiosk::purchase` function, it returns the purchased asset and the `TransferRequest` for the type associated with the asset. To complete the purchase, you must meet the terms defined in the `TransferPolicy` applied to the asset. Transfer policy resolution happens within the same PTB as the purchase, ensuring atomicity; see the [PTB Cookbook](/develop/transactions/ptbs/ptb-cookbook#how-do-i-combine-sponsored-transactions-with-kiosk-operations) for a complete example.
 
 ## Borrow an item from a kiosk
 
