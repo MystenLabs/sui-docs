@@ -74,6 +74,8 @@ Stake required is the amount of DEEP tokens a user must have staked in the pool 
 
 For example, if you stake during epoch N, your stake becomes active with your first action in epoch N+1, and you can start submitting and voting on proposals in epoch N+1.
 
+To unstake, call `unstake`. The function removes all of your active and inactive stake at once and returns it to your `balance_manager`. It also removes any votes you cast, you forfeit maker rebates for the epoch, and reduced taker fees stop for the remaining epoch.
+
 ## What do maker and taker incentives give me?
 
 While your active stake is greater than the pool's stake required, you get reduced taker fees and can accumulate trading fee rebates during that epoch. A maker is eligible for rebates in an epoch as long as their DEEP staked is over the stake required and they have contributed maker volume. See [Claim rebates](#api) to learn how to claim rebates.
