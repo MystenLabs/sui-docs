@@ -105,11 +105,11 @@ public entry fun do_something(value: u64) {
 }
 ```
 
-Sui automatically associates the event with the package that defines the event type. Only that package can emit events to its stream.
+Sui automatically associates the event with the package that defines the event type. Only that package can emit events to its stream. The `stream_id` of that stream is the original ID of the package that defines the event type (the address of its first published version), which the example in [How do I consume and verify events in Rust?](#how-do-i-consume-and-verify-events-in-rust) builds with `SuiAddress::from(package_id)`.
 
 ### Are authenticated events backward compatible with regular events?
 
-Authenticated events are fully backward-compatible with regular Sui events. An authenticated event is a regular event with additional metadata for verification. Existing event consumers continue to work unchanged.
+Authenticated events are backward compatible with existing event consumers. An authenticated event is a regular event with additional metadata for verification, so existing event consumers continue to work unchanged. Emitting authenticated events, however, requires a contract change and a package upgrade.
 
 To upgrade:
 
@@ -369,7 +369,7 @@ The client automatically handles epoch transitions and committee changes.
 - You can retrieve events only if the full node indexes them and has not pruned them.
 - You must consume events in checkpoint order.
 - The `EventStreamHead` must change at the resume checkpoint (the package must have emitted authenticated events).
-- Each package has one stream (`stream_id` = package address).
+- Each package has one stream (`stream_id` = package address), so all authenticated event types that the package defines share that stream.
 - Sui does not support event-level MMR inclusion proofs.
 
 ## Error handling
