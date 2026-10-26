@@ -228,7 +228,7 @@ You create and approve the request across multiple Move calls in a single PTB, t
 flowchart TD
     A["account::new_auth() → auth"] --> B["account.send_balance(auth, to, amount) → request"]
     B --> C["your_contract::approve_transfer(&mut request) → stamps approval"]
-    C --> D["send_funds::resolve_balance(request, policy) → sends to recipient"]
+    C --> D["send_funds::resolve_balance(request, policy) → sends to recipient Account"]
 ```
 
 **Use case:** Transfers, where the compliance contract approves and PAS handles delivery.
