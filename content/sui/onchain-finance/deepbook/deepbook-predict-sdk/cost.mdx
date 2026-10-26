@@ -90,6 +90,8 @@ Predict charges a trading fee at each **finite** boundary of a range, so the nam
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="179-184" />
 
+`lowerUp` holds the lower boundary's probability and `higherUp` holds the higher boundary's probability. A down position sets `lowerUp` to `null`, an up position sets `higherUp` to `null`, and a range between 2 finite strikes sets both. `cost.rangeProbability` returns the range's own probability, `lowerUp` minus `higherUp`, counting a `null` lower side as 1 and a `null` higher side as 0.
+
 Pass either shape as `probabilities`:
 
 - **Raw boundary probabilities** you already hold, as 1e9-scaled `bigint` values. Use `probabilityToRaw` on a value from `read.price`. This is the exact path, and the result sets `exactProbabilities` to `true`.
@@ -99,7 +101,7 @@ Pass either shape as `probabilities`:
 
 ### The book, when inventory impact is on {#book}
 
-Predict prices the inventory-impact charge against the market's payout tree, so a policy with a non-zero `inventoryImpactMaxRate` needs a `book` argument: `maxPayout`, `totalPayout`, and the payout peak inside the candidate range, plus the peak outside it for a close. Both deployments ship with impact disabled, so you do not need `book` until an admin turns it on.
+Predict prices the inventory-impact charge against the market's payout tree, so a policy with a non-zero `inventoryImpactMaxRate` needs a `book` argument: `maxPayout`, `totalPayout`, and the payout peak inside the candidate range, plus the peak outside it for a close. Both deployments ship with impact disabled, so you do not need `book` until an admin turns it on. To check, read `inventoryImpactMaxRate` on the market's fee policy. A non-zero value means you pass `book`.
 
 ## How do I preview a mint's cost? {#mint-previews}
 
@@ -107,7 +109,7 @@ The namespace has 2 mint previews: `cost.mintCost` for an exact payout quantity 
 
 ### `cost.mintCost` {#mint-cost}
 
-Use `cost.mintCost` to price an exact payout quantity, the local twin of an exact-quantity queued mint priced at the clock. It mirrors the contract's `compute_mint_quote`, including the admission checks, and throws a `PredictInputError` naming the abort the chain would have raised: the entry-probability band on each finite leg and on the range, the 1 USDC minimum premium, the lot grid, and the rule that a contract must never cost more than it can pay out.
+Use `cost.mintCost` to price an exact payout quantity, the local twin of an exact-quantity queued mint priced at the clock. It mirrors the contract's `compute_mint_quote`, including the admission checks, and throws a `PredictInputError` naming the abort the chain would have raised: the entry-probability band on each finite leg and on the range, the 1 USDC minimum premium, the lot grid set by `cost.POSITION_LOT_SIZE`, and the rule that a contract must never cost more than it can pay out. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) describes the Move abort codes.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="726-726" />
 
@@ -121,10 +123,12 @@ Use `cost.mintCost` to price an exact payout quantity, the local twin of an exac
 
 A full mint preview runs in this order:
 
-1. Read the market's fee policy with `read.feePolicy(market)`, or from the market's `MarketCreated` event.
+1. Read the market's fee policy with `read.feePolicy(market)` on version 2.7.0 or later, or from the market's `MarketCreated` event on an earlier version.
 2. Read the range's price with `read.price` and convert each finite boundary with `probabilityToRaw`.
 3. Call `cost.mintCost` with the policy, the market's `expiryMs`, the probabilities, and the quantity.
 4. Before submitting, confirm the trade with [`read.planMint`](/onchain-finance/deepbook/deepbook-predict-sdk/positions#plan-mint), which runs the enqueue builder's preflight.
+
+The example passes `cost.SHIPPED_FEE_POLICY` only to keep it short. That template previews low, so for a live market pass the policy from `read.feePolicy(market)` as `fees` instead.
 
 ```ts
 import { cost, probabilityToRaw } from '@mysten/deepbook-v3/predict';
