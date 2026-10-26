@@ -73,7 +73,7 @@ GraphQL RPC Server and the General-purpose Indexer are generally available. JSON
 
 :::
 
-## Components
+## What components make up the GraphQL stack?
 
 The key components of the GraphQL and General-purpose Indexer stack include the following:
 
@@ -85,13 +85,15 @@ The key components of the GraphQL and General-purpose Indexer stack include the 
 
 - **Archival Service:** Enables point lookups for historical data from a key-value store. If unavailable, the GraphQL service falls back to the Postgres-compatible database for lookups, which might be limited by that database's retention policy. See [Archival Store and Service](/develop/accessing-data/archival-store) for more information.
 
-- **Consistent Store:** Answers queries about the latest state of the network within the last hour (objects owned by addresses, objects by type, balances by address and type). Consistency is guaranteed by pinning queries to a specific (recent) checkpoint.
+- **Consistent Store:** A combined indexer and RPC service that indexes live onchain data, separate from the historical data in the Postgres-compatible database. It answers queries about the latest state of the network within the last hour (objects owned by addresses, objects by type, balances by address and type). It guarantees consistency by pinning queries to a specific recent checkpoint.
 
 - **Full node:** Enables transaction execution and simulation.
 
-## When to use
+## When should you use GraphQL?
 
 Use GraphQL RPC with the General-purpose Indexer as a flexible and ergonomic data API to build rich dashboards, explorers, and data-driven apps. The API is powered by an indexer created using the custom indexing framework.
+
+GraphQL RPC is an alternative to the gRPC API, so you can choose either one for your app.
 
 Use GraphQL if your application:
 
@@ -139,21 +141,24 @@ The GraphQL service is deployed as a single binary implementing a stateless, hor
 
 Requests to GraphQL are subject to various limits, to ensure resources are shared fairly between clients. Each limit is configurable, and the values configured for an instance can be queried through `Query.serviceConfig`. Requests that do not meet limits return with an error. The following limits are in effect:
 
-- **Request size:** Requests might not exceed a certain size in bytes. The limit is spread across a transaction payload limit, which applies to all values and variable bindings that are parameters to transaction signing, execution, and simulation fields (default: 175KB), and a query payload limit which applies to all other parts of the query (default: 5KB).
-
-- **Request timeout:** Time spent on each request is bounded, with different bounds for execution (default: 74s) and regular reads (default: 40s).
-
-- **Query input nodes and depth:** The query cannot be too complex, meaning it cannot contain too many input nodes or field names (default: 300) or be too deeply nested (default: 20).
-
-- **Output nodes:** The service estimates the maximum number of output nodes the query might produce, assuming every requested field is present, every paginated field returns full pages, and every multi-get finds all requested keys. This estimate must be bounded (default: 1,000,000).
-
-- **Page and multi-get size:** Each paginated field (default: 50) and multi-get (default: 200) is subject to a maximum size. Certain paginated fields might override this to provide a higher or lower maximum.
-
-- **Rich queries:** A request can contain only a bounded number (default: 5) of queries that require dedicated access to the database (cannot be grouped with other requests).
+| **Limit** | **Default** | **Description** |
+|---|---|---|
+| Transaction payload size | 175KB | Maximum size in bytes of all values and variable bindings that are parameters to transaction signing, execution, and simulation fields. |
+| Query payload size | 5KB | Maximum size in bytes of all other parts of the query. |
+| Execution timeout | 74s | Maximum time the service spends on each execution request. |
+| Read timeout | 40s | Maximum time the service spends on each regular read request. |
+| Query input nodes | 300 | Maximum number of input nodes or field names in the query. |
+| Query depth | 20 | Maximum nesting depth of the query. |
+| Output nodes | 1,000,000 | Maximum estimated number of output nodes the query might produce. The service assumes every requested field is present, every paginated field returns full pages, and every multi-get finds all requested keys. |
+| Page size | 50 | Maximum size of each paginated field. Certain paginated fields might override this to provide a higher or lower maximum. |
+| Multi-get size | 200 | Maximum size of each multi-get. |
+| Rich queries | 5 | Maximum number of queries in a request that require dedicated access to the database, which the service cannot group with other requests. |
 
 ## Working with General-purpose Indexer
 
 General-purpose Indexer fetches checkpoints data from either a remote object store, local files, or a full node RPC, and indexes data into multiple database tables through a set of specialized pipelines. PostgreSQL-compatible storage is the default deployment path for the general-purpose GraphQL stack. Custom indexers built on the same framework can write to other storage layers by implementing the framework's storage traits. Each pipeline is responsible for extracting specific data and writing to its target tables.
+
+The `schema.rs` file in `sui-indexer-alt-schema` defines every table the pipelines write to and its schema:
 
 <details>
 <summary>
@@ -243,6 +248,8 @@ Avoid retaining long-term historical data in Postgres unless required for specif
 For production GraphQL deployments, pair Postgres-compatible storage with the [Archival Service](/develop/accessing-data/archival-store) to support point lookups of transactions, objects, and checkpoints when relevant data does not exist in Postgres. The Archival Service serves as the backend for historical versions and checkpoint data, reducing pressure on your Postgres instance. For gRPC workloads, full nodes do not implicitly route to Archival; clients that need high-retention data must query an Archival Service endpoint directly.
 
 Current implementation supports [GCP Bigtable](https://cloud.google.com/bigtable) which is a highly scalable and performant data store. If you plan to operate your own archival store, refer to `sui-kvstore` and `sui-kv-rpc` for indexer setup and RPC service implementation respectively. For the indexer setup, make sure to use the [custom indexing framework](/develop/accessing-data/custom-indexer/custom-indexers). If you're interested in contributing support for other scalable data stores, reach out on GitHub by creating a new issue.
+
+The following collapsible sections contain the source of `lib.rs` in `sui-kvstore`, for the indexer setup, and `main.rs` in `sui-kv-rpc`, for the RPC service implementation:
 
 <details>
 <summary>
