@@ -45,7 +45,7 @@ answer: >-
 
 Managing the data on your Sui full node is critical to ensuring a healthy Sui network. This topic provides a high-level description of data management on Sui full nodes that you can use to optimize your full node configuration. For more information about Sui full nodes, including pruning policies and archival settings, see [Run a Sui Full Node](/operators/full-node/sui-full-node).
 
-## Basic Sui full node functionality
+## What does a Sui full node do? {#basic-sui-full-node-functionality}
 
 The minimal version of a Sui full node executes all the transactions Sui validators commit. Sui full nodes also orchestrate submitting new transactions to the system:
 
@@ -60,7 +60,7 @@ The preceding image shows how data flows through a full node:
 2. **RPCs:** A Sui full node exposes Sui RPC endpoints for querying the latest state of the system, including both the latest state metadata (such as `sui_getProtocolConfig`) and the latest state object data (`sui_getObject`).
 3. **Transaction submission:** Each Sui full node orchestrates transaction submission to the quorum of the Sui validators and, optionally if configured, locally executes the finalized transactions (called local execution), which circumvents the wait for checkpoint synchronization.
 
-## Sui full node data and RPC types
+## What data does a Sui full node store and serve? {#sui-full-node-data-and-rpc-types}
 
 A Sui full node stores multiple categories of data in its permanent store.
 
@@ -89,15 +89,15 @@ Sui full nodes support more than 40 RPC types that includes the following catego
 
 :::
 
-## Sui archival data
+## What is Sui archival data? {#sui-archival-data}
 
 A Sui archive instance stores the full Sui transaction history since genesis in a database-agnostic format. This includes information about transactions (with client authentication), effects, events, and checkpoints. You can use archival storage for data auditing and for replaying historic transactions.
 
-A full node that starts from scratch can replay (and thus re-verify) transactions that occurred since Sui genesis from the given archive by [configuring archival fallback](/operators/data-management/archives#set-up-archival-fallback) in the `fullnode.yaml` configuration file to point to the cloud bucket that stores the archive.
+A full node that starts from scratch can replay (and thus re-verify) transactions that occurred since Sui genesis from the given archive by [configuring archival fallback](/operators/data-management/archives) in the `fullnode.yaml` configuration file to point to the cloud bucket that stores the archive.
 
 A Sui full node that fails to retrieve checkpoints from its peers through the state sync protocol falls back to downloading the missing checkpoints from its pre-configured archive. This fallback enables a full node to catch up with the rest of the system regardless of the pruning policies of its peers.
 
-## Pruning
+## How to reduce disk usage with pruning {#pruning}
 
 If your node's disk usage is growing beyond your capacity (commonly 7TB or more without pruning), copy one of the following configurations into your `fullnode.yaml` and restart the node. Pruning runs in the background and reclaims space over multiple days as RocksDB compaction completes.
 
@@ -117,7 +117,7 @@ If you are starting a new full node from scratch, apply your pruning configurati
 
 :::
 
-## Sui node pruning policies
+## What pruning policies do Sui nodes support? {#sui-node-pruning-policies}
 
 As described previously, sustainable disk usage requires Sui nodes (validators and full nodes) to prune the information about historic object versions, as well as historic transactions with the corresponding effects and events, including old checkpoint data.
 
@@ -160,7 +160,7 @@ authority-store-pruning-config:
   # RPC requests that require looking up objects by ID and Version (rather than just latest
   # version). However, if your full node does not serve RPC requests you should then also enable.
   # aggressive pruning.
-  num-epochs-to-retain: 1
+  num-epochs-to-retain: 5
   # Advanced setting: Maximum number of checkpoints to prune in a batch. The default
   # settings are appropriate for most use cases.
   max-checkpoints-in-batch: 10
