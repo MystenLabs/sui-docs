@@ -70,10 +70,6 @@ After publishing, you can deploy new versions of your package using `sui client 
 - **Testnet and Devnet:** Use these for development and testing. Testnet and Devnet addresses are separate from Mainnet, and packages published on one network do not exist on another.
 - **Mainnet:** Production deployments. Verify your tests, dependencies, and gas budget before publishing. Use `--dry-run` to simulate the transaction without committing it.
 
-import DocCardList from '@theme/DocCardList';
-
-<DocCardList />
-
 ## How do I fetch the code of a published package?
 
 A package on Sui holds compiled Move bytecode, not the original Move source. To inspect what a package (for example, the package that defines a token) contains, generate a bytecode summary from its package ID with the Sui CLI.
@@ -84,3 +80,7 @@ A package on Sui holds compiled Move bytecode, not the original Move source. To 
 The `--package-id` option only supports bytecode summaries. If you omit `--bytecode`, the CLI prints a warning and falls back to a bytecode-based summary anyway. Pass `--bytecode` to avoid the warning.
 
 If you also have a copy of the Move source that claims to match the package, run `sui client verify-source` from that package directory. The command rebuilds the local source with the toolchain version that originally published the package and compares the result against the onchain bytecode and linkage. A match confirms that the source you hold is the code running onchain.
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
