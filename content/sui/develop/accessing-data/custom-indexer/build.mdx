@@ -284,6 +284,14 @@ The Diesel's migration system evolves the database schema over time in a structu
 
 To simplify writes to Diesel, you can define a struct that represents a record on the `transaction_digests` table.
 
+Create a `models.rs` file in your `src` directory.
+
+```sh
+$ touch ./src/models.rs
+```
+
+Open the file, add the following code, and save it:
+
 <ImportContent source="examples/rust/basic-sui-indexer/src/models.rs" mode="code" />
 
 Key annotations:
@@ -442,6 +450,13 @@ $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/gcp-credentials.json
 $ export GOOGLE_CLOUD_PROJECT=your-billing-project
 ```
 
+Confirm that each variable holds the value you exported before you run the indexer:
+
+```sh
+$ echo $GOOGLE_APPLICATION_CREDENTIALS
+$ echo $GOOGLE_CLOUD_PROJECT
+```
+
 **Phase 1: backfill from the full-retention GCS checkpoint bucket:**
 
 ```sh
@@ -456,6 +471,8 @@ After the indexer reaches the network tip, stop it and restart it with fullnode 
 
 ```sh
 $ export FULLNODE_GRPC_URL=https://your-rpc-provider.example:443
+
+$ echo $FULLNODE_GRPC_URL
 
 $ cargo run -- \
     --rpc-api-url "$FULLNODE_GRPC_URL" \
