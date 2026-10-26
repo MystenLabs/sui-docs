@@ -2,8 +2,9 @@
 title: Maintainer
 description: >-
   Learn about maintainer functions for creating margin pools, enabling or
-  disabling DeepBook pools, updating interest rate parameters, withdrawing fees,
-  and the events emitted by the margin registry.
+  disabling DeepBook pools, updating interest rate parameters, withdrawing
+  maintainer, protocol, and default referral fees, and the events emitted by the
+  margin registry.
 keywords:
   - maintainer
   - margin pool admin
@@ -41,14 +42,14 @@ The maintainer module provides functions for managing margin pools, configuring 
 
 Each margin pool holds a single asset type and lends it only to the DeepBook pools that a maintainer enables for loans. Margin managers associated with those enabled DeepBook pools can then borrow from the margin pool.
 
-## API
+## What maintainer functions does the margin pool expose?
 
 Following are the different maintainer functions that the `MarginPool` exposes.
 
 <details>
 <summary>Create a margin pool</summary>
 
-Creates and registers a new margin pool for a specific asset. Only one margin pool can exist per asset type.
+`create_margin_pool` creates and registers a new margin pool for a specific asset. Only one margin pool can exist per asset type.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -64,7 +65,7 @@ Creates and registers a new margin pool for a specific asset. Only one margin po
 <details>
 <summary>Enable or disable DeepBook pools</summary>
 
-Control which DeepBook pools can borrow from this margin pool. Only margin managers associated with enabled pools can take loans.
+Control which DeepBook pools can borrow from this margin pool with `enable_deepbook_pool_for_loan` and `disable_deepbook_pool_for_loan`. Only margin managers associated with enabled pools can take loans.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -79,7 +80,7 @@ Control which DeepBook pools can borrow from this margin pool. Only margin manag
 <details>
 <summary>Update pool parameters</summary>
 
-Update interest rate parameters and margin pool configuration settings.
+Use `update_interest_params` to update interest rate parameters and `update_margin_pool_config` to update margin pool configuration settings.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -106,7 +107,7 @@ Withdraw accumulated fees from the margin pool: `withdraw_maintainer_fees` for m
 
 </details>
 
-## Events
+## What events does the margin registry emit?
 
 The margin registry, defined in the `margin_registry` module of the `deepbook_margin` package, emits the following events when maintainer or pause capabilities change, or when a DeepBook pool is registered or updated in the registry. Listen for them to track these changes.
 
