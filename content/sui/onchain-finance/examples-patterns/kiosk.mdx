@@ -88,7 +88,7 @@ The function lists `ta2` in the kiosk at a price of `0` and then purchases it wi
 
 :::caution
 
-The following example splits (effectively replacing) the `AssetCap<T>` into two new objects: the `Treasury<T>` and the `AdminCap<T>`. Carefully re-design the access to methods defined in the original package because this change can introduce unwanted effects. This required re-design is not entirely contained in this example and only some methods are changed for demonstration purposes.
+The following example splits (effectively replacing) the `AssetCap<T>` into two new objects: the `Treasury<T>` and the `AdminCap<T>`. This change can introduce unwanted effects. The example shows only some of the changes for demonstration purposes. You must redesign access to the remaining methods in the original package yourself, including functions like `mint` that now take both the `Treasury` object and the `AdminCap` object as input.
 
 :::
 
