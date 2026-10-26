@@ -108,7 +108,7 @@ No. There is no update function. Revoke the allowance and issue a new one with t
 
 #### Can you change the spender?
 
-Only for app-bound allowances, and only by the app. An app-bound allowance is tied to an app type, and the module that defines that type decides whether each pull is allowed. A direct allowance has no app in the loop and a fixed spender. The module that defines the app type can call `rotate_spender` with a `SettingsPermit`. Direct allowances have a fixed spender. To hand a direct allowance to a different address, revoke and reissue.
+Only for app-bound allowances, and only by the app. An app-bound allowance is tied to an app type, and the module that defines that type decides whether each pull is allowed. That module can call `rotate_spender` with a `SettingsPermit`. A direct allowance has no app in the loop and a fixed spender. To hand a direct allowance to a different address, revoke and reissue.
 
 #### Can you issue an allowance to a contract instead of an address?
 
