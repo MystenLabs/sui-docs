@@ -431,3 +431,18 @@ For manual gas resolution (sponsored transactions, custom gas coin selection), s
 JSON-RPC provided `suix_getValidatorsApy`. Neither gRPC nor GraphQL has a direct APY field. Validator APY comes from staking pool exchange rate history, which each validator's system-state object stores in dynamic fields. The legacy method used a compounding calculation across up to 30 epoch samples with outlier filtering.
 
 To compute APY after migration, query the validator set and each validator's exchange rate history, then apply a compounding formula client-side. See the [GraphQL migration cookbook](/develop/accessing-data/graphql/graphql-migration-cookbook#get-validator-apy) for the query pattern and [issue #23832](https://github.com/MystenLabs/sui/issues/23832) for the recommended computation.
+
+## How long does transaction execution take end to end?
+
+Network finality on Sui typically takes 400 to 700 ms, so a 500 ms target falls inside the normal range for the consensus part of the path. The total time that your web app measures also includes the request to, and the response from, the full node that you submit through.
+
+When you submit a transaction, the full node sends it to validators and retrieves the effects. The full node tracks client-observed performance for each validator, including:
+
+- Transaction submission latency
+- Effects retrieval latency
+- Health check response times
+- Success and failure rates
+
+The full node combines reliability and latency into a score for each validator and uses it to select validators. By default, reliability has a weight of 0.6 and latency has a weight of 0.4. If you run your own full node for a latency-sensitive application, increase the `latency` weight in `validator-client-monitor-config`. A lower `health-check-interval` detects failures faster at the cost of higher overhead, and a lower `max-consecutive-failures` excludes problematic validators faster.
+
+Reads after execution can add their own delay. A full node that does not yet know about a transaction waits for the transaction to appear in a checkpoint and reach the node through state sync, which normally takes a few seconds. This delay affects only when the transaction appears in that full node's local state, not network finality. For the full flow, see [Transaction Lifecycle](/develop/transactions/transaction-lifecycle).
