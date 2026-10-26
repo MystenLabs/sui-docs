@@ -394,6 +394,16 @@ Use `getPoolDeepPrice` to get the DEEP price conversion for a pool. The call ret
 
 <ImportContent source="/packages/deepbook-v3/src/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="getPoolDeepPrice" signatureOnly />
 
+### `getBalanceManagerIds`
+
+Use `getBalanceManagerIds` to get all balance manager IDs for a specific owner. The call returns a `Promise` with an array of balance manager IDs.
+
+**Parameters**
+
+- `owner`: String representing the owner address.
+
+<ImportContent source="/packages/deepbook-v3/src/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="getBalanceManagerIds" signatureOnly />
+
 ## Administrative functions
 
 The SDK provides administrative functions for pool management.
@@ -434,16 +444,6 @@ Use `createPermissionlessPool` to create a new permissionless pool. The call ret
   - `deepCoin`: Optional `TransactionArgument` for DEEP token payment.
 
 <ImportContent source="/packages/deepbook-v3/src/transactions/deepbook.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="createPermissionlessPool" signatureOnly />
-
-### `getBalanceManagerIds`
-
-Use `getBalanceManagerIds` to get all balance manager IDs for a specific owner. The call returns a `Promise` with an array of balance manager IDs.
-
-**Parameters**
-
-- `owner`: String representing the owner address.
-
-<ImportContent source="/packages/deepbook-v3/src/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="getBalanceManagerIds" signatureOnly />
 
 ## Referral functions
 
