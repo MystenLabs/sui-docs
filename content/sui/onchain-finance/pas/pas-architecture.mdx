@@ -72,7 +72,7 @@ There is no way to transfer a managed `Balance<C>` out of the system without goi
 
 For currencies, Move enforces this at the type level:
 
-- PAS stores `Balance<C>` as object balance on the Account UID (not as a field on the `Account` struct), using `balance::send_funds` and `balance::redeem_funds`. See [Balance tracking](#balance-tracking).
+- PAS stores `Balance<C>` as object balance on the Account UID (not as a field on the `Account` struct), using `balance::send_funds` and `balance::redeem_funds`. Object balance means PAS sends the funds to the Account object address as a Sui [Address Balance](/onchain-finance/asset-custody/address-balances/using-address-balances), instead of keeping them inside the struct. See [Balance tracking](#balance-tracking).
 
 - The only way to move funds is through request hot potatoes that the same transaction must resolve.
 
