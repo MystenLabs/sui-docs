@@ -55,7 +55,7 @@ There are 2 ways to use an object:
   
   - Immutable reference (`&`): Further restricts the set of operations and the guarantees or invariants over the referenced object. You have read-only access to the object's data.
 
-Programmable transaction blocks (PTBs) do not currently allow the use of object references returned from one of its transaction commands. You can use input objects to the PTB, objects created by the PTB (like `MakeMoveVec`), or returned from a transaction command by value as references in subsequent transaction commands. If a transaction command returns a reference, however, you cannot use that reference in any call, significantly limiting certain common patterns in Move.
+You can use input objects to the PTB, objects created by the PTB (like `MakeMoveVec`), or returned from a transaction command by value as references in subsequent transaction commands. If a transaction command returns a reference, however, you cannot use that reference in any call, significantly limiting certain common patterns in Move.
 
 ## What is the borrow module for?
 
@@ -130,9 +130,13 @@ Now the PTB can retrieve the asset, use it in a call to `use_asset`, and return 
 
 ## Considerations
 
-The `Borrow` object is the key to the guarantees the borrow module offers. The definition of `Borrow`, which is part of the borrow module in the Sui framework rather than something you define yourself, is
-`struct Borrow { ref: address, obj: ID }`
-which makes it such that you cannot drop or save its instance anywhere, so it must be consumed in the same transaction that retrieves it (hot potato). Moreover, fields in the `Borrow` struct make sure that the object returned is for the same `Referent` and the object that was originally held by the `Referent` instance. In other words, there is no way to either keep the object retrieved or to swap it with another object in a different `Referent`.
+The `Borrow` object is the key to the guarantees the borrow module offers. The definition of `Borrow`, which is part of the borrow module in the Sui framework rather than something you define yourself, is:
+
+```move
+struct Borrow { ref: address, obj: ID }
+```
+
+This definition makes it such that you cannot drop or save a `Borrow` instance anywhere, so you must consume it in the same transaction that retrieves it (hot potato). Moreover, fields in the `Borrow` struct make sure that the object returned is for the same `Referent` and the object that was originally held by the `Referent` instance. In other words, there is no way to either keep the object retrieved or to swap it with another object in a different `Referent`.
 
 :::tip
 
