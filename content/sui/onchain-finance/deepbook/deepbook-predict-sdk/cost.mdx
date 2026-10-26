@@ -90,7 +90,7 @@ Predict charges a trading fee at each **finite** boundary of a range, so the nam
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="179-184" />
 
-`lowerUp` holds the lower boundary's probability and `higherUp` holds the higher boundary's probability. A down position sets `lowerUp` to `null`, an up position sets `higherUp` to `null`, and a range between 2 finite strikes sets both. `cost.rangeProbability` returns the range's own probability, `lowerUp` minus `higherUp`.
+`lowerUp` holds the lower boundary's probability and `higherUp` holds the higher boundary's probability. A down position sets `lowerUp` to `null`, an up position sets `higherUp` to `null`, and a range between 2 finite strikes sets both. `cost.rangeProbability` returns the range's own probability, `lowerUp` minus `higherUp`, counting a `null` lower side as 1 and a `null` higher side as 0.
 
 Pass either shape as `probabilities`:
 
@@ -109,7 +109,7 @@ The namespace has 2 mint previews: `cost.mintCost` for an exact payout quantity 
 
 ### `cost.mintCost` {#mint-cost}
 
-Use `cost.mintCost` to price an exact payout quantity, the local twin of an exact-quantity queued mint priced at the clock. It mirrors the contract's `compute_mint_quote`, including the admission checks, and throws a `PredictInputError` naming the abort the chain would have raised: the entry-probability band on each finite leg and on the range, the 1 USDC minimum premium, the lot grid set by `cost.POSITION_LOT_SIZE`, and the rule that a contract must never cost more than it can pay out. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) lists the Move abort codes.
+Use `cost.mintCost` to price an exact payout quantity, the local twin of an exact-quantity queued mint priced at the clock. It mirrors the contract's `compute_mint_quote`, including the admission checks, and throws a `PredictInputError` naming the abort the chain would have raised: the entry-probability band on each finite leg and on the range, the 1 USDC minimum premium, the lot grid set by `cost.POSITION_LOT_SIZE`, and the rule that a contract must never cost more than it can pay out. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) describes the Move abort codes.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="726-726" />
 
