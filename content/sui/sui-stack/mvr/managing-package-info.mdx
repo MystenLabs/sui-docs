@@ -28,7 +28,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-To manage metadata for your Move package in the Move Registry (MVR), create a `PackageInfo` object, add source code information to it, configure reverse resolution by setting a `default` metadata entry, and transfer the object to a safe address.
+A `PackageInfo` object is the source of truth for the metadata of your Move package in the Move Registry (MVR). To manage that metadata, create a `PackageInfo` object, add source code information to it, configure reverse resolution by setting a `default` metadata entry, and transfer the object to a safe address.
 
 :::caution
 
@@ -157,6 +157,8 @@ Output:
 You can add source code information on your `PackageInfo` object using the following setup.
 
 If a version already has source code information and you want to replace it, first call `@mvr/metadata::package_info::unset_git_versioning` to remove the existing information (see [Remove or update source code information](#remove-or-update-source-code-information)). You do not need to do this when adding information for a version for the first time.
+
+In the following examples, replace each placeholder in angle brackets, including the angle brackets, with your own value. Keep the quotation marks that surround the placeholder.
 
 <Tabs groupId='language'>
   <TabItem label="TypeScript" value='typescript'>
