@@ -16,6 +16,11 @@ keywords:
   - restoring from snapshot
   - managed snapshots
   - enabling snapshots
+  - archival snapshots
+  - S3 snapshot
+  - Google Cloud Storage snapshot
+  - Azure Blob Storage snapshot
+  - snapshot configuration
 goal:
   description: >-
     Operator understands database snapshots of the Sui network enable full node
@@ -118,13 +123,21 @@ See [Install Sui](/getting-started/onboarding/sui-install) for more details.
 To restore a node from a formal snapshot, complete the following steps:
 
 1. If it's running, stop the node.
-2. Run the command:
-   ```
-   sui-tool download-formal-snapshot --latest --genesis "<PATH-TO-GENESIS-BLOB>" \
-        --network <NETWORK> --snapshot-bucket <BUCKET-NAME> --snapshot-bucket-type <TYPE> \
-        --path <PATH-TO-NODE-DB> --num-parallel-downloads 50 --no-sign-request
-   ```
-   The template lists every option. To download a specific epoch instead of the latest one, replace `--latest` with `--epoch <EPOCH>`. To choose the snapshot source, keep either `--no-sign-request` (free Cloudflare R2 bucket, no credentials) or `--snapshot-bucket` and `--snapshot-bucket-type` (credentials from the environment variables below), and remove the other; they are mutually exclusive.
+2. Run the command for your snapshot source. The `--no-sign-request` flag and the `--snapshot-bucket` and `--snapshot-bucket-type` flags are mutually exclusive, so use only one of these commands:
+
+   - **Free Cloudflare R2 bucket (no credentials):**
+     ```
+     sui-tool download-formal-snapshot --latest --genesis "<PATH-TO-GENESIS-BLOB>" \
+          --network <NETWORK> --path <PATH-TO-NODE-DB> --num-parallel-downloads 50 --no-sign-request
+     ```
+   - **GCS or S3 bucket (credentials from environment variables):**
+     ```
+     sui-tool download-formal-snapshot --latest --genesis "<PATH-TO-GENESIS-BLOB>" \
+          --network <NETWORK> --snapshot-bucket <BUCKET-NAME> --snapshot-bucket-type <TYPE> \
+          --path <PATH-TO-NODE-DB> --num-parallel-downloads 50
+     ```
+
+   To download a specific epoch instead of the latest one, replace `--latest` with `--epoch <EPOCH>`.
    - `--epoch`: The epoch that you want to download. Mysten Labs hosted buckets keep only the last 90 epochs. You can check the most recent epoch on Sui explorers like [suivision](https://suivision.xyz/) or [suiscan](https://suiscan.xyz/).
    - `--latest`: Rather than explicitly passing an epoch through `--epoch`, you can pass the `--latest` flag, which automatically selects the latest snapshot.
    - `--genesis`: The path to the location of the network's `genesis.blob`.
