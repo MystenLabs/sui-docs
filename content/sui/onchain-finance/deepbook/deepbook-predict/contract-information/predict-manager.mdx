@@ -511,15 +511,15 @@ The quote and mint example is the second of those. It reads a quote, derives a `
 
 Composing create, fund, and trade into a single block of your own is generated-bindings work rather than facade work. Build it from the [`AccountContract` methods](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) and the `loadLivePricer` function that the `/predict` subpath exports, adding commands to a single `Transaction` in this order:
 
-1. `account_registry::new`
+1. `account_registry::new`, which hands back the new wrapper as a result handle rather than as a shared object input
 1. `account::generate_auth`
 1. `account::deposit_funds`
 1. `account::share`
 1. `expiry_market::load_live_pricer`
-1. A second `account::generate_auth`, because `deposit_funds` consumed the first
+1. `account::generate_auth` again, because `deposit_funds` consumed the first
 1. `expiry_market::mint_exact_quantity`
 
-Share the wrapper after the deposit, not before: an object input can only name an object that already existed when the block started, so a wrapper that the block creates is reachable only through the result handle from `new`.
+Share the wrapper after the deposit, not before: an object input can only name an object that already existed when the block started, so a wrapper that the block creates is reachable only through the result handle from `new`, and `public fun share(self: AccountWrapper)` consumes that handle, which is why every borrowing command precedes it.
 
 The [tutorial](/onchain-finance/deepbook/deepbook-predict/tutorial) walks the whole flow with quotes, ranges, redemption, and settlement.
 
