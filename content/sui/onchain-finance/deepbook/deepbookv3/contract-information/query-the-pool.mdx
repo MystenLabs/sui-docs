@@ -65,7 +65,12 @@ To perform trades, you pass a `BalanceManager` and `TradeProof` into the relevan
 - **How do I estimate the output quantity for a swap?** Use `get_quote_quantity_out` or `get_base_quantity_out` to pay fees in DEEP, `get_quote_quantity_out_input_fee` or `get_base_quantity_out_input_fee` to pay fees in the input token, or `get_quantity_out` to get base, quote, and DEEP quantities together. To find the input needed for a given output, use `get_base_quantity_in` or `get_quote_quantity_in`.
 - **How much DEEP does an order require?** Use `get_order_deep_required`.
 - **How do I list the open orders for a `BalanceManager`?** Use `account_open_orders` for order IDs, or `get_account_order_details` for the `Order` structs.
-- **How do I check whether an order can be placed?** Use `can_place_limit_order` or `can_place_market_order`.
+- **How do I check whether an order can be placed?** Use `can_place_limit_order` or `can_place_market_order` to get `true` or `false`. For detailed error information about invalid parameters, use `check_limit_order_params` or `check_market_order_params`.
+- **How do I check whether a pool is stable or registered?** Use `stable_pool` to check whether the pool uses stable curve pricing, or `registered_pool` to check whether the pool is registered in the registry.
+- **How do I read the account for a `BalanceManager`?** Use `account_exists` to check whether an account exists for a `BalanceManager` in the pool, or `account` to get the `Account` struct.
+- **How do I get the balances held in a pool?** Use `vault_balances`.
+- **How do I find the ID of a pool?** Use `get_pool_id_by_asset` to get the ID of the pool given the asset types.
+- **How do I read the pool parameters?** Use `pool_trade_params` for the trade parameters, `pool_book_params` for the book parameters, or `get_order_deep_price` for the `OrderDeepPrice` struct that determines the conversion for DEEP fees.
 
 ## API
 
