@@ -195,7 +195,7 @@ There is no bulk onchain read. `session_expiration_ms` answers one address at a 
 	struct="SessionsApp,SessionsData"
 />
 
-[Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) walks through deriving that field's ID under the canonical account rather than the wrapper, fetching it, and decoding it into a list of grants.
+Build the field's key, `DataKey<…::sessions::SessionsApp>`, from the `sessions` package original ID, not the call target, and derive the field ID under the canonical account rather than the wrapper. [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) walks through that derivation, the fetch, and decoding the field into a list of grants.
 
 Nothing prunes expired grants. Time passing executes no Move code, so a dead grant counts toward the 20-address limit until the owner revokes it, and the 21st `authorize_session` aborts `ESessionLimitExceeded` even when every stored grant is long dead. List, revoke what has expired, then grant.
 
