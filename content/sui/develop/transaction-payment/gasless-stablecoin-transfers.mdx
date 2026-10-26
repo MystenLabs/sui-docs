@@ -95,7 +95,7 @@ The protocol configuration (`get_gasless_allowed_token_types` in `sui-types`) go
 
 Gasless stablecoin transfers are narrow by design. A transaction qualifies only when:
 
-- The programmable transaction block (PTB) consists of allowlisted `balance` or `coin` operations on an allowlisted stablecoin type. The primary one is `0x2::balance::send_funds<T>`. The allowlist also includes a few related helpers (`balance::redeem_funds`, `coin::send_funds`, `coin::into_balance`, `withdrawal_split`, and so on), which might appear in resolved transactions.
+- The programmable transaction block (PTB) consists of allowlisted `balance`, `coin`, or `funds_accumulator` operations on an allowlisted stablecoin type. The primary one is `0x2::balance::send_funds<T>`. The allowlist also includes a few related helpers (`balance::redeem_funds`, `coin::send_funds`, `coin::into_balance`, `funds_accumulator::withdrawal_split`, and so on), which might appear in resolved transactions.
 - `gasPayment` is empty and `gasPrice = 0`.
 - The transaction writes no objects, and it consumes all input coins or converts them to address balances.
 
@@ -171,6 +171,7 @@ tx.setSender(senderAddress);
 // Manually set gas price to 0.  Only do this when you know the coin type is on the allow list
 tx.setGasPrice(0);
 tx.setGasPayment([]);
+tx.setGasBudget(0);
 
 tx.moveCall({
 	target: '0x2::balance::send_funds',
