@@ -63,7 +63,7 @@ Some applications, however, require constraining the scope of the token to a spe
 
 ![Comparison of Coin, which has key + store abilities, and Token, which has only the key ability](../images/difference-with-coin_closed-loop-token_v1.png)
 
-Unlike Coin, which has `key + store` abilities and thus supports wrapping and public transfers, Token has only the `key` ability and cannot be wrapped, stored as a dynamic field, or freely transferred (unless there's a custom policy for that). Due to this restriction, Token **can only be owned by an account** and can't be stored in an application. You can, however, [spend a token](/onchain-finance/closed-loop-token/spending); spending is a protected action, not a free transfer.
+Unlike Coin, which has `key + store` abilities and thus supports wrapping and public transfers, Token has only the `key` ability. Because Token lacks the `store` ability, you cannot wrap it, store it as a dynamic field, or freely transfer it (unless there's a custom policy for that). Due to this restriction, Token **can only be owned by an account** and can't be stored in an application. You can, however, [spend a token](/onchain-finance/closed-loop-token/spending); spending is a protected action, not a free transfer.
 
 ```move
 // defined in `sui::coin`
@@ -94,7 +94,7 @@ Tokens have a set of public and protected actions that you can use to manage the
 
 ## Protected actions
 
-Protected actions are ones that issue an [`ActionRequest`](/onchain-finance/closed-loop-token/action-request) - a hot-potato struct, which means the transaction fails unless the request is resolved within it. There are three main ways to resolve an `ActionRequest`, most common of which is through the [`TokenPolicy`](/onchain-finance/closed-loop-token/token-policy).
+Protected actions are ones that issue an [`ActionRequest`](/onchain-finance/closed-loop-token/action-request), a hot-potato struct. A hot-potato struct is one that the transaction that creates it must also consume, so the transaction fails unless it resolves the request. There are three main ways to resolve an `ActionRequest`, most common of which is through the [`TokenPolicy`](/onchain-finance/closed-loop-token/token-policy).
 
 - `token::transfer`: Transfer a token to a specified address
 - `token::to_coin`: Convert a token to a coin
