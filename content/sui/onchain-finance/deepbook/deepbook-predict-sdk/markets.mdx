@@ -99,7 +99,7 @@ It takes this parameter:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="192-206" />
 
-## The `MarketDescriptor` type {#market-descriptor}
+## How do I describe a position with `MarketDescriptor`? {#market-descriptor}
 
 Builders and reads that act on a market take a `MarketDescriptor`, which names the market by underlying and expiry and describes the position's strikes in USD. The SDK resolves the market and converts each strike to a tick, so you pass neither an `ExpiryMarket` object ID nor a tick unless you choose to pin the market.
 
@@ -116,7 +116,7 @@ The rest of the descriptor is 1 of 2 arms:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="90-118" />
 
-Each call reads a different part of the descriptor:
+Each call reads a different part of the descriptor. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) documents the mint, redeem, and claim builders.
 
 | **Call** | **What it takes** | **What it reads** |
 |---|---|---|
@@ -125,8 +125,6 @@ Each call reads a different part of the descriptor:
 | `tx.claimSettled` | `underlying`, `expiryMs`, and an optional `marketId` | All of them |
 | `read.price` | `underlying`, `expiryMs`, an optional `marketId`, and `strike` | All of them. The SDK checks the strike against the fine grid only. |
 | `read.market`, `read.pricer` | `underlying` and `expiryMs` | Both of them |
-
-[Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) documents the mint, redeem, and claim builders.
 
 ## How do I keep a strike on the admission grid? {#strikes}
 
@@ -152,7 +150,7 @@ const strike = Number((Math.round(target / step) * step).toFixed(9));
 
 `strike: 'reference'` trades at the market's reference price. The SDK reads the reference tick fresh on every build rather than from its market cache, and uses it as the finite boundary directly, so it passes every grid check by construction. While the market has no reference tick recorded, the SDK throws `PredictInputError`. Recording one is permissionless, so you can call `expiry_market::set_reference_tick` yourself rather than wait; see [Reference ticks and pause control](/onchain-finance/deepbook/deepbook-predict/contract-information/predict). With `strike: 'reference'`, the SDK does not validate `side` at runtime and treats any value other than `'up'` as down, so validate `side` yourself when it comes from untyped input such as JSON.
 
-## Tick helpers {#ticks}
+## How do I convert strikes to ticks? {#ticks}
 
 The descriptor hides the tick arithmetic, and the SDK also exports the tick primitives for code that builds its own transactions or checks a position's shape. Each descriptor arm maps onto the tick pair the contract takes, where `K`, `L`, and `H` are USD strikes and `tickSize` is the market's fine grid:
 
@@ -195,7 +193,7 @@ It throws `PredictInputError` when `side` is any value other than `'up'` or `'do
 
 ### `POS_INF_TICK` {#pos-inf-tick}
 
-`POS_INF_TICK` is the positive-infinity sentinel tick, a `bigint` equal to `1073741823n`, which is the largest value the 30-bit tick field holds. Use it as the `higherTick` of an up position or of any range with an open upper end. The matching onchain constant is not callable from your own package, so this export is the SDK's source for the value.
+`POS_INF_TICK` is the positive-infinity sentinel tick, a `bigint` equal to `1073741823n`, which is the largest value the 30-bit tick field holds. Use it as the `higherTick` of an up position or of any range with an open upper end. The matching onchain constant is not callable from your own package, so this export is the SDK's source for the value. [Sentinel ticks](/onchain-finance/deepbook/deepbook-predict/contract-information/market-keys) describes the onchain sentinels.
 
 <ImportContent source="packages/deepbook-v3/src/predict/ticks.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="7-7" />
 
@@ -207,13 +205,13 @@ It throws `PredictInputError` when `side` is any value other than `'up'` or `'do
 
 ### `POSITION_LOT_SIZE` {#position-lot-size}
 
-`POSITION_LOT_SIZE` is the Testnet deployment's `position_lot_size` as a `bigint`: `10000n` raw payout units, which is 0.01 USD of payout. A position quantity must be a whole number of lots, and `tx.mint`, `tx.redeem`, and their quote reads throw `PredictInputError` otherwise. Those builders validate against the lot size of the configuration the client runs with, not against this constant, so on Mainnet read `getConfig(network).units.positionLotSize` or `getUnits(network).positionLotSize` instead; see [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#configuration).
+A position quantity must be a whole number of lots, and `tx.mint`, `tx.redeem`, and their quote reads throw `PredictInputError` otherwise. `POSITION_LOT_SIZE` is the Testnet deployment's `position_lot_size` as a `bigint`: `10000n` raw payout units, which is 0.01 USD of payout. Those builders validate against the lot size of the configuration the client runs with, not against this constant, so on Mainnet read `getConfig(network).units.positionLotSize` or `getUnits(network).positionLotSize` instead; see [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#configuration).
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="79-79" />
 
 ## How do I price strikes from the chain? {#pricing-reads}
 
-Both pricing reads price against the chain's own live pricer, which `expiry_market::load_live_pricer` builds from the oracle feeds, so neither needs an account. Unlike `read.market`, both throw `PredictInputError` when no market exists at that expiry. When the chain cannot load a pricer, for example because the market has reached its expiry, an oracle input is stale, or no recent Block Scholes spot pairs with the latest forward, both throw the `PredictMoveError` the simulation surfaced. Block Scholes is the data provider behind the oracle's spot, forward, and SVI feeds, not a misspelling of the Black-Scholes model. [The pricer](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle#the-pricer) covers the load, its freshness windows, and its abort codes.
+Both pricing reads price against the chain's own live pricer, which `expiry_market::load_live_pricer` builds from the oracle feeds, so neither needs an account. Unlike `read.market`, both throw `PredictInputError` when no market exists at that expiry. When the chain cannot load a pricer, for example because the market has reached its expiry, an oracle input is stale, or no recent Block Scholes spot pairs with the latest forward, both throw the `PredictMoveError` the simulation surfaced. Block Scholes is the data provider that publishes the oracle's spot, forward, and stochastic volatility inspired (SVI) feeds. [The pricer](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle#the-pricer) covers the load, its freshness windows, and its abort codes.
 
 ### `read.price` {#price}
 
@@ -224,7 +222,7 @@ It takes this parameter:
 - `m`: The market coordinates and strike, an object with these fields:
   - `underlying`: The underlying symbol.
   - `expiryMs`: The expiry as a Unix millisecond timestamp.
-  - `marketId`: An optional `ExpiryMarket` object ID that pins the market, which the SDK validates as [The `MarketDescriptor` type](#market-descriptor) describes.
+  - `marketId`: An optional `ExpiryMarket` object ID that pins the market, which the SDK validates as [How do I describe a position with `MarketDescriptor`?](#market-descriptor) describes.
   - `strike`: A USD strike on the market's fine tick grid, or `'reference'` for the market's reference price.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="878-878" />
@@ -247,10 +245,10 @@ It takes this parameter:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="900-902" />
 
-The SDK simulates `expiry_market::load_live_pricer` and decodes the returned `Pricer`, so the chain has already paired the latest Block Scholes forward with the spot at the same source timestamp, chosen the forward, and rolled the stochastic volatility inspired (SVI) surface down to the current time. Every later call on the returned object runs locally with no chain read. The returned object has these members:
+The SDK simulates `expiry_market::load_live_pricer` and decodes the returned `Pricer`, so the chain has already paired the latest Block Scholes forward with the spot at the same source timestamp, chosen the forward, and rolled the SVI surface down to the current time. Every later call on the returned object runs locally with no chain read. The returned object has these members:
 
 - `up(strike)`: The probability that settlement lands above `strike`.
-- `down(strike)`: The probability that settlement lands at or below `strike`, which the board computes locally as `1 - up(strike)`, so it can differ slightly from the chain's own `down` that `read.price` returns, as the note on local precision below describes.
+- `down(strike)`: The probability that settlement lands at or below `strike`, which the board computes locally as `1 - up(strike)`. It can differ slightly from the chain's own `down` that `read.price` returns, because the local math is a floating-point port of the deployed `pricing::compute_nd2` and stays within about 0.0001 of the chain's probability.
 - `probability(strike, side)`: The probability for `side`, either `'up'` or `'down'`, at `strike`.
 - `range(lower, higher)`: The probability mass in `(lower, higher]`, with a floor of 0. Pass a `lower` of 0 or below for negative infinity and `Infinity` for an open upper end.
 - `strikeAtProbability(p)`: The strike whose up probability is `p`, or `null` when `p` is not strictly between 0 and 1 or no crossing exists within 64 percent of the forward.
@@ -266,7 +264,7 @@ The `asOf` shape is the `sources` field of `PricerSnapshot`, which `/predict` ex
 
 The local math is a floating-point port of the deployed `pricing::compute_nd2`, and it stays within about 0.0001 of the chain's probability, which is close enough for display. `read.price` and `read.quoteMint` on [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions) remain the authoritative quote at trade time. A snapshot keeps pricing locally after its oracle inputs go stale, so check `asOf` before you render a board from an old one.
 
-## Functions in the `pricing` namespace {#pricing}
+## How do I price strikes without a chain read? {#pricing}
 
 The `/predict` subpath exports the local pricing math as the `pricing` namespace, for code that already holds its own oracle inputs and wants to price without any chain read. `read.pricer` builds its return value from the same functions. They work on decimals, not on the chain's fixed-point integers:
 
@@ -358,7 +356,7 @@ It takes these parameters:
 
 ### `forward` {#forward}
 
-Use `forward` to compute the forward the contract prices against from raw feed values. It returns `pythSpot * (bsForward / bsSpot)`, the Pyth spot after the Block Scholes basis reanchors it, when both spots are positive, and `bsForward` otherwise.
+Use `forward` to compute the forward the contract prices against from raw feed values. It returns `pythSpot * (bsForward / bsSpot)`, the Pyth spot after the Block Scholes basis reanchors it, when both spots are positive, and `bsForward` otherwise. The chain reanchors only while `use_pyth_spot_for_forward` is on and the Pyth spot is inside its freshness window, and it uses the Block Scholes forward otherwise.
 
 It takes these parameters:
 
@@ -368,11 +366,11 @@ It takes these parameters:
 
 <ImportContent source="packages/deepbook-v3/src/predict/pricing.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="168-168" />
 
-The chain reanchors only while `use_pyth_spot_for_forward` is on and the Pyth spot is inside its freshness window, and it uses the Block Scholes forward otherwise. The chain also takes `bsSpot` from the store's recent spot history at the forward's source timestamp rather than from the latest spot, as [Forward and spot pairing](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) describes. `forward` checks none of these conditions and pairs nothing, so apply the flag, freshness, and pairing rules before you call it, or use `read.pricer`, which returns the forward the chain resolved. [Freshness windows](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle#freshness-windows) lists both settings.
+The chain also takes `bsSpot` from the store's recent spot history at the forward's source timestamp rather than from the latest spot, as [Forward and spot pairing](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) describes. `forward` checks none of these conditions and pairs nothing, so apply the flag, freshness, and pairing rules before you call it, or use `read.pricer`, which returns the forward the chain resolved. [Freshness windows](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle#freshness-windows) lists both settings.
 
 ### `boardPricer` {#board-pricer}
 
-Use `boardPricer` to bind a `PricerInputs` snapshot to the board methods. It returns a `BoardPricer`, the shape `read.pricer` returns without `asOf`, and it makes no chain call.
+Use `boardPricer` to bind a `PricerInputs` snapshot to the board methods. It returns a `BoardPricer`, the shape `read.pricer` returns without `asOf`, and it makes no chain call. Its members are the ones [`read.pricer`](#pricer) lists, including `strikeAtProbability` with its bisection and 64 percent bound, as [`strikeAtProbability`](#strike-at-probability) describes.
 
 It takes this parameter:
 
