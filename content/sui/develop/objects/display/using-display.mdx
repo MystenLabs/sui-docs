@@ -46,15 +46,17 @@ answer: >-
   display from Move code, use the `sui::display_registry` APIs.
 ---
 
+The [package or type owner](#display-registry) must explicitly create and then maintain an Object Display. To create one, call `display_registry::new_with_publisher<T>`, set its fields, and share it.
+
 :::info
 
 Object Display V2 is the current Object Display standard. If you manage a display from Move code, use the `sui::display_registry` APIs.
 
-A system snapshot migration migrated existing V1 displays to V2. If you need to manage a migrated display, claim the capability when you are ready (see [Migrating to V2](#migrating-to-v2)).
+A system snapshot migration migrated existing V1 displays to V2. If you need to manage a migrated display, claim the capability when you are ready (see [How do I migrate a display to V2?](#how-do-i-migrate-a-display-to-v2)).
 
 :::
 
-An Object Display must be explicitly created and then maintained by the [package or type owner](#display-registry). The standard does not limit the fields you can set. Use the `{property}` syntax to access all object properties and insert them as part of the template string. The basic set of suggested properties includes:
+The standard does not limit the fields you can set. Use the `{property}` syntax to access all object properties and insert them as part of the template string. The basic set of suggested properties includes:
 
 - `name`: A name for the object. The name displays when users view the object.
 - `description`: A description for the object. The description displays when users view the object.
@@ -82,7 +84,7 @@ In Object Display V1, you could have N displays per type and had to use events t
 | **How you find `Display<T>`**  | Query events by type; requires historical events.   | Offline derivation. `Display<T>` is a derived object from `(DisplayRegistry UID, DisplayKey<T>)`. ID is computable from registry and type; no events, no scan. |
 | **Identity**                   | Unpredictable (per creation transaction).           | Deterministic. The same registry and same `T` result in the same display ID everywhere.                                                                       |
 
-## Example
+## How do I create a display?
 
 The `display_registry::new_with_publisher<T>` call creates a V2 `Display<T>` and `DisplayCap<T>` for a type. The display object has a deterministic derived ID, and the capability authorizes future updates.
 ```move
@@ -170,7 +172,7 @@ module capy::utility;
 public struct CapyManagerCap has key, store { id: UID }
 ```
 
-## Migrating to V2
+## How do I migrate a display to V2?
 
 :::caution
 
