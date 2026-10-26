@@ -1004,7 +1004,6 @@ GraphQL is not read-only. Transaction execution takes 2 arguments, `transactionD
 ```graphql
 mutation ($tx: String!, $sigs: [String!]!) {
   executeTransaction(transactionDataBcs: $tx, signatures: $sigs) {
-    errors
     effects {
       status
       epoch {
