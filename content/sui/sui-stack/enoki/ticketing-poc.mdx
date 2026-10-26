@@ -94,7 +94,7 @@ This example teaches:
 
 - **Onchain display metadata:** The `display.move` module configures how tickets and loyalty cards appear in wallets and explorers using Sui's `Display` standard with dynamic field templates.
 
-## Architecture
+## How is the example structured?
 
 The example has 5 actors. The Next.js frontend renders event listings, ticket purchase flows, and the user's ticket wallet. The API routes handle permit signing (Ed25519), transaction sponsorship (Enoki), and user data storage (Vercel KV). Enoki provides zkLogin authentication (Google OAuth) and transaction sponsorship. The ticketing Move package manages ticket minting, stage transitions, loyalty points, and cryptographic verification. Vercel KV stores user accounts and zkLogin salt values.
 
@@ -141,7 +141,7 @@ The following steps walk through the flow:
 
 5. The Move contract verifies the Ed25519 signature against the `KeyRegistry`'s stored public key, checks that the nonce is unused, consumes the nonce, mints the `Ticket` NFT, and adds loyalty points to the user's `Loyalty` card.
 
-6. The backend sends a second transaction to create `StageTransition` objects (Purchased, Attended, Collectible) and transfer them to the ticket, enabling future lifecycle transitions.
+6. The frontend calls `/api/stage/mint`. The backend then sends a second transaction to create `StageTransition` objects (Purchased, Attended, Collectible) and transfer them to the ticket, enabling future lifecycle transitions.
 
 ## Prerequisites
 
@@ -222,6 +222,8 @@ When prompted, enter your address's private key. Record the package ID and key r
 
 ##### Step 4: Configure the frontend
 
+Return to the `app` directory and run `pnpm install` again:
+
 ```bash
 $ cd app
 $ pnpm install
@@ -299,7 +301,7 @@ The `/api/permit/mint-ticket` route BCS-encodes the ticket data, generates a non
 
 The route reads the admin Ed25519 private key from the environment, generates a random 8-byte nonce, BCS-encodes the ticket data (matching the Move struct layout), signs the encoded bytes with the private key, and returns the signature, bytes, and nonce for the frontend to submit onchain.
 
-## Common modifications
+## How do I modify the example?
 
 - **Add a secondary marketplace:** Let ticket holders list their tickets for resale. Create a shared `Marketplace` object with dynamic fields for listings. The buyer pays the seller and receives the ticket through an atomic PTB.
 
