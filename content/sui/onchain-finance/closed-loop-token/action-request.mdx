@@ -111,7 +111,7 @@ public fun confirm_with_treasury_cap<T>(
 ): (String, u64, address, Option<address>);
 ```
 
-An example of a transaction implemented in TypeScript with `@mysten/sui`, confirming an action request with a `TreasuryCap`. Here the admin account owns the `TreasuryCap`, which the transaction uses to mint and confirm the transfer request for the token. In this and the following examples, replace the `0x...` placeholders with your own package ID, object IDs, and addresses:
+An example of a transaction implemented in TypeScript with `@mysten/sui`, confirming an action request with a `TreasuryCap`. Here the admin account owns the `TreasuryCap`, which the transaction uses to mint and confirm the transfer request for the token. In this and the following examples, replace the `0x...` placeholders with your own package ID, object IDs, and addresses. The `moveCall` arguments omit the `ctx: &mut TxContext` parameter because the transaction supplies it implicitly:
 
 ```js
 let tx = new Transaction();
