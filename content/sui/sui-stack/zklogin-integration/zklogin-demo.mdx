@@ -198,6 +198,8 @@ VITE_EPHEMERAL_KEY_DURATION_EPOCHS=NUMBER_OF_EPOCHS
 VITE_OAUTH_CLIENT_ID=YOUR_OAUTH_CLIENT_ID
 ```
 
+The K2 demo also reads `VITE_NETWORK` and `VITE_OAUTH_PROVIDER_NAME`. See its `.env.example` for those values.
+
 The salt and the OAuth client ID together determine every derived address. Changing either one moves all of your users to different addresses, so treat both as permanent configuration.
 
 ## Key code highlights
