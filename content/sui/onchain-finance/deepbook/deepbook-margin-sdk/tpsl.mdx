@@ -50,9 +50,9 @@ answer: >-
 
 The TPSL (Take Profit Stop Loss) SDK provides functions for managing conditional orders that execute when the price meets certain conditions. A conditional order pairs a trigger condition with a pending order. Once the oracle price crosses the trigger price, anyone can execute the pending order on the manager's behalf.
 
-## SDK setup
+## How to set up the SDK
 
-TPSL functions live on the DeepBook client extension. Create a `SuiGrpcClient` and extend it with `deepbook()`, passing the margin managers you want to address by key.
+TPSL functions live on the DeepBook client extension. Create a `SuiGrpcClient` and call `$extend` with `deepbook()` to add the extension to the client as `client.deepbook`. Pass the margin managers you want to address by key. Each entry in `marginManagers` maps a key, such as `MARGIN_MANAGER_1`, to the margin manager's onchain address and pool key. Functions that take a `marginManagerKey` parameter expect one of these keys.
 
 ```tsx
 import { deepbook } from '@mysten/deepbook-v3';
@@ -87,7 +87,7 @@ Use `addConditionalOrder` to add a conditional order that executes when the pric
 - `conditionalOrderId`: String representing the unique ID for this conditional order.
 - `triggerBelowPrice`: Boolean indicating whether to trigger once the oracle price falls below the trigger price. Set it to `false` to trigger once the price rises above the trigger price.
 - `triggerPrice`: Number representing the oracle price at which to trigger the order. The oracle price must not already have crossed the trigger, otherwise the call aborts with `EInvalidCondition`.
-- `pendingOrder`: Object containing the order details (either `PendingLimitOrderParams`, which includes a `price` field for the limit price, or `PendingMarketOrderParams`, which has no `price` field).
+- `pendingOrder`: Object containing the order details (either `PendingLimitOrderParams`, which includes a `price` field for the limit price, or `PendingMarketOrderParams`, which has no `price` field). For the fields of each type, see [`newPendingLimitOrder`](#newpendinglimitorder) and [`newPendingMarketOrder`](#newpendingmarketorder).
 
 <ImportContent source="packages/deepbook-v3/src/transactions/marginTPSL.ts" mode="code" org="MystenLabs" repo="ts-sdks" fun="addConditionalOrder" signatureOnly />
 
@@ -201,7 +201,9 @@ Query trigger prices for conditional orders. `lowestTriggerAbovePrice` returns t
 
 The following examples show how to use the TPSL functions.
 
-### Set up a stop loss order
+### How to set up a stop loss order
+
+The stop loss uses a pending market order, so `pendingOrder` has no `price` field.
 
 ```tsx
 // Example: stop loss on a long position, selling once the oracle price drops below 2.0
@@ -222,7 +224,9 @@ const setStopLoss = (tx: Transaction) => {
 };
 ```
 
-### Set up a take profit order
+### How to set up a take profit order
+
+The take profit uses a pending limit order, so `pendingOrder` includes a `price` field.
 
 ```tsx
 // Example: take profit on a long position, selling once the oracle price rises above 5.0
@@ -244,7 +248,7 @@ const setTakeProfit = (tx: Transaction) => {
 };
 ```
 
-### Execute triggered orders (keeper)
+### How to execute triggered orders as a keeper
 
 ```tsx
 // Example: Execute conditional orders as a keeper
@@ -255,7 +259,7 @@ const executeOrders = (tx: Transaction) => {
 };
 ```
 
-### Query and cancel orders
+### How to query and cancel conditional orders
 
 ```tsx
 // Example: Query all conditional order IDs, then cancel a specific order
