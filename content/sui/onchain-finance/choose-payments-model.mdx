@@ -83,9 +83,9 @@ Sui supports a range of payment models, from direct transfers to structured chec
 ## Which payment model should I use?
 
 - If you only need to move value, such as wallet sends, peer-to-peer payments, or treasury moves, use a [basic transfer](#basic-transfer). Send to an address balance unless the recipient or an integrating contract expects a distinct `Coin<T>` object.
-- If you need receipts or duplicate prevention, use [Payment Kit](#payment-kit):
-  - Use registry payments when compliance, accounting, or retry safety requires payment history.
-  - Use ephemeral payments when an external system already tracks payments and duplicates are not a concern.
+- If you need receipts or duplicate prevention, use [Payment Kit](#payment-kit), then choose a processing mode:
+  - If you need duplicate prevention, or compliance, accounting, or retry safety requires payment history, use registry payments.
+  - If an external system already tracks payments, you need no duplicate prevention, and you want lower gas cost, use ephemeral payments.
 - Then pick a [gas strategy](#gas-strategies). Each model works with any gas strategy.
 
 ## Basic transfer
@@ -140,9 +140,9 @@ public fun process_registry_payment<T>(
 ): PaymentReceipt
 ```
 
-The function verifies that the coin value matches `payment_amount`, checks the composite key (the `PaymentKey` described below) for a duplicate, records the payment, transfers funds to `receiver` or the registry, returns a `PaymentReceipt`, and emits an event. It aborts with `EDuplicatePayment` when the same key was already processed, and with `EPaymentAmountMismatch` when the coin value differs from the expected amount.
+Duplicate prevention relies on a `PaymentKey`, a composite key derived from the nonce, amount, coin type, and receiver address. Generate the nonce as a UUIDv4 of at most 36 characters, and reuse the same nonce when you retry a payment so the retry cannot double-charge.
 
-Duplicate prevention relies on a `PaymentKey` derived from the nonce, amount, coin type, and receiver address. Generate the nonce as a UUIDv4 of at most 36 characters, and reuse the same nonce when you retry a payment so the retry cannot double-charge.
+The function verifies that the coin value matches `payment_amount`, checks the `PaymentKey` for a duplicate, records the payment, transfers funds to `receiver` or the registry, returns a `PaymentReceipt`, and emits an event. It aborts with `EDuplicatePayment` when the same key was already processed, and with `EPaymentAmountMismatch` when the coin value differs from the expected amount.
 
 ### Encode a payment request as a URI
 
