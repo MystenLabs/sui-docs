@@ -180,11 +180,17 @@ A complete implementation lives in [`onlyfins-example-app`](https://github.com/M
 
 Publish the Move package and record the package ID, which both the frontend and backend need:
 
+1. Publish the package:
+
 ```bash
 $ sui client publish --gas-budget 200000000
 ```
 
-The frontend reads it from `POSTS_PACKAGE_ID` in `src/constants.ts`. The backend reads it from `PACKAGE_ID` in `.env`, alongside the author key pairs that publish demo content:
+2. Copy the package ID from the command output.
+
+3. In the frontend, set `POSTS_PACKAGE_ID` in `src/constants.ts` to the package ID.
+
+4. In the backend, set `PACKAGE_ID` in `.env` to the package ID. The same file holds the author key pairs that publish demo content:
 
 ```bash title='backend/.env'
 AUTHOR_1_PRIVATE_KEY=YOUR_ED25519_PRIVATE_KEY
