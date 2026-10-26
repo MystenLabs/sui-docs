@@ -37,9 +37,9 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Build a production-safe CI/CD pipeline that tests every pull request, automates Testnet publishing, and gates Mainnet publishing and upgrades behind manual approval.
+To deploy Move packages safely with GitHub Actions, build a continuous integration and continuous delivery (CI/CD) pipeline that tests every pull request, automates Testnet publishing, and gates Mainnet publishing and upgrades behind manual approval.
 
-You can deploy Move packages through a continuous integration and continuous delivery (CI/CD) pipeline in GitHub Actions. The goal is a production-safe setup, not a single workflow that publishes from a branch. A safe pipeline separates low-risk automation from high-risk actions, keeps signing keys out of logs, and requires a human to approve anything that touches Mainnet.
+The goal is a production-safe setup, not a single workflow that publishes from a branch. A safe pipeline separates low-risk automation from high-risk actions, keeps signing keys out of logs, and requires a human to approve anything that touches Mainnet.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -50,7 +50,7 @@ You can deploy Move packages through a continuous integration and continuous del
 </TabItem>
 </Tabs>
 
-## Recommended pipeline structure
+## How to structure the pipeline
 
 Split the pipeline into three tiers, ordered by how much damage a mistake can cause. Each tier has a different trigger and a different level of automation.
 
@@ -87,7 +87,7 @@ To gate Mainnet deployments, add required reviewers to the `mainnet` environment
 
 Scope each secret to the narrowest environment that needs it. Store the Mainnet RPC URL and any Mainnet signing material only in the `mainnet` environment, never as repository-wide secrets.
 
-### Keep private keys out of logs
+### How to keep private keys out of logs
 
 GitHub masks registered secret values in run logs, but you remain responsible for not defeating that protection.
 
@@ -252,7 +252,7 @@ jobs:
 
 The address lives in a repository variable rather than a secret, because addresses are public. Only the private key is sensitive.
 
-## Gate Mainnet publishing and upgrades
+## How to gate Mainnet publishing and upgrades
 
 The Mainnet workflow triggers on a release tag and names the `mainnet` environment, which carries required reviewers. The run pauses for human approval before it can read any Mainnet secret. The recommended job in this workflow builds an unsigned upgrade transaction and hands it off for signing, so no private key enters CI.
 
