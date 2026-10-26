@@ -106,7 +106,7 @@ For configuration examples and guidance on when to use each source, see [Checkpo
 
 The indexing framework manages the ingestion layer, which handles the complex task of reliably fetching and distributing checkpoint data. The `Broadcaster` receives checkpoints from data sources and efficiently distributes them to multiple processing pipelines running in parallel. This is essential for indexers that run multiple different data processing workflows simultaneously. 
 
-`Broadcaster` applies backpressure based on the highest watermark reported by its subscribers, ensuring it does not push data faster than the slowest pipeline can process it.
+`Broadcaster` applies backpressure per subscriber. Each pipeline receives checkpoints through its own bounded channel, and when any channel fills, the broadcaster's adaptive controller reduces ingestion concurrency, ensuring it does not push data faster than the slowest pipeline can process it.
 
 ### Processing layer
 
