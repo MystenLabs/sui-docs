@@ -137,7 +137,7 @@ Sui Foundation disabled JSON-RPC on Mainnet full nodes. If your application stil
 
 An object must receive another object before it can use it. To receive the object, use a `Receiving(o: ObjectRef)` argument type in a [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). This argument takes an object reference containing the object's `ObjectID`, `Version`, and `Digest`, similar to address-owned object arguments. However, `Receiving` PTB arguments are not passed as an owned value or mutable reference within the transaction. Instead, each one becomes a `Receiving<T>` value, also called a receiving ticket, that represents the ability to receive the referenced object.
 
-In other words, the PTB `Receiving` argument and the Move `Receiving<T>` type describe the same input at two levels. You supply a `Receiving` argument in the PTB, and the Move function you call gets it as a `Receiving<T>` receiving ticket. That function then passes the ticket to `transfer::receive` or `transfer::public_receive` to get the object.
+In other words, the PTB `Receiving` argument and the Move `Receiving<T>` type describe the same input at 2 levels. You supply a `Receiving` argument in the PTB, and the Move function you call gets it as a `Receiving<T>` receiving ticket. That function then passes the ticket to `transfer::receive` or `transfer::public_receive` to get the object.
 
 The `transfer` module in the Sui framework defines the core receiving interface in Move:
 
