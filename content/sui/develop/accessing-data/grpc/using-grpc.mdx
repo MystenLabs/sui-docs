@@ -79,7 +79,7 @@ If your provider does not support gRPC, ask them to enable it or contact the Sui
 </TabItem>
 </Tabs>
 
-## Field masks
+## What is a field mask? {#field-masks}
 
 A [`FieldMask` in protocol buffers](https://protobuf.dev/reference/protobuf/google.protobuf/#field-mask) is a mechanism that specifies a subset of fields within a message to read, update, or return. Instead of retrieving the entire object, a client can request only the specific fields they need by providing a list of field paths. This improves performance and reduces unnecessary data transfer.
 
@@ -185,7 +185,7 @@ In the Sui gRPC API, the proto schema represents identifiers with standard human
 
 - `TypeTag` and `StructTag`: Represented in their canonical string format (such as `0x0000000000000000000000000000000000000000000000000000000000000002::coin::Coin<0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI>`)
 
-## Pagination
+## How to paginate gRPC responses {#pagination}
 
 When using gRPC APIs that return lists of data like account balances, owned objects, and so on, you typically need to handle pagination. These APIs return results in chunks and include tokens to help you request the next batch.
 
@@ -225,9 +225,11 @@ Here are the headers you might encounter:
 
 Not every API response includes all headers. The API includes a header only when it applies to the given RPC.
 
-## Access data using `grpcurl`
+## How to query data with `grpcurl` {#access-data-using-grpcurl}
 
 Interact with gRPC by using [`grpcurl`](https://github.com/fullstorydev/grpcurl). 
+
+The examples on this page use `<FULL_NODE_URL>` as a placeholder for the full node host name, such as `fullnode.<network>.sui.io`, without a scheme or port. The Buf CLI examples add the `https://` scheme, and the TypeScript, Go, and Python examples add port `443`.
 
 ### List available gRPC services
 
