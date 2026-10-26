@@ -262,12 +262,14 @@ For local development: http://2ffmxm7j...localhost:3000
 For public sharing:    http://2ffmxm7j...yourdomain.com:3000
 ```
 
+The URLs in this output use the Base36 subdomain of the site object ID. Base36 subdomains work on local servers and alternative portals. The `wal.app` portal does not support Base36 subdomains, so you need a SuiNS name to browse your Mainnet site at `https://wal.app`. See [How do I point a SuiNS name at a Walrus Site?](#how-do-i-point-a-suins-name-at-a-walrus-site).
+
 The `deploy` command writes the site object ID to `ws-resources.json` automatically. Subsequent deploys read this ID to update the existing site.
 
-To confirm the deployment succeeded, run `sitemap` with the object ID:
+To confirm the deployment succeeded, run `sitemap`, replacing `<OBJECT_ID>` with the site object ID that `deploy` printed:
 
 ```bash
-$ site-builder sitemap --id 0x617221edd060dafb4070b73160ebf535e1516bf7f246890ed35190eba786d7ac
+$ site-builder sitemap --id <OBJECT_ID>
 ```
 
 `sitemap` lists every resource that `deploy` uploaded. If the list matches your build output, the site is live.
