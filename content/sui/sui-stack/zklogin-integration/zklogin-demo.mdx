@@ -189,6 +189,15 @@ The app reads its configuration from environment variables, and the same values 
 | `VITE_EPHEMERAL_KEY_DURATION_EPOCHS` | How many epochs past the current one the ephemeral key stays valid. |
 | `VITE_OAUTH_CLIENT_ID` | Your OAuth client ID. Determines which identities map to which addresses. |
 
+The following `.env` file shows the format, with one `NAME=VALUE` line per variable. Replace each placeholder with your own value:
+
+```bash title='.env'
+VITE_SUI_GRPC_URL=YOUR_GRPC_URL
+VITE_SALT=YOUR_SALT
+VITE_EPHEMERAL_KEY_DURATION_EPOCHS=NUMBER_OF_EPOCHS
+VITE_OAUTH_CLIENT_ID=YOUR_OAUTH_CLIENT_ID
+```
+
 The salt and the OAuth client ID together determine every derived address. Changing either one moves all of your users to different addresses, so treat both as permanent configuration.
 
 ## Key code highlights
