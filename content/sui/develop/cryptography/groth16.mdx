@@ -129,9 +129,9 @@ fn main() {
     assert!(verified);
 
     // Print verifying key
-    let mut pk_bytes = Vec::new();
-    pk.vk.serialize_compressed(&mut pk_bytes).unwrap();
-    println!("Verifying key: {}", hex::encode(pk_bytes));
+    let mut vk_bytes = Vec::new();
+    pk.vk.serialize_compressed(&mut vk_bytes).unwrap();
+    println!("Verifying key: {}", hex::encode(vk_bytes));
 
     // Print proof
     let mut proof_serialized = Vec::new();
