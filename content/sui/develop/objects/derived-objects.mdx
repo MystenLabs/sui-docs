@@ -41,7 +41,7 @@ answer: >-
   scalable composable systems on Sui.
 ---
 
-Sui objects get a unique ID assigned to them upon creation. However, a derived object has a claimed ID created through the mapping of a parent object to a key. The parent object's unique onchain ID maps to an individual key, ensuring the derived object's claimed ID is both deterministic and unique. You can compute derived object IDs using the parent ID and key, both onchain and offchain, even before creating the object on the network.
+Sui objects get a unique ID assigned to them upon creation. However, a derived object has a claimed ID created through the mapping of a parent object to a key. The parent object's unique onchain ID maps to an individual key, ensuring the derived object's claimed ID is both deterministic and unique. You can compute derived object IDs using the parent ID and key, both onchain and offchain, even before creating the object on the network. Claiming a UID and creating an object are separate steps. You first claim the UID from the parent and key, then use that UID as the `id` field when you create the object.
 
 Parent objects can be [shared, owned, party, or wrapped](/develop/objects/object-ownership). The parent object might already exist onchain through a published package or transaction, but this is not required. You can create a new parent object in a function and immediately claim a derived object UID from a provided key. However, this workflow would not support offchain determinism because you could not know the parent UID beforehand.
 
@@ -67,11 +67,11 @@ Claiming the ID of derived objects requires a parent object, but the derived obj
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/dJl1zlP_YR4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-## Core capabilities
+## What can derived objects do? {#core-capabilities}
 
 Derived objects provide 4 fundamental capabilities: deterministic addresses, Transfer-to-Object compatibility, one-per-key uniqueness, and native parallelization.
 
-### Deterministic addresses
+### How do I get a deterministic object address? {#deterministic-addresses}
 
 You can compute derived object IDs ahead of time using the `derived_object::derive_address(parent_id, key)` function. This means applications can predict where objects are going to live before they exist, enabling sophisticated coordination patterns and reducing the need for onchain lookups.
 
@@ -101,7 +101,7 @@ The following matrix highlights some of the differences between using dynamic fi
 | --- | --- | --- |
 | Address predictability | ✅ Yes | ✅ Yes |
 | Parent required? | Only to create | ✅ Yes |
-| Ownership type | Any. Can be wrapped or shared, owned, party, or frozen. | Cannot be independently owned. Owner is always the parent. |
+| Ownership type | Any. Can be wrapped or [shared, owned, party, or frozen](/develop/objects/object-ownership). | Cannot be independently owned. Owner is always the parent. |
 | Supports receiving objects? | ✅ Yes | ❌ No |
 | Object parallelism | ✅ Yes | Limited. All writes sequenced through parent. |
 | Loading type | Static. Direct access after creation. | Dynamic. They are loaded through the parent. |
