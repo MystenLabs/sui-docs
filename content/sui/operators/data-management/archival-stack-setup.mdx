@@ -193,6 +193,8 @@ sui-kvstore-alt \
 
 For Testnet, use `--chain testnet` with `--remote-store-gcs mysten-testnet-checkpoints-use4`.
 
+This command uses the GCP project of your credentials. If your Bigtable instance is in a different project, add `--bigtable-project <GCP_PROJECT>` with the same project ID you used in the table-creation script.
+
 That one command backfills from genesis and then indexes at the tip. There is no separate backfill config and no cutover. Do not set `--rpc-api-url`.
 
 | CLI parameter | Required | Description |
@@ -337,6 +339,8 @@ Bigtable writes are idempotent, so you can run several instances at the tip for 
 ```sh
 sui-kv-rpc --config /etc/sui-kv-rpc/config.toml
 ```
+
+The values in these examples are placeholders. Replace `/etc/sui-kv-rpc/config.toml`, `/etc/sui-kv-rpc/bigtable-ro-sa.json`, `/secrets/cert.pem`, and `/secrets/key.pem` with the paths in your deployment, and replace `my-bigtable-instance` with your Bigtable instance ID.
 
 `instance-id` is the only required setting:
 
