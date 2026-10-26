@@ -55,7 +55,7 @@ The liquidity functions move USDC into the Predict pool for PLP shares and move 
 
 ## How a request fills {#request-lifecycle}
 
-Neither request mints nor burns PLP in the transaction that makes it. `tx.supplyPlp` and `tx.withdrawPlp` each escrow an amount from your account custody into a queue, and both requests fill at the next pool flush, at the single mark that flush computes for the whole pool. The flush delivers each fill and each refund to your account rather than to the signer, so check the result with [`read.plpBalance`](#plp-balance) or the account's [USDC balance](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) after the flush.
+Neither request mints nor burns PLP in the transaction that makes it. `tx.supplyPlp` and `tx.withdrawPlp` each escrow an amount from your account custody, the USDC and PLP balances that your [account](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) holds, into a queue. Both requests fill at the next pool flush, at the single mark that flush computes for the whole pool. The mark is the pool's value per PLP share: pool value divided by total PLP supply. The flush delivers each fill and each refund to your account rather than to the signer, so check the result with [`read.plpBalance`](#plp-balance) or the account's [USDC balance](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) after the flush.
 
 Each request takes an optional floor in its options object. The floor bounds the flush's mark for the whole request rather than naming a quantity to fill, and the flush measures it after the pool's supply or withdraw fee, so it bounds what your account actually receives:
 
@@ -77,6 +77,13 @@ Both floors default to none. A request without `minPlpOut` or `minUsdcOut` fills
 ## How do I queue or cancel a request? {#request-functions}
 
 Each request builder derives your account wrapper ID from `owner` with no chain read and returns a fresh `Transaction` synchronously. Its first command generates the account `Auth` that its second command consumes, so the owner must sign the transaction. See how [owner authority](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) works.
+
+To queue a supply or withdrawal and track it to its fill:
+
+1. Build the transaction with `tx.supplyPlp` or `tx.withdrawPlp`, and set `minPlpOut` or `minUsdcOut` in its options if you want a floor.
+2. Sign the transaction with the `owner` address and execute it with its events included.
+3. Pass the executed result to [`decode.plpRequest`](#plp-request) and keep the `index` it returns, which a cancel needs.
+4. After the next pool flush, check [`read.plpBalance`](#plp-balance) or the account's [USDC balance](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
 
 ### `tx.supplyPlp` {#supply}
 
@@ -137,7 +144,7 @@ A cancel works only while its request is still pending. The contract aborts with
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="804-804" />
 
-The receipt's `kind` tells you which builder cancels the request:
+The receipt's `kind` tells you which builder cancels the request. The following function uses the shared `client` from the [client setup](/onchain-finance/deepbook/deepbook-predict-sdk#client) and takes a `DecodableTransactionResult`, the executed transaction shape that [Decode transaction results](/onchain-finance/deepbook/deepbook-predict-sdk#decode) describes:
 
 ```ts
 import type { DecodableTransactionResult } from '@mysten/deepbook-v3/predict';
