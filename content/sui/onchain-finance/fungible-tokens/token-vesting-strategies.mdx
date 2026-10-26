@@ -54,7 +54,21 @@ Implementing and publishing your vesting strategy helps to:
 
 Different vesting strategies are available for your token launch. The best option for your project depends on factors unique to your project and its goals.
 
-### Cliff vesting
+### How do the vesting strategies compare?
+
+The strategies differ in when tokens release and which example contract implements them:
+
+| **Strategy** | **How tokens release** | **Example contract** |
+|---|---|---|
+| [Cliff](#cliff-vesting) | All tokens release after the cliff period passes | `cliff.move` |
+| [Graded](#graded-vesting) | Tokens release gradually, often in equal portions, during the vesting period | No dedicated example. See [Hybrid](#hybrid-vesting). |
+| [Hybrid](#hybrid-vesting) | Combines models, such as a cliff followed by linear release | `hybrid.move` |
+| [Backloaded](#backloaded-vesting) | Most tokens release near the end of the vesting period | `backloaded.move` |
+| [Milestone or performance-based](#milestone) | Tokens release as an authorized account updates progress toward goals or milestones | `milestone.move` |
+| [Linear](#linear-vesting) | Tokens release gradually over a set time period | `linear.move` |
+| [Immediate](#immediate-vesting) | All tokens are available as soon as you allocate them | `linear.move` with `duration` set to 0 |
+
+### What is cliff vesting? {#cliff-vesting}
 
 Cliff vesting releases the entire amount of tokens after a specific period called the cliff. Until the cliff period passes, no tokens release.
 
@@ -78,7 +92,7 @@ For the example scenario, you would call `new_wallet` 10 times so that a separat
 
 </details>
 
-### Graded vesting
+### What is graded vesting? {#graded-vesting}
 
 Graded vesting gradually releases tokens over time, often in equal portions, during the vesting period.
 
@@ -88,7 +102,7 @@ An employee receives 1,200 tokens, with 300 tokens vesting every year over four 
 
 The following [Hybrid vesting](#hybrid-vesting) section includes a smart contract that demonstrates how to perform graded vesting.
 
-### Hybrid vesting
+### What is hybrid vesting? {#hybrid-vesting}
 
 Hybrid vesting combines different vesting models, such as cliff and graded vesting. This allows flexibility in how tokens release over time.
 
@@ -110,7 +124,7 @@ The following smart contract creates a hybrid vesting model. Like the cliff vest
 
 </details>
 
-### Backloaded vesting
+### What is backloaded vesting? {#backloaded-vesting}
 
 Backloaded vesting distributes the majority of tokens near the end of the vesting period rather than evenly over time. This approach can help an ecosystem mature before large amounts of tokens unlock. Team members and stakeholders receive early rewards, but the largest rewards go to those who remain with the project for a greater length of time.
 
@@ -138,7 +152,7 @@ For the example scenario, you could pass the start timestamp for the frontload a
 
 </details>
 
-### Milestone or performance-based vesting {#milestone}
+### What is milestone or performance-based vesting? {#milestone}
 
 With performance-based vesting, achieving specific goals or metrics triggers vest events, such as hitting revenue targets or progressing through project stages.
 
@@ -168,7 +182,7 @@ The milestone update authority calls `update_milestone_percentage` to update the
 
 </details>
 
-### Linear vesting
+### What is linear vesting? {#linear-vesting}
 
 With linear vesting, tokens release gradually over a set time period.
 
@@ -194,7 +208,7 @@ For the example scenario, you create the wallet (call `new_wallet`) with 1,000 t
 
 </details>
 
-### Immediate vesting
+### What is immediate vesting? {#immediate-vesting}
 
 All tokens vest immediately, meaning they are fully available as soon as you allocate them.
 
