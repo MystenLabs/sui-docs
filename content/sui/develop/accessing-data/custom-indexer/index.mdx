@@ -42,7 +42,7 @@ The custom indexing framework (`sui-indexer-alt-framework`) turns raw checkpoint
 
 ## What interfaces does the framework provide?
 
-The custom indexing framework (`sui-indexer-alt-framework`) exposes specific interfaces that you implement to define your data processing logic. Some common APIs include:
+The framework exposes the following interfaces that you implement to define your data processing logic:
 
 - `process()`: Transform raw checkpoint data (transactions, events, object changes) into your desired database rows. This is where you extract meaningful information, filter relevant data, and format it for storage.
 
