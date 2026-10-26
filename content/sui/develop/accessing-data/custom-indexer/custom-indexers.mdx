@@ -100,13 +100,13 @@ The indexing framework supports multiple data sources to give you flexibility in
 
 - **gRPC streaming** pushes new checkpoints from full nodes as soon as they are available, providing lower latency than polling. Because streaming only emits the latest checkpoints, you must configure a polling-based fallback source to fetch historical data and ensure reliability.
 
-For configuration examples and guidance on when to use each source, see [Checkpoint Data Sources](/develop/accessing-data/custom-indexer/indexer-data-integration#checkpoint-data-sources).
+For configuration examples and guidance on when to use each source, see [Checkpoint Data Sources](/develop/accessing-data/custom-indexer/indexer-data-integration).
 
 ### Ingestion layer
 
 The indexing framework manages the ingestion layer, which handles the complex task of reliably fetching and distributing checkpoint data. The `Broadcaster` receives checkpoints from data sources and efficiently distributes them to multiple processing pipelines running in parallel. This is essential for indexers that run multiple different data processing workflows simultaneously. 
 
-`Broadcaster` applies backpressure based on the highest watermark reported by its subscribers, ensuring it does not push data faster than the slowest pipeline can process it.
+A watermark is a checkpoint sequence number that tracks a pipeline's progress. `Broadcaster` applies backpressure based on the highest watermark reported by its subscribers, ensuring it does not push data faster than the slowest pipeline can process it.
 
 ### Processing layer
 
@@ -135,4 +135,4 @@ The failure arrives as a deserialization error at ingestion rather than as a com
 
 ## Building custom indexers
 
-To build your own pipelines for application-specific data, see [Building Your First Custom Indexer](/develop/accessing-data/custom-indexer/build). You can also reach out to a [data indexer operator](/references/awesome-sui) that might already have set one up for your needs.
+To build your own pipelines for application-specific data, see [Building Your First Custom Indexer](/develop/accessing-data/custom-indexer/build). You can also reach out to a data indexer operator that might already have set one up for your needs.
