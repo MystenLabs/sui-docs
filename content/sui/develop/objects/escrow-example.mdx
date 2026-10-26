@@ -47,16 +47,23 @@ Both implementations use a locking primitive:
 
 ```move
 module escrow::lock {
-    public fun lock<T: store>(obj: T, ctx: &mut TxContext): (Locked<T>, Key);
-    public fun unlock<T: store>(locked: Locked<T>, key: Key): T
+    public fun lock<T: key + store>(obj: T, ctx: &mut TxContext): (Locked<T>, Key);
+    public fun unlock<T: key + store>(locked: Locked<T>, key: Key): T
 }
 ```
 
-Any `T: store` can be locked to get a `Locked<T>` and a corresponding `Key`. Unlocking consumes the key, so any tampering with the locked value is detectable by monitoring the key's ID.
+Any `T: store` can be locked to get a `Locked<T>` and a corresponding `Key`. The `unlock` function takes the `Key` by value, so unlocking consumes the key. Each `Escrow` object records the ID of a key, so you can detect any tampering with the locked value by monitoring that key's ID.
 
 View the [complete code](https://github.com/MystenLabs/sui/blob/main/examples/trading/contracts/escrow/sources/lock.move) on GitHub.
 
 ## Fastpath: address-owned objects
+
+The address-owned flow has 4 steps:
+
+1. Both parties lock their objects with `escrow::lock`.
+2. The parties exchange the IDs of their keys.
+3. Each party calls `create` to send an `Escrow` request to the custodian.
+4. The custodian calls `swap` to match the requests and send each object to its recipient.
 
 <details>
 <summary>`owned.move`</summary>
@@ -89,7 +96,7 @@ flowchart LR
     Seller--fa:fa-key key_s-->Buyer
 ```
 
-A third-party custodian holds the objects and matches them when both arrive, using the checks in the `swap` function described below. The `create` function sends the `Escrow` request to the custodian, unlocking the offered object while recording the ID of the key it was locked with:
+A third-party custodian holds the objects and matches them when both arrive. The `create` function sends the `Escrow` request to the custodian, unlocking the offered object while recording the ID of the key it was locked with:
 
 <ImportContent source="examples/trading/contracts/escrow/sources/owned.move" mode="code" fun="create" noComments />
 
@@ -138,6 +145,12 @@ flowchart TB
 ```
 
 ## Consensus: shared object
+
+Unlike the address-owned version, where both parties lock their objects first, only the first party locks an object here. The second party passes their object directly into a shared `Escrow` object. The shared flow has 3 steps:
+
+1. The first party locks their object with `escrow::lock`.
+2. The second party calls `create` to place their object in a shared `Escrow` object.
+3. The intended recipient calls `swap` with their locked object to complete the trade.
 
 <details>
 <summary>`shared.move`</summary>
