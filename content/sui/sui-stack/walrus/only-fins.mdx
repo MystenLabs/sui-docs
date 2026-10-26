@@ -178,13 +178,13 @@ For the underlying primitives, see [Data Storage Using Walrus](/sui-stack/walrus
 
 A complete implementation lives in [`onlyfins-example-app`](https://github.com/MystenLabs/onlyfins-example-app), split into a `frontend`, a `backend` sponsor service, and the `move/posts` package.
 
-Publish the Move package and record the package ID, which both the frontend and backend need:
+The frontend and backend both need the package ID:
 
 1. Publish the package:
 
-```bash
-$ sui client publish --gas-budget 200000000
-```
+   ```bash
+   $ sui client publish --gas-budget 200000000
+   ```
 
 2. Copy the package ID from the command output.
 
