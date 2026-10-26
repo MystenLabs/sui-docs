@@ -195,6 +195,8 @@ The Sui framework provides several modules that simplify common testing tasks:
 
 Use `std::unit_test::destroy` for cleanup, not `sui::test_utils::destroy`, which is deprecated.
 
+To create vectors in tests, use the `vector[]` literal syntax instead of `vector::empty()`.
+
 Example using `std::unit_test::destroy` to clean up an object without writing a custom destructor:
 
 ```move
