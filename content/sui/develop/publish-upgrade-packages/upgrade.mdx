@@ -710,3 +710,19 @@ Transaction Digest: 3NnJGryz2k2BJzjpndDVqVcdZmmefNMB8SJ9bCEQct22
 </details>
 
 The result provides a new ID for the upgraded package. The package system automatically updates `Published.toml` with the new package address and version. You do not need to manually edit any manifest files after upgrading.
+
+## How do I subscribe to events when `suix_subscribeEvent` fails?
+
+Sui deprecated the JSON-RPC WebSocket subscription APIs in mid-2024. If a WebSocket event subscription fails, migrate it to [gRPC](/develop/accessing-data/grpc/what-is-grpc) streaming with `SubscriptionService.SubscribeEvents`. This applies when you watch for events that an upgraded package emits, such as the `Progress` event in the earlier example.
+
+`SubscribeEvents` filters events on the server using an `EventFilter`, so your client receives only matching events. The filter uses disjunctive normal form (DNF):
+
+- The filter holds a list of terms, and the server ORs the terms together.
+- Each term is an AND of signed literals.
+- Literals can match on sender, emitting module, event type, or event stream head.
+- A present filter must have at least one term. An absent filter matches everything.
+- The server rejects a filter that contains more literals than it allows.
+
+A gRPC subscription differs from a WebSocket subscription in how it starts. Subscriptions begin at the current tip and do not accept a resume point. A filtered subscription starts with a progress-only frame whose cursor marks the point immediately before live delivery. An unfiltered subscription can start with a payload, so never discard the first frame. Store live frames in durable storage while `LedgerService.ListEvents` backfills events up to that boundary. If the stream drops, restart from the last cursor you processed and backfill the gap.
+
+For filtered historical event queries over a range, use `LedgerService.ListEvents` or [GraphQL `Query.events`](/develop/accessing-data/using-events#querying-events-with-graphql).
