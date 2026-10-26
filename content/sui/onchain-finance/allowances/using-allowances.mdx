@@ -444,7 +444,7 @@ The funder revokes by passing the `AllowanceCap` and the allowance to `sui::allo
 public fun revoke<T>(self: AllowanceCap<T>, allowance: Allowance<T>)
 ```
 
-From the TypeScript SDK:
+From the TypeScript SDK, replace `<ALLOWANCE_ID>` and `<ALLOWANCE_CAP_ID>` with the object IDs from the issuing transaction's effects, as shown in [Issue an allowance](#issue-an-allowance). The allowance is the created shared object, and the `AllowanceCap` is the created object that the funder owns:
 
 ```typescript title='revoke-allowance.ts'
 import { Transaction } from '@mysten/sui/transactions';
