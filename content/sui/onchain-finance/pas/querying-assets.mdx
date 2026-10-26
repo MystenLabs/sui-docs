@@ -75,7 +75,7 @@ Wallet Address (for example, 0xAlice)
 Account Address (deterministic, same every time)
 ```
 
-In the diagram and examples, `0xAlice` is a placeholder; substitute a full Sui wallet address.
+In the diagram and code examples, `0xAlice` is a placeholder. Before you run the examples, replace `0xAlice` with a full Sui wallet address and replace `0xabc...` with the full package address.
 
 The derived address is different per network (Mainnet compared to Testnet) because the PAS namespace object has a different ID on each network. The SDK handles this based on the client network configuration.
 
@@ -104,7 +104,7 @@ const { balance } = await client.getBalance({
 
 ### How do I check whether a wallet has a PAS Account?
 
-`getObject` throws an `ObjectError` when the object does not exist, so it never returns a missing Account as a value to test. Use `getObjects`, which returns the error in place of the object instead of throwing:
+`getObject` throws an `ObjectError` when the object does not exist, so it never returns a missing Account as a value to test. Use `getObjects`, which returns the error in place of the object instead of throwing. The following example reuses `client` and `walletAddress` from the example in [How do I read PAS balances for an address?](#how-do-i-read-pas-balances-for-an-address):
 
 ```tsx
 const accountAddress = client.pas.deriveAccountAddress(walletAddress);
