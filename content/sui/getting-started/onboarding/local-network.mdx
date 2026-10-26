@@ -68,7 +68,7 @@ Localnet is a single-machine network you run yourself. Devnet is a shared public
 </TabItem>
 </Tabs>
 
-## Starting the local network
+## How to start a local network {#starting-the-local-network}
 
 To start the local network, run the following command:
 
@@ -89,10 +89,12 @@ This command:
 :::caution
 Each time you start the network by passing `--force-regenesis`, the local network starts from a random genesis with no previous data and does not persist the local network. If you want to persist data, do not pass the `--force-regenesis` flag. 
 
+Packages you published before the reset no longer exist on the new network, and they get new addresses when you publish them again.
+
 The command creates a temporary directory in `/tmp`, which might not work if the `/tmp` folder is mounted to `/tmpfs`. If this is the case, set `TMPDIR=./some_folder`.
 :::
 
-## Customization
+## How to customize the local network {#customization}
 
 To customize your local Sui network, such as starting other services or changing default ports and hosts, include additional flags or options in the `sui start` command.
 
@@ -183,13 +185,15 @@ The following is a list of possible options and flags to pass to `sui start`. Us
           validators
 ```
 
-## Persisting local network state
+## How to persist local network state {#persisting-local-network-state}
 
 If you stop and start the network without passing the `--force-regenesis` flag, Sui preserves all history and keeps it accessible.
 
 By default, `sui start` uses an existing genesis and network configuration if the `~/.sui/sui_config` folder exists and includes a `genesis.blob` file. If the folder does not exist, it creates the folder and generates a new genesis configuration. If you pass `--network.config`, the command checks for the network configuration file and tries to load the genesis blob as per the network configuration file.
 
 To generate a custom genesis, use the `sui genesis` command and pass the desired custom values. For more information about possible flags and options, run `sui genesis --help`.
+
+To start the network from a configuration directory that `sui genesis` generated, pass that directory with `--network.config`. The `-f` flag of `sui genesis` overwrites an existing configuration directory, so use it with caution.
 
 To view the transaction history for your local network, use the following command to retrieve the local total transaction count:
 
@@ -214,7 +218,7 @@ If successful, the response resembles the following:
 }
 ```
 
-## Connecting the Sui CLI to your local network
+## How to connect the Sui CLI to your local network {#connecting-the-sui-cli-to-your-local-network}
 
 You can use the Sui CLI with any Sui network. To connect it to your local network, create a new environment alias named `local` that sets the CLI's RPC URL configuration to the local network's URL.
 
@@ -238,6 +242,8 @@ $ sui client active-env
 
 The command returns: `local`.
 
+To switch to another environment later, run `sui client switch --env` with that environment's alias.
+
 ## Show the current active address
 
 The Sui CLI uses the active address for each command if you do not explicitly specify one as a flag in the command. To see the current active address on your local network, use the command:
@@ -248,7 +254,7 @@ sui client active-address
 
 The command returns an address, for example, `0xbc33e6e4818f9f2ef77d020b35c24be738213e64d9e58839ee7b4222029610de`.
 
-## Use the local faucet {#use-the-local-faucet}
+## How to get SUI from the local faucet {#use-the-local-faucet}
 
 Transactions on your local network require SUI coins to pay for gas fees just like on Mainnet, Testnet, and Devnet. The Sui CLI provides the `sui client faucet` command to get SUI from the local faucet. The `faucet` command uses the active address and the active network environment by default. 
 
@@ -321,6 +327,8 @@ $ lsof -i :9000
 $ kill -9 <PID>
 ```
 
+Replace `<PID>` with the process ID that `lsof` returns.
+
 Alternatively, change the fullnode port in `~/.sui/sui_config/fullnode.yaml`.
 
 ### Faucet not dispensing coins
@@ -332,6 +340,8 @@ $ curl --location --request POST 'http://127.0.0.1:9123/gas' \
   --header 'Content-Type: application/json' \
   --data-raw '{ "FixedAmountRequest": { "recipient": "<YOUR_ADDRESS>" } }'
 ```
+
+Replace `<YOUR_ADDRESS>` with your active address, which `sui client active-address` returns.
 
 ### `Package already published` error
 
