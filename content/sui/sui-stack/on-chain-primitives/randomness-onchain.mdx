@@ -226,7 +226,7 @@ Having access to random numbers is only one part of designing secure application
 
 To securely access randomness:
 
-- Define your function as (private) `entry` so it cannot be composed and abort-filtered by another module.
+- Define your function as (private) `entry` so another module cannot call it and abort the transaction whenever the outcome is unfavorable (an abort-filtering attack).
 
 - Prefer generating randomness using function-local `RandomGenerator`. Always create it internally from `&Random`; never accept a `RandomGenerator` as a function parameter.
 
