@@ -48,7 +48,7 @@ Building for SuiPlay0X1 lets you offer players capabilities that traditional gam
 
 ## How wallet integration works
 
-The Playtron wallet is a [zkLogin](/sui-stack/zklogin-integration) wallet backed by Playtron's auth provider, tied to the player's Playtron account rather than to the hardware. On the device, the Trusted Platform Module (TPM), the device's hardware security module, protects the ephemeral keys that zkLogin authorizes to sign on the player's behalf. The same wallet reaches the [companion web app](https://wallet.playtron.one), which holds those ephemeral keys in session storage instead. Players therefore keep one wallet whether they are on the device or not. For the wallet types your game can support, see [Wallet Integration Options](/sui-stack/suiplay0x1/wallet-integration).
+The Playtron wallet is a [zkLogin](/sui-stack/zklogin-integration) wallet backed by Playtron's auth provider, tied to the player's Playtron account rather than to the hardware. On the device, the Trusted Platform Module (TPM), a dedicated security chip on the device, protects the ephemeral keys that zkLogin authorizes to sign on the player's behalf. The same wallet reaches the [companion web app](https://wallet.playtron.one), which holds those ephemeral keys in session storage instead. Players therefore keep one wallet whether they are on the device or not. For the wallet types your game can support, see [Wallet Integration Options](/sui-stack/suiplay0x1/wallet-integration).
 
 How your game reaches that wallet depends on where your game runs:
 
