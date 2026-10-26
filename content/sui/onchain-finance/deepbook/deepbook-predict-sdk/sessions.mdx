@@ -71,7 +71,7 @@ A session key carries authority over everything the account holds, as the [Sessi
 The session lifecycle follows this order:
 
 1. The owner grants the session key with [`authorizeSession`](#authorize-session).
-2. The owner [lists the account's grants](#list) and reclaims the slots that expired grants hold.
+2. The owner [lists the account's grants](#list) and revokes the expired ones to reclaim their slots.
 3. The session key trades for the account with the [queued-order builders](#queue-as-session) and [`redeemSettled`](#redeem-settled).
 4. The owner removes the grant with [`revokeSession`](#revoke-session), which frees its slot.
 
