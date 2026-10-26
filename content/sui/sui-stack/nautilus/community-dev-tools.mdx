@@ -35,7 +35,7 @@ answer: >-
   workflows for Nautilus.
 ---
 
-Community developer tools for Nautilus include options like Marlin Oyster for deploying dockerized applications, with support for PCR verification in trusted execution environments for confidential compute workflows.
+Community developer tools for Nautilus include options like Marlin Oyster for deploying dockerized applications, with support for Platform Configuration Register (PCR) verification in trusted execution environments for confidential compute workflows.
 
 The following tools are available:
 
@@ -55,7 +55,7 @@ Marlin Oyster integrates with the Nautilus framework to remove the operational o
 
 To use Nautilus, you can either manage AWS Nitro Enclaves yourself or use Marlin Oyster. When you manage enclaves yourself, you must manage AWS accounts, networking configurations, enclave images, and attestation infrastructure.
 
-Marlin Oyster handles deterministic enclave builds, provisioning, and attestation. You deploy enclave-powered apps with only a Docker image, Oyster CLI, and Sui. You do not need to interact with AWS directly. Marlin Oyster preserves all cryptographic guarantees, including hardware-backed Nitro security, reproducible enclave measurements (Platform Configuration Registers (PCRs), which confirm that code running in the enclave is authentic and unmodified), and trust-minimized execution.
+Marlin Oyster handles deterministic enclave builds, provisioning, and attestation. You deploy enclave-powered apps with only a Docker image, Oyster CLI, and Sui. You do not need to interact with AWS directly. Marlin Oyster preserves all cryptographic guarantees, including hardware-backed Nitro security, reproducible enclave measurements (PCRs, which confirm that code running in the enclave is authentic and unmodified), and trust-minimized execution.
 
 It transforms Trusted Execution Environment (TEE) access into a transparent and decentralized marketplace. An abstracted Sui Move contract enables you to submit jobs, pay with stablecoins, and expose workloads to Oyster operators. Builds are deterministic, meaning enclave integrity and identity are fully verifiable.
 
