@@ -63,6 +63,8 @@ The total fungible balance of an address for coin type `T` is:
 
 > **total balance = sum of all `Coin<T>` objects + address balance value**
 
+When an address holds both `Coin<T>` objects and an address balance, neither value alone gives its full balance. Add the value of every `Coin<T>` object the address owns to its address balance value.
+
 `Coin<T>` and address balances coexist. Existing coins remain functional and can still be transferred with `transfer::public_transfer`. You can also [convert existing coins to address balances](/onchain-finance/asset-custody/address-balances/using-address-balances#converting-existing-coins-to-address-balances).
 
 ## Coin objects vs address balances
