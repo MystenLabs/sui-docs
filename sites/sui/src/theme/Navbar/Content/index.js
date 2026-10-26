@@ -52,6 +52,21 @@ ${JSON.stringify(item, null, 2)}`,
   );
 }
 
+// Between 997px and 1279px (see .navbar-compact-menu in custom.css) the full
+// row of menus does not fit, so the same top-level sections are offered as one
+// dropdown. Each entry links to the section's landing page.
+function CompactMenu({ items }) {
+  const links = items
+    .filter((item) => item.label && (item.to || item.href))
+    .map(({ label, to, href }) => ({ label, to, href }));
+  if (links.length === 0) return null;
+  return (
+    <div className="navbar-compact-menu">
+      <NavbarItem type="dropdown" label="Docs" position="left" items={links} />
+    </div>
+  );
+}
+
 function NavbarContentLayout({ left, right }) {
   return (
     <div className="navbar__inner">
@@ -136,6 +151,7 @@ export default function NavbarContent() {
         <>
           {!mobileSidebar.disabled && <NavbarMobileSidebarToggle />}
           <NavbarLogo />
+          <CompactMenu items={leftItems} />
           <NavbarItems items={leftItems} />
         </>
       }
