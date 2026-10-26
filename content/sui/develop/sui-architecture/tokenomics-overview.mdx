@@ -76,7 +76,7 @@ The following table lists key values and rules that the rest of this topic descr
 | Total supply cap on Mainnet | 10,000,000,000 SUI |
 | Validator stake changes | Take effect when a new epoch begins |
 | Staking pool exchange rates | The protocol computes them at each epoch boundary |
-| Validator commission rate | Each validator sets its own rate and can change it without prior notice |
+| Validator commission rate | Each validator sets its own rate and can change it without prior notice; a change takes effect at the next epoch |
 | Total voting power units | 10,000 |
 | Minimum voting power threshold to join the validator set (`V`) | 3 in the final phase |
 | Mainnet cliff period | 1 year, ended May 2024 |
@@ -213,7 +213,7 @@ At each epoch boundary, the exchange rate for each validator pool grows by the r
 
 The protocol calculates the exchange rate for each validator pool at each epoch boundary as follows:
 
-```
+```text
 Exchange rate at E+1 = (1 + (third-party staker rewards at E / third-party stake at E)) × (exchange rate at E)
 ```
 
@@ -225,7 +225,7 @@ For example, using hypothetical numbers: if the exchange rate at epoch `E` is 1.
 
 [SIP-39](https://github.com/sui-foundation/sips/pull/39) uses the following formula to determine if a validator can join the set:
 
-```
+```text
 S / (S + T) > V / 10000
 ```
 
