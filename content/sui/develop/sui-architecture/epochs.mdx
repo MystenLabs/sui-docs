@@ -44,15 +44,13 @@ Epoch values are included in the metadata of all [transactions](/develop/transac
 
 Reconfiguration is a critical process occurring at the end of each epoch. It involves several key steps to adjust the network for the upcoming epoch:
 
-1. **Closing the epoch:** When the consensus commit timestamp exceeds the target reconfiguration time (epoch start + epoch duration), validators stop accepting new user transactions and finalize the remaining transactions and checkpoints for the current epoch. This ensures all validators have an identical state at epoch conclusion.
-
-    - **Synchronous moment:** This is the only fully synchronous event in the network, crucial for maintaining consistency.
+1. **Closing the epoch:** The epoch closes when the consensus commit timestamp exceeds the target reconfiguration time (epoch start + epoch duration). Validators then stop accepting new user transactions and finalize the remaining transactions and checkpoints for the current epoch. This ensures all validators have an identical state at epoch conclusion. This step is the only fully synchronous event in the network, and it is crucial for maintaining consistency.
 
 1. **Distribution of gas rewards:** Computation gas fees are distributed to the validator staking reward pool, from which stakers can withdraw. Storage fees are allocated to a storage fund, playing a vital role in the [Sui tokenomics](/develop/sui-architecture/tokenomics-overview).
 
 1. **Validator set change:** Any pending staking and unstaking requests during the epoch are finalized and reflected in the validators' stake distribution. Any pending validator change requests are processed, including adding new validators and removing existing validators. This is the sole opportunity for altering the validator set and stake distribution.
 
-1. **Protocol upgrade:** If agreed upon by 2f+1 validators (a supermajority quorum, where f is the maximum number of faulty validators the network can tolerate), the network might upgrade to a new protocol version, encompassing new features, bug fixes, and updates to Move framework libraries.
+1. **Protocol upgrade:** The network might upgrade to a new protocol version, encompassing new features, bug fixes, and updates to Move framework libraries. An upgrade requires agreement from a supermajority quorum of 2f+1 validators. In this formula, f is the maximum number of faulty validators the network can tolerate.
 
 ## Do object versions change across epochs?
 
