@@ -68,11 +68,11 @@ public fun spend<T>(token: Token<T>, ctx: &mut TxContext): ActionRequest<T>;
 
 The `sui::token` module defines the `spend` function, along with the `Token` and `ActionRequest` types and the `add_approval` function, which the [gift shop example](#how-do-i-gate-the-spend-action) uses.
 
-As the signature shows, `spend` consumes the `Token` object. Its balance becomes the `spent_balance` in the [`ActionRequest`](/onchain-finance/closed-loop-token/action-request#actionrequest-structure).
+As the signature shows, `spend` consumes the `Token` object. Its balance becomes the `spent_balance` in the [`ActionRequest`](/onchain-finance/closed-loop-token/action-request).
 
 ## What happens to a spent token?
 
-The `ActionRequest` for the `spend` action contains the `Balance` of the spent `Token`, and you can either confirm it [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request#confirming-with-treasurycap) or [deliver it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy). In the first case, you burn the balance directly with the `TreasuryCap`. In the second case, the balance moves to the `TokenPolicy` `spent_balance`.
+The `ActionRequest` for the `spend` action contains the `Balance` of the spent `Token`, and you can either confirm it [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request) or [deliver it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request). In the first case, you burn the balance directly with the `TreasuryCap`. In the second case, the balance moves to the `TokenPolicy` `spent_balance`.
 
 You cannot use spent balance in any way, and you cannot withdraw it. The only available action is [flushing](/onchain-finance/closed-loop-token/token-policy#how-do-i-consume-a-spent-token-balance): burning the `spent_balance` by bringing a `TreasuryCap`.
 
@@ -102,4 +102,4 @@ public fun buy_gift(
 }
 ```
 
-The caller of `buy_gift` keeps the `Gift` and must still confirm the returned `ActionRequest`, either [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request#confirming-with-treasurycap) or by [delivering it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy), as [What happens to a spent token?](#what-happens-to-a-spent-token) explains.
+The caller of `buy_gift` keeps the `Gift` and must still confirm the returned `ActionRequest`, either [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request) or by [delivering it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request), as [What happens to a spent token?](#what-happens-to-a-spent-token) explains.
