@@ -70,7 +70,7 @@ To set up staking on your validator node:
 
 2. Acquire 30M SUI by staking to the validator staking pool you created in the previous step. Call `request_add_stake` with the address of the validator (this is not the same as the staking pool ID).
 
-3. Call `request_add_validator` to have the validator become a pending validator. At the next epoch, it joins the validator set. Before the next epoch, you should stand up the validator so that when the epoch changes, it can participate.
+3. Call `request_add_validator` to have the validator become a pending validator. At the next epoch, it joins the validator set. Before the next epoch, deploy and configure your validator node so that it can participate when the epoch changes. See [Deployment](#deployment), [Configuration](#configuration), and [Connectivity](#connectivity).
 
 [Learn more about validator staking rewards](/operators/validator/validator-rewards).
 
