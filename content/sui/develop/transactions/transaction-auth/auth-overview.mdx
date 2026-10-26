@@ -74,7 +74,7 @@ The mnemonics and private keys shown on this page are illustrative placeholders.
 
 :::
 
-### Key derivation schemes
+### Which key derivation schemes does Sui use? {#key-derivation-schemes}
 
 For managing wallets that support the Ed25519 (EdDSA) signing scheme, Sui follows [SLIP-0010](https://github.com/satoshilabs/slips/blob/master/slip-0010), which enforces wallets to always derive child private keys from parent private keys using the hardened key path.
 
@@ -114,7 +114,7 @@ Account-based currencies define only the first 3 levels, while UTXO-based curren
 | ECDSA Secp256k1 | `m/54'/784'/{account}'/{change}/{address}`   | The first 3 levels are hardened.           |
 | ECDSA Secp256r1 | `m/74'/784'/{account}'/{change}/{address}`   | The first 3 levels are hardened.           |
 
-### Mnemonics support
+### Which mnemonics does Sui accept? {#mnemonics-support}
 
 After Sui defines the deterministic way to derive the master key from a seed, Sui uses BIP-39 to make the seed more human-readable and memorable with mnemonics. Sui accepts 12, 15, 18, 21, and 24 words from the BIP-39 word list that is properly checksummed, corresponding to 128, 160, 192, 224, and 256 bits of entropy.
 
@@ -126,7 +126,7 @@ For deriving a 32-byte Sui address, Sui hashes the signature scheme flag 1-byte 
 
 When you submit a signed transaction, you submit a serialized signature and serialized transaction data. The serialized transaction data is the [Binary Canonical Serialization](https://crates.io/crates/bcs) (BCS) serialized bytes of the struct `TransactionData`, and the serialized signature is a concatenation of bytes of `flag || sig || pk`.
 
-### Signature structure
+### What is in a Sui signature? {#signature-structure}
 
 A Sui signature consists of three components concatenated together:
 
@@ -252,7 +252,7 @@ const address = keypair.getPublicKey().toSuiAddress();
 
 See more test vectors for [pure Ed25519](https://github.com/MystenLabs/sui/blob/f3b5fdd73da64a0df65fb4323471512b0f57ec4d/sdk/typescript/test/unit/cryptography/ed25519-keypair.test.ts) or [ECDSA Secp256k1](https://github.com/MystenLabs/sui/blob/199f06d25ce85f0270a1a5a0396156bb2b83122c/sdk/typescript/test/unit/cryptography/secp256k1-keypair.test.ts).
 
-## Workflow
+## How do you sign and send a transaction? {#workflow}
 
 The following high-level process describes the overall workflow for constructing, signing, and executing an onchain transaction:
 
@@ -274,7 +274,7 @@ If you want to use a specific gas coin, first find the object ID of the gas coin
 
 :::
 
-## Process multiple transactions from the same address
+## How to process multiple transactions from the same address {#process-multiple-transactions-from-the-same-address}
 
 The Sui SDK offers transaction executors to help process multiple transactions from the same address.
 
@@ -501,6 +501,8 @@ sui keytool import "$MNEMONICS" secp256r1
 Create a transfer transaction in the CLI. Set the `$SUI_ADDRESS` to the one corresponding to the key pair used to sign. `$GAS_COIN_ID` refers to the ID of an object that the sender owns and uses as gas. `$GAS_BUDGET` refers to the budget used to execute transaction. Then sign with the private key corresponding to the sender address. `$MNEMONICS` refers to 12, 15, 18, 21, or 24 words from the wordlist, for example, `retire skin goose will hurry this field stadium drastic label husband venture cruel toe wire`. Refer to [Keys and Addresses](/develop/transactions/transaction-auth/auth-overview) for more.
 
 `$TX_BYTES` refers to the serialized unsigned transaction produced by the `sui client ptb ... --serialize-unsigned-transaction` command, and `$SERIALIZED_SIGNATURE` refers to the signature produced by the `sui keytool sign` command. Set each variable from the output of the preceding command before running the next one.
+
+To find a value for `$SUI_ADDRESS`, run `sui keytool list`. To find a value for `$GAS_COIN_ID`, use the output of `sui client gas`, the first command in the following sequence.
 
 <ImportContent source="info-gas-budget" mode="snippet" />
 
