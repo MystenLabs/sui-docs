@@ -55,13 +55,13 @@ The DeepBookV3 TypeScript SDK abstracts away the transaction calls, allowing for
 
 ## How do I install the DeepBookV3 SDK? {#install}
 
-To use the SDK in your projects, install the `@mysten/deepbook` package.
+To use the SDK in your projects, install the `@mysten/deepbook-v3` package.
 
 ```sh npm2yarn
 npm install @mysten/deepbook-v3
 ```
 
-The package root covers DeepBook spot and margin, and it imports none of the 3 subpaths the same package ships:
+The package root covers DeepBook spot and margin. It does not import any of the 3 subpaths that the same package ships:
 
 - `@mysten/deepbook-v3/predict`: DeepBook Predict, covering markets and quotes, positions, PLP liquidity, and client-side pricing. See [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk).
 - `@mysten/deepbook-v3/account`: The shared onchain account primitive that Predict and the DeepBook core account wrapper build on. See [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
@@ -126,6 +126,10 @@ class DeepBookMarketMaker {
 	}
 }
 ```
+
+### Read-only and transaction-building calls {#call-patterns}
+
+You await read-only calls, such as `checkManagerBalance` and `getLevel2Range`, and they return data directly. Transaction-building functions, such as `depositIntoManager` and `withdrawAllFromManager`, return a function that you call with a `Transaction` (`fn(...)(tx)`) to add the call to that transaction; the calls run when you sign and execute the transaction. When you need a function's result as input to later calls in the same transaction, pass it to `tx.add(...)`, which returns the result, as the referral examples do with `mintTradeCap` and `claimPoolReferralRewards`.
 
 ## Keys: coin, pool, and manager {#keys}
 
@@ -377,7 +381,7 @@ export class DeepBookMarketMaker {
 
 ### Example setup
 
-The following example uses the default pools and coins provided. It imports the `DeepBookMarketMaker` class from the [Pool](#pool) example, which defines the `signAndExecute` helper used at the end.
+The following example uses the default pools and coins provided. It imports the `DeepBookMarketMaker` class from the [Pool](#pool) example, which defines the `signAndExecute` helper used at the end. Set the balance manager `address` to the object ID of your balance manager. For how the read-only and transaction-building calls in this example differ, see [Read-only and transaction-building calls](#call-patterns).
 
 ```tsx
 import { Transaction } from '@mysten/sui/transactions';
@@ -415,8 +419,6 @@ import { DeepBookMarketMaker } from './deepbookMarketMaker.js';
 	console.dir(res, { depth: null });
 })();
 ```
-
-You await read-only calls, such as `checkManagerBalance` and `getLevel2Range`, and they return data directly. Transaction-building functions, such as `depositIntoManager` and `withdrawAllFromManager`, return a function that you call with a `Transaction` (`fn(...)(tx)`) to add the call to that transaction; the calls run when you sign and execute the transaction. When you need a function's result as input to later calls in the same transaction, pass it to `tx.add(...)`, which returns the result, as the referral examples do with `mintTradeCap` and `claimPoolReferralRewards`.
 
 ## Referral functions
 
