@@ -105,6 +105,17 @@ Be careful when selecting a third-party custodial wallet provider as this might 
 
 The best wallet to select for your app depends on the goals of your project. There is usually not a single, best solution, but some choices are better than others when weighing the tradeoffs between different approaches.
 
+Start with the [requirements](#requirements) that apply to every SuiPlay0X1 game, then compare the [wallet strategies](#wallet-strategies). The Playtron zkLogin wallet plus dApp Kit combo (Option 1) is the recommended strategy.
+
+The following table summarizes how the wallet types compare:
+
+| **Wallet type** | **Who manages the wallet** | **Seed phrases** | **Portability** |
+|---|---|---|---|
+| Self-custodial | The user | The user stores and secures the seed phrase | Most portable across onchain apps |
+| zkLogin | The user, through an ephemeral key pair on the client side | Not needed | Siloed to the app that creates it, unless you upgrade to Enoki Connect |
+| Playtron zkLogin | The user, through Playtron credentials | Not needed | Portable across apps through Enoki Connect, if apps enable support |
+| Custodial | You, or a third-party provider | Not needed | Can't interact with third-party apps |
+
 ## Requirements
 
 As the developer, you choose the wallet strategy, but working with the SuiPlay0X1 has some requirements:
@@ -163,7 +174,7 @@ This option is effectively a special case of the recommended approach. If your g
 - Use game-specific zkLogin wallets as the primary wallet when playing off-device.
 - If new users start on-device, use the Playtron zkLogin wallet.  
 - If users have initially played the game off-device using your game-specific zkLogin wallet, they can use the Playtron companion app to link their wallet and transfer assets from that wallet to their Playtron zkLogin wallet to continue playing on-device. See [Cross-Platform Migration Strategies](/sui-stack/suiplay0x1/migration-strategies) to learn more.
-  - Connecting your zkLogin wallet to the companion app requires you to upgrade your wallet to Enoki Connect (see the [Enoki Connect section](#enoki-connect) that follows).  
+  - Connecting your zkLogin wallet to the companion app requires you to upgrade your wallet to Enoki Connect (see [Enoki Connect](#enoki-connect)).  
   - After users connect their wallet to the companion app, they can link their game-specific zkLogin wallet to the Playtron wallet. If your game requires read-only access, then this link should be sufficient. If your game requires full asset access, on the other hand, players need to transfer assets from their game-specific wallet to the Playtron wallet.
 
 **Tradeoffs**
