@@ -52,7 +52,7 @@ The `sui-indexer-alt-framework` provides two distinct pipeline architectures. Un
 
 Both pipeline types can handle updates in place, aggregations, and complex business logic. While sequential pipelines have throughput limitations compared to concurrent, base your decision primarily on engineering complexity rather than performance needs.
 
-### Recommended: Sequential pipeline
+### Recommended: sequential pipeline
 
 Start here for most use cases. Provides more straightforward implementation and maintenance.
 
@@ -80,7 +80,13 @@ Out-of-order commits introduce a few additional complexities to your pipeline:
 
 ## How do I decide which pipeline to use?
 
-If you are unsure of which pipeline to choose for your project, start with a sequential pipeline as it is easier to implement and debug. Then, measure performance under a realistic load. If the sequential pipeline cannot meet your project's requirements, switch to a concurrent pipeline. In terms of configuration, this means starting with `SequentialConfig` and moving to `ConcurrentConfig` only if your measurements show the sequential pipeline falls short.
+If you are unsure which pipeline to choose for your project, follow these steps in order:
+
+1. If you produce a lot of data that needs pruning, use a concurrent pipeline (`ConcurrentConfig`). Sequential pipelines do not prune.
+1. Otherwise, start with a sequential pipeline (`SequentialConfig`), because it is easier to implement and debug.
+1. Measure performance under a realistic load.
+1. If the sequential pipeline meets your project's requirements, keep it.
+1. If the sequential pipeline cannot meet your project's requirements, switch to a concurrent pipeline (`ConcurrentConfig`).
 
 While not an exhaustive list, some specific scenarios where a sequential pipeline might not meet requirements include:
 
@@ -97,7 +103,7 @@ Both sequential and concurrent pipelines share common components and concepts. U
 
 <ImportContent source="indexer-pipeline-processor" mode="snippet" />
 
-The `Processor` component works identically in both sequential and concurrent pipelines. It receives checkpoint data from the `Broadcaster`, transforms it using your custom logic, and forwards the processed results to the next stage in the pipeline.
+The `Processor` component works identically in both sequential and concurrent pipelines. It receives checkpoint data from the `Broadcaster`, transforms it using your custom logic, and forwards the processed results to the next stage in the pipeline. The `Broadcaster` is the upstream ingestion component. It fetches checkpoint data and sends it to each pipeline's `Processor` through a bounded channel.
 
 ### What are the three watermarks?
 
@@ -107,7 +113,7 @@ Before diving into pipeline-specific architectures, understand the three types o
 |-----------|---------|---------------|
 | `checkpoint_hi_inclusive` | Highest checkpoint where all data is committed (no gaps) | Both pipelines for recovery and progress tracking |
 | `reader_lo` | Lowest checkpoint guaranteed to be available for queries | Concurrent pipelines with pruning enabled |
-| `pruner_hi` | Highest checkpoint that has been pruned (deleted) | Concurrent pipelines with pruning enabled |
+| `pruner_hi` | Exclusive upper bound of pruned (deleted) checkpoints | Concurrent pipelines with pruning enabled |
 
 These are three separate watermarks, each tracked independently rather than as sequential steps. They work together to enable safe out-of-order processing, automatic data cleanup, and recovery from failures.
 
@@ -185,7 +191,7 @@ Current watermarks:
        - `reader_lo` = 1003 - 4 + 1 = 1000.
 
 - `pruner_hi` = 1000:
-       - Highest exclusive checkpoint the pipeline deleted.
+       - Exclusive upper bound of deleted checkpoints: the pipeline deleted every checkpoint below 1000.
        - The pruner deleted checkpoints 998 and 999 to save space.
 
 Clear safe zones:
@@ -244,7 +250,7 @@ Checkpoints older than `reader_lo` might still temporarily exist because:
 - Pruner not completing cleanup yet
 :::
 
-## Sequential pipeline architecture {#sequential-pipeline-architecture}
+## How does a sequential pipeline work? {#sequential-pipeline-architecture}
 
 Sequential pipelines provide a more straightforward yet powerful architecture for indexing that prioritizes ordered processing. While they sacrifice some throughput compared to concurrent pipelines, they offer stronger guarantees and are often easier to reason about.
 
@@ -252,7 +258,7 @@ Sequential pipelines provide a more straightforward yet powerful architecture fo
 
 The sequential pipeline is significantly simpler than the concurrent pipeline's six-component architecture: it has a `Processor`, a `Collector`, and a `Committer`.
 
-![Sequential pipeline diagram](../images/architecture_sequential-pipeline_v1.png)
+![Sequential pipeline diagram with the Processor, Collector, and Committer components](../images/architecture_sequential-pipeline_v1.png)
 
 The `Broadcaster` and `Processor` components use identical backpressure mechanisms, adaptive parallel processing, and `processor()` implementations to the concurrent pipeline. The `Processor` component is described in detail in the [Common pipeline components](#processor) section.
 
@@ -336,20 +342,20 @@ let config = SequentialConfig {
 ```
 
 - `collect_interval_ms`: Higher values allow more checkpoints per batch, improving efficiency.
-- `write_concurrency`: Not applicable to sequential pipelines (always single-threaded writes).
+- `write_concurrency`: A field of the `CommitterConfig` struct that both pipeline types share. Not applicable to sequential pipelines (always single-threaded writes).
 - `fanout`: By default, processor concurrency is adaptive: it starts at 1 and scales up to the number of CPUs based on downstream channel pressure. The controller monitors the fill fraction of the processor-to-collector channel and adjusts concurrency using a dead band between 60% and 85% fill. You can override this with fixed concurrency (`ConcurrencyConfig::Fixed`) or customize the adaptive bounds (`ConcurrencyConfig::Adaptive`). The default max of `num_cpus` is for CPU-bound processors. If your processor performs IO (for example, fetching data from an external service), you might want a higher max. The adaptive controller also exposes a `dead_band` parameter to override the fill-fraction thresholds, but the defaults should work well for most workloads.
 - `ingestion.subscriber_channel_size`: Capacity of the bounded broadcaster-to-processor channel. Defaults to `max(num_cpus / 2, 4)` when `None`. A pipeline that occasionally sees bursts can raise its own capacity, but note that a larger value makes this pipeline appear "less full" to the shared controller, so it triggers throttling later than its peers.
 - `processor_channel_size`: Controls the size of the channel between the processor and the collector. Defaults to `num_cpus / 2`. This channel is also the signal that drives the adaptive concurrency controller.
 - `pipeline_depth`: Controls the size of the channel between the collector and the committer. Defaults to `max(num_cpus / 2, 4)`. Larger values let the collector stay further ahead of a slow committer (absorbing bursts); `1` means one batch can be staged while another is committing.
 - `max_pending_rows`: Soft cap on how many rows the collector buffers before yielding to the flush phase. Unlike the concurrent pipeline's `MAX_PENDING_ROWS`, this is not a hard backpressure gate. Receive is never blocked on it, because a missing predecessor for the next commit might still be sitting in the input channel. It only bounds receive-to-flush latency in the happy path.
 
-## Concurrent pipeline architecture {#concurrent-pipeline-architecture}
+## How does a concurrent pipeline work? {#concurrent-pipeline-architecture}
 
 Concurrent pipelines transform raw checkpoint data into indexed database records through a sophisticated multi-stage architecture designed for maximum throughput while maintaining data integrity. The watermark system covered in the [watermark system section](#watermark-system) is fundamental to how every component coordinates.
 
 ### Architecture overview
 
-![Concurrent Pipeline Diagram](../images/architecture_concurrent-pipeline_v1.png)
+![Concurrent pipeline diagram with the Processor, Collector, Committer, CommitterWatermark, ReaderWatermark, and Pruner components](../images/architecture_concurrent-pipeline_v1.png)
 
 Key design principles:
 
@@ -371,11 +377,11 @@ Concurrent pipelines have five pipeline-specific components in addition to the s
 
 The primary responsibility of the `Collector` is to buffer processed data and create user-configurable batches for database writes.
 
-The `Collector` receives out-of-order processed data from multiple `Processor` workers. It then buffers data until reaching optimal batch size (`MIN_EAGER_ROWS`) or until a timeout is met (to preserve forward progress for quiet pipelines).
+The `Collector` receives out-of-order processed data from multiple `Processor` workers. It then buffers data until reaching optimal batch size (`MIN_EAGER_ROWS`, default 50) or until a timeout is met (to preserve forward progress for quiet pipelines).
 
 <ImportContent mode="code" source="crates/sui-indexer-alt-framework/src/pipeline/concurrent/mod.rs" variable="MIN_EAGER_ROWS" />
     
-The `Collector` combines data from multiple checkpoints into single database write batches and applies backpressure when too much data is pending (`MAX_PENDING_ROWS`).
+The `Collector` combines data from multiple checkpoints into single database write batches and applies backpressure when too much data is pending (`MAX_PENDING_ROWS`, default 5000).
 
 <ImportContent mode="code" source="crates/sui-indexer-alt-framework/src/pipeline/concurrent/mod.rs" variable="MAX_PENDING_ROWS" />
     
@@ -467,11 +473,11 @@ The framework components (`Committer`, `Pruner`) are orchestrators that manage c
 
 :::
 
-### Watermark table management
+### How does the framework manage the `Watermark` table?
 
 The `Watermark` table manages all watermark coordination. It is critical for recovery, as the framework reads this table to resume from the correct checkpoint.
 
-The framework automatically creates and manages a `Watermark` table in your database when you first run your indexer. The table might have only one row per pipeline, allowing multiple indexers to share the same database.
+The framework automatically creates and manages a `Watermark` table in your database when you first run your indexer. The table might have only one row per pipeline, allowing multiple indexers to share the same database. Pipelines that share a database also share its connection pool. Size `write_concurrency` so that the total across all pipelines stays below the connection pool size, as [`CommitterConfig` optimization](#committerconfig-optimization) describes.
 
 `Watermark` schema:
 
@@ -537,7 +543,7 @@ What happens:
 
 The following sections detail the configuration settings you can implement for optimal performance.
 
-#### Concurrent pipeline `Handler` constants
+#### Concurrent pipeline `Handler` constants {#handler-constants}
 
 `Handler` constants are the most direct way to tune pipeline behavior. These are implemented as associated constants in your `Handler` trait implementation and serve as per-handler defaults.
 
@@ -593,7 +599,7 @@ Tuning guidelines:
 
 - **`fanout`:** By default, processor concurrency is adaptive: it starts at 1 and scales up to the number of CPUs based on downstream channel pressure. The controller monitors the fill fraction of the processor-to-collector channel and adjusts concurrency using a dead band between 60% and 85% fill. You can override this with fixed concurrency (`ConcurrencyConfig::Fixed`) or customize the adaptive bounds (`ConcurrencyConfig::Adaptive`). The default max of `num_cpus` assumes your processor is CPU-bound. If your processor performs IO (for example, fetching data from an external service), you might want a higher max. The adaptive controller also exposes a `dead_band` parameter to override the fill-fraction thresholds, but the defaults should work well for most workloads.
 - **`processor_channel_size`:** Controls the size of the channel between the processor and the collector. Defaults to `num_cpus / 2`. This channel is also the signal that drives the adaptive concurrency controller.
-- **`collector_channel_size`:** Controls the size of the channel between the collector and the committer. Defaults to `num_cpus / 2`. This is a separate channel from the processor-to-collector channel, and its size is set independently of `processor_channel_size`. Increase if the committer drains batches faster than the collector can supply them.
+- **`collector_channel_size`:** Controls the size of the channel between the collector and the committer. Defaults to `num_cpus / 2`. This is a separate channel from the processor-to-collector channel, and its size is set independently of `processor_channel_size`. Increase if the committer drains batches faster than the collector can supply them. Sequential pipelines name the equivalent collector-to-committer setting `pipeline_depth`, which defaults to `max(num_cpus / 2, 4)` instead.
 - **`committer_channel_size`:** Controls the size of the channel between the committer and the watermark updater. Defaults to `num_cpus`. Rarely needs tuning.
 - **`ingestion.subscriber_channel_size`:** Capacity of the bounded broadcaster-to-processor channel. Defaults to `max(num_cpus / 2, 4)` when `None`. Raise it for a pipeline that needs more headroom against ingestion bursts. A larger value means this pipeline triggers the adaptive ingest controller's throttling later than its peers.
 - **`MIN_EAGER_ROWS`:** Lower values reduce data commit latency (individual data appears in database sooner), higher values improve overall throughput (more efficient larger batches).
@@ -623,6 +629,8 @@ let config = ConcurrentConfig {
     ..Default::default()
 };
 ```
+
+`..Default::default()` sets every `ConcurrentConfig` field that you do not list to its default value. The full `ConcurrentConfig` example in [Concurrent pipeline `Handler` constants](#handler-constants) shows the other fields and their defaults.
 
 Tuning guidelines:
 
