@@ -43,11 +43,11 @@ answer: >-
 
 Move is a resource-oriented programming language designed for safe smart contract development. Sui uses Move with extensions for the [object model](/develop/objects), [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks), and the Sui-specific framework modules. This page covers the core language syntax. For the full language reference, see [The Move Book](https://move-book.com/).
 
-## Modules
+## What is a Move module?
 
 A module is the basic unit of code organization in Move. Each module belongs to a package and contains struct definitions, function declarations, and constants. Modules are published onchain as part of a package and cannot be modified after publication (use [package upgrades](/develop/publish-upgrade-packages) for updates). See [The Move Book: Modules](https://move-book.com/reference/modules.html).
 
-## Primitive types
+## Which primitive types does Move have?
 
 Move provides the following primitive types:
 
@@ -63,7 +63,7 @@ See [The Move Book: Primitive Types](https://move-book.com/move-basics/primitive
 
 Structs define custom data types with named fields. On Sui, structs with the `key` ability represent [objects](/develop/objects) and must have `id: UID` as their first field. See [The Move Book: Structs](https://move-book.com/move-basics/struct.html).
 
-## Abilities
+## What are Move abilities?
 
 Abilities control what operations you can perform on a type. Every struct has a set of abilities declared at definition time:
 
@@ -86,7 +86,7 @@ Functions contain the executable logic of your module. Move has 3 visibility lev
 
 Private functions (no visibility modifier) are callable only within the defining module. See [The Move Book: Functions](https://move-book.com/move-basics/function.html) and [Visibility Modifiers](https://move-book.com/move-basics/visibility.html).
 
-## Generics
+## How do generics work in Move?
 
 Generics let you write type-parameterized functions and structs. You declare type parameters in angle brackets and optionally constrain them with ability requirements. For example, `<T: store + drop>` declares a type parameter `T` that must have both the `store` and `drop` abilities. See [The Move Book: Generics](https://move-book.com/move-basics/generics.html).
 
@@ -100,7 +100,7 @@ Move 2024 edition introduces enums and `match` expressions. Enums define a type 
 
 ## Vectors, options, and strings
 
-- **Vector (`vector<T>`):** A growable, ordered collection of elements of a single type. Use `vector::push_back`, `vector::pop_back`, and `vector::length` to manipulate vectors. See [The Move Book: Vector](https://move-book.com/move-basics/vector.html).
+- **Vector (`vector<T>`):** A growable, ordered collection of elements of a single type. Use `vector::push_back` to add an element to the end, `vector::pop_back` to remove the last element, and `vector::length` to get the number of elements. See [The Move Book: Vector](https://move-book.com/move-basics/vector.html).
 - **Option (`Option<T>`):** Represents a value that might be absent. Use `option::some(value)` and `option::none()` to construct, and `option::is_some()`, `option::extract()` to access. See [The Move Book: Option](https://move-book.com/move-basics/option.html).
 - **String (`String`):** UTF-8 encoded text. Use `string::utf8(bytes)` to create from a byte vector. See [The Move Book: String](https://move-book.com/move-basics/string.html).
 
