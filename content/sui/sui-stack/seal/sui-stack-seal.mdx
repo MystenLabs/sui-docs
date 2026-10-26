@@ -71,7 +71,7 @@ Seal is a decentralized secrets management (DSM) service that uses access contro
 Seal has 3 core components:
 
 - **Onchain access policies:** Move functions you write that define who can decrypt. [Key servers](/sui-stack/seal/server-overview) evaluate your policy by running a `dry_run_transaction_block` on Sui when a user requests decryption key shares. A dry run evaluates the transaction without executing it onchain. If the policy approves, the servers return the key shares.
-- **Key servers:** Offchain services that hold [IBE (identity-based encryption)](/sui-stack/seal/design) master secret keys. Each server returns derived decryption key shares only when the request satisfies the associated onchain policy. You configure a threshold, so decryption requires at least `t` out of `n` servers to agree.
+- **Key servers:** Offchain services that hold [IBE (identity-based encryption)](/sui-stack/seal/design) master secret keys. IBE encrypts each piece of content to an identity, a byte string that combines your package ID and an `id` you provide. Each server returns derived decryption key shares only when the request satisfies the associated onchain policy. You configure a threshold, so decryption requires at least `t` out of `n` servers to agree.
 - **Client-side encryption:** The user encrypts and decrypts data locally in their environment. Key servers never see plaintext.
 
 In OnlyFins, the access policy is: the user must own a `ViewerToken` object for the specific post they want to unlock. The user receives a `ViewerToken`, a [Sui object](/develop/sui-architecture/object-model), after requesting access onchain. Seal key servers check this ownership before issuing key shares.
@@ -295,7 +295,7 @@ In OnlyFins, encryption runs in the backend `encryptImages.ts` script before you
 A few things to note about the OnlyFins encryption setup:
 
 - The `encryptionId` is a hex-encoded string derived from a timestamp and post index. This value becomes the Seal `id` parameter, which you must later pass to `seal_approve_access` during decryption.
-- The `threshold` is 1, meaning a single key server is sufficient to issue decryption keys. In production, a higher threshold distributes trust across multiple servers.
+- The `threshold` is 1, meaning a single key server is sufficient to issue decryption keys. That suits a demo. For production, choose a higher threshold, such as 2-of-3 or 3-of-5, based on the sensitivity of the data, so you distribute trust across multiple servers.
 - The `packageId` ties the encrypted object to the specific deployed Move package. Seal prepends this to the `id` to form the full namespaced identity.
 
 When `createPosts.ts` registers the post onchain, it stores the `encryptionId` as the `encryption_id` field on the `Post` Sui object. This links the Walrus blob, the Seal encryption, and the Sui object together.
