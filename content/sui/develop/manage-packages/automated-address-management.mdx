@@ -52,7 +52,7 @@ answer: >-
 ---
 
 <AgentPrompt
-  prompt={"Migrate this package to current Sui package address management using Move.lock / Published.toml conventions, then verify build and publish/test-publish behavior."}
+  prompt={"This page documents the legacy pre-v1.63 Move.lock-based address tracking system. For a package that uses this legacy system, adopt automated address management with sui move manage-package, delete the published-at line in Move.toml, set the package address to 0x0 in the [addresses] section, and confirm that Move.lock contains an [env] entry for the active environment. Do not use these steps to migrate to the current package system; see Move Package Management and the package manager migration guide instead."}
 />
 
 :::warning Legacy documentation
