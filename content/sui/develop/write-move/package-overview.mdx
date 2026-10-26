@@ -42,7 +42,7 @@ Move is the smart contract language Sui uses to define onchain logic. Move is pl
 
 Sui uses Move through three constructs: packages, modules, and objects.
 
-A Move package is a set of Move bytecode published to the Sui network. Packages are immutable. You can upgrade a package, but upgrading creates a new onchain version while leaving all prior versions intact. Once published, other packages can import and use a package's modules, and anyone can inspect its contents or trace its logic using a Sui Explorer.
+A Move package is a set of Move bytecode published to the Sui network. Packages are immutable. You can upgrade a package, but upgrading creates a new onchain version while leaving all prior versions intact. After you publish a package, other packages can import and use its modules, and anyone can inspect its contents or trace its logic using a block explorer.
 
 A Move module defines a package's interaction with onchain objects. A package contains one or more modules, and each module name is unique within its package.
 
