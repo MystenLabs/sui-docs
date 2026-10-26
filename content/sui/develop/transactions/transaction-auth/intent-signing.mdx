@@ -115,15 +115,16 @@ let signature = Signature::new_secure(&intent_msg, signer);
 
 ```typescript
 const intentMessage = messageWithIntent('TransactionData', transactionBytes);
-const signature = await this.sign(intentMessage);
+const digest = blake2b(intentMessage, { dkLen: 32 });
+const signature = await this.sign(digest);
 ```
 
 </TabItem>
 </Tabs>
 
-The TypeScript example is an excerpt from a signer class method, so `this` refers to the signer instance.
+The TypeScript example is an excerpt from the `signWithIntent` method of the `Signer` class, so `this` refers to the signer instance.
 
-Internally, the `new_secure` method in Rust and the `signData` method in TypeScript do the following:
+Internally, the `new_secure` method in Rust and the `signWithIntent` method in TypeScript do the following:
 
 1.  Serialize the intent message as the 3-byte intent concatenated with the BCS serialized bytes of the transaction data.
 
