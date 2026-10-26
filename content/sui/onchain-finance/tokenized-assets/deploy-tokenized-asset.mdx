@@ -54,6 +54,14 @@ To interact with your tokenized asset, first publish the [asset tokenization](/o
 - [x] Git installed
 </TabItem>
 </Tabs>
+
+To deploy a tokenized asset:
+
+1. [Clone the reference repository and install the setup dependencies](#get-the-framework).
+2. Initialize the Sui Client CLI.
+3. [Publish the `asset_tokenization` package](#publishing-packages) and store its package ID and registry ID in your `.env` file.
+4. Publish the `template` package and store its package ID, asset metadata ID, asset cap ID, and Publisher ID in your `.env` file.
+5. [Use the TypeScript setup scripts](#typescript-commands) to interact with your tokenized asset.
  
 ## How do I get the framework? {#get-the-framework}
 
@@ -141,6 +149,8 @@ You can find a public-facing reference to the WASM library in the [`@mysten/move
 :::
  
 The WASM feature enables Move bytecode serialization and deserialization in a browser environment, allowing you to edit existing contracts without a local build environment. For asset tokenization, this lets you create and publish new asset types directly from the browser.
+
+The manual `sui client publish` path publishes the `template` package as written. The `npm run publish-template` script instead uses the WASM library to edit the template constants and identifiers before it publishes. This lets you create a new asset type without editing the Move source.
  
 ### Bytecode manipulation {#bytecode-manipulation}
  
@@ -157,7 +167,7 @@ $ xxd -c 0 -p build/template/bytecode_modules/template.mv | head -n 1
 <details>
 <summary>Console response</summary>
  
-The response looks similar to the following:
+The response looks similar to the following. The command prints one continuous line. This example wraps the line for display.
  
 ```sh
 a11ceb0b060000000a010010021026033637046d0a05776807df01ec0108cb03800106cb043
