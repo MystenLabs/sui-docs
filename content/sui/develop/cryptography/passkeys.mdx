@@ -61,7 +61,7 @@ By supporting the passkey signature scheme, Sui improves security and accessibil
 
 See the [TypeScript SDK documentation](https://sdk.mystenlabs.com/typescript/cryptography/passkey) to learn how to add passkey support to your application. For the product specification, see [SIP-9](https://github.com/sui-foundation/sips/blob/main/sips/sip-9.md).
 
-## What are the benefits of using passkey?
+## What are the benefits of using passkey? {#benefits-of-using-passkey}
 
 - Sign transactions securely while the private key stays securely stored within the authenticator. This reduces the risk of key extraction attacks.
 
@@ -75,7 +75,7 @@ See the [TypeScript SDK documentation](https://sdk.mystenlabs.com/typescript/cry
 
 - Work with multisig wallets by combining passkey with other authentication types to build 2-of-2 or m-of-n [multisig wallets](/develop/transactions/transaction-auth/multisig). This enables secure recovery options and shared access patterns.
 
-## What are the limitations of passkey signing on Sui?
+## What are the limitations of passkey signing on Sui? {#limitations-of-passkey}
 
 - Functionality varies by authenticator: Some security keys do not support biometric authentication, requiring you to enter a PIN instead. Because WebAuthn does not provide access to private keys, you must either store your passkey securely or enable cloud synchronization for recovery.
 
