@@ -51,7 +51,7 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-You can send to multiple recipients, sponsor a transaction, borrow and return a kiosk item, combine sponsorship with a kiosk purchase, select coins from mixed sources, and chain Move call results in a single programmable transaction block (PTB). Each pattern below has a copy-paste TypeScript recipe, and each recipe is a complete, self-contained example.
+A single programmable transaction block (PTB) can send to multiple recipients, sponsor a transaction, borrow and return a kiosk item, combine sponsorship with a kiosk purchase, select coins from mixed sources, and chain Move call results. Each of the following patterns has a copy-paste TypeScript recipe, and each recipe is a complete, self-contained example.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -96,6 +96,8 @@ For the conceptual model, see [Sponsored Transactions](/develop/transaction-paym
 
 The sponsor can also pay gas from their SUI address balance instead of providing specific coin objects. Address-balance gas requires additional configuration (a `ValidDuring` expiration for replay protection and a nonce). Read the [full requirements for address-balance gas payment](/onchain-finance/asset-custody/address-balances/using-address-balances#how-do-i-pay-for-gas-from-an-address-balance) before using this pattern in production.
 
+The following example shows a sponsor paying gas from their SUI address balance:
+
 <ImportContent source="examples/ptb-cookbook/src/sponsored.ts" mode="code" tag="sponsored-address-balance-gas" />
 
 ## How do I do a kiosk borrow and return in one transaction?
@@ -128,10 +130,13 @@ This recipe builds on two patterns from this page: the [sponsored transaction](#
 
 Sui supports both coin objects and address balances. You can explicitly choose which source to use in a PTB.
 
-To choose a source:
-- Use `tx.balance()` when you want to deposit into a recipient's address balance and let the SDK select the funding source automatically.
-- Use `tx.splitCoins` with a specific coin object when you need precise control over which coin is spent.
-- Use `tx.withdrawal()` with `coin::redeem_funds` when you need a `Coin<T>` to pass to Move functions.
+To choose a source, match your need to a method:
+
+| **Method** | **Use when** |
+|---|---|
+| `tx.balance()` | You want to deposit into a recipient's address balance and let the SDK select the funding source automatically. |
+| `tx.splitCoins` with a specific coin object | You need precise control over which coin is spent. |
+| `tx.withdrawal()` with `coin::redeem_funds` | You need a `Coin<T>` to pass to Move functions. |
 
 ### Send to a recipient's address balance
 
