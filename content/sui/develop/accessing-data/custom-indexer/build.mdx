@@ -284,6 +284,14 @@ The Diesel's migration system evolves the database schema over time in a structu
 
 To simplify writes to Diesel, you can define a struct that represents a record on the `transaction_digests` table.
 
+Create a `models.rs` file in your `src` directory.
+
+```sh
+$ touch ./src/models.rs
+```
+
+Open the file, add the following code, and save it:
+
 <ImportContent source="examples/rust/basic-sui-indexer/src/models.rs" mode="code" />
 
 Key annotations:
@@ -442,6 +450,13 @@ $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/gcp-credentials.json
 $ export GOOGLE_CLOUD_PROJECT=your-billing-project
 ```
 
+Confirm that each variable holds the value you exported before you run the indexer:
+
+```sh
+$ echo $GOOGLE_APPLICATION_CREDENTIALS
+$ echo $GOOGLE_CLOUD_PROJECT
+```
+
 **Phase 1: backfill from the full-retention GCS checkpoint bucket:**
 
 ```sh
@@ -461,6 +476,8 @@ $ cargo run -- \
     --rpc-api-url "$FULLNODE_GRPC_URL" \
     --streaming-url "$FULLNODE_GRPC_URL"
 ```
+
+Before you run `cargo run` in Phase 2, you can confirm that `FULLNODE_GRPC_URL` holds your endpoint with `echo $FULLNODE_GRPC_URL`.
 
 For testing only, you can instead use the public-good Testnet endpoint `https://fullnode.testnet.sui.io:443`. Do not use the public-good Mainnet, Testnet, and Devnet fullnode endpoints for production.
 
