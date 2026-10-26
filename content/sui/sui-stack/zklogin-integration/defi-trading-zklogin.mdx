@@ -1,8 +1,7 @@
 ---
 title: zkLogin for DeFi
 description: >-
-  End-to-end guide for wiring zkLogin and Enoki sponsored transactions into a
-  DeepBook swap flow on Sui.
+  End-to-end guide for integrating zkLogin (Google sign-in) and Enoki sponsored transactions into a DeepBook token swap on Sui, covering dApp Kit wallet registration, client-side PTB construction, server-side transaction sponsorship, and client-side signing and execution so users can trade without holding SUI for gas.
 keywords:
   - zklogin
   - defi
@@ -19,13 +18,12 @@ questions:
   - How do I combine zkLogin with sponsored transactions for DeFi?
   - How do I build a gasless trading experience on Sui?
 answer: >-
-  This guide shows how to wire zkLogin authentication and Enoki-sponsored
-  transactions into a DeFi trading flow, so users can swap tokens without
-  managing wallets or paying gas.
+  Wiring zkLogin authentication and Enoki-sponsored transactions into a DeFi
+  trading flow lets users swap tokens without managing wallets or paying gas.
 ---
 
 
-Wiring zkLogin authentication and Enoki-sponsored transactions into a DeepBook swap flow on Sui lets users swap tokens without managing wallets or paying gas.
+To let users swap tokens on Sui without managing wallets or paying gas, wire zkLogin authentication and Enoki-sponsored transactions into a DeepBook swap flow.
 
 DeFi applications on Sui can use zkLogin to onboard users who do not have a Sui wallet. Combined with Enoki's sponsored transactions, this creates a trading experience where the user signs in with Google, swaps tokens, and the application covers gas fees, eliminating the cold-start problem of needing SUI before you can trade.
 
@@ -182,7 +180,7 @@ await post('/api/execute-sponsored', { digest, signature });
 
 The server calls `enoki.executeSponsoredTransaction({ digest, signature })` to submit the signed transaction.
 
-## Considerations
+## What to consider for zkLogin trading
 
 - **Session management:** Cache the ephemeral key pair and zero-knowledge proof in session storage. Users should not need to re-authenticate for every trade within a session.
 - **Gas budget:** Enoki sets the gas budget for sponsored transactions. Monitor costs and configure per-transaction or per-user caps in the Enoki Developer Portal.
