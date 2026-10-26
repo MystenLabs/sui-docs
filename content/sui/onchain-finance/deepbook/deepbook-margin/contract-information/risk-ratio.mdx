@@ -59,7 +59,7 @@ The following examples also show the equivalent LTV (loan-to-value): your debt a
 - **Risk ratio = 1.25**: You have 1.25 units of assets for every 1 unit of debt (80% LTV)
 - **Risk ratio = 1.0**: Your assets exactly equal your debts (100% LTV, insolvent)
 
-## Risk ratio thresholds
+## What are the risk ratio thresholds?
 
 Each trading pair has four risk ratio thresholds that control different operations. Typical values in this section are common settings, not fixed system values. Each trading pair has its own actual thresholds.
 
@@ -108,7 +108,7 @@ liquidation eligible  IF risk_ratio <= liquidation_risk_ratio
 
 Here `new_total_assets` and `new_total_debts` are the position's values after the withdrawal or borrow.
 
-## How leverage is determined
+## How much leverage can you take?
 
 The Min Borrow Risk Ratio determines the maximum leverage for a trading pair:
 
@@ -120,7 +120,7 @@ In code form:
 max_leverage = 1 / (1 - 1 / min_borrow_risk_ratio)
 ```
 
-In plain terms, leverage is your total assets divided by your own equity (assets minus debt). At the Min Borrow Risk Ratio, debt makes up `1 / min_borrow_risk_ratio` of your assets, so the lower the ratio, the smaller your equity share and the higher your leverage.
+In plain terms, leverage is your total assets divided by your own equity (assets minus debt). At the Min Borrow Risk Ratio, debt makes up `1 / min_borrow_risk_ratio` of your assets, so your equity makes up `1 - 1 / min_borrow_risk_ratio` of your assets. Leverage is the inverse of that equity share, which gives `1 / (1 - 1 / min_borrow_risk_ratio)`. The lower the ratio, the smaller your equity share and the higher your leverage.
 
 | Min Borrow Risk Ratio | Approximate Max Leverage |
 |-----------------------|--------------------------|
@@ -159,7 +159,7 @@ Consider a SUI/USDC position with the following risk parameters:
 6. Liquidator repays part of your debt and receives collateral plus a reward
 7. After liquidation, your remaining position has a risk ratio of 1.25
 
-## Liquidation rewards
+## What rewards do liquidators receive?
 
 When someone liquidates a position:
 
@@ -168,7 +168,7 @@ When someone liquidates a position:
 
 These rewards give liquidators an incentive to maintain system health and ensure the protocol has reserves against defaults.
 
-## Risk management best practices
+## How to manage risk
 
 1. **Monitor your risk ratio**: Keep track of your position's health, especially during volatile markets
 2. **Maintain a buffer**: Don't borrow up to the maximum; leave room for price fluctuations
