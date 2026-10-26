@@ -64,7 +64,7 @@ The following files typically do not require modification:
 
 You can test most functionality by running the server locally. However, the `get_attestation` endpoint doesn't work locally because it requires access to the Nitro Secure Module (NSM) driver, which is only available when running the code inside the configured EC2 instance. This endpoint functions correctly when the server runs within the enclave as described in the setup steps.
 
-To test the `process_data` endpoint locally, run the following:
+To test the `process_data` endpoint locally, run the following commands. The `API_KEY` value in the second command is an example. Replace it with your own key for the weather API that the example calls.
 
 ```sh
 $ cd src/nautilus-server/
