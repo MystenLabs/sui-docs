@@ -90,8 +90,8 @@ Both creation methods return a `CurrencyInitializer<T>` that allows for addition
 To create a currency with the Currency Standard:
 
 1. Publish a package that defines your coin type.
-2. Call `coin_registry::new_currency` or `coin_registry::new_currency_with_otw` to get a `CurrencyInitializer<T>`.
-3. Optionally, add deny-list support with `make_regulated` and set the supply model with `make_supply_fixed` or `make_supply_burn_only`.
+2. Call `coin_registry::new_currency` after publishing, or call `coin_registry::new_currency_with_otw` in the package's `init` function, to get a `CurrencyInitializer<T>` and a `TreasuryCap<T>`.
+3. Optionally, add deny-list support with `make_regulated`. To lock the supply, mint the total supply with the `TreasuryCap`, then call `make_supply_fixed` or `make_supply_burn_only`.
 4. Call `finalize` to complete currency creation. The `finalize` function returns the `MetadataCap<T>`.
 5. For One-Time Witness creation only, call `coin_registry::finalize_registration` in a second transaction to place the currency into the registry.
 
