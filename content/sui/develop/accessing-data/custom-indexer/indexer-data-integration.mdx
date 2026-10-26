@@ -78,7 +78,7 @@ The public-good fullnode endpoints are `https://fullnode.mainnet.sui.io:443`, `h
 
 ## How do I set up a production indexer? {#recommended-production-flow}
 
-Use separate backfill and steady-state processes. Both processes use the same database and pipeline configuration, so the steady-state process resumes from committed watermarks (each pipeline's recorded progress in that database) after the backfill stops.
+Use separate backfill and steady-state processes. Both processes use the same database and pipeline configuration. Each pipeline records its progress in that database as a committed watermark, so the steady-state process resumes from those committed watermarks after the backfill stops.
 
 1. Backfill from the Requester Pays GCS bucket.
 2. After every required pipeline catches up, stop the GCS-backed process.
