@@ -28,12 +28,17 @@ goal:
 questions:
   - How do I batch transactions to avoid interrupting gameplay?
   - How does gas sponsorship work for SuiPlay0X1 games?
-answer: There are some best practices to consider when developing for SuiPlay0X1.
+answer: When developing for SuiPlay0X1, batch operations into programmable transaction blocks (PTBs) to minimize player signing prompts, use gas sponsorship so players don't need to hold SUI, store onchain only data that must be player-owned or tradeable, and check wallet state fresh at the start of every session.
 ---
 
 <ImportContent source="suiplay" mode="snippet" />
 
-When developing for SuiPlay0X1, minimize player signing prompts during gameplay by batching operations into programmable transaction blocks (PTBs), use gas sponsorship so players don't need to hold SUI, store onchain only data that must be player-owned or tradeable, and check wallet state fresh at the start of every session.
+Follow these practices when developing for SuiPlay0X1:
+
+- Minimize player signing prompts during gameplay by batching operations into programmable transaction blocks (PTBs).
+- Use gas sponsorship so players don't need to hold SUI.
+- Store onchain only data that must be player-owned or tradeable.
+- Check wallet state fresh at the start of every session.
 
 Developing for SuiPlay0X1 requires careful decisions around transaction frequency, gas management, and data storage. Apply these practices to keep gameplay smooth, reduce costs, and protect players.
 
@@ -54,7 +59,7 @@ If using a third-party wallet service ([Beamable](https://beamable.com/), [Shina
 
 ### How does gas sponsorship work for SuiPlay0X1 games?
 
-[Gas sponsorship](/develop/transaction-payment/sponsor-txn) lets your game pay transaction fees on behalf of players. The player still signs the transaction, but does not pay for it: a sponsor address covers the gas. Services like Shinami provide sponsorship APIs that integrate directly into your transaction flow. When you enable sponsorship, players interact with onchain features without needing to hold SUI in their wallets.
+[Gas sponsorship](/develop/transaction-payment/sponsor-txn) lets your game pay transaction fees on behalf of players. The player signs the transaction as the sender but does not pay for it. A sponsor address covers the gas and provides its own signature separately as the gas payer. Services like Shinami provide sponsorship APIs that integrate directly into your transaction flow. When you enable sponsorship, players interact with onchain features without needing to hold SUI in their wallets.
 
 Batch transactions whenever possible regardless of whether you use sponsorship. Fewer transactions mean lower cumulative gas costs and a faster experience for players.
 
