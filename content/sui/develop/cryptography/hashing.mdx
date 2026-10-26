@@ -53,7 +53,7 @@ Sui supports four cryptographic hash functions: SHA2-256, SHA3-256, Keccak256, a
 
 Sui supports the following cryptographic hash functions:
 
-| Hash function | Module | Output size | Use case |
+| Hash function | Function | Output size | Use case |
 |---|---|---|---|
 | SHA2-256 | `std::hash::sha2_256` | 32 bytes | General-purpose hashing, interoperability with Bitcoin and TLS |
 | SHA3-256 | `std::hash::sha3_256` | 32 bytes | General-purpose hashing, NIST-standardized alternative to SHA2 |
@@ -116,4 +116,4 @@ module test::hashing_sui {
 }
 ```
 
-To use Blake2b-256 instead, replace `hash::keccak256(&data)` with `hash::blake2b256(&data)`.
+To use Blake2b-256 instead, replace `hash::keccak256(&data)` with `hash::blake2b256(&data)`. The rest of the example stays the same, because both functions take a reference to the input.
