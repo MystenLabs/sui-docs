@@ -92,7 +92,7 @@ Many Sui bugs use a valid object in the wrong relationship. Inside every privile
 
 Emit [events](/develop/accessing-data/using-events) for admin changes, allowlist updates, mint and burn operations, denylist actions, configuration changes, oracle updates, and emergency pauses. Events make privileged activity auditable and let offchain monitoring detect unexpected behavior quickly.
 
-## Onchain randomness
+## How do I use onchain randomness safely?
 
 The following practices prevent callers from influencing or selectively rejecting random outcomes.
 
@@ -116,13 +116,19 @@ Design functions so that the outcome favorable to the transaction sender consume
 
 For high-stakes applications, consider a two-transaction commit-reveal pattern to further reduce the influence a caller has over a random outcome.
 
-## Seal (encryption and access control)
+## How do I use Seal securely?
 
 Seal provides encryption and access control for your data. You express access rules in Move code in `seal_approve*` functions, and you rely on key servers that you choose. The following practices cover choosing key servers, structuring encryption, and keeping your access policy correct.
 
+#### Choose trusted key servers
+
 Choose trusted key server operators and diversify across organizations, jurisdictions, and infrastructure providers.
 
+#### Use threshold encryption
+
 Use threshold encryption (for example, 2-of-3) to tolerate compromised servers while maintaining availability.
+
+#### Use envelope encryption
 
 Use envelope encryption for sensitive or large data: encrypt data with your own symmetric key, then use Seal to manage access to that key only.
 
@@ -130,7 +136,7 @@ Use envelope encryption for sensitive or large data: encrypt data with your own 
 
 The Move code in `seal_approve*` functions must accurately express your intended access rules. If the package containing `seal_approve*` remains upgradeable, whoever controls its upgrade path can change future access policy. Govern that upgrade path like a security-critical capability.
 
-## Nautilus
+## How do I use Nautilus securely?
 
 Nautilus runs code in an enclave, a trusted execution environment (TEE), and the enclave signs the output it produces. The practices below cover keeping enclave code small, verifying that an enclave runs the image you expect, and handling its signed payloads safely.
 
@@ -164,11 +170,11 @@ The following practices cover the capabilities that control a coin and its suppl
 
 #### Protect TreasuryCap
 
-The `TreasuryCap` controls minting and burning permissions.
+The `TreasuryCap` controls minting and burning permissions. Hold it in a multisig address or a dedicated custody setup rather than a single hot wallet, as you do for admin capabilities.
 
 #### Protect MetadataCap
 
-The `MetadataCap` controls coin branding.
+The `MetadataCap` controls coin branding. Hold it in a multisig address or a dedicated custody setup rather than a single hot wallet, as you do for admin capabilities.
 
 #### Protect DenyCapV2
 
@@ -178,7 +184,7 @@ The `DenyCapV2` can restrict coin usage, which is a powerful compliance and cent
 
 Set the supply model early, and understand the implications of a fixed, burn-only, or flexible supply.
 
-## Access control
+## How do I enforce access control in Move?
 
 Access control determines who can call privileged functions in your package, such as minting, withdrawals, or configuration changes. Move gives you several mechanisms to enforce authorization. Choose them deliberately, because a missing or weak check can expose privileged operations to any caller.
 
@@ -238,7 +244,7 @@ The following practice covers offchain data that your contracts consume.
 
 If your contracts consume offchain data, such as price feeds, validate it before you act on it. Check the freshness of the data, confirm the source, and verify any signatures. Apply replay protection so no one can submit an old data point again. Define explicit failure behavior for when the data is missing, stale, or invalid, so a feed outage does not produce an unsafe result.
 
-## Emergency controls
+## How do I contain an active incident?
 
 Emergency controls help you contain an active incident.
 
@@ -246,7 +252,7 @@ Emergency controls help you contain an active incident.
 
 For high-value applications, consider a pause, kill-switch, or rate-limit mechanism that can contain an active incident. Document who can trigger each control and how you prevent abuse, because an emergency control is itself a privileged operation. Gate it with a capability, and emit an event whenever someone uses it.
 
-## Frontend and transaction signing
+## How do I help users sign transactions safely?
 
 The following practices help users understand and verify what they sign.
 
@@ -262,7 +268,7 @@ Verify the exact package IDs your frontend calls. Do not trust a package only be
 
 When your app signs messages offchain, such as personal messages, include a domain separator and an intent so an attacker cannot replay a signature that you create for one context in another. See [Intent Signing](/develop/transactions/transaction-auth/intent-signing) for how Sui separates signing domains.
 
-## User and operator key management
+## How do I manage user and operator keys?
 
 The following practices protect the keys that users and operators hold.
 
@@ -286,7 +292,7 @@ Use separate keys for the deployer, the admin, and routine operations, so a comp
 
 Write down how to recover and rotate every privileged key before you launch. A documented procedure is what lets you respond quickly when you lose a key or an attacker compromises it.
 
-## General network security
+## What security does the Sui network provide?
 
 The following points describe the security properties of the Sui network itself.
 
