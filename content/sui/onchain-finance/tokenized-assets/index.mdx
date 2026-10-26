@@ -37,7 +37,7 @@ Every NFT object carries metadata you define in its Move struct. Common fields i
 
 ## How do NFTs work on Sui?
 
-Sui NFTs follow the object ownership model. When you mint an NFT, the runtime assigns it a unique `ID` and records the owner. Transferring the NFT changes that ownership record. Because ownership is tracked at the object level rather than inside a mapping, Sui can process NFT transfers in parallel when they involve different objects, which keeps throughput high.
+Sui NFTs follow the object ownership model. When you mint an NFT, the runtime assigns it a unique `ID` and records the owner. Transferring the NFT changes that ownership record. Because Sui tracks ownership at the object level rather than inside a mapping, it can process any transactions that involve different objects in parallel, and NFT transfers are no exception. This keeps throughput high.
 
 You can extend NFT behavior by adding custom transfer policies, attaching dynamic fields for evolving metadata, locking tokens as soulbound (non-transferable), or building rental mechanics that temporarily grant usage rights without changing the underlying owner.
 
