@@ -120,7 +120,7 @@ Use `claimRebates` to claim maker and taker rebates for a balance manager in a s
 
 ## How do I call these functions from a custom class?
 
-The following examples demonstrate custom staking and governance functions that you can place into the `DeepBookMarketMaker` class. Each example first shows the SDK function signature, which returns a function that takes a `Transaction` object, followed by a custom function that calls the SDK through `this.governance` and passes the result to `tx.add()`.
+The following examples demonstrate custom staking and governance functions that you can place into the `DeepBookMarketMaker` class. Each example first shows the SDK function signature, which returns a function that takes a `Transaction` object, followed by a custom function that calls the SDK through `this.governance` and passes the result to `tx.add()`. The signature is for reference only: its empty `{}` body is a placeholder, not callable code. To call the SDK, use `this.governance` as the custom function shows.
 
 ### stake custom function
 
