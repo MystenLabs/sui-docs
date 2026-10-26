@@ -109,6 +109,18 @@ Looking closer at the two main components:
 
 - `tx.upgrade(modules, dependencies, packageId: EXAMPLE_PACKAGE_ID, ticket)`: Upgrades an existing package. The runtime does not call `init` functions for upgraded modules.
 
+The following table maps each TypeScript SDK builder method to its underlying command name:
+
+| **TypeScript SDK method** | **Command name** |
+| :---- | :---- |
+| `tx.splitCoins` | `SplitCoins` |
+| `tx.mergeCoins` | `MergeCoins` |
+| `tx.transferObjects` | `TransferObjects` |
+| `tx.moveCall` | `MoveCall` |
+| `tx.makeMoveVec` | `MakeMoveVec` |
+| `tx.publish` | `Publish` |
+| `tx.upgrade` | `Upgrade` |
+
 Learn more about each [PTB command](/references/ptb-commands).
 
 ## Inputs and results
@@ -135,7 +147,7 @@ The `Argument` enum has 4 variants, shown here in the notation of the Rust imple
 
 - `NestedResult(u16, u16)`: References a result from a previous command. The first index specifies the command, the second specifies which result from that command. For example, if command 1 returns `[Value1, Value2]`, use `NestedResult(1, 0)` for `Value1` and `NestedResult(1, 1)` for `Value2`.
 
-- `Result(u16)`: For a command at index `i`, `Result(i)` is shorthand for `NestedResult(i, 0)`, but only valid when the command at index `i` returns exactly 1 result. Use `NestedResult` for commands that return 0 or multiple results.
+- `Result(u16)`: For a command at index `i`, `Result(i)` is shorthand for `NestedResult(i, 0)`, but only valid when the command at index `i` returns exactly 1 result. Use `NestedResult` for commands that return multiple results. A command that returns 0 results has no result to reference.
 
 ## How does a PTB execute? {#execution}
 
@@ -178,6 +190,8 @@ The transaction fails if you use an argument in any form after the runtime moves
 If the runtime copies an argument that does not have the `drop` ability, it infers the last usage to be a move. As a result, if an argument has `copy` and does not have `drop`, the last usage must be by value. Otherwise, the transaction fails because a value without `drop` remains unused.
 
 #### Borrowing rules
+
+A borrow gives a command access to a value through a reference while the value stays in its input or result position. A mutable borrow (`&mut T`) lets the command change the value. An immutable borrow (`&T`) only lets the command read the value.
 
 Borrowing follows additional rules to ensure safe reference usage:
 
@@ -224,7 +238,7 @@ The runtime automatically injects `TxContext` parameters (`&TxContext` or `&mut 
 
 A non-public `entry` function is a function declared with `entry` that is **not** `public`. It is either private (`entry fun f()`) or `public(package)` (`public(package) entry fun f()`). PTBs can call these functions directly, but other packages cannot.
 
-Non-public `entry` functions have a single restriction: their arguments cannot be in a hot clique (see below) when the PTB calls the function. In short, a clique is a group of values that commands have used together, and it is hot while it is entangled with hot potato values that the PTB has not yet consumed. This restriction ensures that arguments to non-public `entry` functions are not entangled with outstanding [hot potato](https://move-book.com/programmability/hot-potato-pattern) values that could force behavior after the function executes.
+Non-public `entry` functions have a single restriction: their arguments cannot be in a hot clique when the PTB calls the function. A [hot potato](https://move-book.com/programmability/hot-potato-pattern) is a value whose type has neither the `drop` nor the `store` ability, so you must consume it before the transaction completes. A clique is a group of values that commands have used together, and it is hot while it is entangled with hot potato values that the PTB has not yet consumed. This restriction ensures that arguments to non-public `entry` functions are not entangled with outstanding hot potato values that could force behavior after the function executes.
 
 **Hot potato values**
 
@@ -232,7 +246,7 @@ A value is a hot potato if its type has neither the `drop` nor the `store` abili
 
 **Cliques**
 
-The system tracks which values are entangled using cliques. As described above, the goal is to prevent hot potato values from forcing behavior outside of the call to the non-public `entry` function. The cliques provide a modeling of this entanglement by keeping a count of how many hot potato values are live and which values they have interacted with:
+The system tracks which values are entangled using cliques. Cliques exist to prevent hot potato values from forcing behavior outside of the call to the non-public `entry` function. A value becomes entangled with a hot potato when a command uses them together, which merges their cliques. The cliques provide a modeling of this entanglement by keeping a count of how many hot potato values are live and which values they have interacted with:
 
 - Each PTB input starts in its own clique with a hot count of 0.
 - When a command uses values together as arguments, their cliques merge. The hot counts add together.
@@ -442,7 +456,7 @@ Inputs: [Pure(@0x808), Marketplace { id: market_id }, Pure(100u64)]
 Results: []
 ```
 
-After the runtime deducts the maximum gas budget of `500_000`:
+After the runtime deducts the maximum gas budget, which is `500_000` in this example:
 
 ```rust
 Gas Coin: Coin<SUI> { id: gas_coin, balance: 500_000u64 }
