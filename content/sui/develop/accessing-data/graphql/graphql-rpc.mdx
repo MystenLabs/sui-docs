@@ -85,7 +85,7 @@ The key components of the GraphQL and General-purpose Indexer stack include the 
 
 - **Archival Service:** Enables point lookups for historical data from a key-value store. If unavailable, the GraphQL service falls back to the Postgres-compatible database for lookups, which might be limited by that database's retention policy. See [Archival Store and Service](/develop/accessing-data/archival-store) for more information.
 
-- **Consistent Store:** Answers queries about the latest state of the network within the last hour (objects owned by addresses, objects by type, balances by address and type). Consistency is guaranteed by pinning queries to a specific (recent) checkpoint.
+- **Consistent Store:** Answers queries about the live state of the network as of a recent checkpoint, with retention measured in minutes or hours (objects owned by addresses, objects by type, balances by address and type). Consistency is guaranteed by pinning queries to a specific (recent) checkpoint.
 
 - **Full node:** Enables transaction execution and simulation.
 
@@ -149,7 +149,7 @@ Requests to GraphQL are subject to various limits, to ensure resources are share
 
 - **Page and multi-get size:** Each paginated field (default: 50) and multi-get (default: 200) is subject to a maximum size. Certain paginated fields might override this to provide a higher or lower maximum.
 
-- **Rich queries:** A request can contain only a bounded number (default: 5) of queries that require dedicated access to the database (cannot be grouped with other requests).
+- **Rich queries:** A request can contain only a bounded number (default: 21) of queries that require dedicated access to the database (cannot be grouped with other requests).
 
 ## Working with General-purpose Indexer
 
