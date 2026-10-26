@@ -101,11 +101,13 @@ const nonce = generateNonce(ephemeralKeyPair.getPublicKey(), maxEpoch, randomnes
 
 `randomness` is a random value from `generateRandomness()`, and `generateNonce` derives `nonce` from the ephemeral public key, `maxEpoch`, and `randomness`. You pass the `nonce` to the OAuth provider in Step 2.
 
-The `maxEpoch` controls how long this ephemeral key can authorize transactions. The address itself does not expire; only the session does. When the epoch passes `maxEpoch`, generate a new key pair and zero-knowledge proof. See [Does my address expire?](/sui-stack/zklogin-integration/zklogin) for details.
+The `maxEpoch` controls how long this ephemeral key can authorize transactions. The address itself does not expire; only the session does. When the epoch passes `maxEpoch`, generate a new key pair, send the user through the OAuth login again with the new nonce, and get a new zero-knowledge proof. See [Does my address expire?](/sui-stack/zklogin-integration/zklogin) for details.
 
 ## Step 2: Direct the user to the OAuth login
 
 Construct the OAuth URL with your configured client ID, redirect URL, and the nonce from the previous step.
+
+The client ID identifies your application, not an individual user, so every user of your app uses the same client ID. The redirect URL is the address in your app where the provider sends the user after login, with the JWT or authorization code attached. Step 3 shows an example.
 
 Google, Facebook, Twitch, Apple, and Microsoft return the JWT directly, with no token exchange. Kakao and Slack use the authorization `code` flow instead (`response_type=code`): they return an authorization code that you must exchange for a JWT at the provider's token endpoint.
 
@@ -274,6 +276,8 @@ Choose a salt management strategy:
 | Database mapping | Map user identifier (`sub`) to a salt in your backend database. | Reliable; requires a backend service. Salt is unique per user. |
 | Derived from master seed | Use `HKDF(ikm = seed, salt = iss \|\| aud, info = sub)` to derive salts deterministically from a master seed (`\|\|` denotes concatenation). | No per-user storage needed, but you cannot rotate the master seed, and you cannot change the client ID (`aud`) without deriving a different address. |
 
+Your salt service identifies users by JWT claims, not by Sui address, because the address does not exist until you have the salt. The database mapping strategy uses `sub`, and the derived strategy uses `iss`, `aud`, and `sub`.
+
 The Mysten Labs [Enoki](https://docs.enoki.mystenlabs.com/) platform provides a managed salt service (using derived salts). Contact Mysten Labs for access. The service only accepts JWTs authenticated with allowlisted client IDs.
 
 ```sh
@@ -283,6 +287,8 @@ curl -X POST https://salt.api.mystenlabs.com/get_salt \
 
 # Response: {"salt":"129390038577185583942388216820280642146"}
 ```
+
+The service returns the salt as a decimal string. The SDK functions `jwtToAddress` and `genAddressSeed` accept it as a string or a BigInt. Step 7 passes it through `BigInt()`.
 
 The salt's purpose is to disconnect the OAuth identifier (`sub`) from the onchain Sui address. Leaking the salt enables linking Web2 and Web3 identities but does not compromise fund control.
 
@@ -298,21 +304,11 @@ import { jwtToAddress } from '@mysten/sui/zklogin';
 const zkLoginUserAddress = jwtToAddress(jwt, userSalt, false);
 ```
 
-The same `sub` + `iss` + `aud` + `user_salt` always produces the same address. See [Address definition](/sui-stack/zklogin-integration/zklogin#address-definition) for the full derivation formula.
-
-### Pass the derived address to a fiat on-ramp provider
-
-After deriving the zkLogin address, you can use it as the destination address for fiat on-ramp providers. The on-ramp provider sends purchased tokens (SUI, USDC, or other supported assets) directly to the user's zkLogin address. Pass the derived address to the provider's widget or API as the `walletAddress` or equivalent parameter:
-
-1. Derive the address with `jwtToAddress` as shown above.
-2. Pass `zkLoginUserAddress` to the on-ramp provider's configuration (for example, Banxa, Stripe, or Meld). Each provider accepts a destination address parameter in their widget SDK or API. See [Fiat On-Ramps](/onchain-finance/asset-custody/fiat-on-ramps) for provider-specific documentation links.
-3. The provider delivers the purchased tokens to the zkLogin address. The user can then sign transactions with their ephemeral key pair and zero-knowledge proof.
-
-The zkLogin address is deterministic. The same OAuth identity and salt always produce the same address, so the user can receive tokens from an on-ramp provider across multiple sessions without re-deriving.
+The same `sub` + `iss` + `aud` + `user_salt` always produces the same address. A change in any of these values produces a different address, so a user who signs in with 2 different OAuth providers has 2 different zkLogin addresses. See [Address definition](/sui-stack/zklogin-integration/zklogin#address-definition) for the full derivation formula.
 
 ## Step 6: Get the zero-knowledge proof
 
-The zero-knowledge proof attests that the ephemeral key pair is valid and bound to the user's OAuth identity, without revealing the JWT onchain.
+The zero-knowledge proof attests that the ephemeral key pair is valid and bound to the user's OAuth identity, without revealing the JWT onchain. If you cannot use the Mysten Labs hosted prover, run your own prover as described in [Option B: Self-hosted proving service](#option-b-self-hosted-proving-service).
 
 First, generate the extended ephemeral public key:
 
@@ -414,7 +410,7 @@ export type PartialZkLoginSignature = Omit<
 const partialZkLoginSignature = proofResponse as PartialZkLoginSignature;
 ```
 
-The prover response does not include `addressSeed`, which is why `PartialZkLoginSignature` omits it. You compute `addressSeed` with `genAddressSeed` in Step 7.
+The prover response does not include `addressSeed`, which is why `PartialZkLoginSignature` omits it. You compute `addressSeed` from the user salt and the JWT claims `sub` and `aud` with `genAddressSeed` in Step 7.
 
 ### Option B: Self-hosted proving service
 
@@ -477,6 +473,8 @@ Self-host the proving service when you need full control over proof generation, 
          # - PROVER_TIMEOUT=30
    ```
 
+   Set `ZKEY` to the path of the downloaded zkey file and `PROVER_PORT` to the host port for the prover, then start the services:
+
    ```sh
    ZKEY=<path_to_zkLogin.zkey> PROVER_PORT=<port> docker compose up
    ```
@@ -498,6 +496,14 @@ If you need better performance, compile the prover from the [rapidsnark fork](ht
 ## Step 7: Assemble the zkLogin signature and submit
 
 Sign the transaction with the ephemeral private key, then combine it with the zero-knowledge proof to create a zkLogin signature.
+
+The following code uses values from earlier steps:
+
+- `ephemeralKeyPair` and `maxEpoch` from Step 1
+- `decodedJwt` from Step 3
+- `userSalt`, the salt value that your salt service returns in Step 4
+- `zkLoginUserAddress` from Step 5
+- `partialZkLoginSignature` from Step 6
 
 ```typescript
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -566,6 +572,16 @@ await client.executeTransaction({ transaction: bytes, signatures: [signature] })
 ```
 
 See [ZkLoginSigner](/onchain-finance/asset-custody/wallets/zk-login-wallets#zkloginsigner) for the full API reference.
+
+## Pass the derived address to a fiat on-ramp provider
+
+After deriving the zkLogin address, you can use it as the destination address for fiat on-ramp providers. The on-ramp provider sends purchased tokens (SUI, USDC, or other supported assets) directly to the user's zkLogin address. Pass the derived address to the provider's widget or API as the `walletAddress` or equivalent parameter:
+
+1. Derive the address with `jwtToAddress` as shown in Step 5.
+2. Pass `zkLoginUserAddress` to the on-ramp provider's configuration (for example, Banxa, Stripe, or Meld). Each provider accepts a destination address parameter in their widget SDK or API. See [Fiat On-Ramps](/onchain-finance/asset-custody/fiat-on-ramps) for provider-specific documentation links.
+3. The provider delivers the purchased tokens to the zkLogin address. The user can then sign transactions with their ephemeral key pair and zero-knowledge proof.
+
+The zkLogin address is deterministic. The same OAuth identity and salt always produce the same address, so the user can receive tokens from an on-ramp provider across multiple sessions without re-deriving.
 
 ## How do I cache the ephemeral key and zero-knowledge proof?
 
