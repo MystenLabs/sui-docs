@@ -45,7 +45,7 @@ The Sui object model is the foundation of how Sui stores and manages onchain sta
 On Sui, the base unit of storage is an object. Unlike account-based blockchains where state lives in a single global store keyed by address, Sui organizes state around individual objects. Each object has:
 
 - A globally unique ID
-- An owner (an address, another object, or the network itself)
+- An ownership type: owned by an address or another object, shared, immutable, or party (consensus-address owned)
 - A type defined by a Move package
 - A version that increments with each mutation
 
