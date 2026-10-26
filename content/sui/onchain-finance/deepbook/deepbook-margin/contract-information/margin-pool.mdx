@@ -65,9 +65,9 @@ A margin pool must explicitly allow a DeepBook trading pool (the DeepBook market
 The typical workflow for a lender interacting with a margin pool:
 
 1. Mint a `SupplierCap` using `mint_supplier_cap`. The cap is a capability object: you pass it to `supply` and `withdraw`, and the pool tracks your position against it. One cap works across multiple pools.
-2. Call `supply` with your `SupplierCap` and the assets you want to deposit. The pool records your shares. The `referral` parameter is an `Option<ID>`: pass `some(id)` to credit a referral with its pro rata share of the 50% referral split, or `none` if you have no referral.
+2. Call `supply` with your `SupplierCap` and the assets you want to deposit. The pool records your shares. The `referral` parameter is an `Option<ID>`: pass `option::some(id)` to credit a referral with its pro rata share of the 50% referral split, or `option::none()` if you have no referral.
 3. Monitor the pool's interest rate and utilization rate using the read endpoints.
-4. Call `withdraw` when you want to reclaim your assets plus accrued interest. The `amount` parameter is an `Option<u64>` denominated in tokens, not shares. Pass `some(amount)` to take a specific amount, or `none` to withdraw everything the cap holds.
+4. Call `withdraw` when you want to reclaim your assets plus accrued interest. The `amount` parameter is an `Option<u64>` denominated in tokens, not shares. Pass `option::some(amount)` to take a specific amount, or `option::none()` to withdraw everything the cap holds.
 
 Two things can cap a withdrawal below what your shares are worth. The pool's withdrawal rate limiter aborts with `ERateLimitExceeded` when recent withdrawals have used up the amount the limiter currently allows, so check `get_available_withdrawal` before you submit. The pool's vault also has to hold the assets: if borrowers have drawn them down, the call aborts with `ENotEnoughAssetInPool` until utilization falls.
 
