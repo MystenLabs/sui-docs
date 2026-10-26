@@ -48,7 +48,7 @@ Building for SuiPlay0X1 lets you offer players capabilities that traditional gam
 
 ## How wallet integration works
 
-The Playtron wallet is a [zkLogin](/sui-stack/zklogin-integration) wallet backed by Playtron's auth provider, tied to the player's Playtron account rather than to the hardware. On the device, the Trusted Platform Module (TPM) protects the ephemeral keys that zkLogin authorizes to sign on the player's behalf. The same wallet reaches the [companion web app](https://wallet.playtron.one), which holds those ephemeral keys in session storage instead. Players therefore keep one wallet whether they are on the device or not. For the wallet types your game can support, see [Wallet Integration Options](/sui-stack/suiplay0x1/wallet-integration).
+The Playtron wallet is a [zkLogin](/sui-stack/zklogin-integration) wallet backed by Playtron's auth provider, tied to the player's Playtron account rather than to the hardware. On the device, the Trusted Platform Module (TPM), the device's hardware security module, protects the ephemeral keys that zkLogin authorizes to sign on the player's behalf. The same wallet reaches the [companion web app](https://wallet.playtron.one), which holds those ephemeral keys in session storage instead. Players therefore keep one wallet whether they are on the device or not. For the wallet types your game can support, see [Wallet Integration Options](/sui-stack/suiplay0x1/wallet-integration).
 
 How your game reaches that wallet depends on where your game runs:
 
@@ -59,7 +59,14 @@ See [SDK Integrations](/sui-stack/suiplay0x1/integration) for the setup and exam
 
 ## How does SuiPlay0X1 development work on Sui?
 
-SuiPlay0X1 development uses the same Sui tooling as any other Sui application. You write Move smart contracts to define your game's onchain objects, deploy them to Sui Mainnet or Testnet, and use the Sui TypeScript SDK or other Sui SDKs to interact with the chain from your game client. What SuiPlay0X1 adds is the wallet layer, so players sign transactions without your game ever handling a private key.
+SuiPlay0X1 development uses the same Sui tooling as any other Sui application. To build a game for SuiPlay0X1:
+
+1. Write Move smart contracts to define your game's onchain objects.
+2. Deploy the contracts to Sui Mainnet or Testnet.
+3. Use the Sui TypeScript SDK or other Sui SDKs to interact with the chain from your game client.
+4. Connect your game to the player's wallet through the Playtron GameOS SDK on-device or Sui dApp Kit off-device. See [SDK Integrations](/sui-stack/suiplay0x1/integration) for setup.
+
+What SuiPlay0X1 adds is the wallet layer, so players sign transactions without your game ever handling a private key.
 
 <ImportContent source="suiplay" mode="snippet" />
 
