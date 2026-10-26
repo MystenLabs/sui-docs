@@ -105,6 +105,8 @@ strike_from_tick(tick) =
     tick * tick_size          otherwise
 ```
 
+The first 2 cases match only the sentinel ticks themselves: tick `0` is negative infinity and maps to raw strike `0`, and tick `1073741823` is positive infinity. Every finite tick takes the multiplication branch.
+
 Both deployments run one underlying, BTC. Each network's registry enables its own cadences, so read them from `registry::cadence_configs`. Both networks enable 2 cadences, both on the same grids:
 
 | **Cadence** | **`tick_size` raw** | **Fine grid** | **`admission_tick_size` raw** | **Admission grid** |
@@ -160,7 +162,7 @@ A directional view is a one-sided range, and the protocol prices it through exac
 | Ends at or below one level | Directional down | `(0, K]` | `settlement <= K` |
 | Lands between 2 levels | Two-sided range | `(L, H]` | `L < settlement <= H` |
 
-A one-sided range wins on an unbounded outcome, so it costs more per contract and wins more often. A two-sided range wins on a bounded outcome, so it costs less per contract and wins less often. Ranges suit a view on where a price settles rather than on which direction it moves. A two-sided range also carries 2 finite boundaries, so the protocol charges a trading fee at each and applies the entry-probability band at each, in addition to the band on the range itself. `strike_exposure_config` holds that band; see [Error codes](#error-codes).
+A one-sided range wins on an unbounded outcome, so it costs more per contract and wins more often. A two-sided range wins on a bounded outcome, so it costs less per contract and wins less often. Ranges suit a view on where a price settles rather than on which direction it moves. A two-sided range also carries 2 finite boundaries, so the protocol charges a trading fee at each and applies the entry-probability band at each, in addition to the band on the range itself. The entry-probability band is the window of entry probabilities that a mint must fall inside, and a probability outside it aborts the mint. `strike_exposure_config` holds that band; see [Error codes](#error-codes).
 
 The `order` module rejects 2 shapes outright:
 
@@ -169,7 +171,7 @@ The `order` module rejects 2 shapes outright:
 
 ## Why does a mint fail with an invalid admission tick? {#validation-rules}
 
-Confusing the 2 grids is the most common integration failure on this surface. A new mint's strike must satisfy both conditions:
+The `admission_tick_size` is the coarser grid that every new finite mint strike must land on, unless the strike equals the market's `reference_tick`. Confusing the 2 grids is the most common integration failure on this surface. A new mint's strike must satisfy both conditions:
 
 - **Fine grid:** The raw strike must be an exact multiple of the market's `tick_size`, otherwise it is not a tick at all.
 - **Admission grid:** Each finite boundary must additionally land on the coarser `admission_tick_size`, which the cadence configuration sets per cadence.
@@ -217,7 +219,7 @@ Follow these steps before you submit a mint:
 1. Snap each finite tick to the admission grid so that `tick % admission_multiple == 0`, where `admission_multiple = admission_tick_size / tick_size`, or set it to the market's `reference_tick`.
 1. Replace an open lower bound with `0` and an open higher bound with `1073741823`.
 1. Confirm `lower_tick < higher_tick` and that the pair is not `(0, 1073741823]`.
-1. Round the quantity to a whole lot, the protocol's quantity granularity of `10_000` base units, which is 0.01 USD of payout, then check the premium against the minimum below.
+1. Round the quantity to a whole lot, the protocol's quantity granularity of `10_000` base units, which is 0.01 USD of payout, then check that the premium is at least `1_000_000` base units, which is 1 USDC.
 
 The lot is the granularity, not a tradable minimum. Every mint must also produce a premium of at least `1_000_000` base units, which is 1 USDC, or it aborts with `strike_exposure_config::EPremiumBelowMinimum`. Premium is `quantity * entry_probability` and the contract caps entry probability at `0.99`, so the smallest admissible quantity never falls below about `1.02` USDC of payout, and it rises steeply as the strike moves away from the money. A far out-of-the-money strike fails earlier still, on the entry-probability band, and so does a two-sided range when the probability at either of its finite boundaries falls outside that band. See [Mint admission errors](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) for both codes and the measured floors.
 
