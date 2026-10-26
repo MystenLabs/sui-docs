@@ -472,12 +472,12 @@ After the indexer reaches the network tip, stop it and restart it with fullnode 
 ```sh
 $ export FULLNODE_GRPC_URL=https://your-rpc-provider.example:443
 
+$ echo $FULLNODE_GRPC_URL
+
 $ cargo run -- \
     --rpc-api-url "$FULLNODE_GRPC_URL" \
     --streaming-url "$FULLNODE_GRPC_URL"
 ```
-
-Before you run `cargo run` in Phase 2, you can confirm that `FULLNODE_GRPC_URL` holds your endpoint with `echo $FULLNODE_GRPC_URL`.
 
 For testing only, you can instead use the public-good Testnet endpoint `https://fullnode.testnet.sui.io:443`. Do not use the public-good Mainnet, Testnet, and Devnet fullnode endpoints for production.
 
