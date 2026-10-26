@@ -62,7 +62,7 @@ Margin trading borrows funds against collateral, and anyone can liquidate a borr
 
 :::
 
-## The margin object model
+## What is the margin object model? {#the-margin-object-model}
 
 Spot trading uses a `BalanceManager`: it holds your balances, you hold its `TradeCap`, and you trade a `Pool` directly. A single `BalanceManager` works across every pool.
 
@@ -75,7 +75,7 @@ Two consequences drive the rest of integration:
 - **You never hold the wrapped manager's caps.** The `deposit_cap`, `withdraw_cap`, and `trade_cap` live inside the `MarginManager`, which generates the trade proof that authorizes orders internally. So every deposit, withdraw, and trade goes through the `MarginManager`, not through the `BalanceManager` API you would use for spot.
 - **A manager is bound to one pool.** The `deepbook_pool` field fixes the manager to a single DeepBook pool, and `margin_pool_id` records the one margin pool a current loan is from. This is isolated margin: the manager's collateral and debt are confined to its one DeepBook pool, rather than shared across pools as in a cross-pool account.
 
-## Isolated pools
+## How do isolated margin pools work? {#isolated-pools}
 
 Each borrowable asset has exactly one `MarginPool`, and the `MarginRegistry` enforces that uniqueness. A `MarginManager` borrows from one side of its pool at a time, base or quote, so risk stays on a single axis. A DeepBook pool is tradeable on margin only when the registry has enabled it and mapped its base and quote margin pools.
 
@@ -91,7 +91,7 @@ Before integrating against a pool, preflight it. Do not assume a pool supports m
 
 **Observe:** for an enabled pool such as `SUI_DBUSDC`, this returns `marginEnabled: true`, a base and a quote margin pool ID, and the risk parameters. At the time of writing the risk parameters read as a liquidation risk ratio of `1.1`, min borrow `1.2499`, min withdraw `2`, target `1.25`, and rewards of `0.02` (user) and `0.03` (pool). Treat those as example values and read them onchain: they are set per pool by governance and are not the protocol defaults. See [Risk ratio](/onchain-finance/deepbook/deepbook-margin/contract-information/risk-ratio).
 
-## The trading path
+## How does the margin trading path work? {#the-trading-path}
 
 Margin orders do not use the spot order entry. They go through the **pool proxy**, which places the order on the DeepBook pool on the manager's behalf and enforces the risk checks that keep a borrow safe. The current entry points are the `_v2` functions (`place_limit_order_v2`, `place_market_order_v2`, and the reduce-only variants); the unsuffixed originals are deprecated, so integrate against the `_v2` functions only.
 
@@ -103,7 +103,7 @@ To monitor a position's health, read its oracle-priced risk ratio:
 
 Because a risk read values the position, it takes Pyth `PriceInfoObject` arguments and reverts if the prices are older than the pool's maximum age, so keep the feeds fresh before you call it.
 
-## Liquidation from the integrator's view
+## How does liquidation affect your integration? {#liquidation-from-the-integrators-view}
 
 Anyone can liquidate any position your integration opens once its risk ratio falls to the pool's liquidation risk ratio. Liquidation is permissionless and, in the current deployment, runs through the separate `margin_liquidation` package:
 
@@ -116,7 +116,7 @@ The [Leveraged Position Workflow](/onchain-finance/deepbook/deepbook-margin/leve
 
 For an integrator this means two things. First, no grace period protects the positions you build, so surface the risk ratio and its distance to the liquidation threshold to your users, and act early. Second, if you run a liquidator, it is a standard permissionless keeper: watch positions, supply oracles and repay capital, and receive the reward.
 
-## Events to index
+## What margin events should you index? {#events-to-index}
 
 Margin activity emits its own events, distinct from the spot order events. The [DeepBook Margin Indexer](/onchain-finance/deepbook/deepbook-margin/deepbook-margin-indexer) exposes these through the public indexer; the names below are the onchain event structs to key on. For a minimal integration that tracks positions, loans, and liquidations, index the manager lifecycle and pool supply and borrow events.
 
@@ -125,7 +125,7 @@ Margin activity emits its own events, distinct from the spot order events. The [
 - **Pool supply and borrow** (`margin_pool`): `MarginPoolCreated`, `AssetSupplied`, `AssetWithdrawn`, plus fee and referral events for suppliers.
 - **Registry and governance** (`margin_registry`): `DeepbookPoolRegistered`, `DeepbookPoolConfigUpdated`, `MaxPriceAgeUpdated`, `PriceToleranceUpdated`, `MinOpenRiskRatioUpdated`, and `CurrentPriceUpdated`. Watch these if your integration caches per-pool risk parameters, because governance can change them.
 
-## Differences from the fully collateralized spot path
+## How does margin differ from the spot path? {#differences-from-the-fully-collateralized-spot-path}
 
 Every row below reflects current source or an existing reference page.
 
