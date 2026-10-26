@@ -83,7 +83,7 @@ Each scheme maps to a `sigs-cli` scheme name, a Move module, and a Move function
 | BLS G1 (minSig setting) | 48 bytes | `bls12381-minsig` | `sui::bls12381` | `bls12381_min_sig_verify` |
 | BLS G2 (minPk setting) | 96 bytes | `bls12381-minpk` | `sui::bls12381` | `bls12381_min_pk_verify` |
 
-With a non-recoverable signature, you pass the public key to a verify method. With a recoverable signature, you pass only the signature and the message to an ecrecover method. The method returns the signer's public key, and you compare it with the expected public key.
+With a non-recoverable signature, you pass the public key to a verify method. With a recoverable signature, you pass the signature, the message, and the hash function identifier to an ecrecover method, without a public key. The method returns the signer's public key, and you compare it with the expected public key.
 
 For BLS12-381, the minSig setting uses a 48-byte signature in G1, and the minPk setting uses a 96-byte signature in G2 with a public key in G1.
 
