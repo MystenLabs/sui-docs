@@ -67,6 +67,20 @@ The native token of Sui is SUI. The Sui tokenomics structure supports the long-t
 
 1. SUI tokens play an important role in governance by acting as a right to participate in onchain voting on issues such as protocol upgrades.
 
+## What are the key values in Sui tokenomics? {#key-values}
+
+The following table lists key values and rules that the rest of this topic describes:
+
+| **Item** | **Value** |
+|---|---|
+| Total supply cap on Mainnet | 10,000,000,000 SUI |
+| Validator stake changes | Take effect when a new epoch begins |
+| Staking pool exchange rates | The protocol computes them at each epoch boundary |
+| Validator commission rate | Each validator sets its own rate and can change it without prior notice; a change takes effect at the next epoch |
+| Total voting power units | 10,000 |
+| Minimum voting power threshold to join the validator set (`V`) | 3 in the final phase |
+| Mainnet cliff period | 1 year, ended May 2024 |
+
 ## Who are the stakeholders in the Sui economy? {#stakeholders}
 
 Stakeholders in a blockchain's tokenomics have a vested interest in the viability of the blockchain economy. The Sui economy has 3 main groups of stakeholders:
@@ -88,6 +102,8 @@ Users of the network hold their own SUI, which they can delegate to validators o
 ## What is the total supply of SUI?
 
 There is a finite supply of SUI. The total supply of SUI tokens on Mainnet has a cap of 10,000,000,000 SUI. This is the total number of SUI that the protocol can ever mint, but the total supply is not available for transactions. Supply availability follows the designed unlocking schedules in place to enhance the tokenomics stability of the network and provide a long-term level of security. 
+
+Stake reward subsidies disappear in the long run as the amount of SUI in circulation reaches its total supply. For details, see [How are stake rewards distributed each epoch?](#token-distribution).
 
 ## How are stake rewards distributed each epoch? {#token-distribution}
 
@@ -193,14 +209,15 @@ The staking pool is part of the Sui framework, and a system-level smart contract
 
 ### Validator pool exchange rate 
 
-At each epoch boundary, the exchange rate for each validator pool grows by the rate of return that third-party stakers earned during that epoch, which is their rewards divided by their stake. The protocol calculates the exchange rate for each validator pool at each epoch boundary as follows:
-$$
+At each epoch boundary, the exchange rate for each validator pool grows by the rate of return that third-party stakers earned during that epoch, which is their rewards divided by their stake. The distinction between third-party owned versus validator-owned rewards and stake is relevant in that validators earn commission on the staking pool's tokens but third-party stakers do not. This accounting enables Sui to keep track of the rewards accrued by both validators and third-party token holders using a single global exchange rate table.
+
+The protocol calculates the exchange rate for each validator pool at each epoch boundary as follows:
+
+```text
 Exchange rate at E+1 = (1 + (third-party staker rewards at E / third-party stake at E)) × (exchange rate at E)
-$$
+```
 
 For example, using hypothetical numbers: if the exchange rate at epoch `E` is 1.0, and third-party stakers earned 10 SUI in rewards on 1,000 SUI of third-party stake during `E`, then the exchange rate at `E+1` is (1 + 10 / 1,000) × 1.0 = 1.01.
-
-The distinction between third-party owned versus validator-owned rewards and stake is relevant in that validators earn commission on the staking pool's tokens but third-party stakers do not. This accounting enables Sui to keep track of the rewards accrued by both validators and third-party token holders using a single global exchange rate table.
 
 <ImportContent source="staking-pool-reqs" mode="snippet" />
 
@@ -208,7 +225,7 @@ The distinction between third-party owned versus validator-owned rewards and sta
 
 [SIP-39](https://github.com/sui-foundation/sips/pull/39) uses the following formula to determine if a validator can join the set:
 
-```
+```text
 S / (S + T) > V / 10000
 ```
 
