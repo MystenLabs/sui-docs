@@ -52,12 +52,13 @@ Publishing a package follows this sequence:
 1. **Write and test your Move code:** Create a Move project with `sui move new PROJECT_NAME`, write your modules, and run tests with `sui move test`. 
 2. **Configure your manifest:** Verify that your `Move.toml` uses `edition = "2024"` and lists all dependencies. The Sui CLI resolves the Sui framework automatically, so you do not need an explicit entry for it in `[dependencies]`. See the [Manifest Reference](/references/package-managers/manifest-reference) for the full syntax.
 3. **Build the package:** Run `sui move build` to compile. Fix any errors before publishing.
-4. **Publish to the network:** Run `sui client publish` from the package root. The command compiles, creates a package object onchain, and returns the package ID. You need sufficient gas in your active address. Run `sui client publish --dry-run` to estimate gas cost before publishing.
-5. **Verify publication:** Use `sui client verify-source` from the package directory to confirm that the onchain bytecode matches your local source.
+4. **Estimate gas cost:** Run `sui client publish --dry-run` to estimate gas cost before publishing.
+5. **Publish to the network:** Run `sui client publish` from the package root. The command compiles, creates a package object onchain, and returns the package ID. You need sufficient gas in your active address.
+6. **Verify publication:** Use `sui client verify-source` from the package directory to confirm that the onchain bytecode matches your local source.
 
 :::caution
 
-Publishing is irreversible. Once you publish a package, you cannot delete it from the network. You can upgrade the package if you retain the `UpgradeCap`, the object created during the initial publish that upgrades require, but the original version remains onchain. Store your `UpgradeCap` in a multisig address or apply a custom upgrade policy for production packages ([Security Best Practices](/develop/security/best-practices)).
+Publishing is irreversible. Once you publish a package, you cannot delete it from the network. The `UpgradeCap` is the object that the initial publish creates, and every upgrade requires it. You can upgrade the package if you retain the `UpgradeCap`, but the original version remains onchain. Store your `UpgradeCap` in a multisig address or apply a custom upgrade policy for production packages ([Security Best Practices](/develop/security/best-practices)).
 
 :::
 
