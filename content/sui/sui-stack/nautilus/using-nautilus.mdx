@@ -148,7 +148,7 @@ This walkthrough uses `AdministratorAccess` only for simplicity. In production, 
 
 :::
 
-###step List existing EC2 SSH key pairwise
+###step List existing EC2 SSH key pairs
 
 Run the following command to list all key pairs created in your AWS account. You use these only for SSH into EC2.
 
@@ -382,6 +382,8 @@ $ make ENCLAVE_APP=<APP> && make run
 $ sh expose_enclave.sh
 ```
 
+Replace `<APP>` with the name of an app directory under `src/nautilus-server/src/apps`, such as `weather-example` or `twitter-example`.
+
 Use `make run-debug` instead of `make run` to run the enclave in debug mode. This prints all logs, where the production build does not. In debug mode, the PCR values are all zeros and are not valid for production use.
 
 The build writes the enclave's PCR values to `out/nitro.pcrs`. Print them and record them as environment variables, because you need them to register the enclave onchain:
@@ -603,6 +605,11 @@ source ~/aws-temp-creds.sh
 
 - **PEM invalid format:** Your file is empty or corrupted. Recreate the key pair.
 
-- **rsync permission denied:** Fix permissions: `chmod 700 ~/.ssh\chmod 400 ~/.ssh/<your-alias>.pem`
+- **rsync permission denied:** Fix permissions with the following commands:
+
+```bash
+chmod 700 ~/.ssh
+chmod 400 ~/.ssh/<your-alias>.pem
+```
 
 - **Enclave endpoint unreachable:** Check that `expose_enclave.sh` is running, the instance is running, and you are using the correct public IP.
