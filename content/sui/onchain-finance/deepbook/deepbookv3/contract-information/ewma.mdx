@@ -41,9 +41,9 @@ answer: >-
   price penalty system.
 ---
 
-DeepBook implements an exponentially weighted moving average (EWMA) system to dynamically adjust taker fees based on network gas prices. This feature helps prevent toxic takers (takers who use high gas prices to prioritize their transactions and pick off stale maker orders) from profiting at makers' expense.
+DeepBook implements an exponentially weighted moving average (EWMA) system to dynamically adjust taker fees based on network gas prices. This feature helps prevent toxic takers from profiting at makers' expense. In DeepBook's context, a toxic taker is a taker who uses high gas prices to prioritize their transactions and pick off stale maker orders.
 
-## Overview
+## What is the EWMA gas price penalty?
 
 The system tracks gas prices over time and applies a penalty fee to takers when the current gas price is unusually high compared to recent history. This protects makers from having their orders filled during periods of abnormal network activity where toxic takers might try to front-run or take advantage of stale orders.
 
@@ -61,7 +61,7 @@ Key components include:
 
 ### The formula
 
-```sh
+```text
 z_score = (current_gas_price - mean) / standard_deviation
 
 if z_score > z_score_threshold:
@@ -74,14 +74,14 @@ The following table shows sample configuration parameters for the EWMA system:
 
 | Parameter            | Value           | Meaning                                |
 | -------------------- | --------------- | -------------------------------------- |
-| Alpha                | 0.1 (100000000) | 10% weight on new data, 90% on history |
+| Alpha                | 0.1 (100,000,000) | 10% weight on new data, 90% on history |
 | Mean                 | 1,478           | Average gas price (smoothed)           |
 | Variance             | 43,270,831      | Volatility measure                     |
 | Std deviation        | 6,578           | Calculated: √variance                  |
 | Z-score threshold    | 3.0             | Trigger: 3 standard deviations         |
-| Additional taker fee | 0.1% (1000000)  | Penalty fee added                      |
+| Additional taker fee | 0.1% (1,000,000)  | Penalty fee added                      |
 
-Where a value has a number in parentheses, the parenthesized integer is the same value scaled by 10^9 (1,000,000,000). For example, alpha 0.1 × 1,000,000,000 = 100000000, and a 0.1% fee (0.001) × 1,000,000,000 = 1000000.
+Where a value has a number in parentheses, the parenthesized integer is the same value scaled by 10^9 (1,000,000,000). For example, alpha 0.1 × 1,000,000,000 = 100,000,000, and a 0.1% fee (0.001) × 1,000,000,000 = 1,000,000.
 
 ## When does the penalty apply?
 
@@ -91,9 +91,9 @@ The penalty is applied only when all of the following conditions are met:
 2. Current gas price ≥ mean (must be above average).
 3. Z-Score > threshold (must exceed 3.0 standard deviations).
 
-### Penalty threshold calculation
+### How is the penalty threshold calculated?
 
-```sh
+```text
 Penalty Threshold = Mean + (Z-Score Threshold × Std Dev)
 Penalty Threshold = 1,478 + (3.0 × 6,578)
 Penalty Threshold = 1,478 + 19,734
@@ -132,7 +132,7 @@ The following examples illustrate how the EWMA penalty system works under differ
 - **Z-score:** 3.58
 - **Result:** Penalty applied - Additional 0.1% fee added
 
-## Benefits
+## Why does DeepBook use an EWMA penalty?
 
 - Maker protection: Discourages takers from picking off stale maker orders during network congestion.
 - Dynamic adjustment: Automatically adapts to changing gas price patterns over time.
@@ -145,4 +145,3 @@ The following examples illustrate how the EWMA penalty system works under differ
 - Alpha value: 0.1 means the system adapts relatively quickly to new price levels while maintaining historical context.
 - 3-sigma threshold: Statistically, only approximately 0.3% of observations exceed 3 standard deviations in a normal distribution (approximately 0.15% above 3 standard deviations). Real gas prices are not necessarily normally distributed, so the actual share of observations above the threshold can differ.
 - Pool-specific: Each pool has its own EWMA state tracked independently.
-
