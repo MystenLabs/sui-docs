@@ -48,7 +48,7 @@ Address balances introduce a canonical balance system for fungible assets tied t
 
 For the full specification, see [SIP-58: Sui Address Balances](https://github.com/sui-foundation/sips/blob/main/sips/sip-58.md). For implementation details on sending, withdrawing, and paying gas from address balances, see [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
 
-## Read this first
+## What changes with address balances?
 
 This rollout initially has very limited impact:
 
@@ -56,7 +56,7 @@ This rollout initially has very limited impact:
 - No contracts need to be rewritten. Contracts can continue to accept `Coin<T>` and `&mut Coin<T>` as before.
 - Coins can still be sent through `transfer::public_transfer` or the `TransferObjects` command.
 
-### Impact for wallets, exchanges, and custody providers
+### What changes for wallets, exchanges, and custody providers?
 
 Anyone operating a wallet (custodial, non-custodial, or exchange wallets) might be impacted by this change. Users can now send funds to your address through `send_funds()`, which credits your address balance, instead of transferring a coin object with `TransferObjects`. If a wallet receives funds this way, but does not have proper support for address balances, the user cannot see or access the funds. The user might then believe the funds have been lost. The funds cannot actually be lost, but this can cause confusion for affected users.
 
@@ -69,11 +69,11 @@ User funds can also become split across both coins and address balances. Balance
 
 ## What should I check in my integration?
 
-- Handle funds that arrive through `send_funds()` in the address balance, not only funds that arrive as coin objects.
-- Read the combined balance, or the separate `coinBalance` and `addressBalance` fields, from gRPC or GraphQL balance queries. See [Changes to balance queries](#changes-to-balance-queries).
-- When sending funds that include the address balance portion, use `coinWithBalance` from the TypeScript SDK (v2+) or manual withdrawal logic.
-- If you compute balance changes from checkpoint data, process accumulator events or use `derive_balance_changes`. See [Changes to balance computation from checkpoint data](#changes-to-balance-computation-from-checkpoint-data).
-- Replace legacy JSON-RPC balance calls with the gRPC or GraphQL equivalents.
+- Handle funds that arrive through `send_funds()` in the address balance, not only funds that arrive as coin objects. See [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
+- Read the combined balance, or the separate `coinBalance` and `addressBalance` fields, from the gRPC `GetBalance` and `ListBalances` methods or the GraphQL `balance` and `balances` fields. See [Changes to balance queries](#changes-to-balance-queries).
+- When sending funds that include the address balance portion, use `coinWithBalance` from the TypeScript SDK (v2+), which draws from both coin objects and the address balance, or manual withdrawal logic as described in [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
+- If you compute balance changes from checkpoint data, process accumulator events (the records of address balance withdrawals and deposits in `TransactionEffects`, available through `effects.accumulator_events()`) or use `derive_balance_changes`. See [Changes to balance computation from checkpoint data](#changes-to-balance-computation-from-checkpoint-data).
+- Replace legacy JSON-RPC `suix_getBalance` and `suix_getAllBalances` calls with the gRPC `GetBalance` and `ListBalances` methods from `StateService`, or the GraphQL `balance` and `balances` fields.
 
 ## Changes to balance queries
 
@@ -81,7 +81,7 @@ Balance query responses now include address balance information alongside coin o
 
 ### JSON-RPC (legacy)
 
-Sui Foundation disabled JSON-RPC on Mainnet full nodes. This section describes the legacy response shape so you can recognize it in code you are migrating. For new code, use the gRPC or GraphQL fields that follow.
+Sui Foundation disabled JSON-RPC on Mainnet full nodes. Do not call `suix_getBalance` or `suix_getAllBalances` in new code. The legacy response shape helps you recognize these calls in code you are migrating to the [gRPC](#grpc) or [GraphQL](#graphql) fields.
 
 The legacy `suix_getBalance` and `suix_getAllBalances` response carries a `fundsInAddressBalance` field, and its `totalBalance` field combines coin objects and address balance funds:
 
@@ -142,7 +142,7 @@ Each `BalanceChange` contains the address, coin type, and a signed amount (negat
 
 See the [reference implementation](https://github.com/MystenLabs/sui/blob/e23cc4bb0215ec065785a19772f22eda8ada14ae/crates/sui-types/src/balance_change.rs#L86) for the full algorithm.
 
-### Accessing accumulator events
+### How do you access accumulator events?
 
 Accumulator events are embedded in `TransactionEffects`. Access them through the `TransactionEffectsAPI` trait:
 
@@ -175,7 +175,7 @@ These reservations exist primarily to preserve basic functionality for older cli
 
 When a legacy client supplies a compatibility coin reservation as gas payment, the network resolves it as a withdrawal from the address balance rather than smashing it into a coin. And gas smashing applies depending on the position of the coin reservation in the list of gas payments. For more information, see [Gas Smashing](/develop/transaction-payment/gas-smashing).
 
-## Converting existing coins to address balances
+## Do you need to convert existing coins?
 
 Migration is optional. The SDK automatically selects coins or address balances as needed. To consolidate existing coin objects into an address balance, see [Converting Existing Coins to Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances#converting-existing-coins-to-address-balances) in the usage guide.
 
