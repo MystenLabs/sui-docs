@@ -50,13 +50,13 @@ These instructions are for advanced users. If you only need a local development 
 
 This role enables validators to focus on servicing and processing transactions. When a validator commits a new set of transactions (or a block of transactions), the validator pushes that block to all connected full nodes that then service the queries from clients.
 
-## Features 
+## What does a Sui full node do? {#features}
 
 Sui full nodes:
 - Track and verify the state of the blockchain, independently and locally.
 - Serve read requests from clients.
 
-## State synchronization 
+## How does a full node sync state? {#state-synchronization}
 Sui full nodes sync through the state sync protocol, which disseminates certified [checkpoints](/develop/sui-architecture/checkpoint-verification) between nodes. A full node does not need to follow individual validators to learn about committed transactions.
 
 The synchronization process includes:
@@ -89,7 +89,7 @@ Suggested minimum hardware to run a Sui full node:
 
 Disk usage grows with the history and indexes you retain. Without an active pruning configuration, a node can fill 7TB or more; see [pruning configuration](/operators/data-management/managing-data#pruning).
 
-### Software requirements 
+### What software does a Sui full node need? {#software-requirements}
 
 Sui recommends running Sui full nodes on Linux. Sui supports the Ubuntu and Debian distributions. You can run a Sui full node on macOS,
 but Sui recommends this only for development and not for production use.
@@ -134,7 +134,7 @@ Follow these steps to enable indexed gRPC functionality on a full node. The gRPC
       }' <YOUR_NODE>:9000 sui.rpc.v2.LedgerService/ListTransactions
     ```
 
-### Considerations to enable gRPC
+### How do I enable gRPC? {#considerations-to-enable-grpc}
 
 You must enable gRPC support on your full nodes. JSON-RPC is **deprecated**. See [Sui's data serving roadmap](/develop/accessing-data/data-serving) for guidance on the overall transition plan.
 
@@ -263,7 +263,7 @@ Do not expose plain HTTP (port 9000) to the public internet. Use a reverse proxy
 
 The node also supports native TLS through the `rpc.https-address` and `rpc.tls` configuration options, but proxy-based termination is easier to manage operationally (certificate rotation, rate limiting, access logs).
 
-### Readiness check {#readiness}
+### How do I check that a full node is ready? {#readiness}
 
 After starting a full node, verify it is healthy before serving traffic:
 
@@ -319,7 +319,7 @@ Keep the following considerations in mind when running a Sui full node, as they 
 * [Archival Fallback](/operators/data-management/archives): The archival fallback allows you to sync checkpoints from any point in the chain's history. The network `seed-peers` below only keep a few epochs of history.
 
 
-### Using Docker Compose 
+### How do I run a full node with Docker Compose? {#using-docker-compose}
 
 The Sui repository includes a guide on running a full node through [Docker Compose](https://github.com/MystenLabs/sui/tree/main/docker/fullnode#readme).
 This alone is not suitable for a production environment, but you can use it to get a full node up and running quickly on a virtual machine or local machine for development purposes.
@@ -375,20 +375,20 @@ Run the commands in this section from the same folder. Replace `branch-name` in 
 
     Use `docker compose` (Compose v2). On hosts that still run the standalone Compose v1 binary, the command is `docker-compose up -d`.
 
-### Building from source
+### How do I build `sui-node` from source? {#building-from-source}
 
 You can also build `sui-node` directly from the Sui repository using [Cargo](https://doc.rust-lang.org/cargo/), the Rust package manager.
 
-1. Install the prerequisites listed in [Software requirements](#software-requirements).
+1. Install the prerequisites listed in [What software does a Sui full node need?](#software-requirements).
 
-1. Clone the Sui repository, replacing `branch-name` with the branch for your target network (see the branch table in [Using Docker Compose](#using-docker-compose)):
+1. Clone the Sui repository, replacing `branch-name` with the branch for your target network (see the branch table in [How do I run a full node with Docker Compose?](#using-docker-compose)):
 
     ```sh
     $ git clone https://github.com/MystenLabs/sui.git -b branch-name
     $ cd sui
     ```
 
-1. Follow [Setting up a full node](#setting-up-a-full-node) to prepare `fullnode.yaml` and download the genesis blob.
+1. Complete the steps in [How do I set up a full node?](#setting-up-a-full-node) to prepare `fullnode.yaml` and download the genesis blob.
 
 1. Build and run `sui-node` from source:
 
@@ -484,7 +484,7 @@ When you are ready to run `sui-node` in your production environment, you can set
         genesis-file-location: "/sui-fullnode/genesis.blob"
     ```
 
-### Starting your full node {#starting-a-full-node}
+### How do I start a full node? {#starting-a-full-node}
 
 Do not start syncing your full node from the start of the genesis. This takes a very long time and consumes a lot of resources (including likely filling up your disk).
 
@@ -623,7 +623,7 @@ If `journalctl` or your log file shows no output, check the following:
 
 Use this section as a quick reference for the most common full node operations. Each entry links to the detailed guide for that procedure.
 
-### Snapshot restore
+### How do I restore from a snapshot? {#snapshot-restore}
 
 If your node's database is corrupted, if you are starting a new node, or if you need to recover from a failed upgrade, restore from a snapshot rather than syncing from genesis:
 
@@ -634,7 +634,7 @@ If your node's database is corrupted, if you are starting a new node, or if you 
 
 For the complete procedure, see [Sui Snapshots](/operators/snapshots).
 
-### Version upgrades
+### How do I upgrade a full node? {#version-upgrades}
 
 Sui releases new versions regularly. To upgrade your node:
 
