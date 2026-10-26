@@ -87,7 +87,13 @@ Replace `BASE58_TX_DIGEST` with the Base58-encoded digest of the transaction you
 Apps can query the Archival Service when a full node returns retention-related errors. This application-level fallback does not implicitly happen inside the full node.
 
 1. Send the request to the full node.
-2. If the full node returns `NOT_FOUND` for data that should exist, retry the same request against an Archival Service endpoint such as `archive.mainnet.sui.io:443`.
+2. If the full node returns `NOT_FOUND` for data that should exist, retry the same request against an Archival Service endpoint such as `archive.mainnet.sui.io:443`. For example, to retry a `GetTransaction` request using `grpcurl`:
+
+   ```shell
+   grpcurl -d '{
+     "digest": "BASE58_TX_DIGEST"
+   }' archive.mainnet.sui.io:443 sui.rpc.v2.LedgerService/GetTransaction
+   ```
 
 ## Can I run my own Archival Service instance?
 
