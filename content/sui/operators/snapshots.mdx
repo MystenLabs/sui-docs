@@ -16,7 +16,6 @@ keywords:
   - restoring from snapshot
   - managed snapshots
   - enabling snapshots
-  - archival snapshots
   - S3 snapshot
   - Google Cloud Storage snapshot
   - Azure Blob Storage snapshot
@@ -126,12 +125,12 @@ To restore a node from a formal snapshot, complete the following steps:
 2. Run the command for your snapshot source. The `--no-sign-request` flag and the `--snapshot-bucket` and `--snapshot-bucket-type` flags are mutually exclusive, so use only one of these commands:
 
    - **Free Cloudflare R2 bucket (no credentials):**
-     ```
+     ```sh
      sui-tool download-formal-snapshot --latest --genesis "<PATH-TO-GENESIS-BLOB>" \
           --network <NETWORK> --path <PATH-TO-NODE-DB> --num-parallel-downloads 50 --no-sign-request
      ```
    - **GCS or S3 bucket (credentials from environment variables):**
-     ```
+     ```sh
      sui-tool download-formal-snapshot --latest --genesis "<PATH-TO-GENESIS-BLOB>" \
           --network <NETWORK> --snapshot-bucket <BUCKET-NAME> --snapshot-bucket-type <TYPE> \
           --path <PATH-TO-NODE-DB> --num-parallel-downloads 50
