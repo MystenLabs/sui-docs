@@ -259,19 +259,19 @@ To read stake state for an address, list owned `StakedSui` objects through `Stat
 
 Treat deposit and withdrawal pipelines as event-driven and idempotent. The following checklist covers the design points that matter most for an exchange:
 
-- **Use checkpoint sequence numbers as your cursor.** Persist the last fully processed checkpoint, and resume from the next sequence number on restart. Checkpoints do not fork, so once you process a checkpoint, it does not change.
+1. **Use checkpoint sequence numbers as your cursor.** Persist the last fully processed checkpoint, and resume from the next sequence number on restart. Checkpoints do not fork, so once you process a checkpoint, it does not change.
 
-- **Make every credit and debit idempotent.** Key your ledger entries by `(transaction digest, event sequence)` for event-driven credits, or by `(transaction digest, object change)` for object-based credits. Replaying the same checkpoint must not produce duplicate ledger entries.
+2. **Make every credit and debit idempotent.** Key your ledger entries by `(transaction digest, event sequence)` for event-driven credits, or by `(transaction digest, object change)` for object-based credits. Replaying the same checkpoint must not produce duplicate ledger entries.
 
-- **Define a finality policy.** Sui transactions are final before Sui includes them in a checkpoint, and checkpoints themselves are final. For exchange purposes, treating inclusion in a finalized checkpoint as the point of finality is the standard choice.
+3. **Define a finality policy.** Sui transactions are final before Sui includes them in a checkpoint, and checkpoints themselves are final. For exchange purposes, treating inclusion in a finalized checkpoint as the point of finality is the standard choice.
 
-- **Support reprocessing and backfill.** Build the pipeline so you can replay a range of checkpoints to recover from a bug or a missed window. This depends on the idempotency keys above.
+4. **Support reprocessing and backfill.** Build the pipeline so you can replay a range of checkpoints to recover from a bug or a missed window. This depends on the idempotency keys from point 2.
 
-- **Reconcile against onchain balances.** Periodically read `Balance.totalBalance`, and `Balance.coinBalance` and `Balance.addressBalance` separately, for each tracked address, and compare against your internal ledger. Investigate any drift.
+5. **Reconcile against onchain balances.** Periodically read `Balance.totalBalance`, and `Balance.coinBalance` and `Balance.addressBalance` separately, for each tracked address, and compare against your internal ledger. Investigate any drift.
 
-- **Plan for both coin objects and address balances.** You can pay withdrawals from either, and a user's holdings can sit in either at any time. Build your withdrawal logic to handle both, and use PTBs rather than legacy JSON-RPC transfer methods.
+6. **Plan for both coin objects and address balances.** You can pay withdrawals from either, and a user's holdings can sit in either at any time. Build your withdrawal logic to handle both, and use PTBs rather than legacy JSON-RPC transfer methods.
 
-- **Validate addresses on input.** Reject malformed addresses early, and confirm `0x` prefix handling matches your display layer.
+7. **Validate addresses on input.** Reject malformed addresses early, and confirm `0x` prefix handling matches your display layer.
 
 ## Production considerations
 
