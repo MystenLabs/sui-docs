@@ -88,9 +88,9 @@ public struct Wallet has key, store {
 }
 ```
 
-### Body
+### Where should constants and structs go in a module?
 
-Structure your code using comments to create sections for your Move code files. Structure your titles using `===` on either side of the title.
+Structure your code using comments to create sections for your Move code files. Structure your titles using `===` on either side of the title. These section comments are recommendations rather than strict rules.
 
 ```move
 module conventions::comments;
@@ -204,8 +204,8 @@ The following functions follow standard create, read, update, and delete (CRUD) 
 - `property_name`: Returns an immutable reference or a copy of a field.
 - `property_name_mut`: Returns a mutable reference of a field.
 - `drop`: Drops a struct.
-- `destroy`: Destroys an object or data structure that has values with the **drop** ability.
-- `destroy_empty`: Destroys an empty object or data structure that has values with the **drop** ability.
+- `destroy`: Destroys an object or data structure.
+- `destroy_empty`: Destroys an empty object or data structure.
 - `to_name`: Transforms a Type X to Type Y.
 - `from_name`: Transforms a Type Y to Type X.
 
@@ -223,11 +223,11 @@ public struct Receipt<T> has store { ... }
 public struct Receipt<Data> has store { ... }
 ```
 
-## Code structure
+## How should I design objects and functions?
 
 Move development on Sui follows common patterns and best practices for object ownership models and function design.
 
-In the examples on this page, a function body of `abort(0)` with the comment `// Implementation omitted.` is a placeholder for an implementation that the example does not show. It is not part of the recommended pattern.
+In the code examples, a function body of `abort(0)` with the comment `// Implementation omitted.` stands in for an implementation that the example does not show. It is not part of the recommended pattern.
 
 ### Shared objects
 
@@ -414,7 +414,7 @@ public fun new_shared(deposit: Coin<SUI>, ctx: &mut TxContext) {
 
 ### Admin capability
 
-In admin-gated functions, place the capability as the second parameter. This keeps the capability visible in method signatures and maintains method associativity: with the object that the function modifies as the first parameter, callers use method syntax on that object (`account.set(&cap, ...)`) rather than on the capability (`cap.update(&mut account, ...)`).
+In admin-gated functions, place the capability as the second parameter. This keeps the capability visible in method signatures and maintains method associativity, which means callers call the method on the object that the function modifies. With that object as the first parameter, callers use method syntax on it (`account.set(&cap, ...)`) rather than on the capability (`cap.update(&mut account, ...)`).
 
 ```move
 module conventions::social_network;
@@ -443,7 +443,7 @@ public fun update(_: &Admin, account: &mut Account, new_name: String) {
 }
 ```
 
-## Documentation
+## How should I document Move code?
 
 There is nothing more pleasant than a well-written and well-documented codebase. While some argue that clean code is self-documenting, well-documented code is self-explanatory.
 
