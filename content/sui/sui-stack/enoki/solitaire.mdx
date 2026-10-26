@@ -144,7 +144,7 @@ The entire game lives in a single `Game` object that the player owns. The `Game`
 
 - `available_cards: vector<u64>`: The pool of undealt cards used during random reveals. Because the deck and columns store only a count of hidden cards rather than their IDs, a hidden card's identity comes from this pool at the moment the game reveals it.
 
-The game represents cards as integers 0 through 51. The suit and rank derive from the card ID: `rank = id % 13` (0=Ace through 12=King), `suit = id / 13` (0=Clubs, 1=Spades, 2=Hearts, 3=Diamonds). For example, card 27 is the Two of Hearts: `27 % 13 = 1` (Two) and `27 / 13 = 2` (Hearts, using integer division). Cards 0 through 25 are black (Clubs, Spades), 26 through 51 are red (Hearts, Diamonds).
+The game represents cards as integers 0 through 51. The suit and rank derive from the card ID: `rank = id % 13` (0=Ace through 12=King), `suit = id / 13` (0=Clubs, 1=Spades, 2=Hearts, 3=Diamonds). For example, card 27 is the Two of Hearts: `27 % 13 = 1` (Two, because rank 0 is Ace) and `27 / 13 = 2` (Hearts, using integer division). Cards 0 through 25 are black (Clubs, Spades), 26 through 51 are red (Hearts, Diamonds).
 
 ## Prerequisites
 
@@ -316,7 +316,7 @@ The following sections address common issues with this example.
 **Cause:** Enoki doesn't recognize your Google Client ID.                           
                                                                                 
 **Fix:** You need to register your Google Client ID in the Enoki dashboard:            
-  1. Go to https://enoki.mystenlabs.com                                         
+  1. Go to the [Enoki dashboard](https://portal.enoki.mystenlabs.com/)
   2. Open your project                                                          
   3. Under the auth/OAuth providers section, add Google as a provider           
   4. Enter your Google Client ID
