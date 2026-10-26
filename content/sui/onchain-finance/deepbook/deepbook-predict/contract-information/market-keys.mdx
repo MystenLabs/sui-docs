@@ -96,7 +96,7 @@ The only conversion in the other direction is `range_codec::strike_from_tick`, w
 	noComments
 />
 
-In outline, using the sentinel values from [Sentinel ticks](#sentinels):
+In outline, where tick `0` is the negative-infinity sentinel whose raw strike is `0` rather than any tick that happens to multiply to zero, using the sentinel values from [Sentinel ticks](#sentinels):
 
 ```text
 strike_from_tick(tick) =

@@ -341,7 +341,7 @@ The following example builds an owner-signed revocation, reads a session's expir
 
 ## DeepBook spot wrappers {#spot-wrappers}
 
-`SessionsContract` does not wrap the 5 DeepBook spot session calls, because the SDK does not model the surrounding workflow of discovering the account's embedded balance manager and reading its resting orders and locked balances. Reach them through the generated `sessionsMoveCalls` namespace instead:
+`SessionsContract` has no builder for the 5 DeepBook spot session calls, because the SDK does not model the surrounding workflow of discovering the account's embedded balance manager and reading its resting orders and locked balances. The `@mysten/deepbook-v3/sessions` subpath still exports the generated `sessionsMoveCalls` namespace alongside `SessionsContract`, so reach those calls through its bindings instead:
 
 - `placeLimitOrder`: Places a DeepBook spot limit order for the account.
 - `placeMarketOrder`: Places a DeepBook spot market order for the account.

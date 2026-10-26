@@ -72,7 +72,7 @@ To learn about available features, see [Currency Standard](/onchain-finance/fung
 
 ## How do I create a regulated currency?
 
-To use regulatory features, you need to [create a currency](/onchain-finance/fungible-tokens/create-a-fungible-token). During currency initialization, use the `make_regulated()` function on the `CurrencyInitializer<T>` before calling `finalize()`. This adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the registry system:
+To use regulatory features, you need to [create a currency](/onchain-finance/fungible-tokens/create-a-fungible-token). During currency initialization, use the `make_regulated()` function on the `CurrencyInitializer<T>` before calling `finalize()`. The function adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the Coin Registry. It returns a `DenyCapV2` that allows the bearer to maintain the list of addresses on the deny list:
 
 <details>
 <summary>
@@ -81,7 +81,7 @@ Regulated currency creation
 <ImportContent source="examples/move/coin/sources/regcoin_new.move" mode="code" />
 </details>
 
-After calling `finalize()`, the registry automatically tracks regulatory status in the `RegulatedState` enum.
+The `make_regulated` function takes a `bool` parameter controlling whether the currency allows global pause. When `true`, the `DenyCapV2` holder can freeze all transfers of the token across the network. After calling `finalize()`, the registry automatically tracks regulatory status in the `RegulatedState` enum.
 
 ## Example
 

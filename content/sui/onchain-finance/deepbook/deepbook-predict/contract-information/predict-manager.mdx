@@ -514,7 +514,7 @@ Composing create, fund, and trade into a single block of your own is generated-b
 1. `account_registry::new`
 1. `account::generate_auth`
 1. `account::deposit_funds`
-1. `account::share`
+1. `account::share`, which consumes that wrapper value, so every command that borrows the wrapper has to come before it
 1. `expiry_market::load_live_pricer`
 1. A second `account::generate_auth`, because `deposit_funds` consumed the first
 1. `expiry_market::mint_exact_quantity`

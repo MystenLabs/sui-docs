@@ -77,7 +77,7 @@ GraphQL RPC Server and the General-purpose Indexer are generally available. JSON
 
 The key components of the GraphQL and General-purpose Indexer stack include the following:
 
-- **General-purpose Indexer:** Ingests and transforms Sui checkpoint data using configurable and parallel pipelines, then writes it into a Postgres-compatible database. It can be configured to use the Sui remote checkpoint store and a full node as its sources.
+- **General-purpose Indexer:** Ingests and transforms Sui checkpoint data using configurable and parallel pipelines, then writes it into a Postgres-compatible database. It can be configured to use the Sui remote checkpoint store and a full node as its sources. The public HTTPS checkpoint endpoints retain only the most recent 30 days of checkpoints and are testing endpoints, so use the full-retention GCS checkpoint buckets with Requester Pays enabled for backfills.
 
 - **Postgres-compatible database:** Stores indexed data for GraphQL queries. It is tested using [GCP AlloyDB](https://cloud.google.com/products/alloydb), but you can run any Postgres-compatible database. Test alternative databases and share feedback on performance, cost, and operational characteristics.
 
@@ -133,7 +133,7 @@ As a developer, indexer operator, or RPC provider, you can:
 
 ## Working with the GraphQL service
 
-The GraphQL service exposes query and mutation surfaces conforming to GraphQL concepts. It allows pagination, filtering, consistent snapshot queries, transaction execution, and transaction simulation. The service also supports runtime configuration for schema, query cost limits, and logging. The GraphQL schema is defined in the [GraphQL reference](/references/sui-graphql). You can explore supported types and fields there, use the GraphiQL IDE to test queries and mutations, and read documentation on the up-to-date schema.
+The GraphQL service exposes query and mutation surfaces conforming to GraphQL concepts. It allows pagination, filtering, consistent snapshot queries, transaction execution, and transaction simulation. The service also supports runtime configuration for schema, query cost limits, and logging. The GraphQL schema is defined in the [GraphQL reference](/references/sui-graphql), which links to the [schema reference documentation](/references/sui-api/sui-graphql/beta/reference). You can explore supported types and fields there, use the GraphiQL IDE to test queries and mutations, and read documentation on the up-to-date schema.
 
 The GraphQL service is deployed as a single binary implementing a stateless, horizontally scalable service. Queries are served with data from one or more of a Postgres-compatible database (filters over historical data), Archival Service (point lookups), Consistent Store (live data), or full node (execution and simulation), based on need. Access to these stores must be configured with the service on start-up, otherwise the service might fail to respond correctly to requests. More details on how to set up, configure, and run the service are available in its [README](https://github.com/MystenLabs/sui/tree/main/crates/sui-indexer-alt-graphql).
 
@@ -153,7 +153,7 @@ Requests to GraphQL are subject to various limits, to ensure resources are share
 
 ## Working with General-purpose Indexer
 
-General-purpose Indexer fetches checkpoints data from either a remote object store, local files, or a full node RPC, and indexes data into multiple database tables through a set of specialized pipelines. PostgreSQL-compatible storage is the default deployment path for the general-purpose GraphQL stack. Custom indexers built on the same framework can write to other storage layers by implementing the framework's storage traits. Each pipeline is responsible for extracting specific data and writing to its target tables.
+General-purpose Indexer fetches checkpoints data from a remote object store, local files, a full node RPC, or a gRPC checkpoint stream from a full node, and indexes data into multiple database tables through a set of specialized pipelines. PostgreSQL-compatible storage is the default deployment path for the general-purpose GraphQL stack. Custom indexers built on the same framework can write to other storage layers by implementing the framework's storage traits. Each pipeline is responsible for extracting specific data and writing to its target tables.
 
 <details>
 <summary>

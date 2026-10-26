@@ -603,6 +603,6 @@ source ~/aws-temp-creds.sh
 
 - **PEM invalid format:** Your file is empty or corrupted. Recreate the key pair.
 
-- **rsync permission denied:** Fix permissions: `chmod 700 ~/.ssh\chmod 400 ~/.ssh/<your-alias>.pem`
+- **rsync permission denied:** Fix permissions by running `chmod 700 ~/.ssh` and then `chmod 400 ~/.ssh/<your-alias>.pem`
 
 - **Enclave endpoint unreachable:** Check that `expose_enclave.sh` is running, the instance is running, and you are using the correct public IP.

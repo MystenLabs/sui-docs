@@ -409,7 +409,7 @@ Abort codes restart at `0` in each module, so match a code together with the mod
 | `4` | `EVersionWatermarkNotAdvanced` | `bump_version_watermark` did not strictly increase the watermark |
 | `5` | `EProtocolFrozen` | A version-gated flow ran while frozen |
 | `6` | `ESnapshotInProgress` | A trade, a settled redeem, or a second `start_pool_valuation` landed inside a flush's snapshot transaction |
-| `7` | `ETradeWindowClosed` | Raised only by the retired immediate trades, inside the no-trade window. No live path raises it |
+| `7` | `ETradeWindowClosed` | Dead code path on protocol version 4: it was raised only by the retired immediate trades, inside the no-trade window. The immediate mint and live-redeem functions keep their signatures and always abort with `EDelayedExecutionRequired` instead, so no live path raises this code |
 | `8` | `ESettledRedeemKeeperAlreadyAdded` | `add_settled_redeem_keeper` named an address already on the list |
 | `9` | `ESettledRedeemKeeperNotFound` | `remove_settled_redeem_keeper` named an address not on the list |
 | `10` | `EFlushOperatorAlreadyAdded` | `add_flush_operator` named an address already on the list |
