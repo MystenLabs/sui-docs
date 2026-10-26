@@ -84,7 +84,7 @@ If you remove the old address from its own alias set, the old key can no longer 
 Instead of transferring objects to a trusted agent or operational hot key, add that address as an alias. The alias signs transactions with its own key and is authorized to act as your address, accessing your objects and balances directly. Revoke access by removing the alias:
 
 ```sh
-sui client ptb \
+$ sui client ptb \
     --move-call sui::address_alias::remove @<ADDRESS_ALIASES_OBJECT_ID> @<AGENT_ADDRESS> \
     --gas-budget 50000000
 ```
