@@ -389,7 +389,11 @@ div[role="tabpanel"] {
   .navbar-left-items {
     display: none !important;
   }
+}
 
+/* Below the Docusaurus mobile breakpoint the drawer carries the navigation and
+   the right-hand controls need the room, so the logo stays hidden there. */
+@media screen and (max-width: 996px) {
   .navbar__brand {
     display: none !important;
   }
@@ -401,10 +405,23 @@ div[role="tabpanel"] {
   gap: clamp(0.5rem, 1vw, 0.75rem);
 }
 
-/* Show hamburger toggle up to 1279px instead of Docusaurus default 996px */
+/* Between 997px and 1279px the six top-level menus do not fit beside the logo
+   and the right-hand controls, and the Docusaurus mobile drawer only mounts
+   below 997px, so the hamburger this band used to show opened nothing. A single
+   "Docs" dropdown (rendered by src/theme/Navbar/Content) carries the same
+   sections instead. 13-inch Macs at their default 2x scaling are 1204px wide
+   and land in this band. */
+.navbar-compact-menu {
+  display: none;
+}
+
 @media screen and (min-width: 997px) and (max-width: 1279px) {
-  .navbar__toggle {
-    display: inherit !important;
+  .navbar-compact-menu {
+    display: flex;
+    align-items: center;
+    /* Keep the dropdown beside the logo rather than letting the
+       space-between layout push it against the right-hand controls. */
+    margin-right: auto;
   }
 }
 
@@ -760,10 +777,31 @@ html[data-theme='dark'] [data-md-tabs].tabs-container {
   display: flex;
   gap: 0.5rem;
 }
+/* The row sits inside the TOC's scroll container, which clips anything wider
+   than the column; at 1204px the "No" button was cut off. Let the two buttons
+   share the row and stack when even that is too narrow. The PushFeedback web
+   component wraps each slotted button in a shadow <button part="button">, so
+   that part has to stretch too. */
+.toc-feedback__row {
+  flex-wrap: wrap;
+}
+.toc-feedback__row > feedback-button {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.toc-feedback__row > feedback-button::part(button) {
+  display: flex;
+  width: 100%;
+}
 .toc-feedback .button {
   display: inline-flex;
+  flex: 1 1 auto;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
+  min-width: 0;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
 }
 
 /* ---------------------------
