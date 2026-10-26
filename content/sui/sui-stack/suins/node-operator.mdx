@@ -1,12 +1,12 @@
 ---
 title: Node Operator Guide
 sidebar_label: Node Operators
-description: Configure full nodes to resolve SuiNS names on Mainnet and Testnet environments for the Sui Name Service.
+description: Full nodes resolve SuiNS names on Mainnet and Testnet without extra configuration, selecting the SuiNS deployment from the network's chain identifier.
 keywords: [ SuiNS, node operators, full node, configuration, Mainnet, Testnet, name resolution ]
 goal:
   description: >-
-    Reader can configure a Sui full node to resolve SuiNS names on Mainnet
-    and Testnet environments
+    Reader understands that a current Sui full node resolves SuiNS names on
+    Mainnet and Testnet without extra configuration
   requires:
     - has_frontmatter:
         - title
@@ -21,16 +21,15 @@ questions:
   - Which networks support SuiNS name resolution?
   - What configuration is needed for SuiNS on Testnet?
 answer: >-
-  Mainnet full nodes resolve SuiNS names without extra configuration. Testnet
-  nodes require adding name-service-package-address, registry-id, and
-  reverse-registry-id to the YAML configuration file.
+  Full nodes resolve SuiNS names on Mainnet and Testnet without extra
+  configuration. The node selects the SuiNS package and registry objects
+  for its network from the chain identifier. The name-service-* fields that
+  earlier releases accepted in fullnode.yaml no longer exist.
 ---
 
-Mainnet full nodes resolve SuiNS names without extra configuration. Testnet nodes require three additional fields in the YAML configuration file: `name-service-package-address`, `name-service-registry-id`, and `name-service-reverse-registry-id`.
+Full nodes resolve SuiNS names on Mainnet and Testnet without extra configuration. The node selects the SuiNS package and registry objects for its network from the chain identifier, so the `name-service-*` fields that earlier releases accepted in the YAML configuration file no longer exist.
 
 Name resolution means translating a human-readable SuiNS name into the address it points to. Reverse resolution maps an address back to its registered name.
-
-Full nodes for the Mainnet environment process SuiNS names without additional configuration. The Mysten Labs public nodes for Testnet also resolve SuiNS names.
 
 Mysten Labs public nodes:
 
@@ -39,44 +38,42 @@ Mysten Labs public nodes:
 
 ## Full node configuration
 
-Full node configuration is necessary for nodes to resolve SuiNS names in the Testnet environment.
+A current full node needs no SuiNS-specific configuration. The gRPC `NameService` (`LookupName` and `ReverseLookupName`) reads the SuiNS package address, registry ID, and reverse registry ID from values built into the node, and picks the Mainnet or Testnet set by checking the chain identifier of the network the node is on.
 
-To configure a node for SuiNS name resolution on Testnet, add the following options to your yaml configuration file:
+### Built-in SuiNS values {#configuration-fields}
 
-```yaml
-name-service-package-address: 0x22fa05f21b1ad71442491220bb9338f7b7095fe35000ef88d5400d28523bdd93
-name-service-registry-id: 0xb120c0d55432630fce61f7854795a3463deb6e3b443cc4ae72e1282073ff56e4
-name-service-reverse-registry-id: 0xcee9dbb070db70936c3a374439a6adb16f3ba97eac5468d2e1e6fff6ed93e465
-```
+Each value maps to a specific onchain object in the SuiNS deployment:
 
-### Configuration fields
+- **Package address:** The address of the SuiNS package. The node uses this to locate the name record types.
+- **Registry ID:** The object ID of the SuiNS registry. The registry maps human-readable names to their resolved addresses.
+- **Reverse registry ID:** The object ID of the reverse registry. The reverse registry maps addresses back to their registered names.
 
-Each field maps to a specific onchain object in the SuiNS deployment:
+| Value | Mainnet | Testnet |
+| --- | --- | --- |
+| Package address | `0xd22b24490e0bae52676651b4f56660a5ff8022a2576e0089f79b3c88d44e08f0` | `0x22fa05f21b1ad71442491220bb9338f7b7095fe35000ef88d5400d28523bdd93` |
+| Registry ID | `0xe64cd9db9f829c6cc405d9790bd71567ae07259855f4fba6f02c84f52298c106` | `0xb120c0d55432630fce61f7854795a3463deb6e3b443cc4ae72e1282073ff56e4` |
+| Reverse registry ID | `0x2fd099e17a292d2bc541df474f9fafa595653848cbabb2d7a4656ec786a1969f` | `0xcee9dbb070db70936c3a374439a6adb16f3ba97eac5468d2e1e6fff6ed93e465` |
 
-- **`name-service-package-address`:** The address of the SuiNS package on Testnet. The node uses this to locate and call the name resolution logic.
-- **`name-service-registry-id`:** The object ID of the SuiNS registry. The registry maps human-readable names to their resolved addresses.
-- **`name-service-reverse-registry-id`:** The object ID of the reverse registry. The reverse registry maps addresses back to their registered names.
+These values ship with the node binary. You do not set them in `fullnode.yaml`, and a new deployment of the SuiNS package takes effect when you upgrade to a node release that includes the new values.
 
-These values are fixed for the Testnet deployment. You do not need to change them unless the SuiNS package is redeployed to a new address.
+## How to update an existing configuration {#how-to-apply-the-configuration}
 
-## How to apply the configuration
-
-After adding the fields, restart your full node for the changes to take effect.
+Node releases that still included the JSON-RPC server accepted `name-service-package-address`, `name-service-registry-id`, and `name-service-reverse-registry-id` in `fullnode.yaml`. A current node ignores these fields. If your configuration file still contains them, remove them to avoid confusion:
 
 1. Open your node's YAML configuration file. The default file is `fullnode.yaml`.
-1. Add the three `name-service-*` fields shown above to the top level of the file.
+1. Remove any `name-service-*` fields from the top level of the file.
 1. Save the file.
 1. Restart the full node process.
 
-Once the node restarts, it resolves SuiNS names for incoming requests on the Testnet network.
+After the node restarts, it resolves SuiNS names for incoming requests on Mainnet or Testnet.
 
 ## Which networks support SuiNS name resolution?
 
 Both Mainnet and Testnet support SuiNS name resolution:
 
-- **Mainnet:** SuiNS name resolution works without any configuration changes. All Mainnet full nodes resolve names by default.
-- **Testnet:** SuiNS name resolution requires the three configuration fields described above. Without them, the node does not resolve SuiNS names.
+- **Mainnet:** All Mainnet full nodes resolve names by default.
+- **Testnet:** All Testnet full nodes resolve names by default.
 
-Localnet and Devnet do not have a SuiNS deployment and do not support name resolution.
+Localnet and Devnet do not have a SuiNS deployment. On these networks, the node does not recognize the chain identifier and the `NameService` methods return an `Unimplemented` error stating that SuiNS is not configured for the network.
 
 For complete details on configuring a Sui Full Node, see [Run a Sui Full Node](/operators/full-node/sui-full-node).
