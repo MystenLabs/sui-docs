@@ -1,10 +1,10 @@
 ---
 title: Transaction Plugin for Sui TypeScript SDK
-description: Use the MVR Sui TypeScript SDK plugin to construct programmable transaction blocks with MVR names that resolve to package addresses and types.
+description: Use the MVR resolution built into the Sui TypeScript SDK client to construct programmable transaction blocks with MVR names that resolve to package addresses and types.
 keywords: [ MVR, Move Registry, TypeScript SDK, PTB, programmable transaction blocks, plugin, named packages ]
 goal:
   description: >-
-    Reader can install and configure the MVR TypeScript SDK plugin to construct
+    Reader can configure MVR resolution in the Sui TypeScript SDK client to construct
     PTBs using MVR names that resolve to package addresses and types
   requires:
     - has_frontmatter:
@@ -17,30 +17,30 @@ goal:
       label: Needs answer summary for AI citation
 questions:
   - How do I use MVR names in TypeScript PTBs?
-  - How do I register the MVR plugin for the Sui TypeScript SDK?
+  - How do I enable MVR resolution in the Sui TypeScript SDK?
   - What is the difference between runtime and static MVR resolution?
 answer: >-
-  The MVR TypeScript SDK plugin resolves MVR names to package addresses
-  in PTBs. Register it globally or per transaction, and consider the
+  The Sui TypeScript SDK client resolves MVR names to package addresses
+  when it builds a PTB. Configure the client's mvr option, and consider the
   @mysten/mvr-static plugin for build-time resolution.
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-To use Move Registry (MVR) names in programmable transaction blocks (PTBs), register the `namedPackagesPlugin` from `@mysten/sui` either globally or per transaction. For build-time resolution, consider the `@mysten/mvr-static` plugin instead.
+To use Move Registry (MVR) names in programmable transaction blocks (PTBs), build the transaction with a `@mysten/sui` client. Starting with `@mysten/sui` v2.0, MVR resolution is built into the client and configured through its `mvr` option, so there is no plugin to register. For build-time resolution, consider the `@mysten/mvr-static` plugin instead.
 
-The Move Registry (MVR, pronounced mover) Sui TypeScript SDK plugin offers builders a seamless experience when constructing programmable transaction blocks (PTBs) using MVR names.
+The Move Registry (MVR, pronounced mover) support in the Sui TypeScript SDK offers builders a seamless experience when constructing programmable transaction blocks (PTBs) using MVR names.
 
-The plugin resolves MVR names to their respective addresses before constructing the PTB, caching the results during each runtime.
+The client resolves MVR names to their respective addresses while building the PTB, caching the results during each runtime.
 
 This also applies to type names, especially across package upgrades.
 
 ## Recommended usage
 
-The MVR plugin uses a runtime API to resolve named packages and types. While this is beneficial to the user experience, it naturally comes with considerations around performance, availability, and security.
+The built-in resolver uses a runtime API to resolve named packages and types. While this is beneficial to the user experience, it naturally comes with considerations around performance, availability, and security.
 
-For this reason, consider using the `@mysten/mvr-static` plugin, which statically resolves all the package addresses and types during the build. The plugin caches your MVR references and exports them to a resolution file.
+For this reason, consider using the `@mysten/mvr-static` plugin, which statically resolves all the package addresses and types during the build. The plugin caches your MVR references and exports them to a resolution file that you pass to the client as overrides.
 
 This approach offers a couple of benefits:
 
@@ -53,58 +53,74 @@ Check the NPM page for the [`@mysten/mvr-static` plugin](https://www.npmjs.com/p
 
 :::info
 
-The plugin is functional starting from `@mysten/sui` v1.25.0.
+Built-in resolution is available starting from `@mysten/sui` v2.0. Versions 1.25.0 through 1.x used a `namedPackagesPlugin` export that v2.0 removed. The [v2.0 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0/sui#named-packages-plugin-removed) shows how to replace the plugin registration with client options.
 
 :::
 
-The `@mysten/sui` package exports the MVR plugin directly. To enable the plugin, register it either globally or per PTB in your app.
+Every `@mysten/sui` client that implements the core API, such as `SuiGrpcClient` and `SuiGraphQLClient`, includes an MVR resolver. Configure it through the client's `mvr` option, then pass the client when you build the transaction.
 
-Runtime resolution uses `namedPackagesPlugin`. For build-time resolution, see [Recommended usage](#recommended-usage).
+Runtime resolution uses the client's `mvr` option. For build-time resolution, see [Recommended usage](#recommended-usage).
 
 ### Endpoints
 
-Mysten Labs provides public good endpoints compatible with the MVR plugin.
+Mysten Labs provides public good endpoints for MVR resolution. The client selects the endpoint that matches its `network` option, so you do not need to set a URL on Mainnet or Testnet. Set `mvr.url` to use a different endpoint.
 
 ```
 Mainnet: https://mainnet.mvr.mystenlabs.com
 Testnet: https://testnet.mvr.mystenlabs.com
 ```
 
-### Register the plugin
+### Configure the client {#register-the-plugin}
 
-Depending on the architecture of your app, you can register the plugin either globally or per PTB.
+Resolution happens when you build a transaction that contains MVR names and pass a client to `build`. Methods that build on your behalf, such as `signAndExecuteTransaction`, pass the client for you. Building a transaction that contains MVR names without a client throws an error.
 
-`namedPackagesPlugin` takes an options object with the `url` of an MVR endpoint and optional `overrides` (see [Define overrides](#define-overrides)). It returns a plugin that you pass to `Transaction.registerGlobalSerializationPlugin` or `transaction.addSerializationPlugin`.
+The `mvr` option accepts the following fields:
+
+- `url`: The MVR endpoint. Defaults to the Mainnet or Testnet endpoint that matches the client's `network`.
+- `pageSize`: The number of names sent in each resolution request. Defaults to 50.
+- `overrides`: Package and type addresses that the client uses without calling the endpoint. See [Define overrides](#define-overrides).
 
 ```typescript
-/** Register the MVR plugin globally */
+/** Configure MVR resolution on the client */
 
-import { namedPackagesPlugin, Transaction } from "@mysten/sui/transactions";
+import { SuiGrpcClient } from "@mysten/sui/grpc";
+import { Transaction } from "@mysten/sui/transactions";
 
-const plugin = namedPackagesPlugin({ url: '<endpoint based on network>' });
+const client = new SuiGrpcClient({
+    baseUrl: 'https://fullnode.mainnet.sui.io:443',
+    network: 'mainnet',
+    // Optional: the client picks the endpoint from `network`.
+    mvr: { url: 'https://mainnet.mvr.mystenlabs.com' },
+});
 
-/** Register the MVR plugin globally (once) for our PTB construction */
-Transaction.registerGlobalSerializationPlugin('namedPackagesPlugin', plugin);
+const transaction = new Transaction();
+
+// Add commands that use MVR names, then build with the client.
+const bytes = await transaction.build({ client });
 ```
 
 ```typescript
-/** Register the MVR plugin per PTB */
+/** Resolve names per network */
 
-const mainnetPlugin = namedPackagesPlugin({ url: 'https://mainnet.mvr.mystenlabs.com' });
-const testnetPlugin = namedPackagesPlugin({ url: 'https://testnet.mvr.mystenlabs.com' });
+const clients = {
+    mainnet: new SuiGrpcClient({ baseUrl: 'https://fullnode.mainnet.sui.io:443', network: 'mainnet' }),
+    testnet: new SuiGrpcClient({ baseUrl: 'https://fullnode.testnet.sui.io:443', network: 'testnet' }),
+};
 
-function createTransaction(network: 'mainnet' | 'testnet') {
+async function buildTransaction(network: 'mainnet' | 'testnet') {
     const transaction = new Transaction();
 
-    transaction.addSerializationPlugin(network === 'mainnet' ? mainnetPlugin : testnetPlugin);
-
     // continue with your transaction.
+
+    return transaction.build({ client: clients[network] });
 }
 ```
 
 ### Define overrides
 
-If you want to use the plugin locally (for continuous integration), or you want to cache results yourself (without the `@mysten/mvr-static` generator), you can define overrides for the package addresses and types.
+If you want to resolve names locally (for continuous integration), or you want to cache results yourself (without the `@mysten/mvr-static` generator), you can define overrides for the package addresses and types. The client uses an override without calling the endpoint, so overrides also work on networks that have no default endpoint.
+
+The client validates overrides when you construct it. Each package override needs a valid MVR package name and package ID, and each type override must name a first-level type, so list each generic type parameter as its own entry.
 
 ```typescript
 const overrides = {
@@ -117,7 +133,11 @@ const overrides = {
     }
 }
 
-const plugin = namedPackagesPlugin({ url: '<endpoint based on network>', overrides });
+const client = new SuiGrpcClient({
+    baseUrl: '<fullnode endpoint for the network>',
+    network: 'mainnet',
+    mvr: { overrides },
+});
 ```
 
 ## Before and after example
@@ -170,6 +190,9 @@ transaction.moveCall({
         `@suifrens/core::suifren::SuiFren<@suifrens/core::bullshark::Bullshark>`
     ]
 })
+
+// The client resolves the names while building.
+const bytes = await transaction.build({ client });
 ```
   </TabItem>
 </Tabs>
