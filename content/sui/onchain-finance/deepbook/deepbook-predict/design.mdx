@@ -149,7 +149,7 @@ Pricing is transaction-local. `expiry_market::load_live_pricer` takes the protoc
 
 The pricer resolves a forward, then reads each range's probability off the SVI curve as the difference between its 2 strike boundaries. While `use_pyth_spot_for_forward` is on, which is the shipped default, a fresh usable Pyth spot anchors the forward and the Block Scholes basis scales it. The basis is the latest Block Scholes forward for that expiry divided by the Block Scholes spot that carries the same source timestamp, which the pricer looks up among the 10 most recent spots the value store retains. When no retained spot matches, live pricing aborts with `EBlockScholesPriceUnavailable`, whichever forward source is active. A missing, stale, or unusable Pyth spot falls back to the Block Scholes forward for that expiry. A position's live value is its quantity multiplied by its range probability, and a winning position settles at its full quantity. Mint admission holds the quoted range probability inside a per-market band, and for a two-sided range it also holds the probability that settlement ends above the lower strike and the probability that it ends at or below the higher strike inside that band. It also requires a minimum premium, so a quote at the extreme edge of the distribution fails rather than rounding. A mint whose all-in cost would exceed its own maximum payout aborts with `EMintCostAboveMaxPayout`.
 
-Live trading has a hard stop before expiry. `no_trade_window_ms` sets a window, 10 seconds on both deployments. No queued order's price instant might fall inside it, and with the queue's own margin new orders stop about 11 seconds before expiry. Live pricing aborts once the expiry itself has passed, and settled redemption, settlement, and reference tick recording ignore the window. In a market's final seconds the entry probability converges hard, so the window removes trades that would fill at a converged price.
+Live trading has a hard stop before expiry. `no_trade_window_ms` sets a window, 10 seconds on both deployments as of 2026-10-13. No queued order's price instant might fall inside it, and with the queue's own margin new orders stop about 11 seconds before expiry. Live pricing aborts once the expiry itself has passed, and settled redemption, settlement, and reference tick recording ignore the window. In a market's final seconds the entry probability converges hard, so the window removes trades that would fill at a converged price.
 
 ### How a trade executes {#trade-execution}
 
@@ -204,6 +204,13 @@ On every mint by a referred account, the protocol computes:
 referral_fee_basis = (trading_fee - fee_incentive_subsidy) + penalty_fee
 referral_fee       = floor(referral_fee_basis * referral_fee_rate / 1e9)
 ```
+
+The formula uses these values:
+
+- `trading_fee`: The trading fee the mint charged, as [Fee components](#fee-components) describes.
+- `fee_incentive_subsidy`: The sponsor-funded reduction in the trading fee.
+- `penalty_fee`: The congestion surcharge, which protocol version 4 retires.
+- `referral_fee_rate`: The protocol-wide rate on `ProtocolConfig`, in billionths, so `100_000_000` is 10 percent.
 
 The basis is what the trader actually paid the protocol in fees on that mint: the trading fee net of the sponsor-funded subsidy, which the trader did not pay. The `penalty_fee` term is the retired congestion surcharge, which is 0 on every fill. The basis excludes 3 other amounts:
 
