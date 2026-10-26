@@ -105,7 +105,7 @@ public entry fun do_something(value: u64) {
 }
 ```
 
-Sui automatically associates the event with the package that defines the event type. Only that package can emit events to its stream. The `stream_id` of that stream is the package address, which the example in [How do I consume and verify events in Rust?](#how-do-i-consume-and-verify-events-in-rust) builds with `SuiAddress::from(package_id)`.
+Sui automatically associates the event with the package that defines the event type. Only that package can emit events to its stream. The `stream_id` of that stream is the original ID of the package that defines the event type (the address of its first published version), which the example in [How do I consume and verify events in Rust?](#how-do-i-consume-and-verify-events-in-rust) builds with `SuiAddress::from(package_id)`.
 
 ### Are authenticated events backward compatible with regular events?
 
