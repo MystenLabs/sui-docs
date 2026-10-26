@@ -67,7 +67,9 @@ Public key: 928744da5ffa614d65dd1d5659a8e9dd558e68f8565946ef3d54215d90cba015
 
 ### How do I compute the VRF output and proof?
 
-To compute the VRF output and proof for the input string `Hello, world!`, which is `48656c6c6f2c20776f726c6421` in hexadecimal (the hex encoding of the string's bytes, which is the form the `--input` flag takes), with the key pair generated previously, run the following command:
+The `--input` flag takes the input as a hex string. Before you run the command, encode the bytes of your input string in hexadecimal. For example, the input string `Hello, world!` is `48656c6c6f2c20776f726c6421` in hexadecimal.
+
+To compute the VRF output and proof for this input with the key pair generated previously, run the following command:
 
 ```sh
 $ cargo run --bin ecvrf-cli prove --input 48656c6c6f2c20776f726c6421 --secret-key c0cbc5bf0b2f992fe14fee0327463c7b03d14cbbcb38ce2584d95ee0c112b40b
@@ -98,6 +100,8 @@ module math::ecvrf_test {
     }
 }
 ```
+
+The `alpha_string` parameter is the VRF input. It holds the bytes of the same input that you pass in hex to the `--input` flag of the CLI tool.
 
 You can also use the CLI tool for verification:
 
