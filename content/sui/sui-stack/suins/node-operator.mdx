@@ -26,7 +26,7 @@ answer: >-
   reverse-registry-id to the YAML configuration file.
 ---
 
-Mainnet full nodes resolve SuiNS names without extra configuration. Testnet nodes require three additional fields in the YAML configuration file: `name-service-package-address`, `name-service-registry-id`, and `name-service-reverse-registry-id`.
+Mainnet [full nodes](/operators/full-node/sui-full-node) resolve SuiNS names without extra configuration. Testnet nodes require three additional fields in the YAML configuration file: `name-service-package-address`, `name-service-registry-id`, and `name-service-reverse-registry-id`.
 
 Name resolution means translating a human-readable SuiNS name into the address it points to. Reverse resolution maps an address back to its registered name.
 
@@ -64,7 +64,7 @@ These values are fixed for the Testnet deployment. You do not need to change the
 After adding the fields, restart your full node for the changes to take effect.
 
 1. Open your node's YAML configuration file. The default file is `fullnode.yaml`.
-1. Add the three `name-service-*` fields shown above to the top level of the file.
+1. Add the three `name-service-*` fields from [Full node configuration](#full-node-configuration) to the top level of the file, not nested under another key.
 1. Save the file.
 1. Restart the full node process.
 
