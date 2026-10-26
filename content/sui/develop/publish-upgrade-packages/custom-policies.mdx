@@ -58,12 +58,12 @@ Protecting the ability to upgrade a package onchain using a single key can pose 
 
 To address these risks while still providing the opportunity to [upgrade live packages](/develop/publish-upgrade-packages/upgrade), Sui offers custom upgrade policies. These policies protect `UpgradeCap` access and issue `UpgradeTicket` objects that authorize upgrades on a case-by-case basis.
 
-## Compatibility {#compatibility}
+## What compatibility policies does Sui provide? {#compatibility}
 
 Sui comes with a set of built-in package compatibility policies, listed here from most to least strict:
 
 | Policy          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Immutable       | No one can upgrade the package.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Dependency-only | You can only modify the dependencies of the package.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Additive        | You can add new functionality to the package (for example, new public functions or structs) but you can't change any of the existing functionality (for example, the code in existing public functions cannot change).                                                                                                                                                                                                                                                                                                                                                                        |
@@ -75,7 +75,7 @@ When you publish a package, by default it adopts the most relaxed, compatible po
 
 You can change the current policy by calling one of the functions in `sui::package` (`only_additive_upgrades`, `only_dep_upgrades`, `make_immutable`) on the package's `UpgradeCap` and a policy can only become more restrictive. For example, after you call `sui::package::only_dep_upgrades` to restrict the policy to become dependency-only, calling `sui::package::only_additive_upgrades` on the `UpgradeCap` of the same package results in an error.
 
-## Upgrade overview {#upgrade-overview}
+## How does a package upgrade work? {#upgrade-overview}
 
 Package upgrades must occur end-to-end in a single transaction and consist of 3 commands:
 
@@ -167,7 +167,7 @@ The `UpgradeReceipt` is proof that the `Upgrade` command ran successfully, and S
 
 After Sui creates an `UpgradeReceipt`, you must use it to update its `UpgradeCap` within the same transaction or the transaction fails. You cannot store it for later, drop it, or burn it. 
 
-## Isolating policies {#isolating-policies}
+## How to isolate a custom policy {#isolating-policies}
 
 When writing custom upgrade policies, prefer:
 
@@ -470,6 +470,13 @@ Then add the Sui TypeScript SDK as a dependency:
 $ npm install @mysten/sui
 ```
 
+The scripts and commands in the rest of this example use placeholders for IDs that come from your own output. Replace each one as follows:
+
+- `<POLICY-PACKAGE>`: The `PackageID` of the `day_of_week` package, listed under **Published Objects** in the `sui client publish` output.
+- `<EXAMPLE-PACKAGE>` (`<EXAMPLE-PACKAGE-ID>` in the `sui client call` command): The `packageId` of the `published` entry in the `node publish.js` output.
+- `<EXAMPLE-UPGRADE-CAP>`: The `objectId` of the created `day_of_week::UpgradeCap` object in the `node publish.js` output.
+- `<UPGRADED-EXAMPLE-PACKAGE>`: The `packageId` of the `published` entry in the `node upgrade.js` output.
+
 ### Publishing a package with custom policy {#publishing-custom-policy}
 
 In the root of your Node.js project, create a script file named `publish.js`. Open the file and define some constants:
@@ -767,7 +774,7 @@ Array [
 
 If you used the example package provided, notice you have an `Events` section that contains a field `x` with value `41`.
 
-### Upgrading a package with custom policy {#upgrading-custom-policy}
+### How to upgrade a package with a custom policy {#upgrading-custom-policy}
 
 With your package published, you can prepare an `upgrade.js` script to perform an upgrade using the new policy. It behaves identically to `publish.js` up until building the package. When building the package, the script also captures its `digest`, and the transaction now performs the 3 upgrade commands (authorize, execute, and commit). The full script for `upgrade.js` is as follows:
 
