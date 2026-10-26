@@ -43,7 +43,7 @@ answer: >-
   borrowed and repaid within the same programmable transaction block.
 ---
 
-Flash loans are uncollateralized loans that you borrow and repay within the same programmable transaction block (PTB). Users can borrow flash loans in the base or quote asset from any DeepBookV3 pool. Flash loans return a `FlashLoan` hot potato (struct with no abilities), which must be returned back to the pool by the end of the call. The transaction is atomic, so the entire transaction fails if the loan is not returned.
+Flash loans are uncollateralized loans that you borrow and repay within the same [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). Users can borrow flash loans in the base or quote asset from any DeepBookV3 pool. Flash loans return a `FlashLoan` hot potato (struct with no abilities), which must be returned back to the pool by the end of the call. The transaction is atomic, so the entire transaction fails if the loan is not returned.
 
 The quantity borrowed can be the maximum amount that the pool owns. Borrowing from a pool and trading in the same pool can result in failures because trading requires the movement of funds. If the funds are borrowed, then there are no funds to move.
 
@@ -115,6 +115,8 @@ tx.transferObjects([baseCoin], signer.toSuiAddress());
 
 await client.signAndExecuteTransaction({ signer, transaction: tx });
 ```
+
+The example assumes that the operation in step 2 leaves `baseCoin` holding at least `BORROW_AMOUNT`. If your operation consumes `baseCoin` and returns a different coin of the base type, split the repayment from that returned coin and transfer its remainder instead.
 
 Replace `DEEPBOOK_PACKAGE_ID`, `POOL_ID`, `BORROW_AMOUNT`, `BASE_TYPE`, and `QUOTE_TYPE` with values for your target pool. The same pattern applies to quote asset flash loans using `borrow_flashloan_quote` and `return_flashloan_quote`.
 
