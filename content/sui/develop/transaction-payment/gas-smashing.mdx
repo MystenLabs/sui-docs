@@ -88,7 +88,7 @@ In the basic case, gas smashing merges the real `Coin<SUI>` objects that you sup
 
 Address balance gas payment is different. When you pay gas from an address balance, you do not select or provide any coin objects. The network resolves the gas fee as a withdrawal from your reserved address balance funds, so there is no gas coin selection or merge workflow, and gas smashing is not needed.
 
-The compatibility layer can present compatibility coin reservations to older clients. A compatibility coin reservation is a synthetic object reference that reserves address balance funds, not a persisted `Coin<SUI>` object. These reservations still participate in gas smashing, and the outcome depends on which gas payment you list first:
+A compatibility coin reservation is a synthetic object reference that reserves address balance funds, not a persisted `Coin<SUI>` object. The compatibility layer can present these reservations to older clients. These reservations still participate in gas smashing, and the outcome depends on which gas payment you list first:
 
 - If the first payment is a real `Coin<SUI>`, the network smashes every payment into that coin. Any coin reservation is fully withdrawn from the address balance into the resulting coin.
 - If the first payment is a coin reservation, the network smashes all of the real coins and sends the combined balance to your address balance.
