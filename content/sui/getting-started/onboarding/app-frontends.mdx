@@ -100,15 +100,15 @@ The rest of this guide walks through the example project's frontend files, which
 
 ## Call the Move package
 
-First, confirm that you have followed the ["Hello, World!"](/getting-started/onboarding/hello-world) example guide and are within the `sui-stack-hello-world/move/hello-world` directory in your CLI.
-
 The frontend source code is in the same `sui-stack-hello-world` repository. If you do not have a local copy, clone it:
 
 ```sh
 $ git clone https://github.com/MystenLabs/sui-stack-hello-world.git
 ```
 
-Then, verify your Move package is still available on Testnet by obtaining its object information:
+Then, confirm that you have followed the ["Hello, World!"](/getting-started/onboarding/hello-world) example guide and change into the `sui-stack-hello-world/move/hello-world` directory.
+
+Next, verify your Move package is still available on Testnet by obtaining its object information:
 
 ```
 $ sui client object <PACKAGE_ID>
@@ -167,7 +167,7 @@ The `Greeting.tsx` file also contains logic that creates and sends a transaction
 
 ### `dapp-kit.ts`
 
-The `dapp-kit.ts` file configures the Sui dApp Kit provider with network settings.
+The `dapp-kit.ts` file creates the dApp Kit instance with `createDAppKit`, configured for Testnet with a gRPC client. The `main.tsx` file passes this instance to `DAppKitProvider`.
 
 <ImportContent source="/ui/src/dapp-kit.ts" mode="code" org="MystenLabs" repo="sui-stack-hello-world" />
 
