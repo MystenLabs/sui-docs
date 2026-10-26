@@ -14,6 +14,9 @@ keywords:
   - json-rpc deprecation
   - grpc vs json-rpc
   - protocol buffers
+  - protobuf
+  - websocket deprecation
+  - archival store
 goal:
   description: >-
     Reader understands how gRPC provides fast, type-safe access to Sui network
@@ -112,7 +115,12 @@ The `SubscriptionService` provides real-time streaming updates for onchain activ
 
 All subscriptions begin at the current tip of the chain as seen by the server. They do not support resumption from a prior checkpoint. Each streamed response includes a progress marker (a `cursor` for `SubscribeCheckpoints`, or a `Watermark` for `SubscribeTransactions` and `SubscribeEvents`), so your application can track how far along the chain the stream has reached.
 
-To combine historical and real-time data without gaps, open the subscription first, note the first progress marker (`cursor` or `Watermark`) in the stream, then backfill with the corresponding list API (`ListCheckpoints`, `ListTransactions`, or `ListEvents`) up to that point. The list APIs accept `start_checkpoint` and `end_checkpoint` bounds and return results as a server-side stream with cursor-based pagination through `QueryOptions`. Once the backfill is complete, begin consuming from the already-open subscription.
+To combine historical and real-time data without gaps:
+
+1. Open the subscription.
+1. Note the first progress marker (`cursor` or `Watermark`) in the stream.
+1. Backfill with the corresponding list API (`ListCheckpoints`, `ListTransactions`, or `ListEvents`) up to that point. The list APIs accept `start_checkpoint` and `end_checkpoint` bounds and return results as a server-side stream with cursor-based pagination through `QueryOptions`.
+1. After the backfill completes, begin consuming from the already-open subscription.
 
 Streaming APIs are useful for building indexers, dashboards, or bots that need to react to real-time Sui activity with minimal latency.
 
@@ -124,7 +132,7 @@ You can reuse the same gRPC `LedgerService` methods for this lookup, but you mus
 
 ## Best practices
 
-1. Always use field masks when applicable to reduce response size and latency, especially for large resources.
+1. Always use [field masks](/develop/accessing-data/grpc/using-grpc#field-masks) when applicable to reduce response size and latency, especially for large resources.
 
 1. Use `TLS (port 443)` for production traffic to ensure encrypted transport and prevent downgrade attacks.
 
