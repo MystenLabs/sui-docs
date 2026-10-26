@@ -251,13 +251,6 @@ The following examples demonstrate common margin manager operations.
 ### Create a margin manager
 
 ```tsx
-/**
- * @description Create a new margin manager
- * @param {string} poolKey The key to identify the pool
- * @returns A function that takes a Transaction object
- */
-newMarginManager = (poolKey: string) => (tx: Transaction) => {};
-
 // Example usage
 createMarginManager = (tx: Transaction) => {
 	const poolKey = 'SUI_DBUSDC';
@@ -313,6 +306,8 @@ liquidatePosition = (tx: Transaction) => {
 ### Create a manager with an initial deposit
 
 Use `newMarginManagerWithInitializer` when you want to deposit collateral in the same transaction that creates the manager. Call `depositDuringInitialization` between creating the manager and sharing it.
+
+Because `newMarginManagerWithInitializer(poolKey)` returns a function that takes a `Transaction` object, the example calls that function directly with `tx` and destructures `manager` and `initializer` from the result. The later steps need both values.
 
 ```tsx
 import { Transaction } from '@mysten/sui/transactions';
