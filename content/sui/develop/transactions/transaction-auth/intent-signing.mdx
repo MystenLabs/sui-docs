@@ -121,6 +121,8 @@ const signature = await this.sign(intentMessage);
 </TabItem>
 </Tabs>
 
+The TypeScript example is an excerpt from a signer class method, so `this` refers to the signer instance.
+
 Internally, the `new_secure` method in Rust and the `signData` method in TypeScript do the following:
 
 1.  Serialize the intent message as the 3-byte intent concatenated with the BCS serialized bytes of the transaction data.
@@ -161,7 +163,9 @@ To generate a proof of possession in Rust, see [`generate_proof_of_possession`](
 
 ## How do I verify a signature in Move?
 
-You can verify a personal-message signature onchain using the `sui::ed25519` or `sui::ecdsa_k1` module:
+You can verify a personal-message signature onchain using the `sui::ed25519` or `sui::ecdsa_k1` module. `ed25519::ed25519_verify` checks the signature against exactly the bytes you pass as `message`. The client signs the 32-byte Blake2b-256 digest of the BCS-serialized `IntentMessage`, not the raw message. To verify, reconstruct the intent message as the `PersonalMessage` intent prefix `[3, 0, 0]` followed by the BCS-serialized message, hash the result with Blake2b-256, and pass the 32-byte digest to `ed25519_verify`.
+
+In the following example, the `message` argument must be that 32-byte digest, not the raw message:
 
 ```move
 use sui::ed25519;
@@ -179,8 +183,6 @@ public fun verify_personal_message(
     );
 }
 ```
-
-`ed25519::ed25519_verify` checks the signature against exactly the bytes you pass as `message`. Because the client signs the 32-byte Blake2b-256 digest of the BCS-serialized `IntentMessage` rather than the raw message, the function as written succeeds only if the caller passes that digest as `message`. To verify, reconstruct the intent message as the `PersonalMessage` intent prefix `[3, 0, 0]` followed by the BCS-serialized message, hash the result with Blake2b-256, and pass the 32-byte digest to `ed25519_verify`.
 
 On the client side (TypeScript), produce the signature:
 
