@@ -50,7 +50,7 @@ Reconfiguration is a critical process occurring at the end of each epoch. It inv
 
 1. **Validator set change:** Any pending staking and unstaking requests during the epoch are finalized and reflected in the validators' stake distribution. Any pending validator change requests are processed, including adding new validators and removing existing validators. This is the sole opportunity for altering the validator set and stake distribution.
 
-1. **Protocol upgrade:** The network might upgrade to a new protocol version, encompassing new features, bug fixes, and updates to Move framework libraries. An upgrade requires agreement from a supermajority quorum of 2f+1 validators. In this formula, f is the maximum number of faulty validators the network can tolerate.
+1. **Protocol upgrade:** The network might upgrade to a new protocol version, encompassing new features, bug fixes, and updates to Move framework libraries. An upgrade requires support from validators holding a supermajority of voting power: the standard 2f+1 quorum threshold, measured in stake rather than validator count, plus a configurable buffer of additional stake. In this formula, f is the maximum voting power the network can tolerate from faulty validators.
 
 ## Do object versions change across epochs?
 
