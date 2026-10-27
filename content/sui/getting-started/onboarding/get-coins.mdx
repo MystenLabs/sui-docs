@@ -87,7 +87,7 @@ Create Sui account and setup CLI environment.
 $ sui client
 ```
 
-If this is the first time running the `sui client` CLI tool, it asks you to provide a Sui full node server URL (or press <kbd>Enter</kbd> for the default Testnet), select an encryption scheme to generate an address, and stores the configuration in a `client.yaml` file. For more information, refer to the [Sui client CLI tutorial](/references/cli/client).
+If this is the first time running the `sui client` CLI tool, it asks whether to create the `client.yaml` configuration file (press <kbd>Enter</kbd> or `Y`). It generates an address with a random key pair, writes `client.yaml` with the Testnet, Mainnet, Devnet and Localnet environments configured, and sets Testnet as the active environment. For more information, refer to [Configure a Sui client](/getting-started/onboarding/configure-sui-client).
 
 If this is not your first time running `sui client`, then you already have a `client.yaml` file in your local environment. If you'd like to create a new address for this tutorial, use the command:
 
