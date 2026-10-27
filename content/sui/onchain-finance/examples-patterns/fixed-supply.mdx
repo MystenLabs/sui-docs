@@ -41,7 +41,7 @@ This pattern involves 3 steps during the module's `init` function:
 
 1. **Create the currency:** Call `coin::create_currency` with a [One-Time Witness](https://move-book.com/programmability/one-time-witness/) to create the `TreasuryCap` and `CoinMetadata`. The `create_currency` function takes parameters for the coin's decimals, symbol, name, description, and icon URL.
 2. **Mint the total supply:** Call `coin::mint` with the `TreasuryCap` to create all tokens at once. The amount is specified in the smallest unit (base units). For example, if your coin has 9 decimals, a supply of `10_000_000_000_000_000_000` (10 billion × 10^9 base units) represents 10 billion coins.
-3. **Lock the `TreasuryCap`:** Store the `TreasuryCap` as a [dynamic object field](/develop/objects/dynamic-fields) on a permanent object. This prevents further minting because `coin::mint` requires the `TreasuryCap`, and the `TreasuryCap` is no longer directly accessible. You can also freeze or destroy the `TreasuryCap` depending on your requirements.
+3. **Lock the `TreasuryCap`:** Store the `TreasuryCap` as a [dynamic object field](/develop/objects/dynamic-fields) on a permanent object. This prevents further minting because `coin::mint` requires the `TreasuryCap`, and the `TreasuryCap` is no longer directly accessible. You can also destroy the `TreasuryCap` if you never need it again. Do not freeze it: a frozen `TreasuryCap` can be passed by reference by anyone, which the [Coin standard](/onchain-finance/fungible-tokens/coin) warns against.
 
 <ImportContent source="I2/fixed_supply/sources/silver.move" mode="code" org="MystenLabs" repo="sui-move-bootcamp" branch="solution" noComments />
 
