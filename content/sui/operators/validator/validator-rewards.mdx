@@ -95,7 +95,7 @@ $$
 SUI withdrawn at E' = ( SUI deposited at E ) * ( Exchange Rate at E'-1 / Exchange Rate at E )
 $$
 
-In this formula, E is the epoch in which you deposit your stake, E' is the epoch in which you withdraw it, and E'-1 is the epoch before your withdrawal epoch, which supplies the previous epoch's exchange rate.
+In this formula, E is the epoch in which you deposit your stake, E' is the epoch in which you withdraw it, and E'-1 is the epoch before your withdrawal epoch, which supplies the previous epoch's exchange rate. Both rates are the ones the staking pool records when an epoch ends: the deposit is priced at the rate recorded at the end of E, which the pool stores under the stake activation epoch E+1, and the withdrawal uses the rate recorded at the end of E'-1, which the pool stores under E'.
 
 You cannot withdraw a portion of your active stake. You must withdraw all staked SUI at the same time. You can, however, stake using multiple `StakedSui` objects by splitting your SUI into multiple coins. You can then perform a partial withdrawal from a validator by un-staking only some of the `StakedSUI` objects.
 
