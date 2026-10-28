@@ -55,7 +55,7 @@ The DeepBookV3 TypeScript SDK abstracts away the transaction calls, allowing for
 
 ## How do I install the DeepBookV3 SDK? {#install}
 
-To use the SDK in your projects, install the `@mysten/deepbook-v3` package.
+To use the SDK in your projects, install the `@mysten/deepbook-v3` package, together with its `@mysten/sui` peer dependency at version 2.37.0 or later. The package requires Node.js 22 or later.
 
 ```sh npm2yarn
 npm install @mysten/deepbook-v3
@@ -65,7 +65,7 @@ The package root covers DeepBook spot and margin. It does not import any of the 
 
 - `@mysten/deepbook-v3/predict`: DeepBook Predict, covering markets and quotes, positions, PLP liquidity, and client-side pricing. See [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk).
 - `@mysten/deepbook-v3/account`: The shared onchain account primitive that Predict and the DeepBook core account wrapper build on. See [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts).
-- `@mysten/deepbook-v3/sessions`: Time-limited trading sessions that let an ephemeral key trade for an account until a fixed expiry. See [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions).
+- `@mysten/deepbook-v3/sessions`: Time-limited trading sessions that let an ephemeral key trade for an account until a fixed expiry, with 30 days the longest grant the contract accepts. See [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions).
 
 Each subpath exports the deployed IDs for its own surface through `getConfig`, `getAccountConfig`, and `getSessionsConfig`, for both Testnet and Mainnet, so you never transcribe an ID by hand.
 
@@ -137,7 +137,7 @@ Functions that require the input of a coin, pool, or a manager require the key o
 
 ### Balance manager
 
-Before placing any trade, you must supply a balance manager address to the client. The manager key points to an object that the `BalanceManager` interface in the client defines. [BalanceManager docs](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager). Initialize the balance manager with the client. If you don't create a balance manager, you can rely on the client to create one, but then you must reinitialize the client.
+Most DeepBookV3 interactions other than swaps and flash loans require a balance manager, so supply its address to the client before you trade. The manager key points to an object that the `BalanceManager` interface in the client defines. [BalanceManager docs](/onchain-finance/deepbook/deepbookv3/contract-information/balance-manager). Initialize the balance manager with the client. If you don't create a balance manager, you can rely on the client to create one, but then you must reinitialize the client.
 
 Example using an existing balance manager:
 

@@ -138,7 +138,7 @@ Use these functions to cancel orders for a margin manager. The call returns a fu
 
 ### `withdrawSettledAmounts`
 
-Use `withdrawSettledAmounts` to withdraw settled amounts from completed trades. This function requires ownership of the margin manager. To withdraw settled amounts for a margin manager you do not own, use `withdrawMarginSettledAmounts`. The call returns a function that takes a `Transaction` object.
+Use `withdrawSettledAmounts` to withdraw settled amounts from completed trades. This function requires ownership of the margin manager. To withdraw settled amounts for a margin manager you do not own, use `withdrawMarginSettledAmounts`, which takes the object ID of the margin manager (`marginManagerId`) instead of the `marginManagerKey` string that the other functions use. The call returns a function that takes a `Transaction` object.
 
 **Parameters**
 

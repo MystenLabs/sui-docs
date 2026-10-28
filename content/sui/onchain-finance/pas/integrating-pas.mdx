@@ -70,7 +70,7 @@ The policy names the witness required for each action, and your approval functio
 
 ## How do I set up a policy for a currency?
 
-A `Policy<Balance<C>>` defines which approval each action type requires. You need a `TreasuryCap<C>` to prove ownership of the currency.
+A `Policy<Balance<C>>` defines which approval each action type requires. You need a `TreasuryCap<C>` to prove ownership of the currency. The `TreasuryCap` controls minting and burning permissions, so hold it in a multisig address or a dedicated custody setup rather than a single hot wallet.
 
 The following example creates a policy in a package:
 
@@ -217,6 +217,6 @@ The following are the custom input names the PAS SDK resolves at PTB constructio
 
 2. The template describes the Move call needed (package, module, function, arguments).
 
-3. The client builds the PTB: create request, template command (approval), resolve.
+3. The client builds the PTB: create request, template command (approval), resolve. The individual transaction commands within a PTB execute in order, and if one transaction command fails, the entire block fails and none of the effects from the commands apply.
 
 This enables generic wallets and frontends to execute compliant transfers without knowing the specific compliance contract details.

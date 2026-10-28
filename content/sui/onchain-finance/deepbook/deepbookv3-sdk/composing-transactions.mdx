@@ -54,7 +54,7 @@ builder_paths:
     stage: Advanced
 ---
 
-A [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) runs a sequence of commands as one atomic transaction: either every command applies or none does, and one command's result can feed the next. That makes DeepBook operations composable. The samples below build three compositions and run compile-checked against `@mysten/deepbook-v3` and `@mysten/sui`, referencing pools and coins by SDK key rather than hardcoding onchain IDs. For the reusable CLI and SDK templates behind them, see the [PTB and CLI cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook).
+A [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) runs a sequence of commands as one atomic transaction: either every command applies or none does, and you can use the result of any command as an argument to a subsequent command in the same block: capture what a command returns, then pass that value straight into the next call instead of supplying a separately built input. That makes DeepBook operations composable. The samples below build three compositions and run compile-checked against `@mysten/deepbook-v3` and `@mysten/sui`, referencing pools and coins by SDK key rather than hardcoding onchain IDs. For the reusable CLI and SDK templates behind them, see the [PTB and CLI cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook).
 
 :::caution
 
@@ -79,7 +79,7 @@ Deposit into a `BalanceManager` and place an order in the same block, so both se
 
 Borrow, use, and repay in one block. `borrowBaseAsset` returns the borrowed coin and the `FlashLoan` hot potato; `returnBaseAsset` consumes it. The [cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook#how-do-i-write-a-deepbook-flash-loan-ptb) and [Flash Loans SDK](/onchain-finance/deepbook/deepbookv3-sdk/flash-loans) cover the quote variants.
 
-The sample calls `borrowBaseAsset`, passes the borrowed coin through a no-op use step, and repays with `returnBaseAsset`, which consumes the `FlashLoan`:
+The sample shows result passing in practice: it destructures the two results of the `borrowBaseAsset` command (the borrowed coin and the `FlashLoan`) from the `tx.add` call, passes the borrowed coin through a no-op use step, and hands both results to `returnBaseAsset`, which consumes the `FlashLoan`:
 
 <ImportContent source="examples/deepbook-spot/src/compose.ts" mode="code" tag="flash-loan" />
 

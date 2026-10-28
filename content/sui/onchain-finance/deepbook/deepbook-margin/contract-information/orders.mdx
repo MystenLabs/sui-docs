@@ -134,7 +134,7 @@ Place limit and market orders through a margin manager. These entries require ma
 <details>
 <summary>Place reduce-only orders</summary>
 
-Place reduce-only orders, which trade only in the direction that unwinds an existing debt. These orders are useful when margin trading is disabled and you need to close existing positions.
+Place reduce-only orders, which trade only in the direction that unwinds an existing debt: a bid requires base (short-side) debt, and an ask requires quote (long-side) debt. Reduce-only orders skip the margin-trading-enabled check (`EPoolNotEnabledForMarginTrading`), so you can still wind a position down after an admin disables margin trading for the pool. The limit variant additionally requires the manager to be at or above the liquidation risk ratio when placed (`EReduceOnlyBelowLiquidation`).
 
 <ImportContent
 	source="packages/deepbook_margin/sources/pool_proxy_upgraded.move"
@@ -194,7 +194,7 @@ Cancel one, multiple, or all orders for the margin manager.
 <details>
 <summary>Withdraw settled amounts</summary>
 
-Withdraw settled amounts from completed trades back to the margin manager's balance manager. The permissionless variant lets anyone settle on behalf of a margin manager.
+Withdraw settled amounts from completed trades back to the margin manager's balance manager. Settled amounts also flow back automatically on the manager's next order, modify, or cancel in that pool, so call these functions to settle without placing another order. The permissionless variant lets anyone settle on behalf of a margin manager they do not own.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/pool_proxy.move"
