@@ -3479,6 +3479,16 @@
       "source": "/build/publish",
       "destination": "/develop/publish-upgrade-packages/deploy",
       "permanent": true
+    },
+    {
+      "source": "/concepts/objects",
+      "destination": "/develop/objects",
+      "permanent": true
+    },
+    {
+      "source": "/concepts/packages",
+      "destination": "/develop/write-move/package-overview",
+      "permanent": true
     }
   ],
   "rewrites": [
