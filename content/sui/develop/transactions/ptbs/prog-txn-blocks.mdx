@@ -374,7 +374,7 @@ At the end of execution, the runtime checks the remaining values and calculates 
 
 **For gas:**
 
-The runtime returns any remaining SUI deducted from the gas coin at the beginning of execution to the coin, even if the owner has changed. The runtime deducts the maximum possible gas at the beginning of execution and returns unused gas at the end (all in SUI). Because you can only take the gas coin by value with `TransferObjects`, no command can wrap or delete it.
+The runtime returns any remaining SUI deducted from the gas coin at the beginning of execution to the coin, even if the owner has changed. The runtime deducts the maximum possible gas at the beginning of execution and returns unused gas at the end (all in SUI). Only two commands can take the gas coin by value: `TransferObjects`, and a `MoveCall` to `sui::coin::send_funds`, which deposits the coin into an address balance and deletes the coin object. No other command can wrap or delete it.
 
 The execution layer then passes out the total effects (created, mutated, and deleted objects), and the Sui network applies them.
 

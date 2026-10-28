@@ -237,7 +237,7 @@ $ sui client ptb \
     --gas-budget 5000000
 ```
 
-To transfer the full gas coin balance to `eloquent-amber`, transfer `gas` directly. `transfer-objects` is the only PTB command that can take the gas coin by value:
+To transfer the full gas coin balance to `eloquent-amber`, transfer `gas` directly. `transfer-objects` is one of the two PTB commands that can take the gas coin by value (the other is a `--move-call` to `sui::coin::send_funds`, which deposits it into an address balance):
 
 ```sh
 $ sui client ptb \
