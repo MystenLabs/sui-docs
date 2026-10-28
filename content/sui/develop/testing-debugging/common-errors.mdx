@@ -528,7 +528,7 @@ Look up the chain ID for your network with `sui client chain-identifier`. The co
 
 #### RPC error codes
 
-The Sui RPC layer returns standard error codes. Use the following table to diagnose failures:
+The JSON-RPC API returns standard JSON-RPC error codes. Use the following table to diagnose failures in JSON-RPC responses. The gRPC client does not use these integer codes. An error it throws carries a gRPC status name, such as `UNAVAILABLE` or `INVALID_ARGUMENT`, as a string in its `code` field.
 
 | Code   | Name                        | Retryable | Common cause                              |
 |--------|-----------------------------|-----------|-------------------------------------------|
@@ -548,7 +548,7 @@ Sui errors fall into two categories:
 
 | Category          | Examples                              | Where it happens | What to do             |
 |-------------------|---------------------------------------|------------------|------------------------|
-| Transport errors  | HTTP 429/502/504, RPC -32050          | Network layer    | Retry with backoff.    |
+| Transport errors  | HTTP 429/502/504, gRPC `UNAVAILABLE`, JSON-RPC -32050 | Network layer    | Retry with backoff.    |
 | Execution errors  | `MoveAbort`, `InsufficientGas`        | Onchain VM       | Fix code or parameters.|
 
 Detect the category in TypeScript:
@@ -562,17 +562,23 @@ const client = new SuiGrpcClient({
 });
 
 try {
-  const result = await client.executeTransaction({ /* ... */ });
-  // Check execution status from the response
-  if (result.effects?.status?.status === 'failure') {
-    // On-chain execution error (MoveAbort, InsufficientGas)
-    console.error('Execution failed:', result.effects.status.error);
+  const result = await client.executeTransaction({
+    transaction: transactionBytes,
+    signatures: [signature],
+  });
+  // A transaction that executed but failed onchain is returned, not thrown
+  if (result.$kind === 'FailedTransaction') {
+    // Onchain execution error (MoveAbort, InsufficientGas)
+    console.error('Execution failed:', result.FailedTransaction.status.error);
   }
 } catch (error) {
-  // Transport or infrastructure error
-  console.error('RPC error:', error.code, error.message);
+  // Transport or infrastructure error; `code` is a gRPC status name such as 'UNAVAILABLE'
+  const { code, message } = error as { code?: string; message?: string };
+  console.error('RPC error:', code, message);
 }
 ```
+
+`executeTransaction` returns a discriminated union. A transaction that executed and succeeded comes back as `{ $kind: 'Transaction', Transaction }`, and one that executed but failed onchain comes back as `{ $kind: 'FailedTransaction', FailedTransaction }`. Both variants carry `status` with `success` and `error` fields, and the full `effects` only when the call includes `include: { effects: true }`. Errors that reach the `catch` block come from the transport or from the node rejecting the request before execution, such as a malformed signature.
 
 ---
 
