@@ -18,7 +18,7 @@ Create Sui account and setup CLI environment
 $ sui client
 ```
 
-If this is the first time running the `sui client` CLI tool, it asks you to provide a Sui full node server URL and a meaningful environment alias. It also generates an address with a random key pair in `sui.keystore` and a config `client.yaml`.
+If this is the first time running the `sui client` CLI tool, it asks whether to create the `client.yaml` configuration file (press <kbd>Enter</kbd> or `Y`). It generates an address with a random key pair in `sui.keystore` and writes `client.yaml` with the Testnet, Mainnet, Devnet and Localnet environments configured, Testnet active.
 
 By default, the `client.yaml` and `sui.keystore` files are located in `~/.sui/sui_config`. For more information, refer to the [Sui client CLI tutorial](/references/cli/client).
 
