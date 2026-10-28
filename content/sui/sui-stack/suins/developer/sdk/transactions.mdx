@@ -106,16 +106,13 @@ const register = async (name: string, years: number) => {
     // Specify the coin type used for the transaction, can be SUI/NS/USDC
     const coinConfig = suinsClient.config.coins.USDC;
 
-    // priceInfoObjectId is required for SUI/NS
-    const priceInfoObjectId = (await suinsClient.getPriceInfoObject(transaction, coinConfig.feed))[0];
-
     // Build the transaction to register the name, specifying a year from 1 to 5.
     const nft = suinsTransaction.register({
         domain: 'myname.sui',
         years: 3,
         coinConfig,
         coin: '0xMyCoinObject', // Only required for NS/USDC
-        priceInfoObjectId, // Only required for SUI/NS
+        // Add priceInfoObjectId here when paying in SUI or NS
     });
 
     // Transfer the name's NFT
@@ -127,6 +124,8 @@ const register = async (name: string, years: number) => {
 
 ### Renew a name
 
+Like the `register` example, this example pays in USDC, so it omits the `getPriceInfoObject` call and the `priceInfoObjectId` argument. Add both when you pay in SUI or NS.
+
 ```js
 const renew = async (nftId: string, name: string, years: number) => {
     // Create a transaction block as usual in your PTBs.
@@ -136,15 +135,12 @@ const renew = async (nftId: string, name: string, years: number) => {
     // Specify the coin type used for the transaction, can be SUI/NS/USDC
     const coinConfig = suinsClient.config.coins.USDC;
 
-    // priceInfoObjectId is required for SUI/NS
-    const priceInfoObjectId = (await suinsClient.getPriceInfoObject(transaction, coinConfig.feed))[0];
-
     // Build the transaction to renew the name, specifying a year from 1 to 5.
     suinsTransaction.renew({
         nft: '0xMyNftObject',
         years: 3,
         coinConfig,
-        priceInfoObjectId, // Only required for SUI/NS
+        // Add priceInfoObjectId here when paying in SUI or NS
     });
 
     // ... sign and execute the transaction
