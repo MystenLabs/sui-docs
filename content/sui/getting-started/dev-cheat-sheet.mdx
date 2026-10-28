@@ -95,7 +95,7 @@ Best practices for writing Move smart contracts on Sui.
 ## Signing
 
 - **Do not** sign two concurrent transactions that touch the same mutable owned object. Either use independent owned objects, combine related operations into one PTB, or wait for one transaction to conclude before sending the next one.
-- Any `sui client` command that crafts a transaction (for example, `sui client publish` or `sui client call`) can accept the `--serialize-output` flag to output a base64 transaction for signing.
+- Any `sui client` command that crafts a transaction (for example, `sui client publish` or `sui client call`) can accept the `--serialize-unsigned-transaction` flag to output the base64 transaction bytes for signing instead of executing, or `--serialize-signed-transaction` to output the signed transaction.
 - Sui supports several signature schemes for transaction signing, including native multisig.
 
 ## zkLogin
