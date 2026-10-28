@@ -38,7 +38,7 @@ The supply referral system allows users to earn a portion of the protocol fees g
 ## How it works
 
 1. **Create a referral**: Mint a `SupplyReferral` object for a specific margin pool with `mint_supply_referral`
-2. **Referral ID**: Suppliers include your referral ID when supplying liquidity with `supply`. The referral ID is optional; suppliers can supply without one, in which case all protocol fees from that position go to the protocol
+2. **Referral ID**: Suppliers include your referral ID when supplying liquidity with `supply`. The referral ID is optional; suppliers can supply without one, in which case the position's shares count toward the default referral described in [Fee distribution](#fee-distribution)
 3. **Earn fees**: As referred suppliers earn interest, a portion of protocol fees accrues to your referral
 4. **Claim fees**: Withdraw accumulated referral fees at any time with `withdraw_referral_fees`
 
@@ -147,16 +147,14 @@ The system emits this event when the referral owner claims referral fees.
 
 ## Fee distribution
 
-The referral spread parameter determines what portion of protocol fees goes to referrers. The referral spread is configured per margin pool rather than network-wide, so it can differ between pools; 20% is a typical value.
+There is no separate referral spread parameter. Each margin pool sets a protocol spread, capped at 20% by the contract, that determines what portion of borrower interest the pool keeps as protocol fees instead of paying out to suppliers. The Mainnet SUI margin pool, for example, uses a 20% protocol spread.
 
-```text
-referrer_fees  = protocol_fees × referral_spread
-protocol_share = protocol_fees × (1 − referral_spread)
-```
+Each time fees accrue, the pool splits them pool-wide in fixed proportions:
 
-For example:
+- **Protocol:** 1/4 of the accrued fees
+- **Maintainer:** 1/4 of the accrued fees
+- **Referrals:** the remaining 1/2, divided among referrals in proportion to the supply shares each one referred
 
-- **Without referral**: 100% of protocol fees go to the protocol
-- **With referral**: 80% to protocol, 20% to referrer (at 20% referral spread)
+The pool converts the referral half into a fees-per-share increase over its total supply shares, so a referral's claimable fees grow with the shares it referred relative to all shares in the pool. Shares supplied without a referral ID count toward a default referral (address `0x0`) whose fees only the admin can withdraw with `admin_withdraw_default_referral_fees`. If the pool has no supply shares when fees accrue, the referral half goes to the maintainer and the protocol instead.
 
-You can view the referral spread for each margin pool in the [Contract Information](/onchain-finance/deepbook/deepbook-margin/contract-information).
+You can view the protocol spread for each margin pool in the [Contract Information](/onchain-finance/deepbook/deepbook-margin/contract-information).
