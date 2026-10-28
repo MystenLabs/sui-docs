@@ -66,7 +66,7 @@ The adapter exposes a single provider-neutral `Price`. A consumer that values co
 
 ## How do I read a price with a staleness bound?
 
-Pyth offers two readers that this page uses: `get_price_no_older_than`, which aborts if the feed is older than the bound you pass, and the unchecked `get_price_unsafe`, which does not gate on age. The primary reader delegates the staleness gate to Pyth's own `get_price_no_older_than`, which aborts if the feed is older than the bound, then normalizes the result. A consumer picks the maximum age that suits it: the tightest freshness bound for a liquidation, because a liquidation acts on the price now, while a generous max-age is acceptable for a display, and the borrowing decision uses the same tight, checked read a liquidation does.
+Pyth offers two readers that this page uses: `get_price_no_older_than`, which aborts if the feed is older than the bound you pass, and the unchecked `get_price_unsafe`, which does not gate on age. The primary reader delegates the staleness gate to Pyth's own `get_price_no_older_than`, then normalizes the result. A consumer picks the maximum age that suits it: the tightest freshness bound for a liquidation, because a liquidation acts on the price now, while a generous max-age is acceptable for a display, and the borrowing decision uses the same tight, checked read a liquidation does.
 
 `price_from_pyth` is that primary reader:
 

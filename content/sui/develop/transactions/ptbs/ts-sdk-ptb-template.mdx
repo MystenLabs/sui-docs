@@ -100,7 +100,7 @@ if (result.$kind === 'FailedTransaction') {
 console.log('Transaction digest:', result.Transaction.digest);
 ```
 
-The `tx.coin` method sources the requested amount from your address balance when available and falls back to owned coins, so you do not need to pick coins yourself. The `transferObjects` command then sends that coin to the recipient.
+The `tx.coin` method sources the requested amount from your address balance when available and falls back to owned coins, so you do not need to pick coins yourself. The `transferObjects` command then sends that coin to the recipient. The gas budget is an upper bound rather than the amount you pay: at the beginning of execution, the system withdraws the maximum gas budget from the gas coin, and it returns any unused gas to the gas coin at the end of execution.
 
 Always check the `$kind` field on the result. A transaction can still fail onchain after you submit it, so treat a `FailedTransaction` result as an error rather than assuming success.
 
@@ -154,7 +154,7 @@ export function SendButton() {
 }
 ```
 
-Pass the `Transaction` instance directly to the wallet. The wallet sets the sender, selects gas coins, and signs, so you never call `tx.build()` yourself and never touch the user's key.
+Pass the `Transaction` instance directly to the wallet. The wallet sets the sender, selects gas coins, and signs, so you never call `tx.build()` yourself and never touch the user's key. At the beginning of execution, the system withdraws the maximum gas budget from the gas coin, and it returns any unused gas to the gas coin at the end of execution.
 
 :::danger
 

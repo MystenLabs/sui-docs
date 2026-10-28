@@ -182,7 +182,7 @@ For all `Coin` functions available, see the Sui framework [`coin` module documen
 
 ### How do I manage the deny list?
 
-The frontend code provides functions to manage the addresses assigned to the deny list for your coin. These call the `deny_list_v2_add` and `deny_list_v2_remove` functions in the `coin` module.
+The frontend code provides functions to manage the addresses assigned to the deny list for your coin. These call the `deny_list_v2_add` and `deny_list_v2_remove` functions in the `coin` module. Each call passes the `DenyList` object (`0x403`), your `DenyCapV2` object ID, and the address you want to add or remove.
 
 If you add an address to the deny list, you might notice that you can still send tokens to that address. The address can still receive coins until the end of the epoch in which you called the function. If you try to send the regulated coin from the blocked address, the attempt results in an error. After the next epoch starts, the address can no longer receive the coins either. If you remove the address, it can receive coins immediately but must wait until the epoch after removal before the address can include the coins as transaction inputs.
 
