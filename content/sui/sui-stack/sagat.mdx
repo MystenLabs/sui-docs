@@ -245,6 +245,7 @@ Register your address with Sagat before creating multisigs:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="registers single user addresses"
 	noComments
 />
@@ -256,6 +257,7 @@ Register multiple addresses with Sagat in the same session before creating multi
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="registers multiple user addresses in same session"
 	noComments
 />
@@ -273,6 +275,7 @@ For example, create and verify a 2-of-2 multisig:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="create and verify 2-of-2 multisig"
 	noComments
 />
@@ -286,6 +289,7 @@ You can also create a multisig with a custom name:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="creates multisig with custom name"
 	noComments
 />
@@ -297,6 +301,7 @@ You can view multisig details about a specific address:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="can look up registered address"
 	noComments
 />
@@ -310,6 +315,7 @@ Manage the addresses that can create proposals for the multisig:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="Add proposer"
 	noComments
 />
@@ -327,6 +333,7 @@ View and accept pending multisig invitations for a public key:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="member can accept multisig invitation"
 	noComments
 />
@@ -344,11 +351,12 @@ Only verified multisig members can create and vote on proposals. Each multisig m
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="creates proposal with correct initial state"
 	noComments
 />
 
-You must [verify](https://github.com/MystenLabs/sagat/blob/main/api/test/proposal-business-logic.test.ts#L41) a transaction's signature before you can create a proposal. Learn how to execute this task using the [Sagat TypeScript SDK](https://github.com/MystenLabs/sagat/blob/313624a9d3b4b971b81b80be851b49e055067250/sdk/src/client.ts#L128-L134).
+You must [verify](https://github.com/MystenLabs/sagat/blob/313624a9d3b4b971b81b80be851b49e055067250/api/test/proposal-business-logic.test.ts#L41) a transaction's signature before you can create a proposal. Learn how to execute this task using the [Sagat TypeScript SDK](https://github.com/MystenLabs/sagat/blob/313624a9d3b4b971b81b80be851b49e055067250/sdk/src/client.ts#L128-L134).
 
 ### Viewing proposals 
 
@@ -359,6 +367,7 @@ You can browse proposals for a multisig with filtering by status and pagination:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="Get paginated proposals"
 	noComments
 />
@@ -372,6 +381,7 @@ You can view a proposal by its transaction digest:
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="Get proposal by digest"
 	noComments
 />
@@ -387,6 +397,7 @@ Users approve or reject a transaction by voting on the proposal to either accept
 	mode="code"
 	org="MystenLabs"
 	repo="sagat"
+	branch="313624a9d3b4b971b81b80be851b49e055067250"
 	test="full multisig workflow: creation -> verification -> proposal -> voting -> execution"
 	noComments
 />
