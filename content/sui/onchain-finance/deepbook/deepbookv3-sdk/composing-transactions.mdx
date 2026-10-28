@@ -54,7 +54,7 @@ builder_paths:
     stage: Advanced
 ---
 
-A [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) runs a sequence of commands as one atomic transaction: either every command applies or none does, and you can use the result of any command as an argument to a subsequent command in the same block: capture what a command returns, then pass that value straight into the next call instead of supplying a separately built input. That makes DeepBook operations composable. The samples below build three compositions and run compile-checked against `@mysten/deepbook-v3` and `@mysten/sui`, referencing pools and coins by SDK key rather than hardcoding onchain IDs. For the reusable CLI and SDK templates behind them, see the [PTB and CLI cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook).
+A [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks) runs a sequence of commands as one atomic transaction: either every command applies or none does, and you can use the result of any command as an argument to a subsequent command in the same block: capture what a command returns, then pass that value straight into the next call instead of supplying a separately built input. The [flash loan round trip](#flash-loan-round-trip) sample shows result passing in practice. That makes DeepBook operations composable. The samples below build three compositions and run compile-checked against `@mysten/deepbook-v3` and `@mysten/sui`, referencing pools and coins by SDK key rather than hardcoding onchain IDs. For the reusable CLI and SDK templates behind them, see the [PTB and CLI cookbook](/onchain-finance/deepbook/deepbookv3-sdk/ptb-cli-cookbook).
 
 :::caution
 
@@ -65,7 +65,7 @@ The third composition supplies to a margin lending pool. Lending and margin trad
 Two guarantees do the work in every composition:
 
 - **Atomicity.** If any command in the block aborts, the whole block rolls back. A composition never half-applies.
-- **Hot potato.** A hot potato is a value you cannot keep, drop, or transfer, so you have to consume it before the block ends. In Move terms, it is a value with no `store`, `copy`, `drop`, or `key` ability. DeepBook's flash loan returns one, which is what forces repayment in the same transaction.
+- **Hot potato.** A hot potato is a value you cannot keep, drop, or transfer, so you have to consume it before the block ends. In Move terms, abilities are the permissions a type declares for its values, and a hot potato has none of the `store`, `copy`, `drop`, or `key` abilities. DeepBook's flash loan returns one, which is what forces repayment in the same transaction.
 
 ## Fund and order atomically
 
@@ -89,7 +89,7 @@ The sample shows result passing in practice: it destructures the two results of 
 
 Deploy capital three ways in one block: supply to a margin pool, rest a maker order, and stake DEEP for governance rebates. The legs are independent, but composing them makes them atomic.
 
-Supplying needs a `SupplierCap`, a reusable owned object. Mint it once, persist its ID, and reuse it; minting a fresh cap each run fragments your supply position, so gate creation on an existing ID (the same reuse pattern as a `BalanceManager`).
+Supplying needs a `SupplierCap`, a reusable owned object that represents your supply position. Mint it once, persist its ID, and reuse it; minting a fresh cap each run fragments your supply position, so gate creation on an existing ID (the same reuse pattern as a `BalanceManager`).
 
 <ImportContent source="examples/deepbook-margin/src/supply.ts" mode="code" tag="create-cap" />
 
