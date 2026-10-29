@@ -80,6 +80,14 @@ The next example presents a basic test that creates a `Clock` object, increments
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/tests/clock_tests.move" mode="code" noComments />
 
+## How do I read the time without a `Clock` parameter?
+
+From protocol version 141, the Sui framework provides `sui::clock::borrow`, which returns a `&Clock` without the `Clock` being a transaction input. It is the same `Clock`, at the same timestamp, as one passed into the same transaction, so `timestamp_ms` returns the same value either way.
+
+<ImportContent source="crates/sui-framework/packages/sui-framework/sources/clock.move" mode="code" fun="borrow" noComments />
+
+The framework recommends this for new code: a function that reads the time through `borrow` keeps its signature, so its callers do not change when it starts to need the time. To call an existing function that takes a `&Clock` argument, pass it `clock::borrow()` instead of threading a `Clock` through every caller.
+
 ## Epoch timestamps
 
 Use the following function from the `sui::tx_context` module to access the timestamp for the start of the current epoch for all transactions, including ones that do not go through consensus:
