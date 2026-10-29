@@ -188,3 +188,11 @@ User funds can be split across coin objects and the address balance of the same 
 ### Why can a user not see funds that were sent to their address?
 
 If the sender used `send_funds()` instead of transferring a coin object, the funds are in the address balance. A wallet without address balance support cannot show or access them, but the funds are not lost. Add address balance support as described in [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
+
+## How gas smashing handles coin reservations
+
+The first entry in the gas payment list is the smash target. The network smashes every other entry into it, and the result depends on where the compatibility coin reservation sits:
+
+- **Reservation after the first position:** The network records a withdrawal of the full reserved amount from the address balance. Coin objects in these positions are deleted.
+- **Reservation in the first position:** The network deposits the value of the other payments into the address balance. The reservation acts only as a maximum withdrawal, and the network withdraws from the address balance only when gas charging requires it.
+- **Coin object in the first position:** The coin's value becomes the total of all gas payments, including any reserved address balance funds.
