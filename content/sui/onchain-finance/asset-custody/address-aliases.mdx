@@ -113,3 +113,17 @@ The set never becomes empty, so at least one key can always sign for the address
 ## Does the original address stay in its alias set?
 
 You do not need to add the original address as an alias. Enabling alias configuration creates the alias set with the original address as its only member, so the original key keeps its signing rights. After you enable configuration, the alias set replaces the address for signature checks, so only addresses in the set can sign for it. An address without alias configuration is its own sole alias.
+
+## How does `remove` take its arguments?
+
+`sui client ptb` reads a move call as the function path followed by its arguments in order (`--move-call <address>::<module>::<name> (<<type>, ...>)? <arg> ...`). The `remove` entry function takes the `AddressAliases` object first and the alias address second, so you pass both after the function name in one `--move-call`. Line breaks with `\` are optional.
+
+```move
+entry fun remove(aliases: &mut AddressAliases, alias: address) {
+    assert!(aliases.aliases.contains(&alias), ENoSuchAlias);
+    assert!(aliases.aliases.length() > 1, ECannotRemoveLastAlias);
+    aliases.aliases.remove(&alias);
+}
+```
+
+The call fails if the address is not in the alias set, or if it is the last remaining alias.
