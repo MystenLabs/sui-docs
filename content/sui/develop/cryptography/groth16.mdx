@@ -180,3 +180,12 @@ public fun groth16_bn254_test() {
 ```
 
 `verify_groth16_proof` returns a boolean. The example wraps the call in `assert!`, so the function aborts if the proof does not verify.
+
+## Errors from proof verification
+
+`verify_groth16_proof` returns `false` when the proof does not verify, for example when the proof bytes are invalid. Malformed input causes an abort instead of a `false` result. The underlying native function can abort with `EInvalidCurve`, `ETooManyPublicInputs`, or `EInvalidVerifyingKey`:
+
+- `ETooManyPublicInputs`: the call supplies more public inputs than the API supports.
+- `EInvalidVerifyingKey`: the prepared verifying key is malformed, for example when its length is not a whole number of G1 elements or does not match the number of public inputs.
+
+`prepare_verifying_key` can also abort with `EInvalidVerifyingKey` or `EInvalidCurve`.
