@@ -270,7 +270,7 @@ Sequential pipelines have two pipeline-specific components in addition to the sh
 
 #### `Collector` {#seq-collector}
 
-The sequential `Collector` receives out-of-order processed data from the `Processor`, orders it by checkpoint sequence, and assembles batches using your `batch()` logic. The `Collector` dispatches a batch when either `collect_interval_ms` elapses or `MIN_EAGER_ROWS` have accumulated and the next expected checkpoint has arrived. The `Collector` also bounds how many checkpoints contribute to a single batch (`MAX_BATCH_CHECKPOINTS`). `MAX_PENDING_ROWS` is a soft cap: when exceeded, the `Collector` yields from eagerly draining its input channel to flush what it can. Receive itself is never hard-gated, because a missing predecessor for the next commit might still be sitting in the input channel and blocking receive would risk deadlock.
+The sequential `Collector` receives out-of-order processed data from the `Processor`, orders it by checkpoint sequence, and assembles batches using your `batch()` logic. Once the next expected checkpoint has arrived, the `Collector` cuts pending rows into a batch as soon as the `Committer` has room for one, so batches only grow while the `Committer` is busy. To keep batches larger, set `min_batch_rows` and `max_batch_delay_ms` in `CommitterConfig`. The `Collector` also bounds how many checkpoints contribute to a single batch (`MAX_BATCH_CHECKPOINTS`). `MAX_PENDING_ROWS` is a soft cap: when exceeded, the `Collector` yields from eagerly draining its input channel to flush what it can. Receive itself is never hard-gated, because a missing predecessor for the next commit might still be sitting in the input channel and blocking receive would risk deadlock.
 
 `batch()`: Data merging logic.
 
@@ -312,8 +312,12 @@ let config = SequentialConfig {
         // Not applicable to sequential pipelines
         write_concurrency: 1,
 
-        // Batch collection frequency in ms (default: 500)
-        collect_interval_ms: 1000,
+        // Rows to wait for before cutting a batch (default: 0, cut as soon as the committer has room)
+        min_batch_rows: 0,
+
+        // Longest time pending rows wait for min_batch_rows, in ms (default: 500)
+        max_batch_delay_ms: 500,
+        ..Default::default()
     },
 
     // Adaptive concurrency (default). Starts at 1 and scales up to num_cpus.
@@ -327,7 +331,6 @@ let config = SequentialConfig {
     //     max: 32,
     // }),
 
-    min_eager_rows: None,
     max_pending_rows: None,
     max_batch_checkpoints: None,
     processor_channel_size: None, // defaults to num_cpus / 2
@@ -341,7 +344,7 @@ let config = SequentialConfig {
 };
 ```
 
-- `collect_interval_ms`: Higher values allow more checkpoints per batch, improving efficiency.
+- `min_batch_rows` and `max_batch_delay_ms`: With the default `min_batch_rows` of 0, pending rows are written as soon as the committer has room. Raise `min_batch_rows` for stores that prefer fewer, larger writes; rows then wait until that many are pending, or until the oldest has waited `max_batch_delay_ms`.
 - `write_concurrency`: A field of the `CommitterConfig` struct that both pipeline types share. Not applicable to sequential pipelines (always single-threaded writes).
 - `fanout`: By default, processor concurrency is adaptive: it starts at 1 and scales up to the number of CPUs based on downstream channel pressure. The controller monitors the fill fraction of the processor-to-collector channel and adjusts concurrency using a dead band between 60% and 85% fill. You can override this with fixed concurrency (`ConcurrencyConfig::Fixed`) or customize the adaptive bounds (`ConcurrencyConfig::Adaptive`). The default max of `num_cpus` is for CPU-bound processors. If your processor performs IO (for example, fetching data from an external service), you might want a higher max. The adaptive controller also exposes a `dead_band` parameter to override the fill-fraction thresholds, but the defaults should work well for most workloads.
 - `ingestion.subscriber_channel_size`: Capacity of the bounded broadcaster-to-processor channel. Defaults to `max(num_cpus / 2, 4)` when `None`. A pipeline that occasionally sees bursts can raise its own capacity, but note that a larger value makes this pipeline appear "less full" to the shared controller, so it triggers throttling later than its peers.
@@ -377,9 +380,7 @@ Concurrent pipelines have five pipeline-specific components in addition to the s
 
 The primary responsibility of the `Collector` is to buffer processed data and create user-configurable batches for database writes.
 
-The `Collector` receives out-of-order processed data from multiple `Processor` workers. It then buffers data until reaching optimal batch size (`MIN_EAGER_ROWS`, default 50) or until a timeout is met (to preserve forward progress for quiet pipelines).
-
-<ImportContent mode="code" source="crates/sui-indexer-alt-framework/src/pipeline/concurrent/mod.rs" variable="MIN_EAGER_ROWS" />
+The `Collector` receives out-of-order processed data from multiple `Processor` workers. It cuts pending rows into a batch as soon as the `Committer` has room for one, so batches only grow while the `Committer` is busy. Stores that prefer fewer, larger writes can set `min_batch_rows`: rows then wait until that many are pending, or until the oldest has waited `max_batch_delay_ms`.
     
 The `Collector` combines data from multiple checkpoints into single database write batches and applies backpressure when too much data is pending (`MAX_PENDING_ROWS`, default 5000).
 
@@ -414,7 +415,7 @@ The `CommitterWatermark` maintains an in-memory map of checkpoint completion sta
 
 This component enforces the critical rule that `checkpoint_hi_inclusive` can advance only when all data up to that point is committed with no gaps. See the [watermark system](#watermark-system) for details on how this enables safe out-of-order processing.
 
-By using polling, updates happen on a configurable interval (`watermark_interval_ms`) rather than immediately, balancing consistency with performance.
+A concurrent pipeline writes its watermark as soon as it advances, unless the previous write was less than `watermark_interval_ms` ago, in which case it writes once that gap has passed. This bounds how often the `Watermark` table is written without delaying progress on quiet pipelines.
 
 <ImportContent mode="code" source="crates/sui-indexer-alt-framework/src/pipeline/mod.rs" struct="CommitterConfig" highlight="watermark_interval_ms" />
 
@@ -551,9 +552,6 @@ The following sections detail the configuration settings you can implement for o
 impl concurrent::Handler for MyHandler {
     type Store = Db;
 
-    // Minimum rows to trigger eager commit for committer (default: 50)
-    const MIN_EAGER_ROWS: usize = 100;
-
     // Backpressure threshold on collector (default: 5000)
     const MAX_PENDING_ROWS: usize = 10000;
 
@@ -580,7 +578,6 @@ let config = ConcurrentConfig {
     //     min: 1,
     //     max: 32,
     // }),
-    min_eager_rows: Some(100),
     max_pending_rows: Some(10000),
     max_watermark_updates: Some(5000),
     processor_channel_size: None, // defaults to num_cpus / 2
@@ -602,7 +599,6 @@ Tuning guidelines:
 - **`collector_channel_size`:** Controls the size of the channel between the collector and the committer. Defaults to `num_cpus / 2`. This is a separate channel from the processor-to-collector channel, and its size is set independently of `processor_channel_size`. Increase if the committer drains batches faster than the collector can supply them. Sequential pipelines name the equivalent collector-to-committer setting `pipeline_depth`, which defaults to `max(num_cpus / 2, 4)` instead.
 - **`committer_channel_size`:** Controls the size of the channel between the committer and the watermark updater. Defaults to `num_cpus`. Rarely needs tuning.
 - **`ingestion.subscriber_channel_size`:** Capacity of the bounded broadcaster-to-processor channel. Defaults to `max(num_cpus / 2, 4)` when `None`. Raise it for a pipeline that needs more headroom against ingestion bursts. A larger value means this pipeline triggers the adaptive ingest controller's throttling later than its peers.
-- **`MIN_EAGER_ROWS`:** Lower values reduce data commit latency (individual data appears in database sooner), higher values improve overall throughput (more efficient larger batches).
 - **`MAX_PENDING_ROWS`:** Controls how much data can accumulate when the committer falls behind. Higher values provide more buffer space but use more memory during bottlenecks.
 - **`MAX_WATERMARK_UPDATES`:** Lower for sparse pipelines (rare events), keep default for dense pipelines.
 
@@ -616,10 +612,13 @@ let config = ConcurrentConfig {
         // Number of parallel database writers (default: 5)
         write_concurrency: 10,
 
-        // How often collector checks for batches in ms (default: 500)
-        collect_interval_ms: 250,
+        // Rows to wait for before cutting a batch (default: 0, cut as soon as a writer is free)
+        min_batch_rows: 1000,
 
-        // How often watermarks are updated in ms (default: 500)
+        // Longest time pending rows wait for min_batch_rows, in ms (default: 500)
+        max_batch_delay_ms: 250,
+
+        // Minimum time between two watermark writes in ms (default: 500)
         watermark_interval_ms: 1000,
 
         // Maximum random jitter added to watermark interval in ms (default: 0)
@@ -635,8 +634,8 @@ let config = ConcurrentConfig {
 Tuning guidelines:
 
 - **`write_concurrency`:** Higher values result in faster throughput but more database connections; `ensure total_pipelines × write_concurrency < db_connection_pool_size`.
-- **`collect_interval_ms`:** Lower values reduce latency but increase CPU overhead.
-- **`watermark_interval_ms`:** Controls how often watermarks are updated. Higher values reduce database contention from frequent watermark writes but make the indexer slower to respond to pipeline progress.
+- **`min_batch_rows` and `max_batch_delay_ms`:** The default `min_batch_rows` of 0 writes rows as soon as a writer is free, for the lowest latency. Raise it for stores that prefer fewer, larger writes, such as ClickHouse; `max_batch_delay_ms` caps how long rows wait for the batch to fill. `max_batch_delay_ms` is not used while `min_batch_rows` is 0.
+- **`watermark_interval_ms`:** The minimum time between two watermark writes. A watermark that advances after this much time is written immediately. Higher values reduce database contention from frequent watermark writes.
 
 #### `PrunerConfig` settings
 
