@@ -186,3 +186,11 @@ You can claim the capability in either of 2 ways:
 - **Legacy Display** using `claim`: Use this if you hold the V1 `Display<T>` object. Pass it in; it is consumed and you receive the `DisplayCap<T>`.
 
 Once claimed, the holder of `DisplayCap<T>` can update the display fields (`set`, `unset`, `clear`). Anyone who holds a V1 `Display<T>` can call `delete_legacy(display, legacy)` to burn their legacy object.
+
+## How is the display ID derived?
+
+The deterministic ID comes from Sui derived objects. A derived object gets a deterministic address from a parent object's UID and a key. Each parent-key combination is unique. For displays, the parent is the `DisplayRegistry` and the key is `DisplayKey<T>`. The registry keeps only a record of which derived addresses it has claimed. If a display for the type already exists, creation aborts with `EDisplayAlreadyExists`. After creation, the derived `Display<T>` operates independently and does not require sequencing on the registry.
+
+## Where do you find the display registry?
+
+The `DisplayRegistry` that `new_with_publisher` requires is a shared singleton object. It has the system-generated address `0xd`. Pass it to the call as a mutable shared object input.
