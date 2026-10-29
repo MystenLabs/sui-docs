@@ -269,3 +269,7 @@ PAS does not support or guarantee the following:
 | Account owner (`Auth`) | Can initiate send or unlock from their Account. |
 | Anyone | Can create Accounts, deposit, sync versioning. |
 | Approval witness package | Controls who can approve requests. |
+
+## Approval order and duplicate approvals
+
+`VecSet` does not sort its contents by type name. It stores keys in the order you insert them, so the order of your `approve` calls determines the order of the collected approval set. `VecSet` also aborts if you insert a key that is already present, so stamping the same witness type twice aborts the transaction.
