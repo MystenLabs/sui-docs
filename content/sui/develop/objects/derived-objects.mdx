@@ -264,3 +264,9 @@ public fun receive_from_vault<T key + store>(
 }
 
 ```
+
+## Reclaiming a derived object address
+
+When you delete a derived object with `object::delete`, the parent keeps its claimed marker, so `exists` returns true and nobody can claim that `(parent, key)` address again. To free the address, pass the parent UID and the derived UID to the `release` function. It removes the marker and deletes the UID, so a later `claim` with the same key succeeds. Dynamic fields of the released UID, objects sent to its address, and its address balances persist and become reachable again after you re-claim the address.
+
+You cannot release the UID of a shared object: `release` aborts with `ESharedObjectRelease`. It aborts with `EObjectNotClaimed` if the UID is not claimed under the parent you pass.
