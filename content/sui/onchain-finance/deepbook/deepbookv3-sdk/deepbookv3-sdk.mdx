@@ -288,6 +288,8 @@ class DeepBookMarketMaker {
 
 `createBalanceManagerAndReinitialize` signs and executes a transaction that creates and shares a balance manager. It then searches the transaction effects' `changedObjects` for the created object whose type includes `BalanceManager`, uses that object's ID as the balance manager address, and recreates the client with it.
 
+The `$extend` call adds `client.deepbook` and keeps the Sui client's core API on `client.core`. Use `client.core` for general Sui calls, such as signing and executing a transaction or reading a wallet balance. For example, check the wallet balance with `client.core.getBalance` before you deposit into a balance manager. `depositIntoManager` throws at build time when the wallet holds less than the requested amount.
+
 ### Coin
 
 The SDK comes with 4 default coins on Testnet and 5 default coins on Mainnet.
