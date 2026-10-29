@@ -103,3 +103,13 @@ An alias address has the same authority as the original address. It can transfer
 ## How do I manage aliases?
 
 The `AddressAliasState` singleton object lives at address `0xa`. Use `sui client ptb` to call entry functions in the `sui::address_alias` module. See [Address Aliases](/develop/transactions/transaction-auth/address-aliases) for the complete CLI reference, including `enable`, `add`, `remove`, and `replace_all` commands.
+
+## Can an alias remove the original address?
+
+An alias can remove the original address from the alias set. The `remove` function checks only 2 things: the address you remove must be in the set, and the set must contain more than one alias. If either check fails, the transaction aborts with `ENoSuchAlias` or `ECannotRemoveLastAlias`.
+
+The set never becomes empty, so at least one key can always sign for the address. Nothing prevents an alias from removing the original address and every other alias, though. When that happens, the alias that remains holds sole control of the address and its assets.
+
+## Does the original address stay in its alias set?
+
+You do not need to add the original address as an alias. Enabling alias configuration creates the alias set with the original address as its only member, so the original key keeps its signing rights. After you enable configuration, the alias set replaces the address for signature checks, so only addresses in the set can sign for it. An address without alias configuration is its own sole alias.
