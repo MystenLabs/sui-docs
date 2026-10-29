@@ -415,3 +415,9 @@ The write paths in this walkthrough type-check but this document does not execut
 1. Queue a supply of at least 10 USDC. Confirm a `SupplyRequested` event, then cancel it with the returned index and confirm a `RequestCancelled` event.
 1. Queue a second supply of at least 10 USDC with no floor and leave it queued. Wait for a flush, then confirm a `SupplyFilled` event carrying your queue index and a nonzero `read.plpBalance(owner)`. You cannot start a flush yourself, so this step waits on the operator's cadence.
 1. Queue a withdrawal of at least 1 PLP against that balance. Confirm a `WithdrawRequested` event, then wait for the next flush and confirm either a `WithdrawFilled` event or a `RequestCancelled` refund.
+
+## What a partial sell does
+
+A sell targets an Open record by `recordId` and closes the payout `quantity` you pass, in USD. The quantity must be a whole $0.01 lot. Pass less than the full position to sell part of it.
+
+After a sell, the position lives under the sell's record ID instead of the mint's record ID. Use that ID for any later sell of the same position. When the sell does not fill within its floors, the market refunds it and the position goes back to an Open record. At expiry, a keeper settles the market and pays every Open record to its account, usually within seconds.
