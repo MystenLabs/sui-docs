@@ -126,3 +126,18 @@ Rate-limit windows are fixed. A 30-day limit renews every 30 days from the first
 - Revocation is immediate and final.
 - Funds never leave the balance until a spend succeeds. An unused allowance costs nothing and locks nothing.
 - The funder can list every allowance they have granted through the `AllowanceCap` objects they hold.
+
+## Which limit combinations are valid?
+
+Sui enforces 2 rules on the limits of every allowance:
+
+- It needs a lifetime cap or a rate limit. Otherwise it fails with `ENoLimit`.
+- It needs an expiration or a rate limit. Otherwise it fails with `ENoExpiration`.
+
+A rate limit alone satisfies both rules. In that case, a lifetime cap and an expiration are optional. Without a rate limit, you must set both a lifetime cap and an expiration. When you set a lifetime cap and a rate limit together, the rate limit applies on top of the lifetime cap.
+
+Each limit also has its own check:
+
+- A lifetime cap must be greater than zero.
+- An expiration must be after the start time.
+- A rate limit needs a positive period and limit.
