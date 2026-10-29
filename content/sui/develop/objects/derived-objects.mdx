@@ -264,3 +264,22 @@ public fun receive_from_vault<T key + store>(
 }
 
 ```
+
+## How do I release a derived object ID?
+
+The `release` function in the derived object module returns a claimed `(parent, key)` slot to the parent so that you can claim it again later. You pass a mutable reference to the parent's `UID` and the derived object's `UID`. The function consumes the derived `UID`. After the call, `exists` returns false for that key, and the next `claim` with the same parent and key produces the same address as before.
+
+To release an owned derived object:
+
+1. Unpack the derived object to take its `UID` out of the struct.
+2. Call `release` with `&mut` access to the parent's `UID` and the derived `UID`.
+3. Optionally, call `claim` with the same parent and key to create a new object at the same ID.
+
+Transaction effects report the released object as deleted. When you claim the same key again and create a new object, the effects report that same ID as created. Because of this, release and reclaim let you recycle a derived ID instead of retiring it permanently.
+
+`release` aborts in the following cases:
+
+- You pass a parent other than the one that claimed the `UID`. The call aborts with `EObjectNotClaimed`.
+- You pass a `UID` that did not come from `claim`, such as a regular `UID` from `ctx.new()`. The call aborts with `EObjectNotClaimed`.
+- You release the same address twice. The call aborts with `EObjectNotClaimed`.
+- The derived object is shared. The call aborts with `ESharedObjectRelease`, so you cannot release a shared derived object.
