@@ -165,3 +165,7 @@ published-version = "1"
 - Key-value pairs correspond to the data described in [adopting automated address management](#adopting-automated-address-management). Use the `sui move manage-package` command as the frontend to modify these values.
 
 :::
+
+## Original and latest IDs after an upgrade
+
+Each upgrade creates a new package object at a different ID. The new package's version is one greater than the version of the package it upgrades. The original ID never changes, so after one or more upgrades `latest-published-id` differs from `original-published-id`. `latest-published-id` is the ID of the most recent upgraded package, and this is the ID that `UpgradeCap` authorizes for the next upgrade. Move calls always load a package at its latest version.
