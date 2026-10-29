@@ -141,3 +141,12 @@ Each limit also has its own check:
 - A lifetime cap must be greater than zero.
 - An expiration must be after the start time.
 - A rate limit needs a positive period and limit.
+
+## Which Move functions grant, spend, and revoke an allowance?
+
+The `sui::allowance` module in the Sui framework defines the calls for each step:
+
+- `new<T>`: An entry function the funder calls to create and share a direct allowance. It takes a name, the spender, an optional lifetime cap, optional start and expiration timestamps, and an optional rate limit. It sends the `AllowanceCap` to the funder.
+- `balance_spend<C>`: The spender passes the shared `Allowance`, the `AllowanceWithdrawal`, and the `Clock`, and receives a `Balance<C>`. The transaction sender must be the spender.
+- `app_balance_spend<C, A>`: The spend path for app-bound allowances. It also requires a `SpendPermit<A>` from the app.
+- `revoke<T>`: The funder passes the `AllowanceCap` and the `Allowance`. The call deletes both, and aborts with `EWrongCap` if the cap belongs to a different allowance.
