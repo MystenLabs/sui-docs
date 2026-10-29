@@ -57,3 +57,14 @@ Reconfiguration is a critical process occurring at the end of each epoch. It inv
 Object versioning matters for epochs because conflicting transactions on the same owned object can leave that object equivocated until the next epoch. Sui's [object versioning](/develop/objects/versioning) ensures that each object update writes a new version. For address-owned and immutable objects, transactions reference a specific object version. For consensus-managed objects, including shared objects and consensus-address-owned party objects, consensus determines the next version during scheduling.
 
 Applications should avoid submitting conflicting transactions that use the same owned object concurrently. Depending on how validator reservations are split, one transaction might be rejected because the object version is already reserved, or competing transactions can equivocate the object until the next epoch. Prefer a single [programmable transaction block](/develop/transactions/ptbs/building-ptb) for related operations, or use SDK/client execution helpers that manage object and gas coin concurrency for you.
+
+## How reconfiguration distributes gas fees and rewards
+
+Gas fee distribution at epoch change involves more steps than a two-way split:
+
+- The storage fund receives the epoch's storage charges. It burns the storage rebates that transaction senders already received in their gas coins, and it moves the non-refundable portion of storage fees into its non-refundable balance.
+- Computation charges go to validator staking pools, where they auto-compound for stakers.
+- Validators also receive storage fund rewards. A validator keeps these rewards, together with its commission, and does not share them with stakers.
+- A share of the storage fund's rewards, set by `storage_fund_reinvest_rate` in basis points, goes back into the storage fund.
+- Staking rewards left over from integer division go to the storage fund's non-refundable balance.
+- When other validators report a validator, the network can slash that validator's rewards by `reward_slashing_rate`. Unslashed validators share the slashed amount.
