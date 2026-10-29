@@ -180,3 +180,15 @@ To verify that the system settings are updated successfully, check the output of
 ```sh
 $ sudo sysctl -a | egrep [rw]mem
 ```
+
+## How do tallying rules work?
+
+Tallying rules let validators report peers that perform poorly. At the end of each epoch, Sui first computes each validator's reward share from its voting power. It then uses the tallying rule report records for the epoch to determine which validators to slash, and applies the reward slashing rate to their rewards.
+
+To report a validator, run the `report-validator` subcommand with the Sui address of the validator you are reporting. You can also undo an existing report with the same subcommand. When the sender is not the reporting validator itself, provide the Operation Cap ID, which you can find with the `display-metadata` subcommand.
+
+## Update the gas price survey
+
+Submit your gas price quote with the `update-gas-price` subcommand, passing the gas price in MIST. Sui uses this quote to calculate the reference gas price. If you send the transaction from the validator address that holds the Operation Cap, the Operation Cap ID is optional. Otherwise, provide it. Find the ID with the `display-metadata` subcommand.
+
+The quote you submit applies from the next epoch, when Sui copies the next epoch gas price into the validator's active gas price. The maximum gas price a validator can set is 100K MIST.
