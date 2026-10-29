@@ -83,3 +83,13 @@ The checkpoint also includes the effects digests of each transaction. An effects
 The validators of the initial committee create the genesis checkpoint during the genesis ceremony. Each validator verifies and signs the genesis checkpoint with `sui genesis-ceremony verify-and-sign`. After all validators sign, `sui genesis-ceremony finalize` builds the genesis file, prints its blake2b-256 hash, and the network operators distribute the genesis state.
 
 A client reads the initial committee from this genesis file, a `genesis.blob` file. For Mainnet, you can download the genesis blob from https://github.com/MystenLabs/sui-genesis/blob/main/mainnet/genesis.blob.
+
+## Verify checkpoints with the light client
+
+The `sui-light-client` tool automates the committee-tracking part of this process. Its `sync` command downloads all end-of-epoch checkpoints, checks them for validity, and caches them in the checkpoint summary directory for future runs:
+
+```
+$ sui-light-client --config mainnet.yaml sync
+```
+
+In this command, `mainnet.yaml` is the light client configuration file. The sync runs in 2 steps. First, it downloads the end-of-epoch checkpoint numbers into the `checkpoints.yaml` file, which must be present in the checkpoint summaries directory. Then it downloads the corresponding checkpoint summaries. Run `sync` regularly to pick up new checkpoints.
