@@ -110,6 +110,8 @@ Set up a client next. The following example uses the [gRPC](/develop/accessing-d
 
 Every `client.predict.read` method runs against the node's core API through simulation and object reads, so reads need no indexer. Every `client.predict.tx` builder returns an unsigned transaction, and the SDK never signs or handles keys.
 
+To run the quickstart against Mainnet, set `NETWORK` to `mainnet` in `src/config.ts`. Every other example file follows that constant, and the startup check then expects the `deepbook-predict-mainnet` deployment record. The Mainnet deployment settles in native USDC, so the address needs real USDC as the quote coin. Both networks have passed the delayed-execution cutover, so the queued-order samples (`queue-mint.ts`, `queue-sell.ts`, and `sessions-queue.ts`) apply on Mainnet unchanged. The immediate-path files (`mint.ts`, `mint-range.ts`, `redeem.ts`, and the trade wrappers in `sessions-trade.ts`) abort on both networks. Call `client.predict.read.executionMode()` to confirm which path a network is on.
+
 ### 4. Create and fund an account
 
 Each owner has exactly one Predict account: a shared account wrapper holding balances and Predict positions. Its address derives from the owner address, so `client.predict.wrapperIdFor(owner)` returns the ID without a chain read. The method name `createManager` follows DeepBook balance manager naming, and the object it creates is the account wrapper.
