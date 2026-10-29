@@ -298,3 +298,11 @@ It takes this parameter:
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="1008-1010" />
 
 <ImportContent source="packages/deepbook-v3/src/predict/decode.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="186-195" />
+
+## Snap a strike onto the admission grid
+
+Call `snapStrike` with the numeric strike and the market's admission step, as in `snapStrike(atTheMoney, market.admissionTickSize)`. A numeric strike must be a whole multiple of the market's `admissionTickSize`. That step is coarser than `tickSize`, varies by cadence, and is mutable protocol state, so read it from the market rather than assuming a value. An off-grid strike throws `PredictInputError` when you build the transaction. The market's own `referencePrice` is the only finite strike that the chain admits off the grid. To find a strike near the money, call `pricer.strikeAtProbability(0.5)` on the market's pricer from `read.pricer`, then snap the result.
+
+## What is a lot in Predict?
+
+A Predict payout quantity is in USD, at `$1` of payout per contract, and must be a whole `$0.01` lot. This applies to the quantity you mint, the quantity you sell from an Open record, and the quantity you close. Raw amounts are integers at 6 decimals, so round a cost cap to 6 decimals: a finer value throws `PredictInputError`.
