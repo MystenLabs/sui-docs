@@ -367,3 +367,9 @@ The following sections address common issues with this example.
 **Cause:** The backend did not create the `StageTransition` object for the target stage or did not send it to the ticket's address.
 
 **Fix:** Verify that `/api/stage/mint` ran successfully after the user purchased the ticket. Use `sui client objects` to check that the ticket's address owns the `StageTransition` objects.
+
+## Export the private key for your address
+
+To display the private key for your active address, run `sui keytool export` with that address in place of `$SUI_ADDRESS`. The command reads the key from your Sui Keystore and prints it in Bech32 format, starting with `suiprivkey`. If you do not know the address, `sui keytool list` shows every key in the keystore.
+
+`sui keytool convert` does not look up a key by address. It takes a private key value in Hex or Base64 and converts it to the Bech32 `suiprivkey` format.
