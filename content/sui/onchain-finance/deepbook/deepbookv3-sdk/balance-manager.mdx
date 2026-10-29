@@ -571,3 +571,22 @@ completeSetup = async (tx: Transaction) => {
 	tx.transferObjects([depositCap, withdrawCap, tradeCap], ownerAddress);
 };
 ```
+
+## Trade proofs in order placement
+
+`placeLimitOrder` identifies the balance manager by `balanceManagerKey` and takes no trade proof parameter. You do not need to call `generateProof` and pass its result when you place an order. For example, the following function deposits into a balance manager and places an order in the same transaction:
+
+```ts
+	tx.add(client.deepbook.balanceManager.depositIntoManager(managerKey, depositCoinKey, depositAmount));
+	tx.add(
+		client.deepbook.deepBook.placeLimitOrder({
+			poolKey,
+			balanceManagerKey: managerKey,
+			clientOrderId,
+			price,
+			quantity,
+			isBid: false,
+			orderType: OrderType.POST_ONLY,
+		}),
+	);
+```
