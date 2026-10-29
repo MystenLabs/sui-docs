@@ -306,3 +306,12 @@ Public key in hex: $PK
     let verified = bls12381::bls12381_min_pk_verify(&sig, &pk, &msg);
     assert!(verified == true, 0);
 ```
+
+## Hash function identifiers for ECDSA signatures
+
+The last argument of the Secp256k1 and Secp256r1 verify and ecrecover functions is a `u8` that identifies the hash function used to hash the message when signing. Pass the raw message, not a hash. The valid values are:
+
+- `0`: Keccak256
+- `1`: SHA256
+
+Pass the value that matches how the signer hashed the message. For example, Ethereum signatures use the Keccak256 hash of the message, so you pass `0` when you recover an Ethereum signer.
