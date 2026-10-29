@@ -431,3 +431,10 @@ The subpath re-exports these deployment helpers, so code that imports only `@mys
 [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#configuration) describes the deployment record they read.
 
 <ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="12-13" />
+
+## Queue record IDs and order IDs
+
+The queue record ID and a position's order ID are separate values:
+
+- **Record ID:** Identifies the queued order record. After the enqueue transaction executes with events included, decode it with `client.predict.decode.enqueue(result)`. Persist it, because you use it to follow the order, sell the position, and show the result. A filled mint stays in the market's queue as an Open record, so `outcome.order.view.position` holds the position. After a sell, the position lives under the sell's record ID instead.
+- **Order ID:** The `position.orderId` of a filled record. At expiry a keeper settles the market and deletes the records, so keep the order ID to compute what the position is owed afterward with `cost.settledPayout`.
