@@ -483,3 +483,9 @@ The funder's `AllowanceCap` objects point at the allowances they granted. List t
 - `current_spend`: Total spent so far.
 
 Spenders learn about allowances offchain: the funder shares the allowance ID, or an indexer maps spender addresses to allowance objects. The module does not emit events. Issuance and revocation show up as created and deleted objects in transaction effects, and spends show up as balance changes on the funder's address.
+
+## What is a funds withdrawal input?
+
+A funds withdrawal input is a PTB input that reserves funds before the transaction executes. It declares a maximum amount (`MaxAmountU64`), a `Balance` type argument for the coin type, and a source. The source is one of `Sender`, `Sponsor`, or `SenderAllowance { funder, allowance }`. The amount must be greater than zero.
+
+With a `SenderAllowance` source, Sui checks the declared funder and allowance against the loaded `Allowance` object at signing and reserves the withdrawal against the funder's balance. At execution, Sui mints an `AllowanceWithdrawal<T>` from the input, and the allowance's spend paths, such as `balance_spend`, consume it.
