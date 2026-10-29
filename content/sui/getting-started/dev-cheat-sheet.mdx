@@ -113,3 +113,17 @@ Pick a dynamic field-backed collection based on value types, object visibility, 
 - `LinkedTable` keeps its entries in order. Use `next` to walk entries and `pop_front` or `pop_back` to remove from either end. You can `drop` a non-empty `LinkedTable` only if the value type has the `drop` ability.
 
 A bag or table must be empty before you call `destroy_empty` on it.
+
+## Sign with dApp Kit and execute on your full node
+
+In dApp Kit, the `useSignTransaction` hook from `@mysten/dapp-kit` signs a transaction with the wallet without executing it. Pass the resulting `bytes` and `signature` to `executeTransactionBlock` on your app's full node:
+
+```ts
+  const { mutateAsync: signTransactionBlock } = useSignTransaction();
+```
+
+```ts
+      const res = await client.executeTransactionBlock({
+        transactionBlock: signature.bytes,
+        signature: signature.signature,
+```
