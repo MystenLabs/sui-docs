@@ -343,3 +343,9 @@ When a kiosk purchase occurs, the system creates a `TransferRequest` hot potato,
 A kiosk can trade an item of type `T` only if the `TransferPolicy` for `T` exists and the buyer can access it. A purchase issues a `TransferRequest` that must be resolved in a matching `TransferPolicy`. If no policy exists or the buyer can't access it, the transaction fails.
 
 This system gives you maximum freedom and flexibility. By removing transfer policy logic from the trading primitive, only you can set policies, and you control all enforcement as long as the primitive is used.
+
+## How do you withdraw fees from a transfer policy?
+
+Fees that rules add with `add_to_balance` stay in the `TransferPolicy` balance until the `TransferPolicyCap` holder withdraws them. Call `withdraw` with the policy, the cap, an `Option<u64>` amount, and the transaction context. It returns a `Coin<SUI>`. If you pass no amount, `withdraw` returns the full balance. The call aborts with `ENotOwner` if the cap does not match the policy, and with `ENotEnough` if the requested amount exceeds the balance.
+
+To close a policy, call `destroy_and_withdraw` with the `TransferPolicy` and its `TransferPolicyCap`. It deletes both objects, emits a `TransferPolicyDestroyed` event, and returns the remaining balance as a `Coin<SUI>`.
