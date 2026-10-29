@@ -82,3 +82,9 @@ The interactive preview tool appears below. Follow the steps in [How to use the 
 <div className="full-width-iframe">
   <iframe src="/display-preview/index.html" />
 </div>
+
+## Are display values validated as URLs?
+
+The `Display<T>` object stores every property, including `link`, `image_url`, and `project_url`, as a plain string in a `VecMap<String, String>`. The framework does not use a URL type for these properties or check their format. The property name tells clients what the value means, and the value itself is always a string.
+
+Because the framework does not check the format, a static or dynamic value under a URL property such as `project_url` or `link` must still render to a valid URL. You are responsible for that. Properties such as `name`, `description`, and `creator` can hold any text.
