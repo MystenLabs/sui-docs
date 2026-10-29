@@ -71,3 +71,14 @@ The pages in this section cover the object model, how to use objects, and the di
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## What is party object ownership?
+
+A party object combines properties of address-owned and shared objects. When you call `party_transfer`, only the members of the `Party` can use the object as a transaction input, as with an address-owned object. As with a shared object, the `default` permissions of the `Party` value can let anyone use the object. The object must go through consensus and cannot use the fast path.
+
+The object model has 2 related owner types:
+
+- **`ConsensusAddressOwner`:** A single address exclusively owns the object, and Sui sequences it through consensus.
+- **`Party`:** Sui sequences the object through consensus with per-address permissions. Each listed address receives a subset of permission flags, and addresses not explicitly listed fall back to the default permissions.
+
+The `party_transfer` function asserts that the `Party` value has a single owner.
