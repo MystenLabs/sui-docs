@@ -44,3 +44,15 @@ Programmable transaction blocks (PTBs) let you compose multiple commands into a 
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## What commands can a PTB contain?
+
+Each command in a PTB is one of 7 types:
+
+- `MoveCall`: Calls a Move function.
+- `TransferObjects`: Transfers objects to a specified address.
+- `SplitCoins`: Splits a coin into N coins according to an array of amounts.
+- `MergeCoins`: Merges N coins into a provided coin.
+- `MakeMoveVec`: Constructs a vector from values of the same type.
+- `Publish`: Publishes a Move package.
+- `Upgrade`: Upgrades a Move package.
