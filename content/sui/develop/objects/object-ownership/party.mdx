@@ -189,3 +189,7 @@ Use the following guidance when a transaction that uses party objects fails.
 
 - **Owner changed or access denied:** A validator aborts the transaction when the owner of an input party object changed because of an earlier, conflicting transaction, or when the sender is not the current owner. Refetch the object's current owner and version, then rebuild and resubmit the transaction.
 - **Gas payment failed with a party coin:** A party object `Coin<SUI>` cannot pay for gas. Transfer the coin back to address-owned, then use it as the gas coin, or select a different address-owned gas coin.
+
+## Can you convert a party object to a shared object?
+
+You cannot convert an existing party object into a shared object. The `share_object` and `public_share_object` functions in the `transfer` module abort with `ESharedNonNewObject` if the current transaction did not create the object. A party object always comes from an earlier transaction, so sharing it fails. Sharing is also irreversible: after you share an object, it stays shared forever. This differs from the other conversions that party objects support, such as transferring to an address, wrapping, or freezing.
