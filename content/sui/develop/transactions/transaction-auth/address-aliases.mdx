@@ -89,9 +89,9 @@ In this example, even if the transaction has signatures from `[B, Y]` and not fr
 Signature verification through the RPC services checks the signature against the address itself by default. An offchain service that authenticates users by signature, such as a sign-in flow, rejects a valid signature from an alias unless you turn on alias checking:
 
 - **GraphQL:** Pass `checkAddressAliases: true` to the `verifySignature` query. The signature must then come from one of `author`'s current aliases instead of from `author` itself.
-- **gRPC:** Set `check_address_aliases` to `true` in `VerifySignatureRequest` on `SignatureVerificationService`. The response sets `address_aliases_checked` when the server applied the check.
+- **gRPC:** Set `check_address_aliases` to `true` in `VerifySignatureRequest` on `SignatureVerificationService`, and set `address` in the same request. The request fails if `address` is missing. The response sets `address_aliases_checked` when the server applied the check.
 
-With alias checking on, the address's own key only verifies if the address is still in its own alias set. This matches how Sui authenticates transactions for the address.
+With alias checking on, the address's own key only verifies if the address is still in its own alias set. If the address has no aliases configured, the check falls back to the address itself, so its own key still verifies. This matches how Sui authenticates transactions for the address.
 
 ## How do I manage aliases with the Sui CLI?
 
