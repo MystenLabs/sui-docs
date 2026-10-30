@@ -180,3 +180,5 @@ public fun groth16_bn254_test() {
 ```
 
 `verify_groth16_proof` returns a boolean. The example wraps the call in `assert!`, so the function aborts if the proof does not verify.
+
+`verify_groth16_proof` aborts with `EInvalidVerifyingKey` instead of returning `false` when the prepared verifying key does not match the public inputs. The key must contain exactly one more `vk_gamma_abc` element than the number of public inputs. If your circuit's public input count can vary, check it against the verifying key before you call the function.

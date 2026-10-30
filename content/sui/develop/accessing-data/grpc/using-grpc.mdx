@@ -391,10 +391,18 @@ Every response frame in a list API stream includes a `watermark` with a `cursor`
 | `ITEM_LIMIT` | Returned the requested number of items. | Resume from the latest `watermark.cursor`. |
 | `SCAN_LIMIT` | The server exhausted its internal scan budget before finding enough results. Common with sparse filters. | Resume from the latest `watermark.cursor`. The server made progress even if it returned fewer items than requested. |
 | `LEDGER_TIP` | Reached the current tip of the chain (the request specified no `end_checkpoint`). | No more results available yet. Poll later or switch to a `Subscribe*` stream. |
-| `CHECKPOINT_BOUND` | Reached the `end_checkpoint` specified in the request. | No more results in this range. |
+| `CHECKPOINT_BOUND` | Reached the `end_checkpoint` specified in the request, or the request's cursor already lies past the end of the requested checkpoint range. | No more results in this range. |
 | `CURSOR_BOUND` | Reached a cursor-derived boundary. | Resume from the latest `watermark.cursor`. |
 
 To paginate, take the `cursor` from the latest `watermark` in the stream and pass it as `options.after` (for ascending order) or `options.before` (for descending order) in your next request. The `watermark` also tells you how much of the checkpoint range the server has covered, which is useful when a sparse filter produces few or no matching items.
+
+A cursor from `ListTransactions` or `ListEvents` works in either direction, so you can pass a cursor from an ascending stream as `options.before` in a descending request without skipping items.
+
+Requests outside the indexed range return an `OUT_OF_RANGE` error instead of an empty or clamped result:
+
+- A descending request whose `after` cursor lies past the latest indexed checkpoint.
+- A descending `ListTransactions`, `ListEvents`, or `ListCheckpoints` request whose `end_checkpoint` is more than 1 above the latest indexed checkpoint, or whose `start_checkpoint` is above the latest indexed checkpoint when the request sets no `end_checkpoint`.
+- On a full node that prunes history, any request that needs data below the pruning floor. A descending request with no `start_checkpoint` streams everything down to the floor and sends a watermark at the floor before it returns the error, so you can record how far the stream reached.
 
 For operator-level configuration of these APIs (timeouts, item limits, scan budgets), see [Ledger history configuration](/operators/full-node/sui-full-node#ledger-history-configuration).
 
