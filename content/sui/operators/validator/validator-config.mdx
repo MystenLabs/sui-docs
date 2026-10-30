@@ -191,4 +191,4 @@ To report a validator, run the `report-validator` subcommand with the Sui addres
 
 Submit your gas price quote with the `update-gas-price` subcommand, passing the gas price in MIST. Sui uses this quote to calculate the reference gas price. If you send the transaction from the validator address that holds the Operation Cap, the Operation Cap ID is optional. Otherwise, provide it. Find the ID with the `display-metadata` subcommand.
 
-The quote you submit applies from the next epoch, when Sui copies the next epoch gas price into the validator's active gas price. The maximum gas price a validator can set is 100K MIST.
+The quote you submit applies from the next epoch, when Sui copies the next epoch gas price into the validator's active gas price. The gas price you set must be lower than 100,000 MIST.
