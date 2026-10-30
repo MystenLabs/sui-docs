@@ -220,3 +220,7 @@ The following are the custom input names the PAS SDK resolves at PTB constructio
 3. The client builds the PTB: create request, template command (approval), resolve. The individual transaction commands within a PTB execute in order, and if one transaction command fails, the entire block fails and none of the effects from the commands apply.
 
 This enables generic wallets and frontends to execute compliant transfers without knowing the specific compliance contract details.
+
+## Which package ID does the template command use?
+
+In the template example, the package address comes from the type name of `MY_COIN`. That address is the defining ID of the type, which is the ID of the package in storage that first introduced `MY_COIN`. It is not necessarily the ID of the latest version of your package. After you upgrade your package, the template still points at the package that first defined `MY_COIN`. If the approval function you want clients to call lives in a later package version, set the template command's package ID to that version explicitly rather than deriving it from the currency type.
