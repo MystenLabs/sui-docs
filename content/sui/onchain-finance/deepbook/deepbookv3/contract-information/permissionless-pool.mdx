@@ -201,4 +201,4 @@ The SDK pulls the 500 DEEP creation fee from your address unless you pass a `dee
 
 ## Which Sui client does the SDK example use?
 
-The example uses `SuiGrpcClient` from `@mysten/sui/grpc` for both the DeepBook extension and transaction execution. `SuiGrpcClient` exposes `signAndExecuteTransaction` directly, so you do not need a separate JSON-RPC client to sign and submit the pool creation transaction.
+The example uses `SuiGrpcClient` from `@mysten/sui/grpc` for both the DeepBook extension and transaction execution. `SuiGrpcClient` exposes `signAndExecuteTransaction` directly, so the same client signs and submits the pool creation transaction.
