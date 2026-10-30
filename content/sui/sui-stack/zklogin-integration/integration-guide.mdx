@@ -611,3 +611,15 @@ The Mysten Labs prover auto-scales for traffic surges. If you expect a spike in 
 | Prover timeout (`took longer than 15s`) | Prover machine is underpowered | Use at least 16 cores and 16 GB RAM, or increase `PROVER_TIMEOUT` |
 | Salt service returns different address | `aud` or `iss` changed | The address depends on `sub` + `iss` + `aud` + `salt`. Any change produces a different address. |
 | User locked out of address | Salt lost | Salt loss is permanent. Ensure your salt service has backups and recovery procedures. |
+
+## Retry a rejected transaction
+
+Validators verify the ephemeral signature against the intent message of the transaction data. Any change to the transaction, such as a new gas budget or updated object references, makes the earlier ephemeral signature invalid for the new transaction.
+
+To retry after the network rejects a transaction:
+
+1. Rebuild the corrected transaction.
+2. Sign the new transaction bytes with the same ephemeral private key.
+3. Assemble a new zkLogin signature from the new ephemeral signature and the existing zero-knowledge proof.
+
+Validators check the zero-knowledge proof inputs separately from the transaction data, so you do not need to request a new proof. The session must still be valid, which means the current epoch must not have passed `maxEpoch`.
