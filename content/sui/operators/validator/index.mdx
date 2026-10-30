@@ -34,3 +34,9 @@ import DocCardList from '@theme/DocCardList';
 ## What do the validator guides cover?
 
 <DocCardList />
+
+## How does the validator set change?
+
+Sui tracks validators in a validator set that changes at epoch boundaries. To join, an address calls `request_add_validator_candidate` and becomes a preactive validator candidate. The candidate then calls `request_add_validator` to join the active validator set `active_validators` in the next epoch. Sui processes new candidates at the end of the epoch.
+
+To leave, a validator calls `request_remove_validator`, and the validator set records the removal as a pending request. After a validator leaves the active set, stakers can still withdraw their stake from it. The active set holds at most 150 validators.
