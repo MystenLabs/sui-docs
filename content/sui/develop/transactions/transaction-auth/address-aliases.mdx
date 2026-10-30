@@ -156,3 +156,7 @@ $ sui client ptb \
 ```
 
 You can then sign the transaction offline and submit it separately. See [Sui Client PTB CLI](/references/cli/ptb) for details.
+
+## Vector arguments in alias commands
+
+A literal vector passed directly to `--move-call` becomes a pure Move vector value, so you can pass a list of alias addresses inline without a separate `--make-move-vec` command. Literal vectors can contain only pure values, such as addresses and numbers. If a literal vector contains an object value, the CLI rejects it. To build a vector of objects, use `--make-move-vec` instead.
