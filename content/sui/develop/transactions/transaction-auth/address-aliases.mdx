@@ -86,7 +86,7 @@ In this example, even if the transaction has signatures from `[B, Y]` and not fr
 
 ## How do I manage aliases with the Sui CLI?
 
-You can manage address aliases using [`sui client ptb`](/references/cli/ptb) to call entry functions in the `sui::address_alias` module. The `AddressAliasState` singleton object lives at the address `0xa`.
+You can manage address aliases using [`sui client ptb`](/references/cli/ptb) to call entry functions in the `sui::address_alias` module. The `AddressAliasState` singleton object lives at the address `0xa`. The `enable` function takes this object as its argument, so the enable command passes `@0xa`. The enable call then creates a separate `AddressAliases` object that holds the alias set for your address.
 
 You must [enable aliases for your address](#enable-aliases-for-your-address) first. The add, replace, and remove commands all require the `AddressAliases` object ID that the enable step creates.
 
@@ -146,4 +146,13 @@ $ sui client ptb \
 
 ### Offline signing
 
-If you are using a hardware wallet or other external signer, add `--serialize-unsigned-transaction` to any of the commands above to output the raw transaction bytes instead of executing. You can then sign the transaction offline and submit it separately. See [Sui Client PTB CLI](/references/cli/ptb) for details.
+If you are using a hardware wallet or other external signer, add `--serialize-unsigned-transaction` to any of the `sui client ptb` commands on this page. The command then outputs the raw transaction bytes instead of executing. For example, to serialize the enable command:
+
+```sh
+$ sui client ptb \
+    --move-call sui::address_alias::enable @0xa \
+    --gas-budget 50000000 \
+    --serialize-unsigned-transaction
+```
+
+You can then sign the transaction offline and submit it separately. See [Sui Client PTB CLI](/references/cli/ptb) for details.
