@@ -248,3 +248,16 @@ Sponsoring from an address balance removes the gas coin entirely. Pass an empty 
 />
 
 Submit dual-signed transactions directly to a full node rather than through the sponsor, so the sponsor cannot delay or withhold them. See [Sponsored Transactions](/develop/transaction-payment/sponsor-txn) for the full flow and risk considerations.
+
+## Gasless stablecoin minimum transfer amounts
+
+On Mainnet, the protocol sets the gasless minimum per token type in base units: each allowlisted stablecoin (USDC, USDSUI, SUI_USDE, USDY, FDUSD, AUSD, and USDB) has a minimum of `10_000` base units. All listed tokens have 6 decimals, so the minimum equals $0.01 of each stablecoin. The check applies to the net amount each recipient receives per token type in the transaction. A transfer below the minimum fails with an error of the form `Gasless transfer of {net_amount} to {recipient} is below minimum {min_amount} for token type {token_type}`.
+
+## Choose `balance::send_funds` or `coin::send_funds`
+
+Both functions deliver to the same address balance. Choose based on the value you hold:
+
+- `balance::send_funds` takes a `Balance<T>`, for example a balance withdrawn from your address balance or held inside a Move object.
+- `coin::send_funds` takes a `Coin<T>` object, converts it into a balance, and then calls `balance::send_funds`.
+
+You can pass the gas coin itself to `coin::send_funds`. The execution layer consumes the gas coin and refunds the unused gas budget into the recipient's address balance, so the transfer leaves no dust behind.
