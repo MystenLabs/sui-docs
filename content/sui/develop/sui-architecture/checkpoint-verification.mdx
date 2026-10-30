@@ -77,3 +77,19 @@ This process allows the client to verify all checkpoints up to the present time.
 After a client verifies a checkpoint, it can use the information to execute transactions and confirm results. A checkpoint contains a list of transactions, so a full node can fetch and execute them. Because transactions are identified by their digest in the form of a cryptographic hash, the client can be sure they have not been altered.
 
 The checkpoint also includes the effects digests of each transaction. An effects digest is the cryptographic hash of the `TransactionEffects` structure, which lists all transaction inputs and outputs, including the digests of all objects written by the transaction. This allows a full node to confirm it has the same execution results as the validators who signed the checkpoint. By executing checkpoints and verifying transaction outputs, a full node can build the entire state of the Sui network and trust that every byte of every object is correct.
+
+## How does a client trust the genesis checkpoint?
+
+The validators of the initial committee create the genesis checkpoint during the genesis ceremony. Each validator verifies and signs the genesis checkpoint with `sui genesis-ceremony verify-and-sign`. After all validators sign, `sui genesis-ceremony finalize` builds the genesis file, prints its blake2b-256 hash, and the network operators distribute the genesis state.
+
+A client reads the initial committee from this genesis file, a `genesis.blob` file. For Mainnet, download the [Mainnet `genesis.blob` file](https://github.com/MystenLabs/sui-genesis/blob/main/mainnet/genesis.blob) from the `sui-genesis` repository.
+
+## Verify checkpoints with the light client
+
+The `sui-light-client` tool automates the committee-tracking part of this process. Its `sync` command downloads all end-of-epoch checkpoints, checks them for validity, and caches them in the checkpoint summary directory for future runs:
+
+```sh
+$ sui-light-client --config mainnet.yaml sync
+```
+
+In this command, `mainnet.yaml` is the light client configuration file. The sync runs in 2 steps. First, it downloads the end-of-epoch checkpoint numbers into the `checkpoints.yaml` file, which must be present in the checkpoint summaries directory. Then it downloads the corresponding checkpoint summaries. Run `sync` regularly to pick up new checkpoints.
