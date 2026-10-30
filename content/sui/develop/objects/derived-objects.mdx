@@ -275,7 +275,7 @@ To release an owned derived object:
 2. Call `release` with `&mut` access to the parent's `UID` and the derived `UID`.
 3. Optionally, call `claim` with the same parent and key to create a new object at the same ID.
 
-Transaction effects report the released object as deleted. When you claim the same key again and create a new object, the effects report that same ID as created. Because of this, release and reclaim let you recycle a derived ID instead of retiring it permanently.
+Transaction effects report the released object as deleted. When you claim the same key again and create a new object, the effects report that same ID as created. Because of this, release and reclaim let you recycle a derived ID instead of retiring it permanently. Dynamic fields of the released `UID`, objects sent to its address, and its address balances persist, and they become reachable again after you claim the address again.
 
 `release` aborts in the following cases:
 
