@@ -98,3 +98,14 @@ Loyalty tokens follow this lifecycle:
 4. **Burning:** The `TreasuryCap` holder can remove the accumulated spent balance from the `TokenPolicy`, effectively burning the tokens.
 
 [View the full example on GitHub](https://github.com/MystenLabs/sui/tree/main/examples/move/token/sources/loyalty.move).
+
+## What happens when a policy has no rule for an action?
+
+A `TokenPolicy` denies any action that has no record in its `rules` map. When you confirm a request for such an action, for example with `confirm_request`, the call aborts with `EUnknownAction`. To make an action available, the `TokenPolicyCap` owner uses one of the following functions:
+
+- `allow`: Adds an empty set of rules, so anyone can perform the action freely.
+- `add_rule_for_action`: Creates the record if it is missing, then adds a rule that every request must satisfy.
+
+The `disallow` function removes the record and blocks the action again. Use `is_allowed` to check whether an action has a record.
+
+In the loyalty example, `add_rule_for_action` enables `spend` and requires the `GiftShop` approval. A spend request without that approval aborts with `ENotApproved`.
