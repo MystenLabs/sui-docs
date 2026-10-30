@@ -218,3 +218,12 @@ The following example creates a non-OTW currency with a burn-only supply, mints 
 <ImportContent source="examples/move/coin/sources/non_otw_currency.move" mode="code" fun="new_currency" noComments />
 
 This example covers creation only. To mint or burn coins after creation, see [Mint and burn coins](#how-do-i-mint-and-burn-coins).
+
+## Burn coins with a burn-only supply
+
+The `make_supply_burn_only` function takes the `TreasuryCap` by value and converts it into the supply that the `Currency` stores. After the call, you no longer hold a `TreasuryCap`, so you burn coins through the `Currency` object instead:
+
+- `burn`: Burns a `Coin<T>`.
+- `burn_balance`: Burns a `Balance<T>`.
+
+Both functions abort with `ESupplyNotBurnOnly` if the `Currency` does not have a burn-only supply state. Each burn decreases the value that `total_supply` returns. You cannot make a supply fixed or burn-only twice.
