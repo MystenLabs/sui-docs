@@ -81,7 +81,7 @@ sui client --switch --env <YOUR-CHAIN-ENVIRONMENT>
 
 ```sh
 sui move manage-package --environment "$(sui client active-env)" \
-                        --network "$(sui client chain-identifier)" \
+                        --network-id "$(sui client chain-identifier)" \
                         --original-id 'ORIGINAL-ADDRESS' \
                         --latest-id 'LATEST-ADDRESS' \
                         --version-number 'VERSION-NUMBER'
