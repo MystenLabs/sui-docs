@@ -189,3 +189,22 @@ When you integrate stablecoins into your app, be aware of issuer-specific compli
 - **USDC (Circle):** Circle maintains a blacklist of addresses. If Circle blacklists an address, transactions involving USDC to or from that address fail onchain. Your app should handle this gracefully by checking transaction results and displaying a clear error when a transfer fails. See [Circle's compliance documentation](https://www.circle.com/en/legal/usdc-user-agreement) for details.
 - **Regulated tokens on Sui:** Some stablecoins on Sui use the [regulated token standard](/onchain-finance/fungible-tokens/regulated-tokens) with `DenyCapV2`. The issuer can block specific addresses from transacting with the token through the `DenyList` object (`0x403`). Check whether the stablecoins you integrate use deny-listing and account for denied transactions in your error handling ([Security Best Practices](/develop/security/best-practices)).
 - **Provider responsibility:** Sui documentation covers onchain primitives (coin types, transfer functions, deny-listing). Compliance obligations such as KYC verification, sanctions screening, and reporting are the responsibility of the stablecoin issuer and your app. Consult your legal team and the issuer's compliance documentation for your specific jurisdiction.
+
+## Full node URLs for `SuiGrpcClient`
+
+The `baseUrl` for Mainnet is the public full node endpoint `https://fullnode.mainnet.sui.io:443`. The port suffix is part of the standard Sui full node URLs. Testnet uses `https://fullnode.testnet.sui.io:443` and Devnet uses `https://fullnode.devnet.sui.io:443`. Pass `network` and `baseUrl` together, as the Sui examples do:
+
+```ts
+return new SuiGrpcClient({
+		network: 'testnet',
+		baseUrl: 'https://fullnode.testnet.sui.io:443',
+	}).$extend(deepbook({ address, balanceManagers }));
+```
+
+## Minimum transfer amount in base units
+
+The 0.01 minimum is in the stablecoin's display unit, so it equals $0.01 for each allowlisted stablecoin. All allowlisted Mainnet stablecoins have 6 decimals, and the protocol configuration stores the minimum as `10_000` base units for each token. The SDK takes amounts in base units, so the smallest eligible `balance` value you pass to `tx.balance()` is `10_000`.
+
+## How `tx.balance()` funds a transfer
+
+`tx.balance()` takes the coin type and the amount in base units. You do not pass a coin object reference. The SDK selects the funding source for the sender when it builds the transaction, and the resulting `Balance<T>` is the first argument to `0x2::balance::send_funds`.
