@@ -195,3 +195,7 @@ These examples showcase the importance of the gas budget. The minimum gas budget
 | Basic transaction storing 10 bytes and deleting data    | 500 MIST            | 1,000             | 75 MIST       | 1,000         | 100,000 MIST   | 500,000 MIST       | 475,000 MIST   |
 | Complex transaction storing 120 bytes                   | 1,000 MIST          | 5,000             | 200 MIST      | 12,000        | 0 MIST         | 7,400,000 MIST     | 7,400,000 MIST |
 | Complex transaction storing 120 bytes and deleting data | 500 MIST            | 5,000             | 200 MIST      | 12,000        | 5,000,000 MIST | 2,500,000 MIST     | -100,000 MIST  |
+
+## Where does the non-rebateable storage fee go?
+
+Sui does not burn the non-rebateable portion of your storage fees, and validators do not receive it directly. At each epoch change, the storage fund splits this portion out of its pool of object storage rebates and moves it into the storage fund's non-refundable balance. The non-refundable balance also holds storage fund reinvestment and leftover staking rewards, and the protocol never refunds it to users who delete objects. In contrast, the storage fund burns the rebateable portion that it already returned to transaction senders' gas coins at the end of the epoch change.
