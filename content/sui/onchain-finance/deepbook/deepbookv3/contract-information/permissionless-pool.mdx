@@ -198,3 +198,7 @@ The SDK pulls the 500 DEEP creation fee from your address unless you pass a `dee
 **Do I need to run a price oracle for my pool?** Only if you want traders to pay fees in DEEP. There is no fallback to input token fees: without price points, any order with `pay_with_deep = true` aborts with `ENoDataPoints`, and traders have to pass `pay_with_deep = false` explicitly. Call `add_deep_price_point()` regularly to keep DEEP fees available.
 
 **What reference pool address should I use for DEEP price points?** Use the `DEEP/USDC` pool at `0xf948981b806057580f91622417534f491da5f61aeaf33d0ed8e69fd5691c95ce` for pools that include USDC. Use the `DEEP/SUI` pool at `0xb663828d6217467c8a1838a03793da896cbe745b150ebd57d82f814ca579fc22` for pools that include SUI.
+
+## Which Sui client does the SDK example use?
+
+The example uses `SuiGrpcClient` from `@mysten/sui/grpc` for both the DeepBook extension and transaction execution. `SuiGrpcClient` exposes `signAndExecuteTransaction` directly, so the same client signs and submits the pool creation transaction.
