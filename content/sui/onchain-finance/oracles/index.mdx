@@ -105,3 +105,15 @@ As a concrete reference point, [DeepBook Margin](/onchain-finance/deepbook/deepb
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## What happens when a price is stale
+
+The Pyth staleness check aborts on a stale feed. Move cannot catch an abort, so the whole transaction fails instead of returning an old value. Your consumer gets a fresh price or a clear abort, never a silently stale one.
+
+To keep a transaction alive when the primary feed is stale, use a fallback feed:
+
+1. Read the primary feed with the unchecked Pyth reader.
+2. Test its freshness yourself, without aborting.
+3. If the primary is stale, read a secondary feed with the checked reader. This read still aborts if the secondary feed is also stale.
+
+In the pull model, the transaction applies the Hermes update before the read. A stale read through a staleness bound means the update did not land, and the read aborts. The [Move Adapter Pattern](move-adapter) implements this fallback.
