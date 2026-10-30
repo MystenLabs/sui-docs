@@ -173,4 +173,11 @@ Use these buckets for:
 
 Mysten Labs hosts free formal snapshots on Cloudflare R2 (currently in North America only). You do not need credentials. Access through `sui-tool download-formal-snapshot --no-sign-request`.
 
+## Free formal snapshot endpoints
 
+When you pass `--no-sign-request`, `sui-tool download-formal-snapshot` reads the free snapshots from the endpoint that matches the `--network` flag:
+
+- `mainnet` (the default): `https://formal-snapshot.mainnet.sui.io`
+- `testnet`: `https://formal-snapshot.testnet.sui.io`
+
+These are the same URLs as the [formal snapshot HTTPS endpoints](#formal-https). `--no-sign-request` conflicts with `--snapshot-bucket` and `--snapshot-bucket-type`, so do not set those flags in the same command. Use `--epoch` to choose a specific epoch, or `--latest` to download the latest available snapshot.
