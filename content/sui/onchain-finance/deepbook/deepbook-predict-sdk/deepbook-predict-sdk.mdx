@@ -346,3 +346,9 @@ const pricer = tx.add(
 <ImportContent source="packages/deepbook-v3/src/predict/tx/trade.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="32-35" />
 
 The `args` parameter takes the market ID and the 3 oracle object IDs that `cfg.underlyings[symbol]` carries. Pass `pricer` to a `/sessions` Predict wrapper such as `SessionsContract.mintExactQuantity`, which [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) walks through.
+
+## Which strikes does a market admit?
+
+A numeric strike must be a whole multiple of the market's `admissionTickSize`. This step is coarser than `tickSize`, varies by cadence, and is mutable protocol state, so read it from the market rather than assuming a value. Round your target strike to the nearest multiple of that step. An off-grid strike throws `PredictInputError` when the SDK builds the transaction. The market's `referencePrice` is the only finite strike the chain admits off-grid.
+
+A range position has 2 finite numeric strikes as its bounds, so both bounds must sit on the admission grid. Strikes scale by 1e9, and the SDK throws when a value carries more than nine decimals. After you round to a sub-dollar step, trim the floating-point residue from the result.
