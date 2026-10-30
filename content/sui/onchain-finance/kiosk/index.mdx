@@ -53,3 +53,13 @@ Select one of the topics in the list that follows to continue.
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## What do Kiosk apps leave intact?
+
+Kiosk apps add features on top of a kiosk without discarding or blocking its base behavior. The base behavior that stays in place includes:
+
+- **True ownership:** Only the kiosk owner can `place`, `take`, `list`, and perform other actions on assets in the kiosk.
+- **Default trading flow:** The `list` and `purchase` flow remains available.
+- **Creator control:** Every transaction with a third party creates a `TransferRequest`, so creators stay in control of the trading experience.
+
+Only the kiosk owner can install an app, and installation requires the `KioskOwnerCap`. An installed app receives a permission bitmap for protected actions such as `place` and `lock`, or no permissions at all. The owner can disable an app at any time, which stops it from performing protected actions.
