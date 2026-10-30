@@ -156,7 +156,7 @@ See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/buildi
 
 ## How do I pay for gas on Sui?
 
-On Sui, you pay gas with a SUI coin object that your address owns, not with an account balance. The protocol rejects a gas object that is not an owned object.
+On Sui, you pay gas in SUI, either from SUI coin objects or from the SUI address balance of the gas owner. An empty gas payment list tells the protocol to deduct gas from the address balance. Any gas coin you do list must be an owned object, and the protocol rejects one that is not.
 
 When you build a transaction with `sui client ptb`, the CLI handles gas for you by default:
 
