@@ -72,3 +72,17 @@ Display V2 brings a richer templating model, improved rendering pipeline, and be
 ## Where can I learn the templating syntax?
 
 [Read more about the templating language and try the visual display builder](/develop/objects/display/display-preview).
+
+## Migrate a V1 display to V2
+
+To migrate a legacy display, call `migrate_v1_to_v2` on the `DisplayRegistry` object and pass the legacy `sui::display::Display` value for your type. The registry address is system-generated at `0xd`. The call returns the new V2 display and its `DisplayCap<T>`:
+
+```move
+        let (_display, _cap) = registry.migrate_v1_to_v2(legacy_display, scenario.ctx());
+```
+
+Each type has only one V2 display, so a second migration for the same type aborts with `EDisplayAlreadyExists`. To create a V2 display for a type that has no V1 display, call `new_with_publisher<T>` with the package `Publisher` instead:
+
+```move
+    let (display, cap) = registry.new_with_publisher<T>(&mut publisher, scenario.ctx());
+```
