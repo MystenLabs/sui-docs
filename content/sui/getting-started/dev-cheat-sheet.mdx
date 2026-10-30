@@ -102,3 +102,20 @@ Best practices for writing Move smart contracts on Sui.
 
 - Call the proving service as sparingly as possible. Design your app flows such that you call the proving service only when the user is about to perform a real transaction.
 - Beware of how you cache the ephemeral private key. Treat the private key as highly sensitive data, such as a password. If an unexpired ephemeral private key and its corresponding ZK proof leak, an attacker can steal the user's assets.
+
+## Which dynamic field-backed collection should you use?
+
+Pick a dynamic field-backed collection based on value types, object visibility, and ordering:
+
+- `Bag` and `ObjectBag` are heterogeneous map-like collections, so one bag holds values of different types.
+- `Table` and `ObjectTable` take type parameters for the key and value (for example, `ObjectTable<K, V>`), so every entry shares one key type and one value type.
+- `ObjectBag` and `ObjectTable` require values that are objects (`V: key + store`). The values still exist in storage, which matters for external tools. Within Move, the difference is otherwise not observable.
+- `LinkedTable` keeps its entries in order. Use `next` to walk entries and `pop_front` or `pop_back` to remove from either end. You can `drop` a non-empty `LinkedTable` only if the value type has the `drop` ability.
+
+A bag or table must be empty before you call `destroy_empty` on it.
+
+## Sign with dApp Kit and execute separately
+
+To sign a transaction in the wallet without executing it, call the `signTransaction` action of dApp Kit. In a React app, get the dApp Kit instance from the `useDAppKit` hook in `@mysten/dapp-kit-react`. The action resolves to the transaction `bytes` as a base64-encoded BCS string and the base64-encoded `signature`.
+
+To execute the signed transaction on your app's full node, decode `bytes` to a `Uint8Array` and pass it with the signature to `executeTransaction` on a `SuiGrpcClient`. `executeTransaction` takes the transaction as `transaction` and the signatures as a `signatures` array.
