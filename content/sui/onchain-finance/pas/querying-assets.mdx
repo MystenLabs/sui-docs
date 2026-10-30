@@ -129,4 +129,4 @@ An Account can hold asset types that a PAS policy does not govern. For example, 
 
 ## Which client supports balance queries?
 
-`SuiGrpcClient` supports these balance queries, so you do not need a different client class. The full node gRPC balance API serves both a single coin type lookup and a full list of balances for an address. Extending the client with `.$extend(pas())` keeps the core API available. You can also reach it explicitly at `client.core`, for example `client.core.getBalance({ owner, coinType })`. Any client that exposes the core API works, whether it uses gRPC or JSON-RPC.
+`SuiGrpcClient` supports these balance queries, so you do not need a different client class. The full node gRPC balance API serves both a single coin type lookup and a full list of balances for an address. Extending the client with `.$extend(pas())` keeps the core API available. You can also reach it explicitly at `client.core`, for example `client.core.getBalance({ owner, coinType })`. Any client that exposes the core API works.
