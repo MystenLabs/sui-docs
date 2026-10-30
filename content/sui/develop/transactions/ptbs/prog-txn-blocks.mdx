@@ -493,3 +493,13 @@ Results: [
 - `Item { id: id2 }` transferred to sender.
 
 - Marketplace object returned as shared (mutated).
+
+## What is address balance gas payment?
+
+With normal gas payment, you list one or more `Coin<SUI>` objects in the gas payment, and the runtime combines (smashes) them into a single gas coin. With address balance gas payment, you leave the gas payment list empty, and the protocol deducts gas from the SUI address balance of the gas owner (the sender, or the sponsor in a sponsored transaction). In that case, no real coin object receives the final gas charge.
+
+When the fullnode selects gas for you, it pays from the gas owner's address balance if the transaction never touches the gas coin and that balance covers the budget. Otherwise, it pays from their SUI coins. If the transaction does use the gas coin, it adds an address balance reservation so both sources are available.
+
+## How do commands merge cliques?
+
+All arguments to a single command, together with the command's results, merge into one clique. Specific arguments are not paired. A by-reference argument belongs to the same clique as the value it borrows and carries the same heat, so it merges cliques exactly like a by-value argument. `TxContext` is the exception: it never joins a clique. After values share a clique, they stay in it for the rest of the transaction.
