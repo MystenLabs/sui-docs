@@ -51,3 +51,7 @@ Choose the subtopic below that matches the historical data you need to access.
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## When do you need the Archival Service?
+
+A full node serves ledger history only down to its serving floor. The full node has pruned all data under that floor, and that data is permanently gone from the node. When your request names a lower bound under the serving floor, or covers a checkpoint range that lies wholly under it, the full node rejects the request with `OutOfRange` instead of returning an empty page. When your request has no lower bound of its own, the full node raises the start of the request to the serving floor. Use the Archival Service for any data older than the serving floor of the full node you query.
