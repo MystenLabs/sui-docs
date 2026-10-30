@@ -182,3 +182,7 @@ The interest rate follows a kinked (piecewise linear) model, where the kink is t
 - Above the kink: Steep linear growth to discourage over-borrowing.
 
 Interest compounds every time the state is updated (on any supply, borrow, repay, or withdraw operation). The protocol spread determines what portion of the interest goes to fees versus suppliers.
+
+## How is a `MarginManager` registered?
+
+Registration with the `MarginRegistry` happens when you create a `MarginManager`. The same call that creates the manager also shares it and registers it in the registry, so the normal path has no separate registration step. After the transaction executes, read the created shared object whose type contains `MarginManager` from the transaction effects and persist its ID. The registry tracks managers for each owner across every pool. Reuse an existing manager instead of creating a new one on every run, because each new manager leaves an orphaned shared object that fragments your collateral.
