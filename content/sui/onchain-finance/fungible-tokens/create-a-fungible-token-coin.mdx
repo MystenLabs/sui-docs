@@ -88,7 +88,7 @@ Create the coin using the `coin::create_currency` function:
 
 ##### Step 3: Mint the initial supply
 
-Mint the initial supply of your coin:
+Mint the initial supply of your coin. You need the `TreasuryCap` object to mint new coins or to burn current ones, so only addresses that have access to this object can maintain the coin supply on the Sui network:
 
 <ImportContent
 	source="I1/silver/sources/silver.move"
