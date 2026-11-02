@@ -100,7 +100,7 @@ The original `place_limit_order`, `place_market_order`, and `place_reduce_only_*
 
 ## How do I modify or cancel an order?
 
-Use `modify_order` to reduce the quantity of a resting limit order. The new quantity must be lower than the original, otherwise the call aborts with `ENewQuantityMustBeLessThanOriginal`. Provide the order ID returned when you placed the order.
+Use `modify_order` in the `pool_proxy` module to reduce the quantity of a resting limit order. The new quantity must be lower than the original, otherwise the call aborts with `ENewQuantityMustBeLessThanOriginal`. Provide the order ID returned when you placed the order.
 
 To cancel orders, use one of three functions depending on scope:
 
@@ -239,7 +239,7 @@ Submit proposals and vote on governance decisions through the margin manager.
 <details>
 <summary>Claim rebates</summary>
 
-Claim trading rebates earned through the margin manager.
+Claim trading rebates earned through the margin manager by calling `claim_rebates` in the `pool_proxy` module.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/pool_proxy.move"

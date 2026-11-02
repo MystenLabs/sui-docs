@@ -94,9 +94,9 @@ For the conceptual model, see [Sponsored Transactions](/develop/transaction-paym
 
 ### Sponsored transaction with address balance gas
 
-The sponsor can also pay gas from their SUI address balance instead of providing specific coin objects. Address-balance gas requires additional configuration (a `ValidDuring` expiration for replay protection and a nonce). Read the [full requirements for address-balance gas payment](/onchain-finance/asset-custody/address-balances/using-address-balances#how-do-i-pay-for-gas-from-an-address-balance) before using this pattern in production.
+The sponsor can also pay gas from their SUI address balance instead of providing specific coin objects. Address-balance gas requires passing an empty array to `setGasPayment` plus additional configuration (a `ValidDuring` expiration for replay protection and a nonce). Read the [full requirements for address-balance gas payment](/onchain-finance/asset-custody/address-balances/using-address-balances#how-do-i-pay-for-gas-from-an-address-balance) before using this pattern in production.
 
-The following example shows a sponsor paying gas from their SUI address balance:
+The following example is a separate code block in the same `sponsored.ts` file (tagged `sponsored-address-balance-gas` rather than `sponsored`), showing a sponsor paying gas from their SUI address balance:
 
 <ImportContent source="examples/ptb-cookbook/src/sponsored.ts" mode="code" tag="sponsored-address-balance-gas" />
 
