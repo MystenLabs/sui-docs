@@ -88,13 +88,13 @@ You can connect a React interface to that "Hello, World!" package to give any us
 
 ## What is the Sui dApp Kit?
 
-The example frontend uses [`@mysten/dapp-kit`](https://sdk.mystenlabs.com/dapp-kit), which provides React hooks and components for wallet connection, transaction signing, and onchain data queries. The key components used in this example are:
+The example frontend uses [`@mysten/dapp-kit-react`](https://sdk.mystenlabs.com/dapp-kit), which provides React hooks and components for wallet connection, transaction signing, and onchain data queries. Do not use `@mysten/dapp-kit` without a suffix: it is the deprecated 1.x package and its hooks differ. The key components used in this example are:
 
 - `ConnectButton`: A pre-built button component that opens a wallet selection dialog. Users click it to connect their Slush wallet (or any Wallet Standard compatible wallet) to your app.
 - `useCurrentAccount`: A React hook that returns the currently connected wallet account, including the user's Sui address. Use it to check whether a user is connected and to read their address for transaction construction.
-- `useSignAndExecuteTransaction`: A React hook that signs and submits a transaction through the connected wallet.
+- `useDAppKit`: A React hook that returns the dApp Kit instance. The example calls its `signAndExecuteTransaction` method to sign and submit a transaction through the connected wallet.
 
-The `dapp-kit.ts` file in the example project configures the Sui dApp Kit provider with network settings. For a deeper walkthrough of building a frontend with Sui dApp Kit, see the [dApp Kit starter app](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/E2/my-first-sui-dapp).
+The `dapp-kit.ts` file in the example project creates the dApp Kit instance with network settings. For a deeper walkthrough of building a frontend with Sui dApp Kit, see the [dApp Kit starter app](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/E2/my-first-sui-dapp).
 
 The rest of this guide walks through the example project's frontend files, which use these components to connect a wallet and send transactions to your Move package.
 
