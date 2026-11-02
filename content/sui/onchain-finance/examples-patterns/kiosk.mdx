@@ -82,7 +82,7 @@ public fun kiosk_join<T>(
 }
 ```
 
-The function lists `ta2` in the kiosk at a price of `0` and then purchases it with a zero-value coin (`coin::zero<SUI>`), so taking `ta2` out of the kiosk costs nothing but still produces a transfer request. Every transaction with a third party creates a `TransferRequest`, so creators stay in control of the trading experience; that request is confirmed against the transfer policy obtained through `proxy::transfer_policy`. The values returned by `confirm_request` are not needed afterward, so they are bound to underscore-prefixed names. Finally, `ta2` is joined into the borrowed `ta1`, and `ta1` is returned to the kiosk.
+The function lists `ta2` in the kiosk at a price of `0` and then purchases it with a zero-value coin (`coin::zero<SUI>`), so taking `ta2` out of the kiosk costs nothing but still produces a transfer request. That request is confirmed against the transfer policy obtained through `proxy::transfer_policy`. The values returned by `confirm_request` are not needed afterward, so they are bound to underscore-prefixed names. Finally, `ta2` is joined into the borrowed `ta1`, and `ta1` is returned to the kiosk.
 
 ### How do I let users burn assets with a burn ticket?
 

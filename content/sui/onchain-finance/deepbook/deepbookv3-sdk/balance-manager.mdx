@@ -163,7 +163,7 @@ Use `checkManagerBalance` to check the balance of a specific coin in a balance m
 <details>
 <summary>generateProof</summary>
 
-Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set: either `generateProofAsOwner` or `generateProofAsTrader`, both described in this section. The call returns a function that takes a `Transaction` object. You do not need to call `generateProof` and pass its result when you place an order, because `placeLimitOrder` identifies the balance manager by `balanceManagerKey` and takes no trade proof parameter.
+Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set: either `generateProofAsOwner` or `generateProofAsTrader`, both described in this section. The call returns a function that takes a `Transaction` object. `placeLimitOrder` generates the trade proof itself from `balanceManagerKey`, so you don't need to call `generateProof` before placing an order.
 
 **Parameters**
 
@@ -404,7 +404,7 @@ Use `balanceManagerReferralPoolId` to get the pool ID associated with a pool ref
 
 ## Examples
 
-The following examples demonstrate common balance manager operations. Note that `placeLimitOrder` identifies the balance manager by `balanceManagerKey` and takes no trade proof parameter, so you do not need to call `generateProof` and pass its result when you place an order.
+The following examples demonstrate common balance manager operations.
 
 ### How do I create and share a balance manager?
 

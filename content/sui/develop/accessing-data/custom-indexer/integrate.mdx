@@ -109,7 +109,7 @@ Generate the matching Rust schema with `diesel print-schema --database-url $DATA
 
 <ImportContent source="examples/rust/basic-sui-indexer/src/schema.rs" mode="code" />
 
-These steps assume PostgreSQL and Diesel. To write to a different store, implement custom `Store` and `Connection` traits from `sui-indexer-alt-framework-store-traits` and use the manual `Indexer` instead of `IndexerCluster`. [Bring Your Own Store](/develop/accessing-data/custom-indexer/bring-your-own-store) covers that path.
+These steps assume PostgreSQL and Diesel. To write to a different store, implement the `Store` and `Connection` traits from `sui-indexer-alt-framework-store-traits` and use `Indexer` directly instead of `IndexerCluster`, which supports only PostgreSQL. [Bring Your Own Store](/develop/accessing-data/custom-indexer/bring-your-own-store) covers that path.
 
 ## Define your row type
 
