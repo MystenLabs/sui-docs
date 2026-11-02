@@ -49,7 +49,7 @@ answer: >-
 
 Regulated currencies are assets with access control managed through a **deny list**. A deny list identifies addresses that cannot send or receive that asset. For example, stablecoins are a type of regulated currency.
 
-To create regulated currencies on Sui, the Currency Standard's Coin Registry provides regulatory features through the `sui::coin_registry` module. It has built-in support for global pause functionality and ecosystem integration.
+To create regulated currencies on Sui, the Currency Standard's Coin Registry provides regulatory features through the `sui::coin_registry` module. The registry is a system-level shared object located at address `0xc`. It has built-in support for global pause functionality and ecosystem integration.
 
 Advantages of these regulatory features include:
 
@@ -72,7 +72,7 @@ To learn about available features, see [Currency Standard](/onchain-finance/fung
 
 ## How do I create a regulated currency?
 
-To use regulatory features, you need to [create a currency](/onchain-finance/fungible-tokens/create-a-fungible-token). During currency initialization, use the `make_regulated()` function on the `CurrencyInitializer<T>` before calling `finalize()`. This adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the registry system:
+To use regulatory features, you need to [create a currency](/onchain-finance/fungible-tokens/create-a-fungible-token). During currency initialization, use the `make_regulated()` function on the `CurrencyInitializer<T>` before calling `finalize()`. The function takes a `bool` parameter controlling whether the currency allows global pause, and it returns a `DenyCapV2` that allows the bearer to maintain the list of addresses on the deny list. This adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the registry system:
 
 <details>
 <summary>

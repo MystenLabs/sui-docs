@@ -465,7 +465,7 @@ $ cargo run -- \
     --remote-store-header "x-goog-user-project:${GOOGLE_CLOUD_PROJECT}"
 ```
 
-After the indexer reaches the network tip, stop it and restart it with fullnode gRPC. Existing pipelines resume from their committed watermarks. For production, obtain a production-grade fullnode gRPC endpoint from an RPC provider:
+After the indexer reaches the network tip, stop it and restart it with fullnode gRPC. Each pipeline records its progress in the database as a committed watermark, so restart the steady-state process against the same database and pipeline configuration to resume from those watermarks. A new pipeline with no committed watermark starts at checkpoint 0 unless you pass `--first-checkpoint`. For production, obtain a production-grade fullnode gRPC endpoint from an RPC provider:
 
 **Phase 2: use fullnode gRPC polling and streaming for steady state:**
 

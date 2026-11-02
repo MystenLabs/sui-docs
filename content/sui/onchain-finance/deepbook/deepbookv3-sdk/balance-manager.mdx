@@ -163,7 +163,7 @@ Use `checkManagerBalance` to check the balance of a specific coin in a balance m
 <details>
 <summary>generateProof</summary>
 
-Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set: either `generateProofAsOwner` or `generateProofAsTrader`, both described in this section. The call returns a function that takes a `Transaction` object.
+Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set: either `generateProofAsOwner` or `generateProofAsTrader`, both described in this section. The call returns a function that takes a `Transaction` object. `placeLimitOrder` generates the trade proof itself from `balanceManagerKey`, so you don't need to call `generateProof` before placing an order.
 
 **Parameters**
 
