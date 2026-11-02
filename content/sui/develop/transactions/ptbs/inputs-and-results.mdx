@@ -167,27 +167,19 @@ tx.moveCall({
 });
 ```
 
-## How do you transfer a chained result to an address?
+## How do I transfer a chained result to an address?
 
-After a chain of `tx.moveCall` commands, the object you built still exists as a result inside the programmable transaction block. To send it to an account, pass that result to `tx.transferObjects` in the same transaction. The first argument is an array of results to transfer, and the second is the recipient address.
+After a chain of `tx.moveCall` commands, the object you built still exists as a result inside the programmable transaction block. To send it to an account, pass that result to `tx.transferObjects` in the same transaction. The first argument is an array of results to transfer, and the second is the recipient address. In the `hero` example above, pass `hero` to `tx.transferObjects` the same way.
+
+To send the object to the account that signs the transaction, use the signer's address, for example `keypair.toSuiAddress()`.
 
 The PTB cookbook example creates a character, mints a sword, equips the sword, and then transfers the character to a player:
 
-```ts
-tx.moveCall({
-	target: '0xGAME::character::equip',
-	arguments: [character, sword],
-});
-
-// Step 3: Transfer the character to the player.
-tx.transferObjects([character], tx.pure.address(playerAddress));
-
-await client.signAndExecuteTransaction({ signer: keypair, transaction: tx });
-```
+<ImportContent source="examples/ptb-cookbook/src/result-chaining.ts" mode="code" tag="result-chaining" />
 
 Keep the following in mind when you add the transfer step:
 
 - Results from `tx.moveCall` are `TransactionArgument` references, so the same `character` result that the equip call receives also goes to `tx.transferObjects`.
 - If a Move function returns multiple values, destructure them: `const [a, b] = tx.moveCall(...)`.
-- `tx.pure.address(playerAddress)` supplies the recipient as a pure `address` input. Other examples pass an address string directly, as in `tx.transferObjects([remainder], recipient);`.
+- `tx.pure.address(playerAddress)` supplies the recipient as a pure `address` input. `transferObjects` also accepts a plain address string as the recipient, so `tx.transferObjects([hero], recipientAddress)` works too.
 - All commands run in order. If any command fails, the entire transaction reverts, so the player never receives a partially built object.
