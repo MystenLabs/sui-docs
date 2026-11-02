@@ -1,12 +1,12 @@
 [
   {
     "id": "archival-service",
-    "label": "Archival Service",
-    "definition": "A gRPC API layer that exposes access to this store."
+    "label": "Archival service",
+    "definition": "A gRPC service that serves point lookups of historical data from the Archival Store."
   },
   {
     "id": "archival-store",
-    "label": "Archival Store",
+    "label": "Archival store",
     "definition": "A long-term storage system that holds checkpoint-indexed Sui data."
   },
   {
@@ -26,7 +26,7 @@
   },
   {
     "id": "closed-loop-token",
-    "label": "Closed-Loop Token",
+    "label": "Closed-loop token",
     "definition": "A token that can be used only for a specific service or authorized account."
   },
   {
@@ -37,17 +37,17 @@
   {
     "id": "devnet",
     "label": "Devnet",
-    "definition": "For developing and testing new features."
+    "definition": "A development network for trying new features. Its data is wiped regularly."
   },
   {
     "id": "epoch",
     "label": "Epoch",
-    "definition": "A period of time defined by the network."
+    "definition": "A period of about 24 hours during which the validator set and reference gas price stay fixed. Stake changes take effect at epoch boundaries."
   },
   {
     "id": "equivocation",
     "label": "Equivocation",
-    "definition": "When an owned object pair is used concurrently in multiple non-finalized transactions."
+    "definition": "Signing two or more transactions that use the same owned object version at the same time. The object stays locked until the end of the epoch."
   },
   {
     "id": "finality",
@@ -57,17 +57,17 @@
   {
     "id": "gas",
     "label": "Gas",
-    "definition": "The computational cost of execution and object storage for a transaction."
+    "definition": "The fee, paid in SUI, for a transaction's computation and the storage its objects use."
   },
   {
     "id": "localnet",
     "label": "Localnet",
-    "definition": "Local network you can run on your own machine for optimized development."
+    "definition": "A Sui network that runs on your own machine for local development and testing."
   },
   {
     "id": "kiosk",
     "label": "Kiosk",
-    "definition": "A decentralized system for commerce applications on Sui."
+    "definition": "A Sui object that holds assets for display and sale, with transfer policies that the creator sets and the protocol enforces."
   },
   {
     "id": "mainnet",
@@ -77,7 +77,7 @@
   {
     "id": "multi-writer-objects",
     "label": "Multi-writer objects",
-    "definition": "Objects that are owned by more than one address."
+    "definition": "Shared objects, which any transaction can read or modify, so Sui orders transactions that use them through consensus."
   },
   {
     "id": "mysticeti",
@@ -91,8 +91,8 @@
   },
   {
     "id": "operation-cap",
-    "label": "Operation Cap",
-    "definition": "Allows a validator to authorize another account to perform certain actions on its behalf."
+    "label": "Operation cap",
+    "definition": "A capability a validator can give another address so it can perform operational tasks, such as setting the gas price vote and reporting other validators."
   },
   {
     "id": "single-writer-objects",
@@ -112,7 +112,7 @@
   {
     "id": "transaction",
     "label": "Transaction",
-    "definition": "A number of commands that execute on inputs to define the result of the transaction."
+    "definition": "A signed request that reads and modifies objects, such as transferring a coin or calling a Move function. It succeeds or fails as a whole."
   },
   {
     "id": "transfer",
@@ -122,7 +122,7 @@
   {
     "id": "validator",
     "label": "Validator",
-    "definition": "Responsible for executing tasks like staking, gas price references, and tallying rules."
+    "definition": "A node that holds stake, participates in consensus, and executes and certifies transactions. Validators earn staking rewards and vote on the reference gas price each epoch."
   },
   {
     "id": "wallet-standard",
@@ -132,39 +132,40 @@
   {
     "id": "consensus",
     "label": "Consensus",
-    "definition": "The process by which the majority of nodes agree on the current state of the network"
+    "definition": "The process by which validators holding more than 2/3 of stake agree on the order of transactions. Sui uses the Mysticeti protocol."
   },
   {
     "id": "full-node",
     "label": "Full node",
-    "definition": "Responsible for validating blockchain activity."
+    "definition": "A node that stores the chain's state and history and serves it to apps through RPC. It does not take part in consensus."
   },
   {
     "id": "dpos",
     "label": "DPoS",
-    "definition": "Consensus mechanism used by Sui.",
+    "definition": "Delegated proof-of-stake: the mechanism that sets each validator's voting power from the SUI staked with it, including stake from delegators.",
     "aliases": ["delegated proof-of-stake"]
   },
   {
     "id": "programmable-transaction-blocks",
     "label": "Programmable transaction blocks",
-    "definition": "Define all user transactions on Sui.",
+    "definition": "A transaction made of up to 1,024 commands, where later commands can use earlier commands' results. All commands succeed or fail together.",
     "aliases": ["PTB", "PTBs"]
   },
   {
     "id": "system-transactions",
     "label": "System transactions",
-    "definition": "Only submittable by validator nodes."
+    "definition": "Transactions the protocol creates for its own operations, such as epoch changes. Users cannot submit them."
   },
   {
     "id": "mist",
     "label": "MIST",
-    "definition": "The smallest unit of SUI."
+    "definition": "The smallest unit of SUI. 1 SUI = 1,000,000,000 MIST."
   },
   {
     "id": "move",
     "label": "Move",
-    "definition": "An open source programming language used for all activity on Sui."
+    "definition": "The programming language for smart contracts (packages) on Sui.",
+    "caseSensitive": true
   },
   {
     "id": "quorum",
@@ -180,24 +181,24 @@
   {
     "id": "multisig",
     "label": "Multisig",
-    "definition": "Multi-signature transactions that require multiple keys for authorization.",
+    "definition": "An address controlled by up to 10 weighted keys. A transaction is valid when its signatures' weights reach the threshold.",
     "aliases": ["multi-signature", "multi-sig"]
   },
   {
     "id": "grpc-api",
     "label": "gRPC API",
-    "definition": "Replaces JSON-RPC on full nodes for data access.",
+    "definition": "The full node API for reading chain data and submitting transactions.",
     "aliases": ["gRPC"]
   },
   {
     "id": "general-purpose-indexer",
-    "label": "General-purpose Indexer",
-    "definition": "A performant and scalable implementation of the custom indexing framework."
+    "label": "General-purpose indexer",
+    "definition": "The indexer that backs GraphQL RPC. It's built on the custom indexing framework."
   },
   {
     "id": "graphql-rpc",
     "label": "GraphQL RPC",
-    "definition": "A lightweight GraphQL RPC service."
+    "definition": "A GraphQL API for querying Sui data, backed by an indexer."
   },
   {
     "id": "zklogin",
@@ -207,13 +208,13 @@
   {
     "id": "checkpoint",
     "label": "Checkpoint",
-    "definition": "Created after transaction execution to provide a certified record of chain history.",
+    "definition": "A batch of executed transactions, signed by a quorum of validators, that forms the record of chain history.",
     "aliases": ["checkpoints"]
   },
   {
     "id": "address",
     "label": "Address",
-    "definition": "A unique, anonymous identity on a blockchain network.",
+    "definition": "A 32-byte identifier for an account or object owner, derived from a public key and its signature scheme.",
     "aliases": ["addresses"]
   },
   {
@@ -224,18 +225,18 @@
   {
     "id": "package",
     "label": "Package",
-    "definition": "Smart contracts on Sui.",
+    "definition": "A set of Move modules published together onchain as an immutable object.",
     "aliases": ["packages", "Move package", "Move packages"]
   },
   {
     "id": "module",
     "label": "Module",
-    "definition": "A component of a Move package that defines interaction with on-chain objects.",
+    "definition": "A unit of Move code inside a package that declares types and functions.",
     "aliases": ["modules"]
   },
   {
     "id": "nautilus",
     "label": "Nautilus",
-    "definition": "Secure and verifiable off-chain computation on Sui."
+    "definition": "A framework for running offchain computation in a trusted execution environment, with results that Move contracts can verify onchain."
   }
 ]
