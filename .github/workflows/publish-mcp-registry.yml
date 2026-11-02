@@ -1,0 +1,67 @@
+name: Publish MCP registry entry
+
+# Publishes mcp-registry/server.json (the Sui docs MCP server) to the official
+# MCP registry as io.github.MystenLabs/sui-mcp.
+#
+# The registry grants the io.github.MystenLabs/* namespace to GitHub Actions
+# OIDC tokens from MystenLabs repositories, so no personal login or secret is
+# needed. Bump "version" in server.json for each change; the registry rejects
+# a version it already has.
+#
+# Manual: it publishes to a public registry, so it runs when someone asks.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Validate server.json without publishing"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PUBLISHER_VERSION: v1.8.7
+  PUBLISHER_SHA256: 00b21004149a4ce66f0782508ae4a2bce67d1bea395a8da0bd8028159fb59579
+
+jobs:
+  publish:
+    name: Publish to registry.modelcontextprotocol.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/mcp-publisher.tgz" \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${PUBLISHER_SHA256}  $RUNNER_TEMP/mcp-publisher.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/mcp-publisher.tgz" -C "$RUNNER_TEMP" mcp-publisher
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Validate
+        working-directory: mcp-registry
+        run: mcp-publisher validate
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        working-directory: mcp-registry
+        run: |
+          mcp-publisher login github-oidc
+          mcp-publisher publish
+
+      - name: Summarise
+        if: always()
+        run: |
+          name=$(jq -r .name mcp-registry/server.json)
+          version=$(jq -r .version mcp-registry/server.json)
+          {
+            echo "### MCP registry${{ inputs.dry_run && ' (dry run)' || '' }}"
+            echo
+            echo "\`$name\` $version"
+            echo
+            echo "Check: https://registry.modelcontextprotocol.io/v0/servers?search=$name"
+          } >> "$GITHUB_STEP_SUMMARY"
