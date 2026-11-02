@@ -50,7 +50,7 @@ function loadGlossary(glossaryPath) {
     const raw = fs.readFileSync(glossaryPath, "utf8");
     const data = JSON.parse(raw);
 
-    /** @type {{label:string,definition:string,id?:string,aliases?:string[]}[]} */
+    /** @type {{label:string,definition:string,id?:string,aliases?:string[],caseSensitive?:boolean}[]} */
     const entries = [];
 
     if (Array.isArray(data)) {
@@ -61,6 +61,7 @@ function loadGlossary(glossaryPath) {
                 definition: String(item.definition),
                 id: item.id ? String(item.id) : undefined,
                 aliases: Array.isArray(item.aliases) ? item.aliases.map(String) : [],
+                caseSensitive: item.caseSensitive === true,
             });
         }
     } else if (data && typeof data === "object") {
@@ -146,7 +147,14 @@ function remarkGlossary(options = {}) {
                 const key = String(term).toLowerCase();
                 const entry = byKey.get(key);
 
-                if (!entry) {
+                // Case-sensitive entries (for example, "Move") only match their exact
+                // label or aliases, so the verb "move" does not get the tooltip.
+                const exactMismatch =
+                    entry?.caseSensitive &&
+                    term !== entry.label &&
+                    !(entry.aliases || []).includes(term);
+
+                if (!entry || exactMismatch) {
                     // No entry? Just emit the raw match and keep going
                     nextChildren.push({ type: "text", value: term });
                 } else {
