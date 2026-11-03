@@ -20,6 +20,7 @@
     "fire:deploy-dev": "firebase deploy --only hosting:dev",
     "ampli": "ampli",
     "test:markdown": "node scripts/test-markdown-export.js",
+    "test:agent-traffic": "node --test scripts/test-agent-traffic.mjs",
     "docs:audit": "node scripts/audit-docs.mjs",
     "docs:audit:summary": "node scripts/audit-docs.mjs --summary",
     "docs:audit:failures": "node scripts/audit-docs.mjs --only-failures --summary",
