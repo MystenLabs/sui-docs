@@ -406,21 +406,6 @@ Wait for the first transaction to finish, then rebuild or re-sign the transactio
 
 ---
 
-#### `Failed to sign transaction by a quorum of validators because one or more of its objects is equivocated until the next epoch.`
-
-An object is equivocated when competing transactions use the same mutable owned object version and split validator reservations so that no transaction can obtain quorum. The affected object version is unavailable until the next epoch.
-
-##### Solution
-
-Wait for the next epoch, then rebuild the transaction using current object references. Avoid submitting multiple concurrent transactions that use the same mutable owned object version. Use independent owned objects for parallel work, combine related operations into one PTB, or use SDK and client helpers that manage gas coins and object dependencies.
-
-**Resources**
-
-- [Object Versioning](/develop/objects/versioning)
-- [Building Transactions](/develop/transactions/ptbs/building-ptb)
-
----
-
 #### `Unable to process transaction. Unexpected status code: 403`
 
 The Sui network responds to an RPC or API request with `HTTP 403: Forbidden` status. This might happen if an RPC provider:
