@@ -125,7 +125,7 @@ impl Connection for MyCustomConnection<'_> {
 }
 ```
 
-For the full set of methods the `Connection` trait requires, expand the `lib.rs` trait definition at the top of this page.
+For the full set of methods the `Connection` trait requires, expand the `lib.rs` trait definition at the top of this page. For an example that persists watermarks, see `store.rs` in [Example: ClickHouse implementation](#example-clickhouse-implementation).
 
 The `todo!("Implement based on your storage system")` placeholders in the preceding snippet are stubs: the code does not compile or run until you replace each one with the query logic for your storage system. For a complete reference, study the `sui-pg-db` implementation on `Connection`:
 
@@ -133,7 +133,7 @@ The `todo!("Implement based on your storage system")` placeholders in the preced
 
 ###step Use manual indexer
 
-Replace `IndexerCluster` with manual `Indexer`:
+Replace `IndexerCluster` with manual `Indexer`. The `ClientArgs` struct groups the checkpoint source settings: `IngestionClientArgs` sets the remote checkpoint store, and `StreamingClientArgs` sets the full node streaming URL. The following example imports both from the `sui_indexer_alt_framework::ingestion` module:
 
 ```rust
 use sui_indexer_alt_framework::{Indexer, IndexerArgs};
