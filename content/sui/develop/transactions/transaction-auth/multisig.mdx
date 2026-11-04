@@ -85,7 +85,7 @@ Compared to threshold signatures, a multisig account is generally more flexible 
 
 :::tip
 
-Hold privileged capabilities such as `AdminCap`, `UpgradeCap`, `TreasuryCap`, and `DenyCapV2` under a multisig account rather than a single key. Choose the `k`-of-`n` threshold deliberately so no single party can act alone, and distribute the signing keys across different people and devices to avoid a single point of compromise. Document your recovery and key-rotation procedures before you need them. See [User and operator key management](/develop/security/best-practices#user-and-operator-key-management) for details.
+Hold privileged capabilities such as `AdminCap`, `UpgradeCap`, `TreasuryCap`, and `DenyCapV2` under a multisig account rather than a single key. Choose the `k`-of-`n` threshold deliberately so no single party can act alone, and distribute the signing keys across different people and devices to avoid a single point of compromise. Document your recovery and key-rotation procedures before you need them. See [User and operator key management](/develop/security/best-practices) for details.
 
 :::
 
@@ -264,7 +264,7 @@ Use the `sui client transfer` command to set up the transfer. The `--serialize-u
 <ImportContent source="info-gas-budget" mode="snippet" />
 
 ```sh
-$ sui client transfer --to $ACTIVE --object-id $COIN --gas-budget <GAS-AMOUNT> --serialize-unsigned-transaction
+$ sui client transfer --to $ACTIVE --object-id $COIN --serialize-unsigned-transaction
 ```
 
 The console displays the result (`<TX-BYTES-RESULT>`), which you can assign to another shell variable.
@@ -305,7 +305,7 @@ Each successful call to the command receives a response similar to the following
 ╰──────────────┴─────────────────────────────╯
 ```
 
-Create two more shell variables to store the signatures, replacing `<SIGNATURE-HASH-*>` with the values from the previous command responses.
+Create two more shell variables to store the signatures. Replace `<SIGNATURE-HASH-*>` with the `suiSignature` value from each of the previous command responses, not the `digest` or `rawIntentMsg` value.
 
 ```sh
 $ SIG_1=<SIGNATURE-HASH-ED25519>
