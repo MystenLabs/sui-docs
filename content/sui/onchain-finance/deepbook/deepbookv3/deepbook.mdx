@@ -141,12 +141,12 @@ Users that stake DEEP can enjoy taker and maker incentives. Taker incentives can
 
 ## How do you stake DEEP?
 
-You stake DEEP in a specific pool, from a `BalanceManager`, as part of a transaction you build with the SDK or a Move package. DEEP held in the manager pays trading fees, and staking it in a pool unlocks the taker-fee discount.
+You stake DEEP in a specific pool, from a `BalanceManager`, as part of a transaction you build with the SDK or a Move package. DEEP held in the manager pays trading fees. Staked DEEP becomes active at the start of the next epoch. The taker-fee discount applies once your active stake in the pool reaches the pool's `stake_required` amount and your trading volume in that pool during the current epoch, valued in DEEP, also reaches `stake_required`.
 
 To stake DEEP:
 
 1. Deposit DEEP into your `BalanceManager`. See [DeepBook Fees and Funding](/onchain-finance/deepbook/deepbookv3/fees-and-funding).
-1. Stake the DEEP in a specific pool from that `BalanceManager`, in a transaction you build with the SDK or a Move package.
+1. Stake the DEEP in a specific pool from your `BalanceManager`. With the SDK, use the `stake` function on the governance contract. From Move, call `pool::stake`, which also takes a `TradeProof`. See [Staking and Governance SDK](/onchain-finance/deepbook/deepbookv3-sdk/staking-governance).
 
 The SDK scales the amount you pass in whole DEEP to the coin's 6 decimals, so 1 DEEP equals 1,000,000 of the smallest unit. For example, to stake 10 DEEP, pass 10, and the SDK converts it to 10,000,000 units onchain.
 
