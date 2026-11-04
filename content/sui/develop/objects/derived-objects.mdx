@@ -103,7 +103,7 @@ The following matrix highlights some of the differences between using dynamic fi
 | Object parallelism | ✅ Yes | Limited. All writes sequenced through parent. |
 | Loading type | Static. Direct access after creation. | Dynamic. They are loaded through the parent. |
 | Supports deletion? | ✅ Yes | ✅ Yes |
-| Supports reclaiming? | ❌ Currently no | ✅ Yes |
+| Supports reclaiming? | ✅ Yes, through `release` and `claim`. Shared derived objects do not support release. | ✅ Yes |
 
 ## `derived_object`
 
@@ -135,7 +135,7 @@ The following steps summarize the workflow described on this page. The [derived 
 3. Check that the ID is not already claimed with `derived_object::exists(&parent.id, key)`.
 4. Claim the UID with `derived_object::claim(&mut parent.id, key)` and use it as the `id` field of your new object.
 5. Transfer, share, or wrap the object as needed.
-6. To take assets sent to the address before the object existed, receive them through the object's UID with `transfer::public_receive`, as the `receive_from_vault` function does.
+6. To take assets sent to the address before the object existed, receive them through the object's UID with `transfer::public_receive`, as the `receive_from_vault` function in the [derived object registry](#derived-object-registry) example does.
 
 ## Registries {#registries}
 
