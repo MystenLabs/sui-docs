@@ -19,7 +19,9 @@ const path = require("path");
 // The release branches carried a spec for a while longer, and lose it one by
 // one as they move past that removal: devnet had none from 21 October 2026,
 // and every preview build failed on the missing file. So only mainnet, the
-// last branch to move, is required. A network whose spec is present is
+// last branch to move, was required, until 4 November 2026, when mainnet moved
+// past the removal too and every build, production included, failed here. No
+// network is required now. A network whose spec is present is
 // validated; one whose spec is absent is reported, and the downloader leaves
 // it out of networks.json so the reference does not offer it.
 const SPEC_DIR = path.resolve(__dirname, "../static/open-spec");
@@ -108,19 +110,11 @@ function main() {
     try {
       raw = fs.readFileSync(abs, "utf8");
     } catch (e) {
-      if (spec.strictJson) {
-        fail(
-          `Missing required file for ${spec.network}:\n  - ${abs}\n\n${e.message}\n\n` +
-            `scripts/getopenrpcspecs.js downloads it from the ${spec.network} branch of MystenLabs/sui ` +
-            `before the build (scripts/build-and-check.sh); run it, or check that branch still carries a spec.`,
-        );
-      } else {
-        warnings.push(
-          `⚠️ No ${spec.network} spec at ${abs}: the ${spec.network} branch of MystenLabs/sui ` +
-            `no longer publishes one, so the reference does not offer ${spec.network}.`,
-        );
-        continue;
-      }
+      warnings.push(
+        `⚠️ No ${spec.network} spec at ${abs}: the ${spec.network} branch of MystenLabs/sui ` +
+          `no longer publishes one, so the reference does not offer ${spec.network}.`,
+      );
+      continue;
     }
 
     // Strict networks must be real JSON.
@@ -130,7 +124,7 @@ function main() {
         doc = JSON.parse(raw);
       } catch (e) {
         fail(
-          `Invalid JSON in REQUIRED ${spec.network} spec:\n  - ${abs}\n\n` +
+          `Invalid JSON in ${spec.network} spec:\n  - ${abs}\n\n` +
             `JSON parse error: ${e.message}\n\n` +
             `First 120 chars:\n${raw.trim().slice(0, 120)}`,
         );
@@ -163,11 +157,9 @@ function main() {
     }
   }
 
-  // Safety: ensure at least one real spec validated
+  // Every network has removed JSON-RPC, so having no spec at all is expected.
   if (validCount < 1) {
-    fail(
-      "No valid OpenRPC specs were validated. At least one network must provide a real OpenRPC JSON spec.",
-    );
+    warnings.push("⚠️ No network publishes an OpenRPC spec; the JSON-RPC reference has nothing to show.");
   }
 
   if (warnings.length) {
