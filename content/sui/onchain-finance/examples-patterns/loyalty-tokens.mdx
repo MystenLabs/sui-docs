@@ -93,8 +93,8 @@ When you implement loyalty tokens, consider the following:
 Loyalty tokens follow this lifecycle:
 
 1. **Minting:** The `TreasuryCap` holder calls `reward_user` to mint tokens to a recipient.
-2. **Spending:** The recipient calls `buy_a_gift` to spend tokens. The `token::spend` function consumes the token and creates an `ActionRequest`.
-3. **Settlement:** The `ActionRequest` is confirmed against the `TokenPolicy`, which accumulates the spent balance.
+2. **Spending:** The recipient calls `buy_a_gift` to spend tokens. The `token::spend` function consumes the token and creates an `ActionRequest`. An `ActionRequest` records the `spend` action so that the `TokenPolicy` can check it against its rules.
+3. **Settlement:** You confirm the `ActionRequest` against the `TokenPolicy`, for example with `confirm_request`. The `TokenPolicy` checks that the request satisfies every rule for the action, such as the `GiftShop` approval in this example, and then accumulates the spent balance. If a check fails, the call aborts, as described in [What happens when a policy has no rule for an action?](#what-happens-when-a-policy-has-no-rule-for-an-action).
 4. **Burning:** The `TreasuryCap` holder can remove the accumulated spent balance from the `TokenPolicy`, effectively burning the tokens.
 
 [View the full example on GitHub](https://github.com/MystenLabs/sui/tree/main/examples/move/token/sources/loyalty.move).
