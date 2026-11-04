@@ -77,8 +77,10 @@ This pricing mechanism gives you the best user experience without needing to for
 Gas fees for any transaction equal:
 
 ```
-total_gas_fees = computation_units × reference_gas_price + storage_units × storage_price
+total_gas_fees = computation_units × gas_price + storage_units × storage_price
 ```
+
+In this formula, `gas_price` is the gas price you set for the transaction, which must be at least the reference gas price. [Computation gas prices](#computation-prices) explains how the gas price relates to the reference gas price.
 
 A unique feature of the Sui gas price mechanism is that users pay separate fees for transaction execution and for storing the data associated with each transaction. The gas fees associated with an arbitrary transaction τ equal:
 
@@ -171,9 +173,9 @@ In the long run, the Sui gas price mechanism creates incentives for validators t
 
 You must submit all transactions together with a gas budget. This provides a cap to the amount of gas fees you pay, especially because sometimes it might be hard to perfectly forecast how much a transaction costs before you submit it to the Sui network.
 
-You define the gas budget for a Sui transaction in SUI units. A transaction executes successfully if it meets the following condition, where `total_gas_fees` comes from the formula in [Gas fee structure](#gas-fee-structure) and `computation_fees` is the computation part of that formula (`computation_units × reference_gas_price`):
+You define the gas budget for a Sui transaction in MIST. A transaction executes successfully if it meets the following condition, where `computation_fees` equals `computation_units × gas_price` (the gas price you set for the transaction, which must be at least the reference gas price) and `total_gas_fees` equals `computation_fees` plus storage fees minus the storage rebate:
 
-```
+```text
 gas_budget >= max{computation_fees, total_gas_fees}
 ```
 
