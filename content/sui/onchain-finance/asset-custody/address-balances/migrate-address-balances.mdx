@@ -158,7 +158,7 @@ Each event contains the target address, a balance type, an operation (`Split` fo
 
 ### Existing contracts
 
-Contracts that accept `Coin<T>` or `Balance<T>` remain callable without changes. The `redeem_funds` functions (in the `sui::coin` and `sui::balance` modules respectively) convert withdrawals to the expected types within the programmable transaction block (PTB). For example:
+Contracts that accept `Coin<T>` or `Balance<T>` remain callable without changes. The `redeem_funds` functions (in the `sui::coin` and `sui::balance` modules respectively) convert withdrawals to the expected types within the programmable transaction block (PTB). The following pseudocode shows a PTB that redeems a withdrawal and transfers the resulting coin. It is not a BCS or JSON encoding. For details on the `withdrawal<T>` input, see [Withdrawal inputs in PTBs](#withdrawal-inputs-in-ptbs).
 
 ```
 inputs: [withdrawal<0x2::sui::SUI>(100)]
@@ -169,7 +169,7 @@ commands:
 
 ### Compatibility coin reservations for legacy clients
 
-A JSON-RPC compatibility layer presents compatibility coin reservations to clients that cannot upgrade. A compatibility coin reservation is a synthetic object reference that reserves address balance funds for backward compatibility with clients that still expect coin object references. It is not a persisted `Coin<T>` object.
+A compatibility coin reservation is a synthetic object reference that reserves address balance funds for backward compatibility with clients that still expect coin object references. It is not a persisted `Coin<T>` object. A JSON-RPC compatibility layer presents compatibility coin reservations to clients that cannot upgrade.
 
 These reservations exist primarily to preserve basic functionality for older clients that expect coin object references. Do not treat them as normal persisted coin objects. For new development, use address balances directly, as described in [Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances).
 
@@ -191,7 +191,7 @@ If the sender used `send_funds()` instead of transferring a coin object, the fun
 
 ## How gas smashing handles coin reservations
 
-The first entry in the gas payment list is the smash target. The network smashes every other entry into it, and the result depends on where the compatibility coin reservation sits:
+The first entry in the gas payment list is the smash target. The network smashes every other entry into it, and the result depends on where the [compatibility coin reservation](#compatibility-coin-reservations-for-legacy-clients) sits:
 
 - **Reservation after the first position:** The network records a withdrawal of the full reserved amount from the address balance. Coin objects in these positions are deleted.
 - **Reservation in the first position:** The network deposits the value of the other payments into the address balance. The reservation acts only as a maximum withdrawal, and the network withdraws from the address balance only when gas charging requires it.
