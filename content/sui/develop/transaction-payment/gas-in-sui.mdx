@@ -86,7 +86,7 @@ $$
 GasFees[\tau] = ComputationUnits[\tau] \times ComputationPrice[\tau] + StorageUnits[\tau] \times StoragePrice
 $$
 
-The gas functions $ComputationUnits[\tau]$ and $StorageUnits[\tau]$ measure the amount of computation and storage resources, respectively, required to process and store the data associated with τ. The gas prices $ComputationPrice[\tau]$ and $StoragePrice$ translate the cost of computation and storage, respectively, into SUI units. The decoupling between gas units and gas prices is useful because SUI market price fluctuates over time in accordance with supply and demand.
+The gas functions $ComputationUnits[\tau]$ and $StorageUnits[\tau]$ measure the amount of computation and storage resources, respectively, required to process and store the data associated with τ. The gas prices $ComputationPrice[\tau]$ and $StoragePrice$ translate the cost of computation and storage, respectively, into SUI units. The [Gas budget examples](#gas-budget-examples) table quotes these prices in MIST, where 1 SUI equals 1,000,000,000 MIST. The decoupling between gas units and gas prices is useful because SUI market price fluctuates over time in accordance with supply and demand.
 
 ## Computation units {#computation}
 
@@ -96,7 +96,7 @@ Sui's computation gas schedule is built coarsely with a bucketing approach. Two 
 
 Using coarse bucketing accomplishes two important goals:
 
-- Frees you from optimizing your smart contracts to deliver marginal gains in gas costs through gas golfing. Instead, you can focus on step-function improvements in your products and services.
+- Frees you from gas golfing, which means optimizing your smart contracts to deliver marginal gains in gas costs. Instead, you can focus on step-function improvements in your products and services.
 
 - Gives you the freedom to adjust per-instruction gas costs and experiment with new gas metering schemes without creating significant development disruption. This can happen frequently, so it is important that you do not rely on per-instruction gas costs remaining stable over time.
 
@@ -171,9 +171,11 @@ In the long run, the Sui gas price mechanism creates incentives for validators t
 
 You must submit all transactions together with a gas budget. This provides a cap to the amount of gas fees you pay, especially because sometimes it might be hard to perfectly forecast how much a transaction costs before you submit it to the Sui network.
 
-The gas budget for a Sui transaction is defined in SUI units and transactions are successfully executed if:
+You define the gas budget for a Sui transaction in SUI units. A transaction executes successfully if it meets the following condition, where `total_gas_fees` comes from the formula in [Gas fee structure](#gas-fee-structure) and `computation_fees` is the computation part of that formula (`computation_units × reference_gas_price`):
 
-`gas_budget >= max{computation_fees, total_gas_fees}`
+```
+gas_budget >= max{computation_fees, total_gas_fees}
+```
 
 If the gas budget does not fulfill this condition, then the transaction fails and a portion of the gas budget is charged. In cases where the `gas_budget` is insufficient for covering `computation_fees`, then the entirety of the `gas_budget` is charged. In cases where `gas_budget` is sufficient for covering `computation_fees` but not the `total_gas_fees`, then a portion of the `gas_budget` corresponding to `computation_fees` and the fees associated with mutating the transaction's input objects are charged.
 
