@@ -1,0 +1,196 @@
+---
+title: Recording Without Code Changes
+description: >-
+  Record AI agent tool calls with Wallog without changing the agent's code. Set
+  up the Claude Code hooks, the wallog-gateway MCP proxy, the wallog-mcp server,
+  the LangChain callback handler, and the OpenAI Agents trace processor, and
+  learn what each one records and how it behaves when Wallog is down.
+keywords:
+  - wallog
+  - claude code hooks
+  - wallog hooks install
+  - wallog-gateway
+  - wallog-mcp
+  - mcp proxy
+  - langchain callback handler
+  - openai agents trace processor
+  - best effort recording
+goal:
+  description: >-
+    Reader installs a Wallog plugin for their agent framework or host, knows what
+    it records, and knows how it behaves when the Wallog server is slow or down
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '```'
+      min: 1
+      label: Has code examples
+    - pattern: '\]\(/[^)]+\)'
+      min: 2
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+questions:
+  - How do I record Claude Code tool calls with Wallog?
+  - How do I record MCP tool calls with Wallog?
+  - How do I use Wallog with LangChain?
+  - How do I use Wallog with the OpenAI Agents SDK?
+  - Does a Wallog hook slow down my agent?
+answer: >-
+  Run wallog hooks install claude-code for Claude Code, put wallog-gateway in
+  front of an MCP tool server, or register WallogCallbackHandler in LangChain or
+  WallogTraceProcessor in the OpenAI Agents SDK. Each records a before and an
+  after receipt per tool call. Recording is best effort: it never stops a tool,
+  but a slow Wallog server can delay one.
+---
+
+[Wallog](/sui-stack/wallog) plugins record an agent's tool calls without changes to the agent's code. Each plugin records a `before` receipt ahead of a call and an `after` receipt behind it. Capture by hooks, by the gateway, and by the framework callbacks is best effort: it never stops a tool, but it can delay one ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+
+To decide whether a plugin fits your needs, see [Choosing a Wallog Integration](/sui-stack/wallog/choosing-an-integration).
+
+<Tabs className="tabsHeadingCentered--small">
+<TabItem value="prereq" label="Prerequisites">
+
+- [x] Install the Wallog packages from a clone, as [Getting Started with Wallog](/sui-stack/wallog/getting-started#install-from-a-clone) describes.
+
+- [x] Have a running Wallog server and a tenant key.
+
+- [x] Create an agent token for the agent the plugin records as, as [Create an agent token](/sui-stack/wallog/getting-started#create-an-agent-token) describes.
+
+</TabItem>
+</Tabs>
+
+:::caution
+
+Give a plugin an agent token (`wla_`), never a tenant key. The model, or a prompt injected into it, can read a token from the environment of the tools it runs. With an agent token, it can only record new receipts for that agent. With a tenant key, it also reaches the tenant's policies, keys, and webhooks ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+:::
+
+## Claude Code hooks
+
+The Python package installs 3 Claude Code command hooks. Create an agent token, set it in the environment Claude Code runs in, and install the hooks ([source](https://github.com/MystenLabs/wallog/blob/main/examples/claude-code/README.md)):
+
+```sh
+$ wallog keys create "laptop" --scope agent --agent my-laptop
+$ export WALLOG_API_KEY=wla_YOUR_AGENT_TOKEN
+$ wallog hooks install claude-code --agent my-laptop
+```
+
+`keys create` needs a tenant key in `WALLOG_API_KEY` when you run it. Set `WALLOG_URL` too if the server is not on `http://127.0.0.1:8080`. You can also put the token in the `env` block of the Claude Code settings file, but keep it out of any settings file you commit to version control.
+
+`hooks install` merges the hooks into `$CLAUDE_CONFIG_DIR/settings.json` when that variable is set, and into `~/.claude/settings.json` otherwise. `--settings PATH` writes another file. Your other settings and hooks stay, and running the command again replaces the Wallog entries. `wallog hooks uninstall claude-code` removes them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+| **Claude Code event** | **Receipt** |
+|---|---|
+| `PreToolUse` | `before`, action `tool:TOOL_NAME`, run `SESSION_ID:TOOL_USE_ID`, input `{tool_name, tool_input}` |
+| `PostToolUse` | `after`, the same action and run, with the digest of `tool_response` |
+| `PostToolUseFailure` | `after`, with the digest of `error` and `labels.error` set to `{"type": "ToolFailure", "interrupt": false}` |
+
+Source: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md). The `PostToolUseFailure` hook needs Claude Code 2.0.56 or later. A Claude Code release before 2.1.101 that does not know that event ignores the whole settings file, including your permissions and `env` block. Add `--disclose` to send each tool's input to the server instead of its digest.
+
+A hook receipt is what Claude Code told the hook. It does not show that the tool did what it should ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
+
+- A policy that denies an action, or that asks for an approval, does not stop Claude Code. The tool runs, and an `after` follows.
+- A `before` can exist for a call that never ran, because a permission rule denied it, another hook blocked it, or it was interrupted.
+- The tool calls of a subagent look like the main agent's.
+
+### When the hooks cannot reach Wallog
+
+A hook always exits 0, so Claude Code counts it as a success, and a failure is 1 line on stderr. A hook makes 1 attempt with a 4-second timeout and no retry, and it ends by itself after 9 seconds. A server that accepts connections and does not answer costs each tool call about 8 seconds, 4 for each of its 2 hooks. A refused connection fails at once ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+A receipt that fails is neither recorded nor queued. There is no retry, and the chain shows no gap. Nothing checks the URL or the credential at install time.
+
+## The MCP gateway
+
+`wallog-gateway` sits between an MCP host and a tool server and records a `before` and an `after` for every `tools/call` that passes through it. It speaks MCP over stdio. To start it in front of your tool server, run the following command, or put the same command and arguments in your MCP host's server configuration ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)):
+
+```sh
+$ node sdks/typescript/packages/mcp/dist/bin/wallog-gateway.js --agent fs-agent -- YOUR_MCP_SERVER_COMMAND
+```
+
+Both MCP programs read the following environment variables ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)):
+
+| **Variable** | **Meaning** |
+|---|---|
+| `WALLOG_API_KEY` | The agent token. The tool server does not receive it. |
+| `WALLOG_URL` | The server URL. |
+| `WALLOG_AGENT` | The agent the receipts are recorded as. Defaults to `mcp-gateway` for the gateway and `mcp-agent` for the server. |
+| `WALLOG_DISCLOSE` | `1` sends inputs to the server. Off by default. |
+| `WALLOG_TIMEOUT_MS` | The time 1 request to the server can take, in milliseconds. |
+| `WALLOG_MAX_RETRIES` | The retries after the first attempt. Defaults to 3. |
+
+For a complete host configuration that runs both programs, see [The MCP server and the gateway](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md) in the TypeScript SDK guide.
+
+The gateway behaves as follows ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)):
+
+- For each `tools/call`, it records a `before` with the action `tool:NAME` and waits for it for at most 5 seconds before it forwards the call.
+- After a `before` fails because the server does not answer, it forwards the calls of the next 30 seconds without waiting.
+- It records the `after` in the background, with the digest of the answer. An error answer carries `labels.tool_error: true`.
+- It does not stop a call. When a policy denies the `before`, the gateway forwards the call all the same.
+- At most 100 receipts are recorded in the background at once. While there are 100, the gateway refuses to record a new one and writes a line on stderr.
+
+Because the `before` keeps going in the background after the 5-second wait, and the `after` is sent as soon as the tool answers, a slow server can record a call's `after` ahead of its `before` in the chain ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/mcp/src/gateway.ts)).
+
+## The MCP server
+
+`wallog-mcp` is an MCP server whose tools the model calls to record receipts: `record_action`, `record_ruling`, and 4 tools that read. It records only what the model asks it to record ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)). Start it with the following command, or add it to your MCP host's configuration:
+
+```sh
+$ node sdks/typescript/packages/mcp/dist/bin/wallog-mcp.js
+```
+
+The `agent` argument of its tools exists only with `WALLOG_ALLOW_AGENT_OVERRIDE=1`, because tool arguments come from the model. The `disclose` argument of `record_action` cannot be turned off, so do not offer `wallog-mcp` to a model when only digests must leave the host ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)).
+
+## LangChain
+
+`WallogCallbackHandler` records every chain, LLM or chat model, and tool run as a `before` and an `after` receipt. Install it from the clone with the SDK in the same command ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/langchain/README.md)):
+
+```sh
+$ pip install -e sdks/python -e 'integrations/langchain[langchain]'
+```
+
+Pass the handler in the callbacks of a run:
+
+<ImportContent source="examples/python/langchain_demo.py" mode="code" org="MystenLabs" repo="wallog" lines="9-17" />
+
+| **Part** | **Value** |
+|---|---|
+| Action | `chain:NAME`, `llm:NAME`, or `tool:NAME` |
+| Run | The LangChain run id, shared by the 2 receipts of a run |
+| Input | `{"inputs": ...}` for a chain, `{"prompts": [...]}` for an LLM, `{"messages": ...}` for a chat model, `{"input": ...}` for a tool |
+| Labels | `parent_run` on the `before` of a nested run. A failed run gets `error: {"type": "EXCEPTION_TYPE"}` |
+
+Source: [integrations/langchain/README.md](https://github.com/MystenLabs/wallog/blob/main/integrations/langchain/README.md). Choose what to record with `record_chains`, `record_llm`, and `record_tools`, which are all on by default. The handler needs a synchronous `wallog.Agent`.
+
+If the `before` of a run fails, the handler still records the run's `after` when the run ends, so the chain can hold an `after` with no matching `before` ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/langchain/wallog_langchain/__init__.py)).
+
+## OpenAI Agents SDK
+
+`WallogTraceProcessor` records every function tool span as a `before` and an `after` receipt with the action `tool:NAME`. Install it from the clone with the SDK in the same command ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/openai-agents/README.md)):
+
+```sh
+$ pip install -e sdks/python -e 'integrations/openai-agents[agents]'
+```
+
+Register the processor once, with `add_trace_processor()`, before you run agents.
+
+{/* TODO: Import code from MystenLabs/wallog: an example file that registers WallogTraceProcessor with add_trace_processor(). The only sample is inline in integrations/openai-agents/README.md, section Use. */}
+
+The `span_types` option chooses the kinds of span to record. It defaults to `("function",)`. `blocking=True`, the default, records inside the span callback, so the `before` is signed ahead of the tool body. `blocking=False` records on 1 background thread, in order ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/openai-agents/README.md)).
+
+With `blocking=False`, call `processor.shutdown()` at exit so that queued receipts are sent. The queue has no size limit, and `shutdown()` waits for every queued receipt with no timeout of its own, so an outage can hold your process at exit ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/openai-agents/wallog_openai_agents/__init__.py)).
+
+## How long a framework callback can block
+
+The LangChain handler and the OpenAI Agents processor with `blocking=True` record inside the framework's callback, so each receipt is a blocking HTTP call. They do not raise into the framework unless you set `raise_errors=True` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+With the default `max_retries=3`, a server that refuses connections costs about 1.3 seconds per receipt. A server that accepts connections and does not answer costs about 41 seconds per receipt once the agent has recorded a receipt. Until the first receipt of an agent object succeeds, every receipt allows 120 seconds per attempt, because the SDK treats it as the receipt that registers the agent's key on Sui. If the server is unreachable from the start of the process, every callback can block about 481 seconds ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py)).
+
+To bound the delay, give the agent an explicit `timeout=` and `max_retries=0`. An explicit `timeout=` replaces the 120-second allowance as well as the 10-second default ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). For more about timeouts and retries, see [Handling Recording Failures](/sui-stack/wallog/handling-failures).
