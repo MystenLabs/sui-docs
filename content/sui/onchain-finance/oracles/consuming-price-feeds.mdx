@@ -59,7 +59,7 @@ Both Pyth and Switchboard on Sui are pull oracles: the consumer pulls the price 
 
 :::caution
 
-The Pyth Sui SDK talks JSON-RPC, but the Mysten Testnet full node serves gRPC, so the default `getFullnodeUrl('testnet')` returns 404 for every SDK call. Point `rpcUrl` at a JSON-RPC provider or your own node. Every Testnet Pyth consumer hits this, and the failure looks like an unrelated 404 rather than an RPC-protocol mismatch. For the same reason, these samples use a JSON-RPC client rather than the `SuiGrpcClient` that the rest of this documentation uses.
+The `examples/oracle-adapter` samples pin version 2 of the Pyth Sui SDK (`@pythnetwork/pyth-sui-js`), which takes the legacy `SuiClient` from `@mysten/sui` version 1. Current Sui full nodes do not serve the API that client calls, so the samples fail against them. Version 4 of the Pyth Sui SDK accepts any `@mysten/sui` version 2 client that exposes the `.core` API, so pass a `SuiGrpcClient` to `SuiPythClient` instead. The `SuiPythClient` and `SuiPriceServiceConnection` methods the samples call keep the same signatures in version 4. The `checkStale` sample also calls `devInspectTransactionBlock`. On `SuiGrpcClient`, use `simulateTransaction` instead.
 
 :::
 
@@ -111,13 +111,11 @@ A price that nobody has updated recently is stale. Reading it with a tight maxim
 
 <ImportContent source="examples/oracle-adapter/ts/src/read.ts" mode="code" tag="stale-read" />
 
+The preceding sample is the exported `checkStale` function, a separate code path from the update-and-read flow. It never applies an update. It looks up the feed's existing `PriceInfoObject`, calls the Pyth staleness-checked reader with your `maxAgeSecs`, and runs the transaction as a read-only simulation. It returns an object with the simulation `status` and, when the read aborts, the `error` string. It throws `no PriceInfoObject for feed` followed by the feed ID if the feed has no onchain object.
+
 **Observe:** with a one-second bound on a feed nobody just updated, the call fails with a `MoveAbort` in `pyth::check_price_is_fresh` (error code `3`, stale price). This is the single most important behavior for a high-stakes consumer to rely on. [Oracle safety](/onchain-finance/oracles/oracle-safety) covers it in depth.
 
 Switchboard's `current_result` does not gate on age, so there is no equivalent staleness abort to dev-inspect; your consumer checks the timestamps itself, as the Switchboard section of this page describes.
-
-### Check for a stale price
-
-The stale-price check is the exported `checkStale` function, a separate code path from the update-and-read flow. It never applies an update. It looks up the feed's existing `PriceInfoObject`, calls the Pyth staleness-checked reader with your `maxAgeSecs`, and runs the transaction as a read-only simulation. It returns an object with the simulation `status` and, when the read aborts, the `error` string. It throws `no PriceInfoObject for feed` followed by the feed ID if the feed has no onchain object.
 
 ## How do I read a Switchboard feed on Sui?
 
