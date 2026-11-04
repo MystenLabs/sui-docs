@@ -43,9 +43,9 @@ answer: >-
   objects.
 ---
 
-A party object belongs to a `Party`: a permission set that determines which addresses can access the object and how. Like [shared](/develop/objects/object-ownership/shared) objects, party objects rely on [consensus](/develop/sui-architecture/consensus) for sequencing and versioning, so you can submit several transactions concurrently. As with shared objects, transactions that mutate a party object execute one at a time in consensus order, while transactions that only read it can execute concurrently. Unlike shared objects, only the addresses with the appropriate permissions can access a party object. These permissions govern all aspects of an object, including reads, writes, and transfers.
+A party object belongs to a party: a permission set that determines which addresses can access the object and how. In Move, the `sui::party::Party` type represents a party. Like [shared](/develop/objects/object-ownership/shared) objects, party objects rely on [consensus](/develop/sui-architecture/consensus) for sequencing and versioning, so you can submit several transactions concurrently. As with shared objects, transactions that mutate a party object execute one at a time in consensus order, while transactions that only read it can execute concurrently. Unlike shared objects, only the addresses with the appropriate permissions can access a party object. These permissions govern all aspects of an object, including reads, writes, and transfers.
 
-You transfer party objects using the [`sui::transfer::party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_party_transfer) or [`sui::transfer::public_party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_party_transfer) function. The `Party` that receives the object then defines its permissions.
+You transfer party objects using the [`sui::transfer::party_transfer`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/transfer.move) or [`sui::transfer::public_party_transfer`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/transfer.move) function. The party that receives the object then defines its permissions.
 
 :::info
 
@@ -76,9 +76,9 @@ public fun party_transfer<T: key>(obj: T, party: sui::party::Party)
 public fun public_party_transfer<T: key + store>(obj: T, party: sui::party::Party)
 ```
 
-- Use the [`sui::transfer::public_party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_party_transfer) function for objects that have the `store` ability. This is the function to use in nearly all cases today.
+- Use the `sui::transfer::public_party_transfer` function for objects that have the `store` ability. This is the function to use in nearly all cases today.
 
-- Use the [`sui::transfer::party_transfer`](/references/framework/sui_sui/transfer#sui_transfer_party_transfer) function only for objects without `store`, where the defining module governs transfers through a [custom transfer policy](/develop/objects/transfers/custom-rules). This mirrors the distinction between `sui::transfer::transfer` and `sui::transfer::public_transfer`.
+- Use the `sui::transfer::party_transfer` function only for objects without `store`, where the defining module governs transfers through a [custom transfer policy](/develop/objects/transfers/custom-rules). This mirrors the distinction between `sui::transfer::transfer` and `sui::transfer::public_transfer`.
 
 Both functions take a `sui::party::Party` value. Currently, you can construct that value only with [`sui::party::single_owner`](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/party.move), which grants all permissions to one address and no permissions to anyone else:
 
