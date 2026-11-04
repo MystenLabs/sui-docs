@@ -408,7 +408,7 @@ Wait for the first transaction to finish, then rebuild or re-sign the transactio
 
 #### `Failed to sign transaction by a quorum of validators because one or more of its objects is equivocated until the next epoch.`
 
-Indicates that competing transactions used the same mutable owned object version and split validator reservations so that no transaction could obtain quorum. The affected object version is unavailable until the next epoch.
+An object is equivocated when competing transactions use the same mutable owned object version and split validator reservations so that no transaction can obtain quorum. The affected object version is unavailable until the next epoch.
 
 ##### Solution
 
