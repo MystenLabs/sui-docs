@@ -91,7 +91,7 @@ If the definitions above do not render, see the enums directly in [`crates/share
 
 The serialization of an `Intent` is a 3-byte array where 1 byte represents each field.
 
-The serialization of an `IntentMessage<T>` is the 3 bytes of the intent concatenated with the BCS (Binary Canonical Serialization) serialized message.
+The serialization of an `IntentMessage<T>` is the 3 bytes of the intent concatenated with the message serialized in Binary Canonical Serialization (BCS). BCS is the binary format that Sui uses to serialize the transaction data and other values that signatures commit to.
 
 ## How are user signatures created?
 
@@ -195,7 +195,7 @@ const { signature } = await wallet.signPersonalMessage({
 
 :::tip
 
-When you sign application or offchain messages (for example, login challenges or authorization payloads), structure the message so no one can replay or misuse it in another context. Include a domain or app identifier, a chain or package identifier, the explicit purpose of the message, a nonce or request ID, and a timestamp or maximum age so the verifier can reject stale or replayed messages. See [Frontend and transaction signing](/develop/security/best-practices#frontend-and-transaction-signing) for details.
+When you sign application or offchain messages (for example, login challenges or authorization payloads), structure the message so no one can replay or misuse it in another context. Include a domain or app identifier, a chain or package identifier, the explicit purpose of the message, a nonce or request ID, and a timestamp or maximum age so the verifier can reject stale or replayed messages. See [security best practices](/develop/security/best-practices) for details.
 
 :::
 
