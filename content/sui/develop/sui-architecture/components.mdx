@@ -99,19 +99,21 @@ To learn more about consensus on Sui, see:
 
 ## What are transactions on Sui?
 
-Transactions on Sui consist of several commands that execute on inputs. These inputs define the result of the transaction. All updates to the Sui network happen through transactions. There are only 2 types of transactions on Sui:
+Transactions on Sui consist of several commands that execute on inputs. These inputs define the result of the transaction. All updates to the Sui network happen through transactions. There are only 2 types of transactions on Sui, and the submitter determines the type:
 
-- **Programmable transaction blocks:** Define all user transactions on Sui, as they can be submitted by anyone. They are used for activities such as sending tokens, creating objects, and interacting with smart contracts.
+- **Programmable transaction blocks:** Anyone can submit these. Every user transaction on Sui is a programmable transaction block, for activities such as sending tokens, creating objects, and interacting with smart contracts.
 
-- **System transactions:** Only submittable by validator nodes. These transactions are for network functions such as changing epochs or starting checkpoints.
+- **System transactions:** Only validator nodes can submit these. They perform network functions such as changing epochs or starting checkpoints.
+
+To classify a transaction, check who submits it and why. A user transaction is a programmable transaction block. A transaction that validator nodes submit for a network function is a system transaction.
 
 Learn more about both types of [transactions](/develop/transactions/txn-overview), or learn more about [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks).
 
 ## What tokens does Sui use?
 
-The native token for Sui is **SUI**. Transactions on Sui often deal with small fractions of the value of 1 SUI. To make it easier to work with transactions, Sui also provides the token **MIST**. 1 billion MIST equals 1 SUI.
+The native token for Sui is **SUI**. Transactions on Sui often deal with small fractions of the value of 1 SUI. To make these small amounts easier to work with, Sui uses **MIST**, the smallest unit of SUI. MIST is not a separate token. 1 billion MIST equals 1 SUI.
 
-On the network, everything has a cost. It costs money to provide computational power, process transactions, and store transaction data. This cost is referred to as gas. You pay gas fees with a blockchain's native token, in this case, SUI or MIST.
+On the network, everything has a cost. It costs money to provide computational power, process transactions, and store transaction data. This cost is referred to as gas. You pay gas fees with a blockchain's native token, in this case, SUI. MIST expresses gas prices and amounts at a finer scale than whole SUI.
 
 To learn more about the tokenomics of Sui, see the following topics:
 
