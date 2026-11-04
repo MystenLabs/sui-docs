@@ -62,7 +62,7 @@ Yes. Start and expiration times are Unix timestamps in milliseconds, the same fo
 
 #### When does a rate-limit window start?
 
-At the first successful spend. Issuing an allowance does not start a window. The first spend anchors the schedule, and every later window is counted from that anchor. A monthly limit first used on March 10 at 15:00 UTC renews on April 10 at 00:00 UTC, then May 10 at 00:00 UTC, and so on. A periodic limit counts exact milliseconds from the first spend instead, so a 30-day limit first used on March 10 at 15:00 UTC renews on April 9 at 15:00 UTC.
+At the first successful spend. Issuing an allowance does not start a window. The first spend anchors the schedule, and every later window is counted from that anchor. A calendar limit, such as a monthly limit, renews on a UTC calendar date. A monthly limit first used on March 10 at 15:00 UTC renews on April 10 at 00:00 UTC, then May 10 at 00:00 UTC, and so on. A periodic limit has a fixed duration and counts exact milliseconds from the first spend instead, so a 30-day limit first used on March 10 at 15:00 UTC renews on April 9 at 15:00 UTC.
 
 #### How do monthly limits handle short months?
 
@@ -98,17 +98,26 @@ No. The spending transaction declares an amount in advance, and that is the most
 
 #### What if the funder's balance is lower than the declared amount?
 
-The spend fails and Sui charges nothing, neither the funder's balance nor the allowance's counters. An allowance never guarantees that funds are available, only that the spender might take them if they are.
+The spend fails. Sui does not debit the funder's balance or change the allowance's counters, but the spender still pays gas for the failed transaction. An allowance never guarantees that funds are available, only that the spender might take them if they are.
 
 ## Changing an allowance
 
 #### Can you change the limits of an existing allowance?
 
-No. There is no update function. Revoke the allowance and issue a new one with the new terms. The new allowance has a new object ID and a fresh spend counter, so share the new ID with the spender.
+No. There is no update function. To change the terms, revoke and reissue:
+
+1. Revoke the existing allowance.
+2. Issue a new allowance with the new terms.
+3. Share the new object ID with the spender.
+
+The new allowance has a new object ID and a fresh spend counter.
 
 #### Can you change the spender?
 
-Only for app-bound allowances, and only by the app. An app-bound allowance is tied to an app type, and the module that defines that type decides whether each pull is allowed. That module can call `rotate_spender` with a `SettingsPermit`. A direct allowance has no app in the loop and a fixed spender. To hand a direct allowance to a different address, revoke and reissue.
+Only for app-bound allowances, and only by the app. The action depends on the allowance type:
+
+- **App-bound allowance:** The allowance is tied to an app type, and the module that defines that type decides whether each pull is allowed. That module can call `rotate_spender` with a `SettingsPermit`.
+- **Direct allowance:** There is no app in the loop and the spender is fixed. To hand a direct allowance to a different address, revoke it and issue a new one to that address, following the same revoke-and-reissue steps as for changing limits.
 
 #### Can you issue an allowance to a contract instead of an address?
 
