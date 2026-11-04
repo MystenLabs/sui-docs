@@ -231,6 +231,8 @@ tx.moveCall({
 tx.transferObjects([allUsdc, sui], tx.pure.address(senderAddress));
 ```
 
+The transaction sources 2000 USDC into `allUsdc` and splits off 200 USDC for the swap, 900 USDC for the deposit, and 100 USDC for Alice, 1200 USDC in total. The last command transfers the remaining 800 USDC in `allUsdc`, together with the swapped SUI, back to the sender. If you change the split amounts, the remainder equals the sourced amount minus the 3 splits.
+
 If any step fails (slippage breach, paused pool, invalid address), the entire transaction reverts. See [Payment Intents](/onchain-finance/payment-intents) for the Resolve, Plan, Execute pattern and more composition examples.
 
 ### Key composition rules
