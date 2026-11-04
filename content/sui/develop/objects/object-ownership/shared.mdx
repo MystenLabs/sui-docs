@@ -52,7 +52,16 @@ Use the [`sui::transfer::share_object`](/references/framework/sui_sui/transfer#s
 Shared objects require the `key` ability.
 
 ```move
-public struct Donut has key { id: UID }
+use sui::sui::SUI;
+use sui::balance::{Self, Balance};
+
+public struct ShopOwnerCap has key { id: UID }
+
+public struct DonutShop has key {
+    id: UID,
+    price: u64,
+    balance: Balance<SUI>
+}
 
 fun init(ctx: &mut TxContext) {
     transfer::transfer(ShopOwnerCap {
