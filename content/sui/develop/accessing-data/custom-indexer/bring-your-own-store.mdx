@@ -1,6 +1,6 @@
 ---
 title: Bring Your Own Store (BYOS)
-description: Implement a custom storage backend for the customer indexer framework.
+description: Implement a custom storage backend for the custom indexer framework.
 keywords:
   - indexer
   - custom store
@@ -12,7 +12,7 @@ keywords:
   - ClickHouse
 goal:
   description: >-
-    Reader can implement a custom storage backend for the customer indexer
+    Reader can implement a custom storage backend for the custom indexer
     framework
   requires:
     - has_frontmatter:
@@ -34,7 +34,7 @@ questions:
   - What does a custom indexer store have to implement?
   - How do I deserialize Move events in a custom indexer?
   - Is there a ClickHouse example for a custom indexer store?
-answer: Implement a custom storage backend for the customer indexer framework.
+answer: Implement a custom storage backend for the custom indexer framework.
 ---
 
 The `IndexerCluster` provides a convenient way to get started with PostgreSQL, but you might want to use a different database or storage system. This requires using the manual `Indexer` class and implementing custom `Store` and `Connection` traits from `sui-indexer-alt-framework-store-traits`.
@@ -133,7 +133,7 @@ The `todo!("Implement based on your storage system")` placeholders in the preced
 
 ###step Use manual indexer
 
-Replace `IndexerCluster` with manual `Indexer`. The `ClientArgs` struct groups the checkpoint source settings: `IngestionClientArgs` sets the remote checkpoint store, and `StreamingClientArgs` sets the full node streaming URL. The following example imports both from the `sui_indexer_alt_framework::ingestion` module:
+Replace `IndexerCluster` with manual `Indexer`. The `ClientArgs` struct groups the checkpoint source settings: `IngestionClientArgs` sets where checkpoints come from (a remote store, a local path, or a full node gRPC endpoint), and `StreamingClientArgs` sets the full node gRPC streaming URL. The following example imports `ClientArgs` from the `sui_indexer_alt_framework::ingestion` module, and imports `IngestionClientArgs` and `StreamingClientArgs` from its `ingestion_client` and `streaming_client` submodules:
 
 ```rust
 use sui_indexer_alt_framework::{Indexer, IndexerArgs};
