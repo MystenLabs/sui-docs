@@ -51,7 +51,7 @@ questions:
 answer: Learn how Sui calculates and distributes validator and staker rewards.
 ---
 
-Sui uses a delegated proof-of-stake (DPoS) system, where validators receive voting power from SUI token holders who delegate their stake. At the end of each epoch, validators receive rewards based on their performance and commission rate. Rewards auto-compound because validator staking pools receive new delegated stakes.
+Sui uses a delegated proof-of-stake (DPoS) system, where validators receive voting power from SUI token holders who delegate their stake. At the end of each epoch, validators receive rewards based on their performance and commission rate. Rewards auto-compound because the network adds them to the SUI balance of the validator's staking pool without issuing new pool tokens. This raises the pool's exchange rate and the value of every existing share of the pool, so later rewards accrue on the larger balance.
 
 The total voting power on Sui is always 10,000, regardless of the amount staked. Therefore, the quorum threshold is 6,667. There is no limit to the amount of SUI users can stake with a validator. Each validator has consensus voting power proportional to SUI in its staking pool, with one exception: the network caps the voting power of an individual validator at 1,000 (10% of the total). If a validator accumulates more than 10% of total stake, the validator's voting power remains fixed at 10%, and the network spreads the remaining voting power across the rest of the validator set.
 
@@ -60,7 +60,7 @@ The total voting power on Sui is always 10,000, regardless of the amount staked.
 The Sui staking mechanism includes features that differ from other blockchains:
 
 - Staking is self-custodial. You keep your staked SUI tokens in an owned object.
-- Staking rewards auto-compound because of the liquidity-pool-inspired design. Rewards raise the exchange rate of the validator's staking pool, which increases the value of your share of the pool each epoch.
+- Staking rewards auto-compound because of the liquidity-pool-inspired design. Rewards raise the exchange rate of the validator's staking pool, which increases the value of your share of the pool each epoch that the pool earns rewards.
 - A new stake begins contributing to a validator's voting power starting the epoch after you create it. Similarly, a withdrawn stake stops contributing starting the epoch after withdrawal.
 
 <ImportContent source="staking-pool-reqs" mode="snippet" />
