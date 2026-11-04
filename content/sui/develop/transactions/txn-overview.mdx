@@ -50,7 +50,7 @@ Every update on Sui, whether to the network itself or to objects on the network,
 
 Sui has two types of transactions:
 
-- **[Programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks):** Enable everyday network activities like deploying smart contracts and sending tokens. Anyone can create and submit PTBs. To deploy to Sui, you submit a PTB that contains a publish command.
+- **[Programmable transaction blocks (PTBs)](/develop/transactions/ptbs/prog-txn-blocks):** Enable everyday network activities like deploying smart contracts and sending tokens. Anyone can create and submit PTBs. To publish a Move package, you submit a PTB that contains a `Publish` command.
 
 - **System transactions:** Manage network events such as epoch changes and checkpoint creation. Only validators can submit system transactions.
 
@@ -68,7 +68,7 @@ Programmable transaction blocks have the following metadata fields:
 
 - **Epoch:** The epoch the transaction is intended for.
 
-- **Type:** The [transaction kind](#transaction-kinds) and its type-specific data. Transactions that you submit use the `ProgrammableTransaction` kind.
+- **Type:** The [transaction kind](#transaction-kinds) and its type-specific data.
 
 - **Authenticator:** A cryptographic signature paired with a public key. The public key must verify the signature and match the sender address.
 
