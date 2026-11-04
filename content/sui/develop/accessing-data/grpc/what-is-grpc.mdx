@@ -113,7 +113,7 @@ The `SubscriptionService` provides real-time streaming updates for onchain activ
 - `SubscribeTransactions` streams individual executed transactions matching a `TransactionFilter`. Use this when you only need specific transactions (for example, those calling a particular Move function or affecting a specific address).
 - `SubscribeEvents` streams individual events matching an `EventFilter`. Use this when you only need specific events (for example, events of a particular Move type or emitted by a specific module).
 
-All subscriptions begin at the current tip of the chain as seen by the server. They do not support resumption from a prior checkpoint. Each streamed response includes a progress marker (a `cursor` for `SubscribeCheckpoints`, or a `Watermark` for `SubscribeTransactions` and `SubscribeEvents`), so your application can track how far along the chain the stream has reached.
+All subscriptions begin at the current tip of the chain as seen by the server. They do not support resumption from a prior checkpoint. Each streamed response includes a `cursor` (for `SubscribeCheckpoints`) or a `Watermark` (for `SubscribeTransactions` and `SubscribeEvents`). Both values act as progress markers that let your application track how far along the chain the stream has reached.
 
 To combine historical and real-time data without gaps:
 
@@ -132,7 +132,7 @@ You can reuse the same gRPC `LedgerService` methods for this lookup, but you mus
 
 ## Best practices
 
-1. Always use [field masks](/develop/accessing-data/grpc/using-grpc#field-masks) when applicable to reduce response size and latency, especially for large resources.
+1. Always use [field masks](/develop/accessing-data/grpc/using-grpc) when applicable to reduce response size and latency, especially for large resources.
 
 1. Use `TLS (port 443)` for production traffic to ensure encrypted transport and prevent downgrade attacks.
 
@@ -150,7 +150,7 @@ You can reuse the same gRPC `LedgerService` methods for this lookup, but you mus
 
 #### Can I use field masks in batch requests?
 
-Only the top-level `read_mask` field is respected in batch requests like `BatchGetObjects`. Any [field masks](/develop/accessing-data/grpc/using-grpc#field-masks) within individual `GetObjectRequest` items are ignored.
+Only the top-level `read_mask` field is respected in batch requests like `BatchGetObjects`. Any [field masks](/develop/accessing-data/grpc/using-grpc) within individual `GetObjectRequest` items are ignored.
 
 #### Why does the API return fewer results than the requested `page_size`?
 
@@ -173,6 +173,7 @@ A new subscription starts at the current chain tip, not where the old stream sto
 1. Record the last progress marker (`cursor` or `Watermark`) you processed.
 1. Open a new subscription.
 1. Backfill from your last recorded marker to the first marker of the new stream with `ListCheckpoints`, `ListTransactions`, or `ListEvents`.
+1. After the backfill completes, begin consuming from the new subscription.
 
 ## Public full node gRPC endpoints
 
