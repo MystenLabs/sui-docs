@@ -82,7 +82,7 @@ The following diagram details the custom indexer architecture.
 
 ![Custom indexer architecture](../images/architecture_custom-indexer_v1.png)
 
-Your indexer runs as one executable program with multiple coordinated background tasks (threads). The ingestion layer polls for new checkpoints while your processing pipelines transform and store data, all within the same process.
+Checkpoint data flows from a data source into the ingestion layer. The ingestion layer distributes it to your processing pipelines, and the pipelines write the results to the storage layer. Your indexer runs as one executable program with multiple coordinated background tasks (threads). The ingestion layer polls for new checkpoints while your processing pipelines transform and store data, all within the same process.
 
 ### Data sources
 
@@ -100,7 +100,7 @@ The indexing framework supports multiple data sources to give you flexibility in
 
 - **gRPC streaming** pushes new checkpoints from full nodes as soon as they are available, providing lower latency than polling. Because streaming only emits the latest checkpoints, you must configure a polling-based fallback source to fetch historical data and ensure reliability.
 
-For configuration examples and guidance on when to use each source, see [Checkpoint Data Sources](/develop/accessing-data/custom-indexer/indexer-data-integration#checkpoint-data-sources).
+For configuration examples and guidance on when to use each source, see [Checkpoint Data Sources](/develop/accessing-data/custom-indexer/indexer-data-integration).
 
 ### Ingestion layer
 
@@ -135,4 +135,4 @@ The failure arrives as a deserialization error at ingestion rather than as a com
 
 ## Building custom indexers
 
-To build your own pipelines for application-specific data, see [Building Your First Custom Indexer](/develop/accessing-data/custom-indexer/build). You can also reach out to a [data indexer operator](/references/awesome-sui) that might already have set one up for your needs.
+To build your own pipelines for application-specific data, see [Building Your First Custom Indexer](/develop/accessing-data/custom-indexer/build). You can also reach out to a data indexer operator that might already have set one up for your needs.
