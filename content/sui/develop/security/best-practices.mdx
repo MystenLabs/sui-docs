@@ -98,7 +98,7 @@ The following practices prevent callers from influencing or selectively rejectin
 
 #### Limit what follows a random call in a PTB
 
-Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable.
+Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable. Sui rejects any command other than `TransferObjects` or `MergeCoins` after the random call with the `PostRandomCommandRestrictions` error. For the full rules, see [Commands allowed after using Random](#commands-allowed-after-random).
 
 #### Mark randomness-consuming functions as private `entry`
 
@@ -304,6 +304,6 @@ Sui maintains its security properties as long as more than 2/3 of validators by 
 
 Every transaction and object on Sui is public and auditable, so anyone can inspect the activity of an address. To protect user privacy, consider using multiple addresses to separate unrelated activity.
 
-## Commands allowed after using Random
+## Commands allowed after using Random {#commands-allowed-after-random}
 
 After a command uses the `Random` object as an input, every later command in the same PTB must be a `TransferObjects` or a `MergeCoins` command. Sui's transaction input validation rejects any other command after that point, such as another `MoveCall`, `SplitCoins`, or `MakeMoveVec`, with the `PostRandomCommandRestrictions` error. Commands that come before the first use of `Random` have no such restriction. A transaction that uses `Random` also fails with `randomness is not enabled on this network` if the network's protocol configuration does not enable the random beacon.
