@@ -1,6 +1,6 @@
 ---
 title: Developer Cheat Sheet
-description: A quick reference document regarding best practices for Sui developers.
+description: Quick-reference best practices for Sui developers, covering Move smart contracts, package upgrades, app development, transaction signing, and zkLogin.
 keywords:
   - cheat sheet
   - quick reference
@@ -63,6 +63,15 @@ Best practices for writing Move smart contracts on Sui.
 - If your function `f` needs a payment in, for example, SUI from the caller, use `fun f(payment: Coin<SUI>)` not `fun f(payment: &mut Coin<SUI>, amount: u64)`. This is safer for callers; they know exactly how much they are paying, and do not need to trust `f` to extract the right amount.
 - Use the [capability pattern](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/C1/capability) for access control instead of address checks. Define capability objects like `AdminCap` or `MintCap` with the `key` ability, require them as function parameters for privileged operations, transfer them to delegate access, and destroy them to revoke access. This is more composable than `tx_context::sender()` checks because other modules can hold and pass capabilities on a user's behalf.
 
+The following table compares collection types and when to use them:
+
+| **Collection type** | **Types** | **Use for** |
+|---|---|---|
+| `vector`-backed | `vector`, `VecSet`, `VecMap`, `PriorityQueue` | Collections with a known maximum size of 1000 items or fewer |
+| Dynamic field-backed | `Table`, `Bag`, `ObjectBag`, `ObjectTable`, `LinkedTable` | Collections that allow third-party addition, larger collections, and collections of unknown size |
+
+Any Move object, including one that holds a `vector`-backed collection, has a maximum size of 250KB.
+
 ### Composability
 
 - Use [Sui Object Display](https://move-book.com/programmability/display) to customize how your objects appear in wallets, apps, and explorers.
@@ -116,6 +125,9 @@ A bag or table must be empty before you call `destroy_empty` on it.
 
 ## Sign with dApp Kit and execute separately
 
-To sign a transaction in the wallet without executing it, call the `signTransaction` action of dApp Kit. In a React app, get the dApp Kit instance from the `useDAppKit` hook in `@mysten/dapp-kit-react`. The action resolves to the transaction `bytes` as a base64-encoded BCS string and the base64-encoded `signature`.
+To sign a transaction in the wallet without executing it, then execute it on your app's full node:
 
-To execute the signed transaction on your app's full node, decode `bytes` to a `Uint8Array` and pass it with the signature to `executeTransaction` on a `SuiGrpcClient`. `executeTransaction` takes the transaction as `transaction` and the signatures as a `signatures` array.
+1. Get the dApp Kit instance. In a React app, get it from the `useDAppKit` hook in `@mysten/dapp-kit-react`.
+2. Call the `signTransaction` action of dApp Kit. The action resolves to the transaction `bytes` as a base64-encoded BCS string and the base64-encoded `signature`.
+3. Decode `bytes` to a `Uint8Array`.
+4. Pass the decoded bytes and the signature to `executeTransaction` on a `SuiGrpcClient`. `executeTransaction` takes the transaction as `transaction` and the signatures as a `signatures` array.
