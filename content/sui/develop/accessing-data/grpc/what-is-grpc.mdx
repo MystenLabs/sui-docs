@@ -132,7 +132,7 @@ You can reuse the same gRPC `LedgerService` methods for this lookup, but you mus
 
 ## Best practices
 
-1. Always use [field masks](/develop/accessing-data/grpc/using-grpc) when applicable to reduce response size and latency, especially for large resources.
+1. Always use [field masks](/develop/accessing-data/grpc/using-grpc#field-masks) when applicable to reduce response size and latency, especially for large resources.
 
 1. Use `TLS (port 443)` for production traffic to ensure encrypted transport and prevent downgrade attacks.
 
@@ -150,7 +150,7 @@ You can reuse the same gRPC `LedgerService` methods for this lookup, but you mus
 
 #### Can I use field masks in batch requests?
 
-Only the top-level `read_mask` field is respected in batch requests like `BatchGetObjects`. Any [field masks](/develop/accessing-data/grpc/using-grpc) within individual `GetObjectRequest` items are ignored.
+Only the top-level `read_mask` field is respected in batch requests like `BatchGetObjects`. Any [field masks](/develop/accessing-data/grpc/using-grpc#field-masks) within individual `GetObjectRequest` items are ignored.
 
 #### Why does the API return fewer results than the requested `page_size`?
 
