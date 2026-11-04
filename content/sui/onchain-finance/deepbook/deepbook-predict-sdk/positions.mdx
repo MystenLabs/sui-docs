@@ -108,15 +108,26 @@ Use `tx.enqueuePlan` to queue the order a plan describes. It returns a `Promise<
 
 The lower-level builders `tx.enqueueMint`, `tx.enqueueMintAmount`, `tx.enqueueMintCost`, and `tx.enqueueSell` take the limits directly, in SDK units, and run the same preflight. Every queued mint needs a finite cost cap, because the chain aborts a zero or unlimited `max_cost` with `EMintCostCapRequired`.
 
-The preflight codes are `not-live`, `no-queue`, `retired`, `paused`, `stuck`, `past-cutoff`, `queue-full`, `account-cap`, `fee`, `market-cash`, `min-premium`, `entry-band`, `cost-above-payout`, `below-min-sell`, `record-not-open`, and `not-record-owner`. The following table maps 5 of the codes to the conditions that trigger them:
+The following table lists the preflight codes and the conditions that trigger them. Each code mirrors an onchain refusal. The queued-order builders and `tx.enqueuePlan` raise every code except `entry-band` and `cost-above-payout`, which only `read.planMint` reports:
 
 | **Code** | **Condition** |
 | --- | --- |
-| `fee` | The balance cannot cover the order fee, or the plan's whole debit. Prompt a deposit. |
-| `entry-band` | The strike is outside the market's entry probability band. |
-| `min-premium` | The budget buys less than 1 USDC of premium. |
-| `past-cutoff` | The market is past its expiry, or near its cutoff. |
-| `record-not-open` | The record is not Open. |
+| `not-live` | Delayed execution is not live: Predict's version watermark is not raised, or Predict does not allowlist the order-flow package yet. |
+| `no-queue` | The market has no `MarketQueue` yet, because `queue::create_and_share` has not run for it. |
+| `retired` | A version floor retired code this SDK calls: Predict's watermark is above the Predict version the SDK targets, or the order desk's floor is above its order-flow package. Update the SDK. |
+| `paused` | Trading is paused, the protocol is frozen, or minting is paused on this market. |
+| `stuck` | The market's pricing is delayed. Enqueue aborts with `EQueueStuck`. |
+| `past-cutoff` | The order's τ would land at or after the market's order cutoff, or the market is past its expiry. |
+| `queue-full` | The market has its maximum unfinished mints or sells. |
+| `account-cap` | The account has its maximum unfinished orders in this market. |
+| `fee` | The account balance does not cover the order fee. A `read.planMint` plan also reports it when the balance does not cover the plan's `totalDebit`, or when the owner has no account yet. Prompt a deposit. |
+| `market-cash` | A mint's cash need is above the market's spare cash. |
+| `min-premium` | The escrowed budget, or an exact-amount mint's premium cap, cannot buy the minimum premium, so the order fails its limits. |
+| `entry-band` | The strike's entry probability is outside the market's entry band. Only `read.planMint` reports this code. |
+| `cost-above-payout` | The order's all-in cost without the fee subsidy is above its payout, so admission refuses it at any slippage. Only `read.planMint` reports this code. |
+| `below-min-sell` | A sell is below the policy minimum, or leaves a remainder below it. |
+| `record-not-open` | The record to sell is missing or not Open. |
+| `not-record-owner` | The record to sell belongs to another account. |
 
 Some checks run only onchain at placement, such as the market's SVI age and room in the payout tree for a new strike, and those abort the transaction rather than raising a preflight code. `describePredictError` turns any of these aborts into readable text.
 
