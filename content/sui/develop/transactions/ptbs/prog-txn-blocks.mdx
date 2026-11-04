@@ -1,8 +1,9 @@
 ---
 title: What is a PTB?
 description: >-
-  Programmable transaction blocks are a group of commands that complete a
-  transaction on Sui.
+  A deep-dive into programmable transaction blocks (PTBs): structure, inputs,
+  commands, execution semantics, gas handling, and the 1,024-operation limit,
+  with TypeScript SDK examples.
 keywords:
   - programmable transaction blocks
   - transaction blocks
@@ -139,7 +140,7 @@ The `Argument` enum has 4 variants, shown here in the notation of the Rust imple
 
 - `Input(u16)`: References an input by its index. For example, with inputs `[Object1, Object2, Pure1, Object3]`, use `Input(0)` for `Object1` and `Input(2)` for `Pure1`.
 
-- `GasCoin`: References the SUI coin used to pay for gas. When using address balance gas payment (empty gas payment list), `GasCoin` references a synthetic coin created from the sender or sponsor address balance. **This is separate from other inputs because it has special restrictions**:
+- `GasCoin`: References the SUI coin used to pay for gas. When using [address balance gas payment](#what-is-address-balance-gas-payment) (empty gas payment list), `GasCoin` references a synthetic coin created from the sender or sponsor address balance. **This is separate from other inputs because it has special restrictions**:
 
     - `&mut` or `&` usage anywhere.
     - Only by value through `TransferObjects` or `sui::coin::send_funds`
@@ -148,6 +149,15 @@ The `Argument` enum has 4 variants, shown here in the notation of the Rust imple
 - `NestedResult(u16, u16)`: References a result from a previous command. The first index specifies the command, the second specifies which result from that command. For example, if command 1 returns `[Value1, Value2]`, use `NestedResult(1, 0)` for `Value1` and `NestedResult(1, 1)` for `Value2`.
 
 - `Result(u16)`: For a command at index `i`, `Result(i)` is shorthand for `NestedResult(i, 0)`, but only valid when the command at index `i` returns exactly 1 result. Use `NestedResult` for commands that return multiple results. A command that returns 0 results has no result to reference.
+
+The following table summarizes each variant:
+
+| **Variant** | **References** | **Usage rules** |
+| :---- | :---- | :---- |
+| `Input(u16)` | An input, by its index in the inputs array | Index into `[Input]` |
+| `GasCoin` | The SUI coin that pays for gas | By reference (`&mut` or `&`) anywhere; by value only through `TransferObjects` or `sui::coin::send_funds` |
+| `NestedResult(u16, u16)` | A result from a previous command | First index is the command, second index is the result from that command |
+| `Result(u16)` | Shorthand for `NestedResult(i, 0)` | Only valid when the command at index `i` returns exactly 1 result |
 
 ## How does a PTB execute? {#execution}
 
@@ -488,7 +498,7 @@ Results: [
 
 - Coin split from gas (`new_coin`) does not appear (created and deleted in same transaction).
 
-- Gas coin and `Item { id: id1 }` transferred to `0x808`. Remaining gas returned to gas coin despite owner change.
+- Gas coin and `Item { id: id1 }` transferred to `0x808`. Remaining gas returned to the gas coin despite the owner change, so `0x808` receives the unused gas with the coin.
 
 - `Item { id: id2 }` transferred to sender.
 
@@ -496,7 +506,7 @@ Results: [
 
 ## What is address balance gas payment?
 
-With normal gas payment, you list one or more `Coin<SUI>` objects in the gas payment, and the runtime combines (smashes) them into a single gas coin. With address balance gas payment, you leave the gas payment list empty, and the protocol deducts gas from the SUI address balance of the gas owner (the sender, or the sponsor in a sponsored transaction). In that case, no real coin object receives the final gas charge.
+An address balance is SUI that an address holds directly rather than in a `Coin<SUI>` object. For example, `sui::coin::send_funds` deposits a coin into an address balance and deletes the coin object. With normal gas payment, you list one or more `Coin<SUI>` objects in the gas payment, and the runtime combines (smashes) them into a single gas coin. With address balance gas payment, you leave the gas payment list empty, and the protocol deducts gas from the SUI address balance of the gas owner (the sender, or the sponsor in a sponsored transaction). In that case, no real coin object receives the final gas charge.
 
 When the fullnode selects gas for you, it pays from the gas owner's address balance if the transaction never touches the gas coin and that balance covers the budget. Otherwise, it pays from their SUI coins. If the transaction does use the gas coin, it adds an address balance reservation so both sources are available.
 
