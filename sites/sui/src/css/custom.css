@@ -2936,6 +2936,14 @@ body {
   margin-right: 0 !important;
 }
 
+/* The wrappers above lose their padding, so keep "Edit this page" in line
+   with the landing content instead of flush against the sidebar. */
+:has(.gs-landing) .theme-doc-footer {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .gs-hero {
   text-align: center;
   padding: 1.5rem 0 1.5rem;
