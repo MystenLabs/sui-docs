@@ -177,7 +177,7 @@ public fun execute_swap(s1: SwapRequest, s2: SwapRequest): Balance<SUI>;
 
 `s1` and `s2` are 2 wrapped objects that were sent from different object owners to the service operator. Both wrapped objects are passed by value because they eventually need to be [unpacked](https://move-book.com/move-basics/struct#destructing-structures).
 
-The following snippets are excerpts from the body of `execute_swap`, not standalone code.
+The following snippets are excerpts from the body of `execute_swap`, not standalone code. They appear in the order they run in the function, and the function ends by returning `fee1`. For the complete function body, see the full [`trusted_swap`](https://github.com/MystenLabs/sui/blob/main/examples/move/trusted_swap) source.
 
 First, unpack the 2 objects to obtain the inner fields:
 
