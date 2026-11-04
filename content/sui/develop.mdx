@@ -49,3 +49,9 @@ If you are new to Sui development, work through these areas in order:
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## How do transactions reach finality on Sui?
+
+Sui validators participate in Mysticeti consensus. A transaction travels from your app to a full node and then to the validators. The validators vote on every user transaction and commit it through consensus before they execute it. Sui has no separate fastpath execution path.
+
+After consensus, validators execute transactions and commit their effects. The Move VM meters gas during execution, and transactions that do not conflict execute in parallel. This design gives Sui high throughput and low latency.

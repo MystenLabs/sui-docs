@@ -84,9 +84,18 @@ To be valid, the transaction `T` requires a signature from either `A` or `B`, an
 
 In this example, even if the transaction has signatures from `[B, Y]` and not from `A`, during execution it nonetheless has access to everything owned by `A`, and during Move call execution its `TxContext::sender` is `A`.
 
+### How do I verify a signature against an address's aliases?
+
+Signature verification through the RPC services checks the signature against the address itself by default. An offchain service that authenticates users by signature, such as a sign-in flow, rejects a valid signature from an alias unless you turn on alias checking:
+
+- **GraphQL:** Pass `checkAddressAliases: true` to the `verifySignature` query. The signature must then come from one of `author`'s current aliases instead of from `author` itself.
+- **gRPC:** Set `check_address_aliases` to `true` in `VerifySignatureRequest` on `SignatureVerificationService`, and set `address` in the same request. The request fails if `address` is missing. The response sets `address_aliases_checked` when the server applied the check.
+
+With alias checking on, the address's own key only verifies if the address is still in its own alias set. If the address has no aliases configured, the check falls back to the address itself, so its own key still verifies. This matches how Sui authenticates transactions for the address.
+
 ## How do I manage aliases with the Sui CLI?
 
-You can manage address aliases using [`sui client ptb`](/references/cli/ptb) to call entry functions in the `sui::address_alias` module. The `AddressAliasState` singleton object lives at the address `0xa`.
+You can manage address aliases using [`sui client ptb`](/references/cli/ptb) to call entry functions in the `sui::address_alias` module. The `AddressAliasState` singleton object lives at the address `0xa`. The `enable` function takes this object as its argument, so the enable command passes `@0xa`. The enable call then creates a separate `AddressAliases` object that holds the alias set for your address.
 
 You must [enable aliases for your address](#enable-aliases-for-your-address) first. The add, replace, and remove commands all require the `AddressAliases` object ID that the enable step creates.
 
@@ -146,4 +155,17 @@ $ sui client ptb \
 
 ### Offline signing
 
-If you are using a hardware wallet or other external signer, add `--serialize-unsigned-transaction` to any of the commands above to output the raw transaction bytes instead of executing. You can then sign the transaction offline and submit it separately. See [Sui Client PTB CLI](/references/cli/ptb) for details.
+If you are using a hardware wallet or other external signer, add `--serialize-unsigned-transaction` to any of the `sui client ptb` commands on this page. The command then outputs the raw transaction bytes instead of executing. For example, to serialize the enable command:
+
+```sh
+$ sui client ptb \
+    --move-call sui::address_alias::enable @0xa \
+    --gas-budget 50000000 \
+    --serialize-unsigned-transaction
+```
+
+You can then sign the transaction offline and submit it separately. See [Sui Client PTB CLI](/references/cli/ptb) for details.
+
+## Vector arguments in alias commands
+
+A literal vector passed directly to `--move-call` becomes a pure Move vector value, so you can pass a list of alias addresses inline without a separate `--make-move-vec` command. Literal vectors can contain only pure values, such as addresses and numbers. If a literal vector contains an object value, the CLI rejects it. To build a vector of objects, use `--make-move-vec` instead.

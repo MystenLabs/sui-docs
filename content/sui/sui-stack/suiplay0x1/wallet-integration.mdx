@@ -217,3 +217,7 @@ You can prove ownership of another wallet or asset and link it to your Playtron 
 :::
 
 The Playtron wallet app automatically establishes a SuiLink connection for SuiPlay0X1 users it onboards. You can query a user's SuiLink objects to validate that they own a specific asset. For more information, refer to the [separate guide on using SuiLink](/onchain-finance/asset-custody/wallets/suilink).
+
+## What is a soulbound asset?
+
+A soulbound asset is an onchain object, such as an NFT, that stays with the address that owns it. In Move, you define a soulbound object with the `key` ability but without the `store` ability. Without `store`, nobody can transfer the object unless the module that defines it provides a transfer function. To make the asset fully soulbound, leave that transfer function out of the module. The owner can still hold, update, or burn the asset, but can't trade it on marketplaces or move it to another wallet.

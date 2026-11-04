@@ -214,3 +214,7 @@ Although the `Escrow` object is shared and accessible by anyone, Move ensures on
 Address-owned objects avoid contention, but the swap needs a third-party custodian to match the 2 sides. A shared object removes the custodian, at the cost of sequencing every access to it.
 
 In both versions, a party who decides not to proceed can get their object back. In the address-owned version, either party can unlock and exit before sending their object to the custodian, and the custodian can only match the objects correctly or return them. In the shared version, the sender recorded in the `Escrow` object can reclaim it if the swap doesn't complete.
+
+## What happens if the matching escrow never arrives?
+
+If the matching `Escrow` never arrives, the custodian calls `return_to_sender`. This function deletes the `Escrow` wrapper and transfers the escrowed object back to the address in its `sender` field. Returning the object depends on the custodian, which the protocol trusts to preserve liveness but not safety. Before a party sends an `Escrow` to the custodian, that party can also call `unlock` to recover a locked object if the other party stalls.

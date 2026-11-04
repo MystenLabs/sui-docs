@@ -148,3 +148,7 @@ Move is an open source programming language that is used for all activity on Sui
 Move is platform-agnostic to enable common libraries, tooling, and developer communities across blockchains with vastly different data and execution models.
 
 To learn more about Move, see [Move Concepts](/develop/write-move/sui-move-concepts).
+
+## How do you pay gas on Sui?
+
+MIST is not a separate token that you choose instead of SUI. `Coin<SUI>` has 9 decimals, and MIST is its smallest unit (10^-9 SUI). You always pay gas with `Coin<SUI>` objects. MIST expresses gas prices and amounts at a finer scale than whole SUI.

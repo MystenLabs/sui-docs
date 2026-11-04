@@ -303,3 +303,7 @@ Sui maintains its security properties as long as more than 2/3 of validators by 
 #### Treat all onchain activity as public
 
 Every transaction and object on Sui is public and auditable, so anyone can inspect the activity of an address. To protect user privacy, consider using multiple addresses to separate unrelated activity.
+
+## Commands allowed after using Random
+
+After a command uses the `Random` object as an input, every later command in the same PTB must be a `TransferObjects` or a `MergeCoins` command. Sui's transaction input validation rejects any other command after that point, such as another `MoveCall`, `SplitCoins`, or `MakeMoveVec`, with the `PostRandomCommandRestrictions` error. Commands that come before the first use of `Random` have no such restriction. A transaction that uses `Random` also fails with `randomness is not enabled on this network` if the network's protocol configuration does not enable the random beacon.

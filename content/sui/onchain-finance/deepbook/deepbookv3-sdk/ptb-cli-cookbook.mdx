@@ -287,3 +287,17 @@ The flash loan CLI template above has its flag syntax verified against `sui` 1.6
 1. Add `--preview` to any command to print its PTB commands without executing.
 2. Add `--dry-run` to estimate gas and surface argument or type errors.
 3. For DeepBook object IDs and coin and pool keys, see [Contract Information](/onchain-finance/deepbook/deepbookv3/contract-information) and the DeepBookV3 SDK constants.
+
+## Pass a recipient address in TypeScript
+
+In the TypeScript flash loan sample, `SENDER` is a `0x`-prefixed address string. `transferObjects` accepts the recipient as a plain string, as in this type-checked DeepBook sample where `recipient` is a `string`:
+
+```ts
+	tx.transferObjects([remainder], recipient);
+```
+
+You can also wrap the address explicitly as a pure argument. Both forms produce the same transfer:
+
+```ts
+tx.transferObjects([character], tx.pure.address(playerAddress));
+```

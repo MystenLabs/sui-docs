@@ -120,3 +120,12 @@ Understanding object versioning helps you design applications correctly and avoi
 - **Choose the right versioning path.** Fastpath reduces latency for single-owner workflows. Consensus handles multi-party coordination without requiring offchain locking.
 - **Prune safely.** Because Sui never reuses (ID, version) pairs, node operators can safely prune old versions without risking collision with future writes.
 - **Reason about history.** The strictly increasing version sequence gives every object a linear, auditable history. Archival nodes can serve any historical version to clients that need it.
+
+## Address-owned objects on each path
+
+The ownership type of an address-owned object determines its versioning path, not the transaction that uses it. Sui records 2 distinct owner types for objects that a single address owns:
+
+- `AddressOwner`: The object is exclusively owned by a single address and is mutable.
+- `ConsensusAddressOwner`: The object is exclusively owned by a single address and sequenced through consensus.
+
+An object's owner type can change, so an object can become a consensus object after Sui creates it.

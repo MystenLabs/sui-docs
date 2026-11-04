@@ -163,7 +163,7 @@ Use `checkManagerBalance` to check the balance of a specific coin in a balance m
 <details>
 <summary>generateProof</summary>
 
-Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set: either `generateProofAsOwner` or `generateProofAsTrader`, both described in this section. The call returns a function that takes a `Transaction` object.
+Use `generateProof` to generate a trade proof for the balance manager. Automatically calls the appropriate function based on whether a `tradeCap` is set: either `generateProofAsOwner` or `generateProofAsTrader`, both described in this section. The call returns a function that takes a `Transaction` object. `placeLimitOrder` generates the trade proof itself from `balanceManagerKey`, so you don't need to call `generateProof` before placing an order.
 
 **Parameters**
 
@@ -570,4 +570,23 @@ completeSetup = async (tx: Transaction) => {
 	// Step 4: Transfer capabilities to owner
 	tx.transferObjects([depositCap, withdrawCap, tradeCap], ownerAddress);
 };
+```
+
+## Trade proofs in order placement
+
+`placeLimitOrder` identifies the balance manager by `balanceManagerKey` and takes no trade proof parameter. You do not need to call `generateProof` and pass its result when you place an order. For example, the following function deposits into a balance manager and places an order in the same transaction:
+
+```ts
+	tx.add(client.deepbook.balanceManager.depositIntoManager(managerKey, depositCoinKey, depositAmount));
+	tx.add(
+		client.deepbook.deepBook.placeLimitOrder({
+			poolKey,
+			balanceManagerKey: managerKey,
+			clientOrderId,
+			price,
+			quantity,
+			isBid: false,
+			orderType: OrderType.POST_ONLY,
+		}),
+	);
 ```

@@ -73,3 +73,8 @@ Instead of feature flags, Sui objects coordinate framework changes. The Sui fram
 
 If a validator notices that its built-in framework differs from the framework in object `0x2`, it signals to other validators that it wants to upgrade the framework to a new version. As with `ProtocolConfig`, if 2/3 or more of validators agree, the new framework object is written at the end of the current epoch. Transactions executed in the new epoch then use the new version of the framework.
 
+## How does replay stay consistent after an upgrade?
+
+Each protocol version has a fixed set of configuration values. Sui never changes a constant for a protocol version that already exists. Any change to a value requires a new protocol version. As a result, a node that replays chain history applies the same configuration for each epoch that validators applied when they first executed it.
+
+A node binary supports only a range of protocol versions. If the network protocol version is below the minimum or above the maximum that the binary supports, the node stops with an error that tells you to upgrade the binary.

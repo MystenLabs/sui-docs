@@ -253,3 +253,20 @@ Use this table to pick the right gas strategy for your transaction. Answer the q
 | 3 | Does the user have a SUI address balance? | Use address balance gas (`tx.setGasPayment([])`). No coin lookup needed. | Use standard gas. The SDK auto-selects coin objects. |
 
 For most transactions, use `coinWithBalance` for non-gas coins, and the SDK handles coin-vs-balance selection for you. The exception is [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers), which use `tx.balance()` with `balance::send_funds` so the transaction stays eligible for zero gas.
+
+## What is `tx.balance()`?
+
+`tx.balance()` is a method on the `Transaction` builder from `@mysten/sui/transactions`, so it needs no separate import. It is not an alias of `coinWithBalance`. `tx.balance()` supplies a `Balance<T>`, the type that `0x2::balance::send_funds` takes. `coinWithBalance` sources coins, which fit `0x2::coin::send_funds` and other functions that expect a `Coin<T>`. The SDK selects the funding source for `tx.balance()`:
+
+```ts
+// Send 1 SUI to the recipient's address balance. The SDK selects the funding source.
+tx.moveCall({
+	target: '0x2::balance::send_funds',
+	typeArguments: ['0x2::sui::SUI'],
+	arguments: [tx.balance({ balance: 1_000_000_000n }), tx.pure.address(recipientAddress)],
+});
+```
+
+## Setting the gas price for offline builds
+
+Set `gasPrice` (in MIST) to at least the current reference gas price (RGP). Validators do not sign a transaction priced under the reference, so it fails with `Gas price {gas_price} under reference gas price (RGP) {reference_gas_price}` instead of executing. When the Sui CLI builds a transaction without an explicit gas price, it reads the current reference gas price from RPC, so query that value before you build offline. A gas price above the reference gives the transaction priority when it accesses congested shared objects.

@@ -257,3 +257,15 @@ The examples import the shared `client` from the [client setup](/onchain-finance
 The following example queues a withdrawal of the whole PLP balance, checks the 1 PLP minimum before it builds, and cancels a queued withdrawal or supply by index:
 
 <ImportContent source="examples/deepbook-predict/src/withdraw.ts" mode="code" tag="withdraw" />
+
+## What is the account wrapper ID?
+
+Each trader holds one canonical account: a shared `AccountWrapper` object that holds an `Account`. The SDK derives the wrapper's ID from the owner address, so you can compute it before any transaction lands and without a chain read. Call `client.predict.wrapperIdFor` to get it:
+
+```ts
+export function accountWrapperId(owner: string): string {
+	return client.predict.wrapperIdFor(owner);
+}
+```
+
+Because the contract derives the wrapper from the transaction sender, the address that signs must be the `owner` you pass to each builder.

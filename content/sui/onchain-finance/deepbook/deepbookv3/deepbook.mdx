@@ -162,3 +162,9 @@ DeepBookV3 is open for community development. You can use the [Sui Improvement P
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## How do you stake DEEP?
+
+You stake DEEP in a specific pool, from a `BalanceManager`, as part of a transaction you build with the SDK or a Move package. First deposit DEEP into the manager. DEEP held in the manager pays trading fees, and staking it in a pool unlocks the taker-fee discount. The SDK scales the amount you pass in whole DEEP to the coin's 6 decimals.
+
+You can combine a stake with other actions, such as placing a maker order, in one programmable transaction block. If any action aborts, none of them apply. Because the order and the stake both draw on the same `BalanceManager`, keep enough DEEP in the manager to cover both. To deposit DEEP into a manager, see [DeepBook Fees and Funding](/onchain-finance/deepbook/deepbookv3/fees-and-funding).

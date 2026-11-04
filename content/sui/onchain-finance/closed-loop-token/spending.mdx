@@ -103,3 +103,15 @@ public fun buy_gift(
 ```
 
 The caller of `buy_gift` keeps the `Gift` and must still confirm the returned `ActionRequest`, either [with a `TreasuryCap`](/onchain-finance/closed-loop-token/action-request#confirming-with-treasurycap) or by [delivering it to the `TokenPolicy`](/onchain-finance/closed-loop-token/action-request#confirming-with-tokenpolicy), as [What happens to a spent token?](#what-happens-to-a-spent-token) explains.
+
+## What if the spend action has no rules?
+
+A `TokenPolicy` does not permit the `spend` action by default. For an action to become available, the policy needs a record for it in its `rules` map. A request for an action without a record fails with `EUnknownAction`, which marks the action as not allowed (defined) in the policy.
+
+The `TokenPolicyCap` owner controls this record:
+
+- `allow` adds an empty set of rules for the action, so anyone can perform it freely.
+- `add_rule_for_action` creates the record if it is missing, then adds the rule.
+- `disallow` removes the record and blocks the action completely.
+
+An empty rule set and a missing record are different. The first allows free spending, and the second blocks spending through the policy.

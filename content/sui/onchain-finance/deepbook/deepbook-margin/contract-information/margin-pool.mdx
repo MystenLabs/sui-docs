@@ -286,3 +286,12 @@ The system emits this event when it accrues protocol fees from interest payments
 />
 
 </details>
+
+## How do margin traders borrow from a margin pool?
+
+Margin traders do not supply a `SupplierCap`. They borrow through a `MarginManager`, which draws from the margin pool for either the base or the quote asset of a DeepBook pool. Each side borrows from a separate, isolated margin pool, and a `MarginManager` borrows from one margin pool at a time, not both. To borrow with the TypeScript SDK:
+
+1. Deposit collateral into your `MarginManager`.
+2. Call `client.deepbook.marginManager.borrowQuote(managerKey, amount)`. The contract rejects the borrow unless the resulting risk ratio stays at or above the pool's Min Borrow Risk Ratio, so size the borrow from the pool's risk parameters.
+3. Place orders through `client.deepbook.poolProxy.placeLimitOrder`, which keeps the borrow and the trade bound to the `MarginManager`.
+4. Call `client.deepbook.marginManager.repayQuote(managerKey, amount)` to repay the debt plus accrued interest. Pass an amount to repay part of the debt, or `undefined` to repay the full outstanding balance.

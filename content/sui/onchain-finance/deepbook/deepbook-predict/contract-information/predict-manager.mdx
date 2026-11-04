@@ -590,3 +590,11 @@ The module declares 2 further events, `AppAuthorized` and `AppDeauthorized`, whi
 | `1` | `EPositionNotFound` | `deepbook_predict::predict_account` | A redeem referenced a position the account does not hold. |
 
 Codes repeat across modules, so always resolve an abort against the module named in the abort location rather than against the number alone. Over gRPC or GraphQL the abort also carries the constant name; over JSON-RPC it does not.
+
+## Track a queued fill by its record ID
+
+After an enqueue transaction executes with events included, decode its record ID with `client.predict.decode.enqueue(result)` and persist it. The record ID is your handle for following the order, selling the position, and showing the result.
+
+`client.predict.read.waitForOutcome(descriptor, recordId)` polls until the record is filled or refunded. A filled mint stays in the market's queue as an Open record, so `outcome.order.view.position` holds the position, not the account. To read the record later, call `client.predict.read.order(market, recordId)`.
+
+At expiry a keeper settles the market, pays every Open record to its account, and deletes the records, usually within seconds. Keep each filled record's `position.orderId` to show the result afterwards. The payment itself is the `OpenRecordSettled` event. A record that the payout walk skips emits `OpenRecordPayoutSkipped` and waits for `tx.payOpen`.

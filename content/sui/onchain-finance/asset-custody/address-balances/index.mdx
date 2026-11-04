@@ -128,3 +128,7 @@ For details, see [Converting existing coins to address balances](/onchain-financ
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## What happens when a withdrawal exceeds the balance?
+
+A withdrawal from an address balance is a funds withdrawal input that the transaction reserves before it executes. The protocol checks that the withdrawal limit does not exceed the balance when it takes the input, and the balance it checks against is the settled balance. Deposits that have not yet settled do not count toward it. A transaction that fails with `InsufficientFundsForWithdraw` skips execution entirely. Its effects charge zero gas and only bump the versions of its mutable inputs.

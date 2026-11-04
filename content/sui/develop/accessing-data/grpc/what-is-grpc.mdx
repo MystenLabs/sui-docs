@@ -163,3 +163,25 @@ In `proto3`, marking a field as `optional` gives the API the ability to detect [
 #### Are all services and related data guaranteed to be available on all full nodes?
 
 Full nodes might vary in which services and retention they support. Some services might not be supported yet or some APIs might return `NOT_FOUND` depending on the node's configuration and data availability.
+
+## Subscription stream interruptions
+
+A subscription stream can end mid-session, for example after a network interruption. The server also drops every in-progress subscription when it falls behind the checkpoint stream, because it can no longer deliver an in-order, gap-free stream. Design your client to reconnect.
+
+A new subscription starts at the current chain tip, not where the old stream stopped. To recover the checkpoints you missed:
+
+1. Record the last progress marker (`cursor` or `Watermark`) you processed.
+1. Open a new subscription.
+1. Backfill from your last recorded marker to the first marker of the new stream with `ListCheckpoints`, `ListTransactions`, or `ListEvents`.
+
+## Public full node gRPC endpoints
+
+Specify a full node gRPC endpoint as an HTTPS URL that includes the port. The Sui SDK defines the public full node URLs for each network:
+
+```rust
+pub const SUI_DEVNET_URL: &str = "https://fullnode.devnet.sui.io:443";
+pub const SUI_TESTNET_URL: &str = "https://fullnode.testnet.sui.io:443";
+pub const SUI_MAINNET_URL: &str = "https://fullnode.mainnet.sui.io:443";
+```
+
+In the TypeScript SDK, pass the same URL as the `baseUrl` of a `SuiGrpcClient`. For production traffic, consider a provider from [RPC and Data Providers](/develop/accessing-data/rpc-providers).

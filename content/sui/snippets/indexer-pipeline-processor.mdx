@@ -1,8 +1,6 @@
 The `Processor` is the concurrent processing engine, handling multiple tasks running at the same time for maximum throughput. Its primary responsibility is to convert raw checkpoint data into database-ready rows using parallel workers.
 
-The component handles this task by spawning `FANOUT` worker tasks (default: 10) for parallel processing. The `FANOUT` is the key configuration as it controls parallel processing capacity.
-
-<ImportContent source="crates/sui-indexer-alt-framework/src/pipeline/processor.rs" mode="code" variable="FANOUT" />
+The component processes checkpoints with `fanout` concurrent workers, the key setting for parallel processing capacity. By default, `fanout` is adaptive: it starts at 1 and scales up to the number of CPUs as the channel to the `Collector` drains. You can set a fixed value or custom bounds with `ConcurrencyConfig`, as described in the performance tuning sections of this page.
 
 Each worker calls your `Handler::process()` method independently. 
 

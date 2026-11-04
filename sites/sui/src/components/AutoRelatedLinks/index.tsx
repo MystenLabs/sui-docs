@@ -201,6 +201,8 @@ function resolveMeta(href: string, data: Meta[] | null): Meta | undefined {
 
 function shouldSkipPage(): boolean {
   if (document.querySelector(".next-steps-module") !== null) return true;
+  // The Getting Started landing page is already a grid of link cards.
+  if (document.querySelector(".gs-landing") !== null) return true;
   if (document.querySelector("[class*='docCardList']") !== null) return true;
   return false;
 }

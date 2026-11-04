@@ -115,3 +115,16 @@ Switchboard is also pull, with a different shape. Instead of a shared price obje
 `current_result` returns a `CurrentResult` exposing the median `result()` (a `Decimal`) along with `min_timestamp_ms()` and `max_timestamp_ms()`. Unlike Pyth's `get_price_no_older_than`, it does not gate on age, so the consumer checks the timestamps against the clock itself. See the [Switchboard Sui docs](https://docs.switchboard.xyz/product-documentation/data-feeds/sui) for feed creation and the on-demand flow.
 
 Next, wrap a provider read behind a single internal interface with the safety checks built in: [The Move adapter pattern](/onchain-finance/oracles/move-adapter).
+
+## Check for a stale price
+
+The stale-price check is the exported `checkStale` function, a separate code path from the update-and-read flow. It never applies an update. It looks up the feed's existing `PriceInfoObject`, calls the Pyth staleness-checked reader with your `maxAgeSecs`, and runs the transaction as a read-only simulation. It returns an object with the simulation `status` and, when the read aborts, the `error` string. It throws `no PriceInfoObject for feed` followed by the feed ID if the feed has no onchain object.
+
+## Paying for a Pyth price update
+
+`updatePriceFeeds` takes only the transaction, the update data from Hermes, and the feed IDs. The samples pass no separate fee coin to it. A transaction that applies an update costs gas plus the Pyth base update fee, so plan the sender's funds and gas budget for both. The keeper sample sets an explicit gas budget after it appends the update commands:
+
+```typescript
+	await pyth.updatePriceFeeds(tx, updates, [feedId]);
+	tx.setGasBudget(150_000_000n);
+```

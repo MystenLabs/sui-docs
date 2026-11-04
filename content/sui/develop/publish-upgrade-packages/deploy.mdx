@@ -123,3 +123,13 @@ The multisig publish workflow runs in this order:
 1. Distribute the transaction bytes to your multisig signers.
 1. Collect enough signatures from the signers.
 1. Submit the signed transaction with `sui client execute-signed-tx`.
+
+## How source verification picks a toolchain
+
+`sui client verify-source` reads the toolchain version recorded in the package's publication metadata. If that `sui` release is not already cached, the command downloads it and rebuilds your package with it. The command resolves the version in this order:
+
+1. The `--toolchain-version` flag, if you pass it. The CLI uses this version even when it differs from the recorded version and prints a warning.
+2. The toolchain version in `Published.toml`.
+3. The `[move].toolchain-version` field in the legacy `Move.lock`, for packages that older releases published (roughly v1.23 to v1.62).
+
+Releases before v1.23 record no toolchain version. For those packages, verification fails and asks you for `--toolchain-version`. The command verifies only the root package. To verify a dependency, run the command again against that dependency's source.

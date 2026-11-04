@@ -122,3 +122,9 @@ The module includes functions to return NFT metadata. You can call the `name` fu
 The following is the complete `testnet_nft.move` module:
 
 <ImportContent source="examples/move/nft/sources/testnet_nft.move" mode="code" />
+
+## Required fields and abilities
+
+Because `TestnetNFT` has the `key` ability, the Sui verifier requires its first field to be named `id` and to have the type `object::UID` from the Sui framework. If the first field has a different name or type, verification fails. The other fields, such as `name`, `description`, and `url`, are your design choice.
+
+The `store` ability is optional. If you remove `store`, nobody can transfer the NFT unless its module provides a transfer function. The soulbound example struct `TestnetSoulboundNFT` uses this approach and declares only `key`.

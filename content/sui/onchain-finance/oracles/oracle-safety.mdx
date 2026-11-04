@@ -90,3 +90,7 @@ Each push is a transaction that costs gas plus the Pyth base update fee, so the 
 - **`MoveAbort` in `check_price_is_fresh` (code 3):** observed. The feed is older than your bound. In a pull flow, confirm the update command runs before the read in the same transaction. For a push feed, the keeper has fallen behind.
 - **`getFullnodeUrl('testnet')` calls return 404:** observed. The Mysten Testnet full node serves gRPC; the Pyth SDK needs JSON-RPC. Point the client at a JSON-RPC endpoint.
 - **A price passes the staleness check but looks wrong:** hypothesized. An actor can manipulate a single feed, or the feed can briefly diverge. Add a deviation check against a second source, and reject rather than act when they disagree.
+
+## What is Hermes?
+
+Hermes is the Pyth service that serves signed price updates offchain. A pull consumer or a keeper fetches the latest signed update from Hermes and applies it onchain, which refreshes the feed's `PriceInfoObject`. On Testnet, the example configuration reads the beta Hermes deployment at `https://hermes-beta.pyth.network`.

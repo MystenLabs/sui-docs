@@ -73,3 +73,11 @@ The pages in this section cover publishing, upgrading, and dependency management
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## How to verify a deployed package
+
+To confirm that an onchain package matches its source, run `sui client verify-source <package-path>`. The command rebuilds the source with the toolchain version that the package's publication metadata records. It then fetches the onchain package (modules, linkage table, and original ID), checks that the original ID matches the one the publication records, and compares module bytecode and then linkage.
+
+You do not pass the onchain address as a command-line argument. The CLI reads it from the package's own publication metadata, the same resolution the package system performs when other packages link against it. If a toolchain cannot run, pass `--toolchain-version` to try another one. An adjacent release is usually a workable substitute.
+
+For reliable verification, publish from a source you can point at, pin dependencies to commit hashes, and record the toolchain version for each environment you publish to.

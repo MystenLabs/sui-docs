@@ -111,3 +111,7 @@ The recommendations on this page, collected in one place:
 - Make sure transactions that operate on your objects use smart contracts you trust, that you or others you trust have audited, and whose logic you understand.
 - Remember that all transactions and assets on Sui are publicly visible. If privacy matters to you, use multiple addresses, or third-party custodial or non-custodial services.
 - Expect some gas to be charged even when a transaction aborts.
+
+## How validator rewards reflect reliability
+
+Validators assess each other's reliability. Any validator can report another validator it considers unreliable by calling `report_validator`. At the end of each epoch, the system first divides staking rewards in proportion to voting power. It then adjusts that division using these reports, known as the tallying rule. When validators that together hold enough stake report a validator, the system reduces that validator's computation and storage fund rewards by the reward slashing rate. It shares the slashed amount among the unslashed validators. Staking rewards are shared with the validator's stakers, so a slashed validator's delegators also receive less reward. Their staked principal stays intact.

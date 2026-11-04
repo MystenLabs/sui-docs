@@ -285,9 +285,12 @@ batch-write-flow-control = false
 | Option | Default | Description |
 |--------|---------|-------------|
 | `write-concurrency` | 256 | Concurrent write tasks per pipeline. |
-| `collect-interval-ms` | 500 | How often to flush buffered rows. |
-| `watermark-interval-ms` | 500 | How often to update the watermark. |
+| `min-batch-rows` | 0 | Pending rows the collector waits for before cutting a batch. `0` cuts a batch as soon as the committer has room. |
+| `max-batch-delay-ms` | 500 | Longest time the oldest pending row waits for `min-batch-rows`. Not used while `min-batch-rows` is 0. |
+| `watermark-interval-ms` | 100 | Minimum gap between two watermark writes of a concurrent pipeline. |
 | `watermark-interval-jitter-ms` | 0 | Jitter on the watermark interval. |
+
+`collect-interval-ms` and `min-eager-rows` are no longer used. They are still accepted in config files but ignored with a warning, so remove them.
 
 #### Per-pipeline overrides (`[pipeline.<name>]`)
 

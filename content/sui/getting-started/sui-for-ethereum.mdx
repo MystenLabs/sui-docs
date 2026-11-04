@@ -153,3 +153,15 @@ See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/buildi
 | Contract upgrading | Native, upgrade capability mediated. | Achieved using proxy pattern to delegate calls. Upgrades change where the proxy directs calls. |
 | Composability | Call any number of functions within a single transaction using PTBs. Compose by taking the output of one contract call and passing it into another. Ensures atomic execution. | Each call is its own transaction that the chain must process individually and serialize. Requires careful publishing to ensure execution. Not atomic. |
 | Token royalties | The chain enforces them. | Only enforceable by marketplaces. |
+
+## How do I pay for gas on Sui?
+
+On Sui, you pay gas in SUI, either from SUI coin objects or from the SUI address balance of the gas owner. An empty gas payment list tells the protocol to deduct gas from the address balance. Any gas coin you do list must be an owned object, and the protocol rejects one that is not.
+
+When you build a transaction with `sui client ptb`, the CLI handles gas for you by default:
+
+- **Gas coin:** If you do not pass the object ID of a gas coin, the CLI uses the first gas coin it finds that has at least the requested gas-budget balance.
+- **Gas budget:** If you do not set a budget, the CLI runs a dry run to estimate the gas cost and then executes the transaction.
+- **Gas price:** If you do not set a price, the CLI fetches the reference gas price from RPC.
+
+You can also use the gas coin as an input inside the PTB, for example `--split-coins gas [1000, 5000, 75000]`.

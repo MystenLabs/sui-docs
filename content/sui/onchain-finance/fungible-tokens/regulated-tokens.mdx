@@ -49,7 +49,7 @@ answer: >-
 
 Regulated currencies are assets with access control managed through a **deny list**. A deny list identifies addresses that cannot send or receive that asset. For example, stablecoins are a type of regulated currency.
 
-To create regulated currencies on Sui, the Currency Standard's Coin Registry provides regulatory features through the `sui::coin_registry` module. It has built-in support for global pause functionality and ecosystem integration.
+To create regulated currencies on Sui, the Currency Standard's Coin Registry provides regulatory features through the `sui::coin_registry` module. The registry is a system-level shared object located at address `0xc`. It has built-in support for global pause functionality and ecosystem integration.
 
 Advantages of these regulatory features include:
 
@@ -72,7 +72,7 @@ To learn about available features, see [Currency Standard](/onchain-finance/fung
 
 ## How do I create a regulated currency?
 
-To use regulatory features, you need to [create a currency](/onchain-finance/fungible-tokens/create-a-fungible-token). During currency initialization, use the `make_regulated()` function on the `CurrencyInitializer<T>` before calling `finalize()`. This adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the registry system:
+To use regulatory features, you need to [create a currency](/onchain-finance/fungible-tokens/create-a-fungible-token). During currency initialization, use the `make_regulated()` function on the `CurrencyInitializer<T>` before calling `finalize()`. The function takes a `bool` parameter controlling whether the currency allows global pause, and it returns a `DenyCapV2` that allows the bearer to maintain the list of addresses on the deny list. This adds deny list capabilities to the `Currency<T>` and tracks the regulatory status within the registry system:
 
 <details>
 <summary>
@@ -191,3 +191,20 @@ To use these functions, pass the address you want to add or remove. The frontend
 The following snippet from the TypeScript client adds an address to or removes an address from the deny list:
 
 <ImportContent source="examples/regulated-coin/ts-client/src/main.ts" mode="code" tag="deny" />
+
+## Regulated state values
+
+The `regulated` field of `Currency<T>` holds one of these `RegulatedState` values:
+
+- `Regulated { cap, allow_global_pause, variant }`: A deny cap exists for address restrictions. `cap` is the ID of the deny cap. `allow_global_pause` is `None` when the information is unknown because it has not been migrated from `DenyCapV2`. `variant` identifies the regulated coin version, starting from `0` in the new system.
+- `Unregulated`: You created the currency without a deny list.
+- `Unknown`: The regulatory status is unknown. A currency migrated from the legacy `coin.move` constructors starts in this state.
+
+## Migrate a legacy regulated coin
+
+A legacy currency created with `create_regulated_currency` enters the Coin Registry with its regulatory status set to `Unknown`. To record it as regulated, call one of these functions on its `Currency<T>`:
+
+- `migrate_regulated_state_by_metadata`: Pass the frozen `RegulatedCoinMetadata` object. Anyone can call it, and it succeeds only once, while the state is still `Unknown`. The resulting state leaves `allow_global_pause` unknown.
+- `migrate_regulated_state_by_cap`: Pass the `DenyCapV2` for the currency. The resulting state also records whether the cap allows a global pause.
+
+If your legacy coin still uses the original `DenyCap`, migrate it to `DenyCapV2` first.

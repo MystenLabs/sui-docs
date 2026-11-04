@@ -463,3 +463,8 @@ Transaction Digest: 7mBWUxT6HUVDa8bii3PZJc7nhWqefTLNTsGbHYnx7ZA4
 ```
 </details>
 
+## What happens when signatures do not meet the threshold
+
+When Sui verifies a multisig, it checks each signature against its matching public key and adds that key's weight to a running sum. If any single signature fails verification, Sui rejects the whole multisig with an `InvalidSignature` error that names the public key and address of the failing signer.
+
+If every signature verifies but the sum of weights is below the threshold, verification fails with an `InvalidSignature` error. The error message follows the format `Signature is not valid: {}`, where the detail is `Insufficient weight={:?} threshold={:?}`. The message reports the weight your signatures reached and the threshold the multisig address requires. To fix the error, collect signatures from additional participating keys until their combined weight is greater than or equal to the threshold, then combine and submit the transaction again.

@@ -301,3 +301,11 @@ public struct Farm has key {
 ```
 
 This example wraps a `vector` of `Pet` in `Farm` and can be accessed only through the `Farm` object.
+
+## What happens to a wrapped object in storage?
+
+When a transaction wraps an object, Sui treats it as removed from storage. The transaction effects list the object as wrapped, alongside deleted objects, and the wrapped object no longer appears among the transaction's output objects. Its data, including its `UID`, exists only inside the wrapping object. That is why a lookup by ID fails and why you cannot use the object as a transaction input.
+
+When a later transaction unwraps the object, Sui writes it back to storage as an output object with the same ID.
+
+If external tools need to find the inner object by its ID, add it as a [dynamic object field](/develop/objects/dynamic-fields) instead of wrapping it. A dynamic object field keeps the child object in storage.

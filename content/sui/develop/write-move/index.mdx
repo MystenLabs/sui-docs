@@ -100,3 +100,7 @@ This module uses Move 2024 syntax: the module label declaration (`module my_pack
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## Which modules need a use declaration?
+
+The counter module calls `object::new(ctx)` and declares a `UID` field without a `use` declaration for them. Sui Move code can reference the `object` module and the `UID` type without importing them, so the example compiles as written. Other framework modules, such as `event`, still need an explicit import like `use sui::event;`.

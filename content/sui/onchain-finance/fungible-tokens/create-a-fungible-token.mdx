@@ -91,7 +91,7 @@ To create a currency with the Currency Standard:
 
 1. Publish a package that defines your coin type.
 2. Call `coin_registry::new_currency` after publishing, or call `coin_registry::new_currency_with_otw` in the package's `init` function, to get a `CurrencyInitializer<T>` and a `TreasuryCap<T>`.
-3. Optionally, add deny-list support with `make_regulated`. To lock the supply, mint the total supply with the `TreasuryCap`, then call `make_supply_fixed` or `make_supply_burn_only`.
+3. Optionally, add deny-list support by calling `make_regulated` on the `CurrencyInitializer` before you call `finalize`. To lock the supply, mint the total supply with the `TreasuryCap`, then call `make_supply_fixed` or `make_supply_burn_only`.
 4. Call `finalize` to complete currency creation. The `finalize` function returns the `MetadataCap<T>`.
 5. For One-Time Witness creation only, call `coin_registry::finalize_registration` in a second transaction to place the currency into the registry.
 
@@ -218,3 +218,12 @@ The following example creates a non-OTW currency with a burn-only supply, mints 
 <ImportContent source="examples/move/coin/sources/non_otw_currency.move" mode="code" fun="new_currency" noComments />
 
 This example covers creation only. To mint or burn coins after creation, see [Mint and burn coins](#how-do-i-mint-and-burn-coins).
+
+## Burn coins with a burn-only supply
+
+The `make_supply_burn_only` function takes the `TreasuryCap` by value and converts it into the supply that the `Currency` stores. After the call, you no longer hold a `TreasuryCap`, so you burn coins through the `Currency` object instead:
+
+- `burn`: Burns a `Coin<T>`.
+- `burn_balance`: Burns a `Balance<T>`.
+
+Both functions abort with `ESupplyNotBurnOnly` if the `Currency` does not have a burn-only supply state. Each burn decreases the value that `total_supply` returns. You cannot make a supply fixed or burn-only twice.

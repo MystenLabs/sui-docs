@@ -323,3 +323,9 @@ In checkpoint data, these events arrive as **raw BCS bytes** that your indexer n
         }
     }
     ```
+
+## How does a new pipeline choose its first checkpoint?
+
+When your store has no watermark for a pipeline, the framework starts that pipeline from the beginning. When a watermark exists, the pipeline resumes strictly after it. This applies to both concurrent and sequential pipelines.
+
+Tasked indexers also read the main pipeline's reader watermark. If the store holds no watermark entry for the main pipeline, or the reader watermark is not set, the framework assumes pruning is not enabled. It then treats every checkpoint from 0 onward as valid for the tasked pipeline.

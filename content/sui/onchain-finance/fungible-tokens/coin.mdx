@@ -272,3 +272,10 @@ Regulated coins freeze `RegulatedCoinMetadata` upon creation, so there are no fu
 
 <ImportContent source="coin-standards-migrate" mode="snippet" />
 
+## What is `MetadataCap`?
+
+`MetadataCap<T>` is the capability that authorizes metadata updates for a `Currency<T>` object. Functions such as `set_name`, `set_description`, and `set_icon_url` require a reference to it. When you create a currency with `new_currency_with_otw`, the metadata cap state starts as `Unclaimed`.
+
+To obtain the capability, the owner of the `TreasuryCap<T>` calls `claim_metadata_cap`, passing the `Currency<T>` and the `TreasuryCap<T>`. You can claim it only once. The call aborts if someone already claimed the `MetadataCap`.
+
+To lock the metadata permanently, call `delete_metadata_cap`. This action is irreversible: you can no longer update the `Currency` metadata, and you cannot claim a new `MetadataCap`.

@@ -1,6 +1,6 @@
 ---
 title: 'Create Fungible Tokens: Coin Standard'
-description: Learn how to create and mint coins using the Coin standard on Sui, and manage fungible assets using address balances (the recommended default) or coin objects for explicit object-level control.
+description: Learn how to create a coin using the Coin standard on Sui by defining metadata, creating the currency, and minting an initial supply, then manage fungible assets using address balances (the recommended default) or coin objects for explicit object-level control.
 keywords:
   - mint tokens
   - create tokens
@@ -75,7 +75,7 @@ This example creates a coin with 9 decimals, the name Silver, a description, the
 
 ##### Step 2: Create the currency
 
-Create the coin using the `coin::create_currency` function:
+Create the coin using the `coin::create_currency` function. The publisher of the smart contract that creates the coin receives a `TreasuryCap` object:
 
 <ImportContent
 	source="I1/silver/sources/silver.move"
@@ -88,7 +88,7 @@ Create the coin using the `coin::create_currency` function:
 
 ##### Step 3: Mint the initial supply
 
-Mint the initial supply of your coin:
+Mint the initial supply of your coin. A `Coin<T>` results from calling the mint function with a `TreasuryCap`, the amount to mint, and the transaction context, and the function updates the total supply in `TreasuryCap` automatically:
 
 <ImportContent
 	source="I1/silver/sources/silver.move"
@@ -142,7 +142,7 @@ You can convert coin objects into an address balance at any time by calling `coi
 
 ## What is gas smashing?
 
-When executing a transaction, you can provide multiple coins as gas payment rather than a single coin. This feature, known as gas smashing, automatically merges the provided coins into the first coin in the payment vector. That merged coin, minus the gas budget, is then available inside the transaction for use in any command. If unused, it returns to the sender.
+When executing a transaction, you can provide multiple coins as gas payment rather than a single coin. This feature, known as gas smashing, automatically merges the provided coins into the first coin you list in the payment vector, so the order in which you supply the coins determines which coin remains. That merged coin, minus the gas budget, is then available inside the transaction for use in any command. If unused, it returns to the sender.
 
 Gas smashing applies only to `Coin<SUI>` objects, because SUI is the only coin type accepted for gas payment.
 

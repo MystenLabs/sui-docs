@@ -94,3 +94,13 @@ These guides show common token configurations in action:
 import DocCardList from '@theme/DocCardList';
 
 <DocCardList />
+
+## Migrate a Coin Standard token to the Coin Registry
+
+Before you migrate an existing Coin Standard token, review how migration behaves:
+
+- `migrate_legacy_metadata` registers your `CoinMetadata` in the `CoinRegistry` and shares the resulting `Currency`. You can call it only once, and only if no `Currency` exists for the type yet.
+- Until you claim the `MetadataCap`, `update_from_legacy_metadata` copies changes from `CoinMetadata` into the `Currency`. After you claim the cap, you can update metadata only through the `set_*` functions.
+- You cannot delete the legacy `CoinMetadata` after migration. `delete_migrated_legacy_metadata` is disabled and aborts.
+- A migrated `Currency` does not record its treasury cap ID automatically. Call `set_treasury_cap_id` with your `TreasuryCap` to register it.
+- For regulated coins, anyone can call `migrate_regulated_state_by_metadata` with the `RegulatedCoinMetadata` object, and only once. You can also call `migrate_regulated_state_by_cap` with your `DenyCapV2`.

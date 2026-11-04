@@ -154,3 +154,14 @@ Evaluate whether this trust model aligns with the threat profile and security ne
 A TEE is not magic: it attests to what code runs, not that the code is correct or safe. Minimize the code and dependencies inside the enclave to shrink the trusted computing base, audit those dependencies, rate-limit and guard the endpoints that reach the enclave, and alert on PCR drift so you catch unexpected changes to enclave measurements immediately. See the [Nautilus](/develop/security/best-practices#nautilus) section of the Security Best Practices guide.
 
 :::
+
+## What happens when attestation verification fails
+
+When onchain attestation verification fails during enclave registration, the transaction aborts with a Move runtime abort. The error reports the abort location and abort code. The Sui framework defines these abort codes for attestation checks:
+
+- `ENotSupportedError` (`0`): The feature is not available on this network.
+- `EParseError` (`1`): The framework cannot parse the attestation input.
+- `EVerifyError` (`2`): The attestation fails verification.
+- `EInvalidPCRsError` (`3`): The PCRs are invalid.
+
+Because the transaction aborts, the registration does not take effect.

@@ -296,3 +296,17 @@ Move tests validate contract logic in a package-local environment. For full appl
 - **Testnet deployment:** Deploy your packages to [Testnet](/getting-started/onboarding/configure-sui-client) to verify behavior with real network conditions, indexing, and RPC queries.
 - **Dry runs:** Use `sui client call --dry-run` or `devInspectTransactionBlock` to simulate a transaction against the current network state without executing it. This catches issues like incorrect object versions or insufficient gas before you submit.
 - **SDK integration tests:** Use the [Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript) to write integration tests that submit transactions, query state, and verify end-to-end flows from a client perspective.
+
+## Inspect transaction effects in a scenario
+
+Each call to `scenario.next_tx(sender)` returns a `TransactionEffects` value for the preceding transaction. Use its accessors to verify side effects:
+
+- `created`, `written`, `deleted`, `shared`, and `frozen`: Return a `vector<ID>` of the affected objects.
+- `transferred_to_account`: Returns a `VecMap<ID, address>` of objects and their new owner addresses.
+- `transferred_to_object`: Returns a `VecMap<ID, ID>` of objects and their new parent objects.
+- `num_user_events`: Returns the number of user events emitted as a `u64`.
+
+```move
+    let effects = scenario.next_tx(sender);
+    assert!(effects.deleted().contains(&id));
+```

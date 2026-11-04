@@ -175,3 +175,7 @@ Prefer address-owned objects over shared objects when:
 - You want to avoid consensus overhead and potential contention.
 
 Shared objects are the right choice when multiple parties must read and write the same mutable state. For read-only data that never changes, use [immutable objects](/develop/objects/object-ownership/immutable) instead.
+
+## Can shared objects bypass consensus?
+
+No. A transaction that uses a shared object always goes through consensus ordering before it executes. Any input that requires consensus forces consensus sequencing for the whole transaction. Sui no longer has a separate fastpath execution path, so every user transaction requires consensus voting and commit before execution. You reduce latency by designing around shared objects where possible, not by skipping consensus for them.

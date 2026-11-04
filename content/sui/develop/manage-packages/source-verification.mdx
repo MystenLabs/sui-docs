@@ -232,3 +232,7 @@ swap in a per-network manifest, or resolve a dependency from a local checkout ra
 revision. You cannot verify such packages from the repository alone. Reproducibly verifiable source
 requires that the manifest committed alongside the package is the one that built it, with every
 dependency pinned to a hash.
+
+## Where does verify-source cache toolchain binaries?
+
+`verify-source` stores each downloaded `sui` binary in its own per-version directory at `sui/source-verification/binaries/<version>` inside your platform cache directory. If the command cannot determine the platform cache directory, it uses `$MOVE_HOME` as the base instead. To inspect, clear, or pre-populate the cache, for example in CI or an air-gapped environment, work with that directory.

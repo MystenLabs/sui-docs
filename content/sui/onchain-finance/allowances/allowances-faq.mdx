@@ -113,3 +113,7 @@ Only for app-bound allowances, and only by the app. An app-bound allowance is ti
 #### Can you issue an allowance to a contract instead of an address?
 
 Use an app-bound allowance. Your module decides whether each pull is allowed, and it can rotate the spender key at any time. The spender itself must still be an account address, not an object, because it must sign and send every spending transaction.
+
+## Does an allowance depend on a specific coin object?
+
+No. An allowance does not reference a coin object. It records the funder's address, and each spend withdraws from the balance of that address. Transferring or destroying a coin that the funder owns does not change or delete the allowance. The allowance object stays onchain until the funder revokes it. A later spend draws on the funder's address balance at execution time. The rules for a balance that cannot cover the spend still apply.

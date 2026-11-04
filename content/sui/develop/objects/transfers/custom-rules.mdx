@@ -111,3 +111,9 @@ public fun transfer_locked(object: Object) {
 ```
 
 With these rules in place, there are different custom transfer rules for any object `Object`. Either it's unlocked and anyone can transfer it, or it's locked and it can only be transferred to `0xCAFE`. Importantly, these are the only ways of transferring any object of type `Object`. In particular, because `Object` does not have the `store` ability, you cannot transfer it using the [`sui::transfer::public_transfer`](/references/framework/sui_sui/transfer#sui_transfer_public_transfer) function.
+
+## Who can call `transfer::transfer`
+
+The Sui Move bytecode verifier enforces this restriction. Every function in `sui::transfer` is private to the module: for a call such as `transfer::transfer<T>(...)`, either `T` must be a type declared in the calling module, or `T` must have `store`. A module that calls `transfer::transfer` on a `key`-only type defined in a different module fails verification. Code outside the defining module, including other packages, can transfer a `key`-only object only by calling a public transfer function that the defining module provides, and that function's checks always run.
+
+The same rule applies to receiving. For a `key`-only object, you can call `sui::transfer::receive` only in the module that defines the object. Elsewhere, you must call `sui::transfer::public_receive`, which works only on objects that also have the `store` ability.
