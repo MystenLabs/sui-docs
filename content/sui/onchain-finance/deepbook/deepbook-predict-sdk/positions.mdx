@@ -108,7 +108,17 @@ Use `tx.enqueuePlan` to queue the order a plan describes. It returns a `Promise<
 
 The lower-level builders `tx.enqueueMint`, `tx.enqueueMintAmount`, `tx.enqueueMintCost`, and `tx.enqueueSell` take the limits directly, in SDK units, and run the same preflight. Every queued mint needs a finite cost cap, because the chain aborts a zero or unlimited `max_cost` with `EMintCostCapRequired`.
 
-The preflight codes are `not-live`, `no-queue`, `retired`, `paused`, `stuck`, `past-cutoff`, `queue-full`, `account-cap`, `fee`, `market-cash`, `min-premium`, `entry-band`, `cost-above-payout`, `below-min-sell`, `record-not-open`, and `not-record-owner`. `fee` means the balance cannot cover the order fee, or the plan's whole debit, so prompt a deposit. Some checks run only onchain at placement, such as the market's SVI age and room in the payout tree for a new strike, and those abort the transaction rather than raising a preflight code. `describePredictError` turns any of these aborts into readable text.
+The preflight codes are `not-live`, `no-queue`, `retired`, `paused`, `stuck`, `past-cutoff`, `queue-full`, `account-cap`, `fee`, `market-cash`, `min-premium`, `entry-band`, `cost-above-payout`, `below-min-sell`, `record-not-open`, and `not-record-owner`. The following table maps 5 of the codes to the conditions that trigger them:
+
+| **Code** | **Condition** |
+| --- | --- |
+| `fee` | The balance cannot cover the order fee, or the plan's whole debit. Prompt a deposit. |
+| `entry-band` | The strike is outside the market's entry probability band. |
+| `min-premium` | The budget buys less than 1 USDC of premium. |
+| `past-cutoff` | The market is past its expiry, or near its cutoff. |
+| `record-not-open` | The record is not Open. |
+
+Some checks run only onchain at placement, such as the market's SVI age and room in the payout tree for a new strike, and those abort the transaction rather than raising a preflight code. `describePredictError` turns any of these aborts into readable text.
 
 ### `decode.enqueue` {#decode-enqueue}
 
@@ -126,7 +136,7 @@ Use `read.waitForOutcome` to poll a record until it is filled, refunded, or clos
 
 ### `read.planSell` {#plan-sell}
 
-Use `read.planSell` to plan an early sell of an Open record. It returns a `Promise<SellPlan>` with the `proceeds` at the current price, `net` after the order fee, the `minProceeds` and `minNet` floors at the worst price the slippage allows, and the `order` for `tx.enqueuePlan`. It throws `PredictPreflightError` with code `record-not-open` for a record that is not Open. A sell pays the order fee whatever it returns, so `net` is negative for a sell worth less than the fee. `read.quoteSell` returns the same quote without the plan.
+Use `read.planSell` to plan an early sell of an [Open record](#queued-orders), a filled mint that stays in its market's queue rather than entering the account. It returns a `Promise<SellPlan>` with the `proceeds` at the current price, `net` after the order fee, the `minProceeds` and `minNet` floors at the worst price the slippage allows, and the `order` for `tx.enqueuePlan`. It throws `PredictPreflightError` with code `record-not-open` for a record that is not Open. A sell pays the order fee whatever it returns, so `net` is negative for a sell worth less than the fee. `read.quoteSell` returns the same quote without the plan.
 
 It takes these parameters:
 
@@ -201,7 +211,7 @@ Use `read.quoteMint` to quote an exact payout quantity. It returns a `Promise<Mi
 - `referral`: The part of the trading fee that the protocol routes to a referrer, 0 unless the account has a referrer.
 - `inventoryImpact`: The inventory-impact charge, a separate charge that `cost` includes.
 
-`cost` is `premium + (trading - subsidy) + builder + penalty + inventoryImpact`, and `referral` is a part of the trading fee that the protocol routes to a referrer, not an extra debit.
+`cost` is `premium + (trading - subsidy) + builder + penalty + inventoryImpact`, and `referral` is a part of the trading fee that the protocol routes to a referrer, not an extra debit. The flat order fee in `orderFee` is separate from the trading fee. `cost` does not include it, and a queued order pays it once, on top of `cost`.
 
 ### `read.quoteMintCost` {#quote-mint-cost}
 
@@ -243,6 +253,8 @@ It takes this parameter:
 
 - `owner`: The address that owns the account.
 
+The following excerpts come from the SDK's `client.ts` and `reads/positions.ts` source files:
+
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="863-863" />
 
 <ImportContent source="packages/deepbook-v3/src/predict/reads/positions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="41-44" />
@@ -271,6 +283,8 @@ It takes this parameter:
 
 - `r`: The executed transaction result, including its events.
 
+The following excerpts come from the SDK's `client.ts` and `decode.ts` source files:
+
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="1003-1004" />
 
 <ImportContent source="packages/deepbook-v3/src/predict/decode.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="106-147" />
@@ -283,6 +297,8 @@ It takes this parameter:
 
 - `r`: The executed transaction result, including its events.
 
+The following excerpts come from the SDK's `client.ts` and `decode.ts` source files:
+
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="1005-1007" />
 
 <ImportContent source="packages/deepbook-v3/src/predict/decode.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="149-184" />
@@ -294,6 +310,8 @@ Use `decode.claim` to read the receipt of a settled claim, and `decode.claims` t
 It takes this parameter:
 
 - `r`: The executed transaction result, including its events.
+
+The following excerpts come from the SDK's `client.ts` and `decode.ts` source files:
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="1008-1010" />
 
