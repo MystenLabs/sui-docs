@@ -1,9 +1,9 @@
 ---
 title: What is a PTB?
 description: >-
-  A deep-dive into programmable transaction blocks (PTBs): structure, inputs,
-  commands, execution semantics, gas handling, and the 1,024-operation limit,
-  with TypeScript SDK examples.
+  Programmable transaction blocks (PTBs) group commands into a single atomic
+  transaction on Sui. Covers PTB structure, inputs, commands, execution
+  semantics, gas handling, and the 1,024-command limit.
 keywords:
   - programmable transaction blocks
   - transaction blocks
@@ -506,7 +506,7 @@ Results: [
 
 ## What is address balance gas payment?
 
-An address balance is SUI that an address holds directly rather than in a `Coin<SUI>` object. For example, `sui::coin::send_funds` deposits a coin into an address balance and deletes the coin object. With normal gas payment, you list one or more `Coin<SUI>` objects in the gas payment, and the runtime combines (smashes) them into a single gas coin. With address balance gas payment, you leave the gas payment list empty, and the protocol deducts gas from the SUI address balance of the gas owner (the sender, or the sponsor in a sponsored transaction). In that case, no real coin object receives the final gas charge.
+An [address balance](/onchain-finance/asset-custody/address-balances) is a balance of a coin type, such as SUI, that an address holds directly rather than in a `Coin<T>` object. For example, `sui::coin::send_funds` deposits a coin into the recipient's address balance and deletes the coin object. With normal gas payment, you list one or more `Coin<SUI>` objects in the gas payment, and the runtime combines (smashes) them into a single gas coin. With address balance gas payment, you leave the gas payment list empty, and the protocol deducts gas from the SUI address balance of the gas owner (the sender, or the sponsor in a sponsored transaction). In that case, no real coin object receives the final gas charge.
 
 When the fullnode selects gas for you, it pays from the gas owner's address balance if the transaction never touches the gas coin and that balance covers the budget. Otherwise, it pays from their SUI coins. If the transaction does use the gas coin, it adds an address balance reservation so both sources are available.
 
