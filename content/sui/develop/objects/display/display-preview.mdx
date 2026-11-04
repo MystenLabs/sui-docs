@@ -66,6 +66,15 @@ Display templates typically include the following properties:
 
 Each `{field_name}` reference in a template renders as the value of that field on the displayed object. For example, for a hypothetical object whose `collection_name` field is `Example` and whose `number` field is `42`, the `name` template `{collection_name} #{number}` renders as `Example #42`, and the `description` template renders as `A collectible from the Example series`.
 
+The following block summarizes the field reference syntax and the same input and output pair:
+
+```text
+Syntax:    {field_name}
+Object:    collection_name = Example, number = 42
+Template:  {collection_name} #{number}
+Output:    Example #42
+```
+
 Template values in the [Common template properties](#common-template-properties) table fall into two groups:
 
 - **Dynamic values** contain one or more field references, so the rendered output differs from object to object. In the table, `name`, `description`, `image_url`, and `link` are dynamic. A dynamic value can combine fixed text with field references, as in `https://example.com/images/{image_id}.png`.
@@ -85,6 +94,6 @@ The interactive preview tool appears below. Follow the steps in [How to use the 
 
 ## Are display values validated as URLs?
 
-The `Display<T>` object stores every property, including `link`, `image_url`, and `project_url`, as a plain string in a `VecMap<String, String>`. The framework does not use a URL type for these properties or check their format. The property name tells clients what the value means, and the value itself is always a string.
+The `Display<T>` object stores every property, including `link`, `image_url`, and `project_url`, as a plain string in a `VecMap<String, String>`. This `VecMap` is the onchain representation inside the `Display<T>` struct, not the rendered output that clients show. The framework does not use a URL type for these properties or check their format. The property name tells clients what the value means, and the value itself is always a string.
 
 Because the framework does not check the format, a static or dynamic value under a URL property such as `project_url` or `link` must still render to a valid URL. You are responsible for that. Properties such as `name`, `description`, and `creator` can hold any text.
