@@ -108,7 +108,7 @@ In Solidity, a contract defines and stores data structures such as `Mapping`. Mu
 
 In Move, the contract defines the logic that mutates the data, but Move objects store the data.
 
-To mutate the data, the owner of the objects calls the contract functions using a [PTB](#how-do-i-chain-contract-calls-with-programmable-transaction-blocks). The protocol checks ownership at the protocol level, so transactions fail if the signer does not have access to the referenced objects.
+To mutate the data, the owner of the objects calls the contract functions using a [PTB](#how-do-i-chain-contract-calls-with-programmable-transaction-blocks). The protocol checks ownership at the protocol level, so transactions fail if the signer does not have access to the referenced objects. To build a PTB in code, see [Building Programmable Transaction Blocks](/develop/transactions/ptbs/building-ptb).
 
 ## How do I chain contract calls with programmable transaction blocks?
 
