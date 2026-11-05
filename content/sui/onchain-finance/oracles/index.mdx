@@ -112,7 +112,7 @@ The Pyth staleness check aborts on a stale feed. Move cannot catch an abort, so 
 
 To keep a transaction alive when the primary feed is stale, use a fallback feed:
 
-1. Read the primary feed with the unchecked Pyth reader.
+1. Read the primary feed with the unchecked Pyth reader, `pyth::get_price_unsafe`.
 2. Test its freshness yourself, without aborting.
 3. If the primary is stale, read a secondary feed with the checked reader, `pyth::get_price_no_older_than`. This read still aborts if the secondary feed is also stale.
 
