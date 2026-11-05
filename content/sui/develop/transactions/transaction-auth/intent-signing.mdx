@@ -195,7 +195,7 @@ const { signature } = await wallet.signPersonalMessage({
 
 :::tip
 
-When you sign application or offchain messages (for example, login challenges or authorization payloads), structure the message so no one can replay or misuse it in another context. Include a domain or app identifier, a chain or package identifier, the explicit purpose of the message, a nonce or request ID, and a timestamp or maximum age so the verifier can reject stale or replayed messages. See [security best practices](/develop/security/best-practices) for details.
+When you sign application or offchain messages (for example, login challenges or authorization payloads), structure the message so no one can replay or misuse it in another context. Include a domain or app identifier, a chain or package identifier, the explicit purpose of the message, a nonce or request ID, and a timestamp or maximum age so the verifier can reject stale or replayed messages. See [Frontend and transaction signing](/develop/security/best-practices#frontend-and-transaction-signing) for details.
 
 :::
 
