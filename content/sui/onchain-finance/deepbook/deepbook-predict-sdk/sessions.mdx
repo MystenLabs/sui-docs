@@ -303,9 +303,9 @@ Each builder takes its own limits:
 - `enqueueExactQuantity`: `quantity`, `maxCost`, and `maxProbability`
 - `enqueueExactAmount`: `maxPremium`, `minQuantity`, and `maxCost`
 - `enqueueExactCost`: `maxCost` and `minQuantity`
-- `enqueueRedeemOpen`: `recordId`, `minProbability`, and `minProceeds`
+- `enqueueRedeemOpen`: `recordId`, `closeQuantity`, `minProbability`, and `minProceeds`
 
-`enqueueExactCost` sizes the fill at τ so its all-in cost fits `maxCost`, at least `minQuantity`. The builder throws for a `maxCost` of 0 or `u64::MAX`, which the chain would abort with `EMintCostCapRequired`, because every queued mint needs a finite cap. `enqueueExactQuantity` takes `quantity`, `maxCost`, and `maxProbability`, and `enqueueExactAmount` takes `maxPremium`, `minQuantity`, and `maxCost`.
+`enqueueExactCost` sizes the fill at τ so its all-in cost fits `maxCost`, at least `minQuantity`. The builder throws for a `maxCost` of 0 or `u64::MAX`, which the chain would abort with `EMintCostCapRequired`, because every queued mint needs a finite cap.
 
 <ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="577-584" />
 
