@@ -82,7 +82,7 @@ Sui supports a range of payment models, from direct transfers to structured chec
 
 ## Which payment model should I use?
 
-- If you only need to move value, such as wallet sends, peer-to-peer payments, or treasury moves, use a [basic transfer](#basic-transfer). Send to an address balance unless the recipient or an integrating contract expects a distinct `Coin<T>` object.
+- If you only need to move value, such as wallet sends, peer-to-peer payments, or treasury moves, use a [basic transfer](#basic-transfer). Send to an address balance unless the recipient or an integrating contract expects a distinct `Coin<T>` object. An address balance is a canonical per-address balance that merges deposits from different senders automatically, so the recipient manages no objects.
 - If you need receipts or duplicate prevention, use [Payment Kit](#payment-kit), then choose a processing mode:
   - If you need duplicate prevention, or compliance, accounting, or retry safety requires payment history, use registry payments.
   - If an external system already tracks payments, you need no duplicate prevention, and you want lower gas cost, use ephemeral payments.
