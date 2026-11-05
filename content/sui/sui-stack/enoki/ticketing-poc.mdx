@@ -204,10 +204,9 @@ $ pnpm install
 
 ```bash 
 $ sui client active-address
-$ sui keytool convert <ADDRESS>
 ```
 
-Replace `<ADDRESS>` with the address returned by `sui client active-address`. Copy the value that starts with `suiprivkey1...`.
+Run `sui keytool export` with the address that `sui client active-address` returns. [Export the private key for your address](#export-the-private-key-for-your-address) describes the command. Copy the value that starts with `suiprivkey1...`.
 
 ##### Step 3: Run setup script 
 
