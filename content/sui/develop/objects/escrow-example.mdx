@@ -219,4 +219,4 @@ In both versions, a party who decides not to proceed can get their object back. 
 
 In the address-owned version, if the matching `Escrow` never arrives, the custodian calls `return_to_sender`. This function deletes the `Escrow` wrapper and transfers the escrowed object back to the address in its `sender` field. Returning the object depends on the custodian, which the protocol trusts to preserve liveness but not safety. Before a party sends an `Escrow` to the custodian, that party can also call `unlock` to recover a locked object if the other party stalls.
 
-The shared version has no custodian. The sender recorded in the `Escrow` object reclaims the escrowed object directly if the swap doesn't complete.
+The shared version has no custodian. The sender recorded in the `Escrow` object calls the shared module's `return_to_sender`, which checks that the caller is that sender, deletes the `Escrow`, and returns the escrowed object to the caller's transaction.
