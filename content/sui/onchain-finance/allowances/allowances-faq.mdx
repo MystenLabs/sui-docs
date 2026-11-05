@@ -117,7 +117,7 @@ The new allowance has a new object ID and a fresh spend counter.
 Only for app-bound allowances, and only by the app. The action depends on the allowance type:
 
 - **App-bound allowance:** The allowance is tied to an app type, and the module that defines that type decides whether each pull is allowed. That module can call `rotate_spender` with a `SettingsPermit`.
-- **Direct allowance:** There is no app in the loop and the spender is fixed. To hand a direct allowance to a different address, revoke it and issue a new one to that address, following the same revoke-and-reissue steps as for changing limits.
+- **Direct allowance:** There is no app in the loop and the spender is fixed. To hand a direct allowance to a different address, revoke it and issue a new one to that address, following the same revoke-and-reissue steps as for changing limits. Alternatively, the spender address can add the new key as an [address alias](/onchain-finance/asset-custody/address-aliases).
 
 #### Can you issue an allowance to a contract instead of an address?
 
