@@ -72,16 +72,18 @@ These versions come from the [Wallog README](https://github.com/MystenLabs/wallo
 
 The Wallog packages are not published to PyPI or npm, so you install them from your clone ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)). Run the following commands from the root of the clone.
 
-<Tabs groupId="language">
-<TabItem value="python" label="Python">
-
-Create a virtual environment and install the `wallog` package and command:
+Create a virtual environment and install the `wallog` package. The `wallog` command that later sections use comes from this package, so install it even if your agent uses TypeScript:
 
 ```sh
 $ python3 -m venv .venv
 $ . .venv/bin/activate
 $ pip install -e sdks/python
 ```
+
+<Tabs groupId="language">
+<TabItem value="python" label="Python">
+
+The `wallog` package you installed is the Python SDK. No other step is needed.
 
 </TabItem>
 <TabItem value="typescript" label="TypeScript">
@@ -108,7 +110,7 @@ The packages are ES modules only. In a CommonJS project, load the SDK with a dyn
 </TabItem>
 </Tabs>
 
-Install the reference verifier and the server with Cargo. This places `wallog-verify` and `wallog-server` in `~/.cargo/bin` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
+From the root of the clone, install the reference verifier and the server with Cargo. This places `wallog-verify` and `wallog-server` in `~/.cargo/bin` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
 
 ```sh
 $ cargo install --path crates/wallog-verify --locked
@@ -183,9 +185,25 @@ The returned receipt has an `id`, a `url` to a page that shows the receipt, and 
 
 To run the complete quickstart from the root of the clone, use the following command:
 
+<Tabs groupId="language">
+<TabItem value="python" label="Python">
+
 ```sh
 $ python examples/python/quickstart.py
 ```
+
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
+
+Run it after `npm ci` and `npm run build` in `sdks/typescript` ([source](https://github.com/MystenLabs/wallog/blob/main/examples/typescript/quickstart.ts)):
+
+```sh
+$ npm i --no-save ./sdks/typescript/packages/verify ./sdks/typescript/packages/sdk
+$ npx tsx examples/typescript/quickstart.ts
+```
+
+</TabItem>
+</Tabs>
 
 :::caution
 
