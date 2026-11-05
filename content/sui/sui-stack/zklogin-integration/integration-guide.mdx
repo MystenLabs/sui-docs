@@ -571,6 +571,8 @@ const { bytes, signature } = await zkSigner.signTransaction(await txb.build({ cl
 await client.executeTransaction({ transaction: bytes, signatures: [signature] });
 ```
 
+The `legacyAddress` option has the same meaning as the third argument of `jwtToAddress` in Step 5. Pass `false` for new integrations, and pass `true` only for addresses that existed before the derivation fix.
+
 See [ZkLoginSigner](/onchain-finance/asset-custody/wallets/zk-login-wallets#zkloginsigner) for the full API reference.
 
 ## Pass the derived address to a fiat on-ramp provider
