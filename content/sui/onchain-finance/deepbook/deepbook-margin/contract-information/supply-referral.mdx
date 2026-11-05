@@ -47,8 +47,6 @@ The referral system uses a shares-based tracking mechanism. When a supplier depo
 - As interest accrues and protocol fees are collected, your claimable fees (accumulated referral fees you have not yet withdrawn) grow
 - When a supplier withdraws, your referral's shares decrease accordingly
 
-Your referral's portion of the referral fees depends on the supply shares it referred relative to all supply shares in the pool. [Fee distribution](#fee-distribution) describes this calculation.
-
 ## API
 
 Following are the functions for managing supply referrals. Each section describes what the function does, followed by its source from the `deepbookv3` repository.
@@ -56,7 +54,7 @@ Following are the functions for managing supply referrals. Each section describe
 <details>
 <summary>Mint a `SupplyReferral`</summary>
 
-Create a new supply referral for earning fees from referred suppliers. The returned `SupplyReferral` object is transferable and can be used to claim accumulated fees. Each referral applies to the specific margin pool you mint it for.
+Create a new supply referral for earning fees from referred suppliers. The function shares a new `SupplyReferral` object, records the caller as its owner, and returns its ID for suppliers to pass to `supply`. Each referral applies to the specific margin pool you mint it for.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -71,7 +69,7 @@ Create a new supply referral for earning fees from referred suppliers. The retur
 <details>
 <summary>Supply with referral</summary>
 
-Supply assets to a margin pool with an optional referral ID. When a referral ID is provided, the referrer earns a portion of protocol fees from the supplier's position. If the supplier omits the referral ID, the position's shares count toward the default referral described in [Fee distribution](#fee-distribution).
+Supply assets to a margin pool with an optional referral ID. When a referral ID is provided, the referrer earns a portion of protocol fees from the supplier's position.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -86,7 +84,7 @@ Supply assets to a margin pool with an optional referral ID. When a referral ID 
 <details>
 <summary>Withdraw referral fees</summary>
 
-Withdraw accumulated referral fees. Only the owner of the `SupplyReferral` object can claim its fees. You can withdraw accumulated fees at any time.
+Withdraw accumulated referral fees. Only the address that minted the `SupplyReferral`, recorded in its `owner` field, can claim its fees. You can withdraw accumulated fees at any time.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
