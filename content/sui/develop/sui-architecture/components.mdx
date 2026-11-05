@@ -99,13 +99,11 @@ To learn more about consensus on Sui, see:
 
 ## What are transactions on Sui?
 
-Transactions on Sui consist of several commands that execute on inputs. These inputs define the result of the transaction. All updates to the Sui network happen through transactions. There are only 2 types of transactions on Sui, and the submitter determines the type:
+Transactions on Sui consist of several commands that execute on inputs. These inputs define the result of the transaction. All updates to the Sui network happen through transactions. There are only 2 types of transactions on Sui:
 
 - **Programmable transaction blocks:** Anyone can submit these. Every user transaction on Sui is a programmable transaction block, for activities such as sending tokens, creating objects, and interacting with smart contracts.
 
-- **System transactions:** Only validator nodes can submit these. They perform network functions such as changing epochs or starting checkpoints.
-
-To classify a transaction, check who submits it and why. A user transaction is a programmable transaction block. A transaction that validator nodes submit for a network function is a system transaction.
+- **System transactions:** Validators create these internally and do not accept them from outside. They perform network functions such as changing epochs or starting checkpoints.
 
 Learn more about both types of [transactions](/develop/transactions/txn-overview), or learn more about [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks).
 
