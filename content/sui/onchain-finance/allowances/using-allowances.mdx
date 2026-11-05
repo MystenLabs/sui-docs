@@ -314,7 +314,7 @@ const balance = tx.moveCall({
 });
 ```
 
-This snippet continues `spend-allowance.ts`, so `tx` is the `Transaction` instance that file imports from `@mysten/sui/transactions`, and `tx.withdrawal()` is a method on that instance.
+This snippet continues `spend-allowance.ts`: `tx` is the `Transaction` instance that file creates with `new Transaction()`, and `withdrawal()` is a method of the `Transaction` class from `@mysten/sui/transactions`.
 
 Both forms take the coin type, while the funder issued the allowance with the balance type `Balance<0x2::sui::SUI>`. The spender pays gas.
 
