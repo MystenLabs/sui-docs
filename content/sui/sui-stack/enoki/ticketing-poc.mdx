@@ -204,9 +204,10 @@ $ pnpm install
 
 ```bash 
 $ sui client active-address
+$ sui keytool export --key-identity <ADDRESS>
 ```
 
-Run `sui keytool export` with the address that `sui client active-address` returns. [Export the private key for your address](#export-the-private-key-for-your-address) describes the command. Copy the value that starts with `suiprivkey1...`.
+Replace `<ADDRESS>` with the address that `sui client active-address` returns. Copy the value that starts with `suiprivkey1...`.
 
 ##### Step 3: Run setup script 
 
@@ -369,6 +370,6 @@ The following sections address common issues with this example.
 
 ## Export the private key for your address
 
-To display the private key for your active address, run `sui keytool export` with that address in place of `$SUI_ADDRESS`. The command reads the key from your Sui Keystore and prints it in Bech32 format, starting with `suiprivkey`. If you do not know the address, `sui keytool list` shows every key in the keystore.
+To display the private key for your active address, run `sui keytool export` with that address as the `--key-identity` value. The command reads the key from your Sui Keystore and prints it in Bech32 format, starting with `suiprivkey`. If you do not know the address, `sui keytool list` shows every key in the keystore.
 
 `sui keytool convert` does not look up a key by address. It takes a private key value in Hex or Base64 and converts it to the Bech32 `suiprivkey` format.
