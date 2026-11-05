@@ -76,8 +76,8 @@ This pricing mechanism gives you the best user experience without needing to for
 
 Gas fees for any transaction equal:
 
-```
-total_gas_fees = computation_units × gas_price + storage_units × storage_price
+```text
+gas_fees = computation_units × gas_price + storage_units × storage_price
 ```
 
 In this formula, `gas_price` is the gas price you set for the transaction, which must be at least the reference gas price. [Computation gas prices](#computation-prices) explains how the gas price relates to the reference gas price.
@@ -118,7 +118,7 @@ Using coarse bucketing accomplishes two important goals:
 
 Similarly, Sui transactions vary depending on the amount of new data written into onchain storage. The variable storage units capture these differences by mapping the amount of bytes held in storage into storage units. The current Sui schedule is linear and maps each byte into 100 storage units. For example, a transaction that stores 25 bytes costs 2,500 storage units, while a transaction that stores 75 bytes costs 7,500 units.
 
-In the Sui [storage fund](/develop/sui-architecture/tokenomics-overview#storage-fund) model, users pay up front for the cost of storing data in perpetuity but can also get a partial rebate on previously stored data if that data is deleted. Hence, the amount of storage fees that you pay can be split into a rebateable and non-rebateable amount. Initially, the rebateable amount equals 99% of the storage fees, while the non-rebateable amount equals the remaining 1%.
+In the Sui [storage fund](/develop/sui-architecture/tokenomics-overview#storage-fund) model, users pay in advance for the cost of storing data in perpetuity but can also get a partial rebate on previously stored data if they delete that data. Hence, the storage fees that you pay split into a rebateable and non-rebateable amount. The rebateable amount currently equals 99.99% of the storage fees, while the non-rebateable amount equals the remaining 0.01%.
 
 ### Storage rebates 
 
@@ -173,7 +173,7 @@ In the long run, the Sui gas price mechanism creates incentives for validators t
 
 You must submit all transactions together with a gas budget. This provides a cap to the amount of gas fees you pay, especially because sometimes it might be hard to perfectly forecast how much a transaction costs before you submit it to the Sui network.
 
-You define the gas budget for a Sui transaction in MIST. A transaction executes successfully if it meets the following condition, where `computation_fees` equals `computation_units × gas_price` (the gas price you set for the transaction, which must be at least the reference gas price) and `total_gas_fees` equals `computation_fees` plus storage fees minus the storage rebate:
+You define the gas budget for a Sui transaction in MIST. A transaction executes successfully if it meets the following condition, where `computation_fees` equals `computation_units × gas_price` (the gas price you set for the transaction, which must be at least the reference gas price) and `total_gas_fees` equals `net_gas_fees` from [Storage rebates](#storage-rebates): `computation_fees` plus storage fees minus the storage rebate:
 
 ```text
 gas_budget >= max{computation_fees, total_gas_fees}
@@ -185,7 +185,7 @@ Ultimately, a successful transaction requires the end user to pay the transactio
 
 The minimum gas budget is 2,000 MIST (0.000002 SUI). This ensures validators are compensated with at least 2,000 MIST even if the gas budget is incorrectly specified and the transaction aborts. Additionally, this protects the Sui network from being spammed with a large number of transactions with minimal gas budgets. The maximum gas budget is 50 billion MIST or 50 SUI. This protects the network against overflow of internal multiplications and gas limits for denial of service attacks.
 
-As mentioned previously, the storage rebate currently equals 99% of the originally paid storage fees. Because the gas budget applies to the totality of gas fees, it is often the case that a transaction only goes through if the gas budget is considerably higher than the net gas fees that a user ultimately pays.
+As mentioned previously, the storage rebate currently equals 99.99% of the originally paid storage fees. Because the gas budget applies to the totality of gas fees, it is often the case that a transaction only goes through if the gas budget is considerably higher than the net gas fees that a user ultimately pays.
 
 ### Gas budget examples {#gas-budget-examples}
 
