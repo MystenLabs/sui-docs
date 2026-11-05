@@ -44,7 +44,7 @@ The `Pool` shared object represents a market, such as a SUI/USDC market. That `P
 
 To create a pool, you need to specify three sizing parameters: tick size, lot size, and minimum order size. Each parameter controls how orders are placed and matched in the pool.
 
-**Tick size** determines the minimum price increment for orders. Calculate tick size using this formula:
+**Tick size** determines the minimum price increment for orders. In the formula, `decimal_desired` is the number of decimal places you want in the price increment. For example, a value of 3 gives a price increment of 0.001. Calculate tick size using this formula:
 
 `10^(9 - base_decimals + quote_decimals - decimal_desired)`
 
