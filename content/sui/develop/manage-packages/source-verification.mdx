@@ -37,12 +37,12 @@ every difference it found and exits non-zero.
 ## What it verifies
 
 The command verifies only the **root** package: the bytecode of its modules and its linkage table (the
-onchain address and version of each dependency that the package links against). The command does not check the source of the dependencies themselves.
+onchain package ID of the version of each dependency that the package links against). The command does not check the source of the dependencies themselves.
 To verify a dependency, run `verify-source` again against that dependency's own source.
 
-The command does not compile with your installed `sui` binary. It resolves the toolchain version that published the
-package, downloads that release's `sui` binary if it is not already cached, and uses it to build the
-source. Because that same toolchain produced the onchain bytecode, a matching build is strong evidence
+The command does not compile the source itself. It resolves the toolchain version that published the
+package and builds the source with that release's `sui` binary: your running `sui` binary if it is the
+same version, or otherwise a downloaded copy, cached after the first download. Because that same toolchain produced the onchain bytecode, a matching build is strong evidence
 that the source is authentic.
 
 :::info
