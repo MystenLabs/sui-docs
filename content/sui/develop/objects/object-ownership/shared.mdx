@@ -55,8 +55,6 @@ Shared objects require the `key` ability.
 use sui::sui::SUI;
 use sui::balance::{Self, Balance};
 
-public struct ShopOwnerCap has key { id: UID }
-
 public struct DonutShop has key {
     id: UID,
     price: u64,
@@ -64,10 +62,6 @@ public struct DonutShop has key {
 }
 
 fun init(ctx: &mut TxContext) {
-    transfer::transfer(ShopOwnerCap {
-        id: object::new(ctx)
-    }, ctx.sender());
-
     transfer::share_object(DonutShop {
         id: object::new(ctx),
         price: 1000,
