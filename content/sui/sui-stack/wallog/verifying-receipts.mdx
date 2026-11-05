@@ -1,0 +1,175 @@
+---
+title: Verifying Wallog Receipts
+description: >-
+  Verify a Wallog receipt against Sui and Walrus with wallog-verify. Learn which
+  checks the verifier makes, what each verdict means, how to stop trusting the
+  full node with a light client, how to check the input behind a digest, and
+  what a proof bundle does and does not prove.
+keywords:
+  - wallog
+  - wallog-verify
+  - verify receipt
+  - proof bundle
+  - light client
+  - committee
+  - checkpoint
+  - merkle proof
+  - verdict
+  - audit log
+goal:
+  description: >-
+    Reader verifies a Wallog receipt or proof bundle with wallog-verify, reads
+    the verdict correctly, and knows which facts are proven and which are taken
+    on trust
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '```'
+      min: 1
+      label: Has code examples
+    - pattern: '\]\(/[^)]+\)'
+      min: 2
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+questions:
+  - How do I verify a Wallog receipt?
+  - What does PROVEN ON SUI mean in Wallog?
+  - Does a Wallog proof bundle prove anything offline?
+  - How do I verify a Wallog receipt without trusting the full node?
+answer: >-
+  Run wallog-verify receipt with the receipt's URL or file and the 4 ids of the
+  log (network, package, log, and registry) from a source you trust. The
+  verifier reads Sui and Walrus itself and answers PROVEN with the 2 times the
+  receipt was made between. Add --trust-committee to verify checkpoints with a
+  light client instead of trusting the full node.
+---
+
+The status that a [Wallog](/sui-stack/wallog) SDK reports, such as `on_sui` or `on_walrus`, is what the server says. The proof is the verdict of a verifier. `wallog-verify`, the reference verifier, reads Sui and Walrus itself and is the only Wallog verifier that reads the network. The Python and TypeScript verifiers check evidence or a proof bundle that you give them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+
+Install `wallog-verify` from a clone of the repository, as [Getting Started with Wallog](/sui-stack/wallog/getting-started#install-from-a-clone) describes.
+
+## Verify a receipt
+
+Pass the receipt link that the SDK returned in `receipt.url`, or a receipt file, together with the 4 ids that say where the log lives ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)):
+
+```sh
+$ wallog-verify receipt --url RECEIPT_URL \
+    --network testnet --package PACKAGE_ID --log LOG_ID --registry REGISTRY_ID \
+    --sui-grpc SUI_GRPC_URL
+```
+
+`--sui-grpc` takes the [gRPC](/develop/accessing-data/grpc) endpoint of a Sui full node. For public endpoints, see [RPC Providers](/develop/accessing-data/rpc-providers). For a receipt file, use `--file receipt.json` in place of `--url`.
+
+:::caution
+
+Get the 4 ids from a source you trust. If you leave them out, the verifier asks the operator's `/v1/log` endpoint where the log is, and checks the receipt against whatever log the operator names, which can be a log the operator made itself. `receipt` and `chain` do not print which log they used. Add `--tenant TENANT_REF` to accept only receipts of the tenant you expect ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+
+:::
+
+The ids of the reference deployment on Sui Testnet are in [`deploy/testnet.env`](https://github.com/MystenLabs/wallog/blob/main/deploy/testnet.env).
+
+### What the verifier checks
+
+The verifier recomputes the receipt hash and checks every part of the receipt's `anchor` against the public record, because no hash or signature covers `anchor` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)):
+
+| **Check** | **What it reads** | **From** |
+|---|---|---|
+| `key`, `key_owner` | The registry entry of the receipt's signing key | Sui |
+| `seal` | The signature over the receipt body | The receipt |
+| `sui_root`, `sui_checkpoint` | The anchoring transaction, its `Anchored` event, and the checkpoint that holds it | Sui |
+| `walrus_record`, `walrus_certified`, `walrus_bytes` | The segment record and blob object, and the segment bytes, hashed | Sui and Walrus |
+| `manifest`, `manifest_seal` | The batch manifest for the receipt's height, and the operator key that sealed it | The segment and Sui |
+| `listed`, `proof` | The receipt hash at its index in the manifest, folded along the Merkle path to the root | The manifest |
+| `not_before`, `order` | The `not_before` checkpoint and its digest, which must not be later than the batch | Sui |
+| `key_valid` | Whether the key was registered and not revoked at the time of the batch | Sui |
+
+The output starts with the verdict and the 2 times, then has 1 line for each check, marked `[ok  ]`, `[FAIL]`, `[MISS]`, or `[skip]`. The first time is the time of the `not_before` checkpoint. The second is the time of the checkpoint that holds the batch's transaction. The receipt's `signed_at` field is the signer's own clock and proves nothing by itself ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+
+## Read the verdict
+
+| **Verdict** | **Printed as** | **Meaning** |
+|---|---|---|
+| `proven` | `PROVEN` | Every check passed, with the manifest read from Walrus. |
+| `proven_on_sui` | `PROVEN ON SUI (manifest from the operator, not yet on Walrus)` | Every check passed, with the manifest read from the operator. Check again within the hour. |
+| `signed` | `SIGNED (not in a batch yet)` | The seal and chain are valid. The time is not proven yet. |
+| `invalid` | `INVALID` | A check failed, and the report names it. |
+| `incomplete` | `INCOMPLETE (evidence missing)` | Something that was needed could not be read, and the report names it. Nothing is reported as valid. |
+
+Source: [verifying.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md). With `--no-operator`, the verifier never asks the operator, and a receipt whose manifest is not on Walrus yet is `INCOMPLETE` until its segment is stored.
+
+## Stop trusting the full node
+
+By default, the verifier believes the full node about checkpoints and events. To stop that, give it a validator committee from a source you trust ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)):
+
+```sh
+$ wallog-verify receipt --file receipt.json \
+    --network testnet --package PACKAGE_ID --log LOG_ID --registry REGISTRY_ID \
+    --trust-committee committee.json
+```
+
+The verifier then checks the aggregated signature of each checkpoint against the committee, shows that the transaction is in the signed checkpoint contents, and shows that the decoded events belong to the transaction. For how checkpoint signatures work, see [Checkpoint Verification](/develop/sui-architecture/checkpoint-verification).
+
+`--pin-committee committee.json` instead pins the node's current committee on the first run, so that committee is the node's word. With either option, registry entries and blob objects are still read from the node without a proof ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+
+## Check the input behind a digest
+
+By default, a receipt commits to an input that it does not contain. Whoever made the receipt can show you the input, and the verifier checks that it matches the digest and byte length in the receipt, and the same for the output ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)):
+
+```sh
+$ wallog-verify receipt --url RECEIPT_URL --input input.json --output output.json
+```
+
+The files hold the input and output as JSON. Member order and number spelling do not matter, because the verifier normalizes and canonicalizes them as the SDK did before hashing. A file that names a member twice is refused.
+
+## Audit an agent or the whole log
+
+`chain` checks every receipt of an agent and every link between them, and lists the gaps. `log` audits the log itself: its roots, its links, the agents' chains, and its silences ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)):
+
+```sh
+$ wallog-verify chain --agent billing-bot --server SERVER_URL --api-key YOUR_API_KEY --to LAST_INDEX
+$ wallog-verify log --server SERVER_URL --trust-committee committee.json
+```
+
+Without `--to`, `chain` ends at the newest receipt the operator lists, so pass `--to` when you know where the chain should reach.
+
+`log` lists a pause between 2 batches longer than `--max-gap-secs` (120 seconds by default) as a silence. A silence is a failure only with `--strict-silence`. The audit measures silences only between batches that exist. It does not compare the time of the newest batch with the current time, so an operator that stops anchoring altogether does not produce a silence. Check the time of the newest batch yourself ([source](https://github.com/MystenLabs/wallog/blob/main/crates/wallog-verify/src/logaudit.rs)).
+
+## Verify a proof bundle
+
+A proof bundle is a zip file with the receipts of 1 agent, the segments that hold their manifests, the keys, and the onchain facts that were read for each receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)). Build a bundle from a real deployment, then verify it offline or online:
+
+```sh
+$ wallog-verify bundle build --agent billing-bot --server SERVER_URL --api-key YOUR_API_KEY --out billing.zip
+$ wallog-verify bundle verify billing.zip
+$ wallog-verify bundle verify billing.zip --online --network testnet \
+    --package PACKAGE_ID --log LOG_ID --registry REGISTRY_ID
+```
+
+The exit status is 0 only when every receipt meets `--require`, which accepts `proven`, `on_sui`, or `signed` and defaults to `proven`.
+
+:::danger
+
+Offline, a bundle proves nothing about the onchain facts. The keys, manifests, segments, and roots are the word of whoever made the bundle, and all 3 Wallog verifiers answer `PROVEN` for a bundle whose maker invented them. For a bundle from someone you do not trust, run `bundle verify` with `--online` and the 4 ids from a source you trust, and add `--trust-committee` and `--tenant` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+
+:::
+
+A bundle checks that its receipts are the range that `bundle.json` states, with none missing inside it. `bundle.json` is not signed, so a bundle cut at the start or at the end is proven for the receipts it holds. Use `chain --to` to learn where a chain should end ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+
+Verify a bundle only with a Wallog verifier. Do not extract it with another zip tool to read its receipts, because a zip file can hold entries that a streaming extractor reads and the Wallog verifiers never read ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+
+### Verify a bundle in your own code
+
+The Python and TypeScript SDKs include verifiers for proof bundles. They never read the network, so they check the bundle with the same limits as an offline `bundle verify` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)):
+
+- **Python:** `wallog verify --bundle billing.zip` from the command line.
+- **TypeScript:** `Bundle.read()` and `bundle.verifyAll()` from `@wallog/verify`.
+
+To feed facts from the network to these verifiers, write them with `wallog-verify evidence` and pass the evidence file. That command exits 0 and leaves out what it could not read, so read the verdict to learn what is missing ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).

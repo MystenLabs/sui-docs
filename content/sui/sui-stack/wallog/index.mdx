@@ -1,0 +1,107 @@
+---
+title: Wallog
+description: >-
+  Wallog is a tamper-evident audit log for AI agents. Each action an agent takes
+  gets a signed receipt, Sui anchors the receipts in batches, and Walrus stores
+  the batch manifests, so anyone can verify a receipt without trusting the
+  Wallog server.
+keywords:
+  - wallog
+  - audit log
+  - ai agents
+  - receipts
+  - tamper-evident
+  - agent observability
+  - mcp
+  - claude code
+  - langchain
+  - openai agents
+  - walrus
+  - merkle root
+goal:
+  description: >-
+    Reader understands what a Wallog receipt proves and does not prove, how Sui
+    and Walrus are used, and can navigate to the guides for integrating an agent
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+      label: Has required frontmatter fields
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+questions:
+  - What is Wallog?
+  - How does Wallog use Sui and Walrus?
+  - What does a Wallog receipt prove?
+  - How do I record what my AI agent does on Sui?
+answer: >-
+  Wallog gives every action an AI agent takes a signed receipt. The receipts of
+  each agent form a hash chain, the Merkle root of each batch of receipts is
+  written to Sui every 30 seconds, and batch manifests are stored on Walrus.
+  Anyone can then check who made a receipt, the 2 points in time it was made
+  between, and that nothing around it was changed or removed.
+---
+
+Wallog is a tamper-evident audit log for AI agents. Each action an agent takes gets a signed receipt. Later, anyone can check who made a receipt, the 2 points in time it was made between, and that nothing around it was changed or removed. A reader needs no Wallog account to check a receipt, and the 2 times come from Sui, not from the Wallog server ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+
+:::info
+
+Wallog is in development. The SDKs and integrations are not published to PyPI or npm, so you install them from a clone of the [Wallog repository](https://github.com/MystenLabs/wallog). The package, log, and registry of a reference deployment are published on Sui Testnet for development, and that package can still be upgraded ([source](https://github.com/MystenLabs/wallog/blob/main/deploy/README.md)).
+
+:::
+
+## Why an agent log needs a public witness
+
+A signature shows who wrote a log entry, but not when. A log that its owner keeps can also be rewritten. Wallog uses Sui as the clock and as the witness for its log ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)):
+
+| **Question** | **How Wallog answers it** |
+|---|---|
+| Was the receipt made no earlier than claimed? | Each receipt contains the newest Sui [checkpoint](/develop/sui-architecture/checkpoint-verification) at the time it was signed, in its `not_before` field. Nobody can know a checkpoint before it exists. |
+| Was the receipt made no later than claimed? | Every 30 seconds, the server writes the Merkle root of the new receipts in a Sui transaction. The receipt existed before that transaction. |
+| Was anything removed or reordered? | The receipts of each agent form a hash chain, and every batch manifest records where each chain stands. |
+| Can the operator withhold the proof? | Batch manifests are stored on [Walrus](/sui-stack/walrus), so a proof can be rebuilt without the operator. |
+| Who can check a receipt? | Anyone, with the open verifiers and a Sui full node. |
+| What does it cost? | 1 Sui transaction per batch, whatever the number of receipts, and 1 Walrus blob per hour or per 1 MiB of manifests, whichever comes first. |
+
+## How a receipt moves through the system
+
+An agent records an action through an SDK, a framework integration, or a plugin. The SDKs hold no signing keys. The Wallog server signs every receipt and chains it to the agent's previous receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)). The server then does the following:
+
+1. Signs the receipt and returns it with the status `signed`.
+1. Closes a batch every 30 seconds and writes its Merkle root to the Wallog log object on Sui. The receipt status becomes `on_sui`.
+1. Stores the batch manifests in a segment on Walrus about once an hour. The receipt status becomes `on_walrus`.
+
+The status values are what the server reports. They are not a proof. The proof is the verdict of a verifier that reads Sui and Walrus itself, or that checks a proof bundle ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)). For how to run a verifier, see [Verifying Wallog Receipts](/sui-stack/wallog/verifying-receipts).
+
+## What a receipt does not prove
+
+A receipt is evidence about a log entry, not about the action itself. Keep the following limits in mind when you rely on a receipt:
+
+- **The server signs on the agent's behalf:** The server holds the agents' signing keys, so it can sign a receipt that the agent never asked for. The 2 times still come from Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+- **A missing receipt leaves no gap:** A receipt that was never recorded leaves no gap in the agent's chain, so an action that an integration failed to record cannot be detected later ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+- **A policy ruling does not stop the agent:** The server records a ruling, but acting on it is the job of your code ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). See [Recording Agent Actions](/sui-stack/wallog/recording-actions).
+- **A digest has no salt:** Anyone who can guess an input can confirm the guess against the digest in a receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+For the full list of claims and non-claims, see the [Wallog threat model](https://github.com/MystenLabs/wallog/blob/main/docs/THREAT_MODEL.md).
+
+## Wallog components
+
+The Wallog repository contains the following packages ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)):
+
+| **Package** | **What it is** |
+|---|---|
+| `wallog` (Python) | The Python client, the `wallog` command with the Claude Code hooks, a verifier for proof bundles, and webhook helpers. |
+| `@wallog/sdk` | The TypeScript `Agent` and `Client` classes and webhook helpers. |
+| `@wallog/verify` | The TypeScript receipt format and a verifier for evidence and proof bundles. It reads no network. |
+| `@wallog/mcp` | `wallog-mcp`, an MCP server, and `wallog-gateway`, a proxy that records the tool calls of another MCP server. |
+| `wallog-langchain`, `wallog-openai-agents` | A LangChain callback handler and an OpenAI Agents trace processor, built on the Python SDK. |
+| `wallog-verify` | The reference verifier, a Rust command-line tool. It is the only verifier that reads Sui and Walrus. |
+| `wallog-server` | The service that signs, chains, batches, and anchors receipts. |
+
+The server reads and writes Sui through [gRPC](/develop/accessing-data/grpc) ([source](https://github.com/MystenLabs/wallog/blob/main/docs/ROADMAP.md)), and `wallog-verify` takes a gRPC endpoint for the Sui network it checks against ([source](https://github.com/MystenLabs/wallog/blob/main/crates/wallog-verify/src/main.rs)).
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
