@@ -134,7 +134,7 @@ An Account can hold asset types that a PAS policy does not govern. For example, 
 The following example calls the core API explicitly to read a single PAS-managed balance. It reuses `client` and `walletAddress` from the example in [How do I read PAS balances for an address?](#how-do-i-read-pas-balances-for-an-address):
 
 ```tsx
-const result = await client.core.getBalance({
+const { balance } = await client.core.getBalance({
     owner: client.pas.deriveAccountAddress(walletAddress),
     // placeholder: replace '0xabc...' with the full package address
     coinType: '0xabc...::my_coin::MY_COIN',
