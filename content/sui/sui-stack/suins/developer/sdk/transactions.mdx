@@ -90,6 +90,8 @@ This is a list of all the available PTB commands supported through the SDK.
 
 The examples use placeholder values such as `0xMyAddress`, `0xMyNftObject`, and `0xMyCoinObject`. Replace them with your own addresses and object IDs.
 
+Each example passes a `suinsClient` to `SuinsTransaction`. Construct it as shown in [Fetch and build on a server](#fetch-and-build-on-a-server).
+
 ### How to register a name
 
 `register` returns the name's NFT. Transfer it to an address or pass it to other commands in the same PTB, as the combined example later on this page shows.
@@ -193,7 +195,7 @@ For subname operations (create, edit, extend, and remove subnames), see [Subname
 
 ### Set a name's metadata
 
-Currently supports AVATAR and IPFS hash.
+Supports the `avatar`, `contentHash` (IPFS hash), and `walrusSiteId` keys of `ALLOWED_METADATA`.
 
 ```js
 const setUserData = async (nft: string, avatar: string, contentHash: string, walrusSiteId: string) => {
