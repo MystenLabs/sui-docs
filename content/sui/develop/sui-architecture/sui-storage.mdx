@@ -167,15 +167,15 @@ The storage fund is locked and staked each epoch to compensate active validators
 
 The design of the storage fund also incentivizes users to delete data if the cost of storing it exceeds the value of keeping it onchain. By offering a rebate on storage fees, the system encourages users to free up space.
 
-If data is deleted from Sui, it would stop using storage resources and a portion of the original storage fee, currently set at 99%, would be returned to the gas fee payer as a rebate. The non-refundable portion of the storage fee (1%) is never returned. Immutable objects lock both their storage fee forever and cannot receive a rebate, as they cannot be deleted or modified.
+If you delete data from Sui, the data stops using storage resources and Sui returns a portion of the original storage fee, currently 99.99%, to the gas fee payer as a rebate. Sui never returns the non-refundable portion of the storage fee (0.01%). Immutable objects lock their storage fee forever and cannot receive a rebate, because you cannot delete or modify them.
 
 As a formula, using the current rebate rate:
 
 ```
-storage rebate (MIST) = original storage fee (MIST) × 0.99
-non-refundable fee (MIST) = original storage fee (MIST) × 0.01
+storage rebate (MIST) = original storage fee (MIST) × 0.9999, rounded to the nearest MIST
+non-refundable fee (MIST) = original storage fee (MIST) - storage rebate (MIST)
 
-Example: 7,600,000 MIST × 0.99 = 7,524,000 MIST rebate
+Example: 7,600,000 MIST × 0.9999 = 7,599,240 MIST rebate
 ```
 
 ## How is the rebate calculated when an object shrinks?
