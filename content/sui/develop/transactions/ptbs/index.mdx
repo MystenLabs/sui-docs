@@ -1,6 +1,6 @@
 ---
 title: Programmable Transaction Blocks
-description: Overview and navigation hub for programmable transaction blocks (PTBs) on Sui, covering the 7 command types and linking to conceptual, cookbook, and SDK integration subtopics.
+description: Programmable transaction blocks (PTBs) compose up to 7 command types into one atomic Sui transaction. Links to conceptual, cookbook, and SDK subtopics.
 keywords:
   - programmable transaction blocks
   - transaction blocks
@@ -51,8 +51,8 @@ Each command in a PTB is one of 7 types:
 
 - `MoveCall`: Calls a Move function.
 - `TransferObjects`: Transfers objects to a specified address.
-- `SplitCoins`: Splits a coin into new coins, one for each amount in the provided array.
-- `MergeCoins`: Merges N coins into a provided coin.
+- `SplitCoins`: Splits new coins off a coin, one for each amount in the provided array. The original coin keeps the remainder.
+- `MergeCoins`: Merges one or more coins into a provided coin.
 - `MakeMoveVec`: Constructs a vector from values of the same type.
 - `Publish`: Publishes a Move package.
 - `Upgrade`: Upgrades a Move package.
