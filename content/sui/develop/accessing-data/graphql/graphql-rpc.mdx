@@ -73,7 +73,7 @@ GraphQL RPC Server and the General-purpose Indexer are generally available. JSON
 
 :::
 
-## Components
+## What are the components of the GraphQL stack? {#components}
 
 The key components of the GraphQL and General-purpose Indexer stack include the following:
 
@@ -89,7 +89,7 @@ The key components of the GraphQL and General-purpose Indexer stack include the 
 
 - **Full node:** Enables transaction execution and simulation.
 
-## When to use
+## When should you use GraphQL? {#when-to-use}
 
 Use GraphQL RPC with the General-purpose Indexer as a flexible and ergonomic data API to build rich dashboards, explorers, and data-driven apps. The API is powered by an indexer created using the custom indexing framework.
 
@@ -151,9 +151,11 @@ Requests to GraphQL are subject to various limits, to ensure resources are share
 
 - **Rich queries:** A request can contain only a bounded number (default: 21) of queries that require dedicated access to the database (cannot be grouped with other requests).
 
-## Working with General-purpose Indexer
+## What is the General-purpose Indexer? {#working-with-general-purpose-indexer}
 
 General-purpose Indexer fetches checkpoints data from either a remote object store, local files, or a full node RPC, and indexes data into multiple database tables through a set of specialized pipelines. PostgreSQL-compatible storage is the default deployment path for the general-purpose GraphQL stack. Custom indexers built on the same framework can write to other storage layers by implementing the framework's storage traits. Each pipeline is responsible for extracting specific data and writing to its target tables.
+
+The `schema.rs` file in `sui-indexer-alt-schema` contains the full list of tables and their schemas.
 
 <details>
 <summary>
@@ -206,7 +208,7 @@ These pipelines provide support infrastructure, such as checkpoint sequence numb
 
 `sum_displays` tables stores the latest version of the `Display` object for each object type, used for rendering [the offchain representation (display) for a type](/develop/objects/display/display-overview).
 
-## Working with Consistent Store
+## What is the Consistent Store? {#working-with-consistent-store}
 
 The Consistent Store is a combined indexer and RPC service that is responsible for indexing live data onchain, and serving queries about it for recent checkpoints. Retention is configurable and is typically measured in minutes or hours. Its indexer fetches checkpoints from the same sources as the General-purpose Indexer, and writes data to an embedded RocksDB store, while requests are served through gRPC, answering the following queries:
 
@@ -222,7 +224,7 @@ This service is not stateless as it maintains its own database. A new instance c
 
 If you're running the GraphQL RPC and General-purpose Indexer stack as a service, here are a few key considerations for configuring your setup to offer builders a performant and cost-effective experience. For step-by-step setup and operations instructions, see the [GraphQL and General-Purpose Indexer guide](/operators/data-management/indexer-stack-setup).
 
-### How much data to index and retain
+### How much data should you index and retain? {#how-much-data-to-index-and-retain}
 
 You should retain 30 to 90 days of recent checkpoint data in your Postgres-compatible database. This provides a strong default for most apps without incurring the high storage costs of full historical indexing.
 
@@ -243,6 +245,8 @@ Avoid retaining long-term historical data in Postgres unless required for specif
 For production GraphQL deployments, pair Postgres-compatible storage with the [Archival Service](/develop/accessing-data/archival-store) to support point lookups of transactions, objects, and checkpoints when relevant data does not exist in Postgres. The Archival Service serves as the backend for historical versions and checkpoint data, reducing pressure on your Postgres instance. For gRPC workloads, full nodes do not implicitly route to Archival; clients that need high-retention data must query an Archival Service endpoint directly.
 
 Current implementation supports [GCP Bigtable](https://cloud.google.com/bigtable) which is a highly scalable and performant data store. If you plan to operate your own archival store, refer to `sui-kvstore` and `sui-kv-rpc` for indexer setup and RPC service implementation respectively. For the indexer setup, make sure to use the [custom indexing framework](/develop/accessing-data/custom-indexer/custom-indexers). If you're interested in contributing support for other scalable data stores, reach out on GitHub by creating a new issue.
+
+The `lib.rs` file in `sui-kvstore` contains the indexer setup, and the `main.rs` file in `sui-kv-rpc` contains the RPC service implementation.
 
 <details>
 <summary>

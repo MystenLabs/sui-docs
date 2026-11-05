@@ -59,7 +59,7 @@ Both Pyth and Switchboard on Sui are pull oracles: the consumer pulls the price 
 
 :::caution
 
-The Pyth Sui SDK talks JSON-RPC, but the Mysten Testnet full node serves gRPC, so the default `getFullnodeUrl('testnet')` returns 404 for every SDK call. Point `rpcUrl` at a JSON-RPC provider or your own node. Every Testnet Pyth consumer hits this, and the failure looks like an unrelated 404 rather than an RPC-protocol mismatch. For the same reason, these samples use a JSON-RPC client rather than the `SuiGrpcClient` that the rest of this documentation uses.
+The `examples/oracle-adapter` samples pin version 2 of the Pyth Sui SDK (`@pythnetwork/pyth-sui-js`), which takes the legacy `SuiClient` from `@mysten/sui` version 1. Current Sui full nodes do not serve the API that client calls, so the samples fail against them. Version 4 of the Pyth Sui SDK accepts any `@mysten/sui` version 2 client that exposes the `.core` API, so pass a `SuiGrpcClient` to `SuiPythClient` instead. The `SuiPythClient` and `SuiPriceServiceConnection` methods the samples call keep the same signatures in version 4. The `checkStale` sample also calls `devInspectTransactionBlock`. On `SuiGrpcClient`, use `simulateTransaction` instead.
 
 :::
 
@@ -96,11 +96,22 @@ The price comes back as an integer magnitude and a signed exponent, and the expo
 
 **Observe:** the transaction succeeds and the read returns a current price. Running this against Testnet for `SUI/USD` returns a price near the live market rate, with a confidence interval around `0.1%` of the price. The `68005477` magnitude in the example is illustrative only, because the market price changes between runs. The read goes through the adapter's staleness bound, so a price the update failed to refresh aborts rather than reading old.
 
+## Paying for a Pyth price update
+
+`updatePriceFeeds` takes only the transaction, the update data from Hermes, and the feed IDs. The samples pass no separate fee coin to it. A transaction that applies an update costs gas plus the Pyth base update fee, so plan the sender's funds and gas budget for both. The keeper sample sets an explicit gas budget after it appends the update commands:
+
+```typescript
+	await pyth.updatePriceFeeds(tx, updates, [feedId]);
+	tx.setGasBudget(150_000_000n);
+```
+
 ## What happens when a price feed is stale?
 
 A price that nobody has updated recently is stale. Reading it with a tight maximum age aborts with the provider's staleness error rather than returning an old value. This is `dev-inspect`-able, so you can confirm the rejection without spending gas or updating the feed:
 
 <ImportContent source="examples/oracle-adapter/ts/src/read.ts" mode="code" tag="stale-read" />
+
+The preceding sample is the exported `checkStale` function, a separate code path from the update-and-read flow. It never applies an update. It looks up the feed's existing `PriceInfoObject`, calls the Pyth staleness-checked reader with your `maxAgeSecs`, and runs the transaction as a read-only simulation. It returns an object with the simulation `status` and, when the read aborts, the `error` string. It throws `no PriceInfoObject for feed` followed by the feed ID if the feed has no onchain object.
 
 **Observe:** with a one-second bound on a feed nobody just updated, the call fails with a `MoveAbort` in `pyth::check_price_is_fresh` (error code `3`, stale price). This is the single most important behavior for a high-stakes consumer to rely on. [Oracle safety](/onchain-finance/oracles/oracle-safety) covers it in depth.
 
@@ -115,16 +126,3 @@ Switchboard is also pull, with a different shape. Instead of a shared price obje
 `current_result` returns a `CurrentResult` exposing the median `result()` (a `Decimal`) along with `min_timestamp_ms()` and `max_timestamp_ms()`. Unlike Pyth's `get_price_no_older_than`, it does not gate on age, so the consumer checks the timestamps against the clock itself. See the [Switchboard Sui docs](https://docs.switchboard.xyz/product-documentation/data-feeds/sui) for feed creation and the on-demand flow.
 
 Next, wrap a provider read behind a single internal interface with the safety checks built in: [The Move adapter pattern](/onchain-finance/oracles/move-adapter).
-
-## Check for a stale price
-
-The stale-price check is the exported `checkStale` function, a separate code path from the update-and-read flow. It never applies an update. It looks up the feed's existing `PriceInfoObject`, calls the Pyth staleness-checked reader with your `maxAgeSecs`, and runs the transaction as a read-only simulation. It returns an object with the simulation `status` and, when the read aborts, the `error` string. It throws `no PriceInfoObject for feed` followed by the feed ID if the feed has no onchain object.
-
-## Paying for a Pyth price update
-
-`updatePriceFeeds` takes only the transaction, the update data from Hermes, and the feed IDs. The samples pass no separate fee coin to it. A transaction that applies an update costs gas plus the Pyth base update fee, so plan the sender's funds and gas budget for both. The keeper sample sets an explicit gas budget after it appends the update commands:
-
-```typescript
-	await pyth.updatePriceFeeds(tx, updates, [feedId]);
-	tx.setGasBudget(150_000_000n);
-```

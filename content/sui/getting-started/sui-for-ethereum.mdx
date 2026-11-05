@@ -108,7 +108,7 @@ In Solidity, a contract defines and stores data structures such as `Mapping`. Mu
 
 In Move, the contract defines the logic that mutates the data, but Move objects store the data.
 
-To mutate the data, the owner of the objects calls the contract functions using a [PTB](#how-do-i-chain-contract-calls-with-programmable-transaction-blocks). The protocol checks ownership at the protocol level, so transactions fail if the signer does not have access to the referenced objects.
+To mutate the data, the owner of the objects calls the contract functions using a [PTB](#how-do-i-chain-contract-calls-with-programmable-transaction-blocks). The protocol checks ownership at the protocol level, so transactions fail if the signer does not have access to the referenced objects. To build a PTB in code, see [Building Transactions](/develop/transactions/ptbs/building-ptb).
 
 ## How do I chain contract calls with programmable transaction blocks?
 
@@ -120,7 +120,7 @@ Builders on Sui leverage PTBs to provide experiences that would otherwise be int
 
 {/* TODO: Import code from MystenLabs/sui-typescript. Show a basic PTB example using Transaction, splitCoins, and transferObjects. TypeScript PTB that splits a coin from the gas coin and transfers the split amount to a recipient address */}
 
-See [Building Programmable Transaction Blocks](/develop/transactions/ptbs/building-ptb) for the full guide on constructing PTBs with the TypeScript SDK, including `moveCall`, chaining results, and gas management.
+See [Building Transactions](/develop/transactions/ptbs/building-ptb) for the full guide on constructing PTBs with the TypeScript SDK, including `moveCall`, chaining results, and gas management.
 
 ## How else does Sui compare to Ethereum?
 

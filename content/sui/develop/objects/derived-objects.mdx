@@ -103,7 +103,7 @@ The following matrix highlights some of the differences between using dynamic fi
 | Object parallelism | ✅ Yes | Limited. All writes sequenced through parent. |
 | Loading type | Static. Direct access after creation. | Dynamic. They are loaded through the parent. |
 | Supports deletion? | ✅ Yes | ✅ Yes |
-| Supports reclaiming? | ❌ Currently no | ✅ Yes |
+| Supports reclaiming? | ✅ Yes, with `release` and `claim` in Sui v1.84 and later. You cannot release a shared derived object. | ✅ Yes |
 
 ## `derived_object`
 
@@ -135,7 +135,7 @@ The following steps summarize the workflow described on this page. The [derived 
 3. Check that the ID is not already claimed with `derived_object::exists(&parent.id, key)`.
 4. Claim the UID with `derived_object::claim(&mut parent.id, key)` and use it as the `id` field of your new object.
 5. Transfer, share, or wrap the object as needed.
-6. To take assets sent to the address before the object existed, receive them through the object's UID with `transfer::public_receive`, as the `receive_from_vault` function does.
+6. To take assets sent to the address before the object existed, receive them through the object's UID with `transfer::public_receive`, as the `receive_from_vault` function in the derived object registry example does.
 
 ## Registries {#registries}
 
@@ -171,7 +171,7 @@ public fun new(registry: &mut VaultRegistry, ctx: &mut TxContext) {
 }
 
 // Access vault through parent
-public fun receive_from_vault<T key + store>(
+public fun receive_from_vault<T: key + store>(
   registry: &mut VaultRegistry,
   receiving: Receiving<T>,
   ctx: &mut TxContext,
@@ -216,7 +216,7 @@ public fun new(registry: &mut VaultRegistry, ctx: &mut TxContext) {
 }
 
 // Access vault without relying on parent
-public fun receive_from_vault<T key + store>(
+public fun receive_from_vault<T: key + store>(
   vault: &mut Vault,
   receiving: Receiving<T>,
   ctx: &mut TxContext,
@@ -254,7 +254,7 @@ public fun new(registry: &mut VaultRegistry, ctx: &mut TxContext) {
 }
 
 // Access vault without relying on parent
-public fun receive_from_vault<T key + store>(
+public fun receive_from_vault<T: key + store>(
   vault: &mut Vault,
   receiving: Receiving<T>,
 ): T {
@@ -266,6 +266,12 @@ public fun receive_from_vault<T key + store>(
 ```
 
 ## How do I release a derived object ID?
+
+:::info Availability
+
+`derived_object::release` is available from Sui v1.84. It is not yet available on Mainnet or Testnet.
+
+:::
 
 The `release` function in the derived object module returns a claimed `(parent, key)` slot to the parent so that you can claim it again later. You pass a mutable reference to the parent's `UID` and the derived object's `UID`. The function consumes the derived `UID`. After the call, `exists` returns false for that key, and the next `claim` with the same parent and key produces the same address as before.
 

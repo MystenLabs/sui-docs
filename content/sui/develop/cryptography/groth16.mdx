@@ -185,3 +185,19 @@ public fun groth16_bn254_test() {
 ```
 
 `verify_groth16_proof` returns a boolean. The example wraps the call in `assert!`, so the function aborts if the proof does not verify.
+
+## Errors from proof verification
+
+`verify_groth16_proof` returns `false` when the proof does not verify, for example when the proof bytes are invalid. Malformed input causes an abort instead of a `false` result.
+
+`public_proof_inputs_from_bytes` checks the public inputs when you build them, before `verify_groth16_proof` runs:
+
+- `EInvalidScalar`: the input length is not a multiple of 32 bytes.
+- `ETooManyPublicInputs`: the inputs hold more than 8 public inputs. The native verifier checks this limit again.
+
+The native verifier behind `verify_groth16_proof` can abort with `EInvalidCurve`, `ETooManyPublicInputs`, or `EInvalidVerifyingKey`:
+
+- `EInvalidCurve`: the curve ID is not BLS12-381 or BN254. The public API only builds valid curves with `bls12381()` and `bn254()`, so this does not occur in normal use.
+- `EInvalidVerifyingKey`: the prepared verifying key is malformed. From protocol version 141, this includes a `vk_gamma_abc` that does not hold exactly `n + 1` G1 elements for `n` public inputs. On earlier protocol versions, such a key makes `verify_groth16_proof` return `false`.
+
+`prepare_verifying_key` can also abort with `EInvalidVerifyingKey`, `EInvalidCurve`, or `ETooManyPublicInputs` (when the key is for more than 8 public inputs).
