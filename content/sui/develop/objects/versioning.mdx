@@ -55,7 +55,7 @@ Sui references every object stored onchain by an ID and version. When a transact
 
 Versions strictly increase and Sui never re-uses (`ID`, `version`) pairs. This allows [node operators](/operators) to prune old object versions from their stores, though they might also retain them to serve historical requests or help other nodes catch up.
 
-## Object versioning paths
+## What are the object versioning paths?
 
 Sui versions objects either through the [fastpath](#fastpath-objects) or through [consensus](/develop/sui-architecture/consensus). The choice affects object ownership options and has performance trade-offs.
 
@@ -66,6 +66,8 @@ new version = 1 + max(version of all input objects)
 ```
 
 For example, a transaction transferring object `O` at version 5 using gas object `G` at version 3 updates both to version `1 + max(5, 3) = 6`.
+
+Scheduling is the step where consensus sequences the transactions that access an object and assigns their versions.
 
 The following table summarizes the two paths. The [Fastpath objects](#fastpath-objects) and [Consensus objects](#consensus-objects) sections describe each path in detail.
 
@@ -104,7 +106,7 @@ You reference [shared](/develop/objects/object-ownership/shared) transaction inp
 
 Consensus is a good fit for applications that require coordination between multiple parties.
 
-## Wrapped and dynamic field objects
+## How does Sui version wrapped and dynamic field objects?
 
 [Wrapped](/develop/objects/object-ownership/wrapped) objects are not accessible by their ID in the object store. You must access them through the object that wraps them. You do not need to supply a wrapped object's ID or version as transaction input. Validators refuse to sign transactions that specify wrapped objects directly as inputs.
 
@@ -121,7 +123,7 @@ Understanding object versioning helps you design applications correctly and avoi
 - **Prune safely.** Because Sui never reuses (ID, version) pairs, node operators can safely prune old versions without risking collision with future writes.
 - **Reason about history.** The strictly increasing version sequence gives every object a linear, auditable history. Archival nodes can serve any historical version to clients that need it.
 
-## Address-owned objects on each path
+## Which path does an address-owned object use?
 
 The ownership type of an address-owned object determines its versioning path, not the transaction that uses it. Sui records 2 distinct owner types for objects that a single address owns:
 
