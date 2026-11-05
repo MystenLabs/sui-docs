@@ -49,7 +49,7 @@ answer: >-
 SuiPlay0X1 games can integrate with self-custodial wallets, zkLogin wallets, the Playtron zkLogin wallet, or custodial wallets, but games that run on the SuiPlay0X1 device must support the Playtron zkLogin wallet as the default option. There are some concepts to keep in mind when deciding which wallets to target.
 
 - [Self-custodial wallets](#self-custodial-wallets): Users control their private keys and own their assets directly.
-- [zkLogin wallets](#zkLogin-wallets): Traditional zkLogin wallets (or [Enoki](https://enoki.mystenlabs.com/) wallets) are a unique wallet type to Sui. zkLogin wallets are tied to a Web2 auth provider (such as Google OAuth). The user authenticates with their traditional auth provider, which associates a wallet to their social account by utilizing zero knowledge proofs. This grants them access to their zkLogin wallet through an ephemeral key pair, which is a temporary key pair. The zero knowledge proof hides, but does not remove, the link between auth provider user metadata and their onchain attributed address. If the ephemeral key pair resides on the client side, the zkLogin wallet is self-custodial.
+- [zkLogin wallets](#zkLogin-wallets): Traditional zkLogin wallets (or [Enoki](https://enoki.mystenlabs.com/) wallets) are a unique wallet type to Sui. zkLogin wallets are tied to a Web2 auth provider (such as Google OAuth). The user authenticates with their traditional auth provider, which associates a wallet to their social account by utilizing zero knowledge proofs. This grants them access to their zkLogin wallet through an ephemeral key pair, which is a temporary key pair. The zero-knowledge proof keeps the user's OAuth identifiers off chain, and a user salt prevents observers from linking the onchain address to the user's auth provider account. If the ephemeral key pair resides on the client side, the zkLogin wallet is self-custodial.
 - [Playtron zkLogin wallet](#playtron-zkLogin-wallet): The Playtron zkLogin wallet is a special zkLogin wallet tied to the user's Playtron credentials. Every user who has a SuiPlay0X1 device has a Playtron login, and therefore possess an associated Playtron zkLogin wallet.
 - [Custodial wallets](#custodial-wallets): Developers manage wallets on behalf of users (similar to traditional gaming databases) except onchain. Users don't need to create or bring a wallet, or to even understand what a wallet is. This smooths out the initial experience, but you still need to confront this issue downstream for users to actually benefit from the Web3 aspects of your game.
 
@@ -65,7 +65,7 @@ Self-custodial wallets have the most portability in terms of being able to inter
 
 zkLogin wallets are a unique wallet type to Sui. These wallets provide familiar login methods from Web2 authorization providers (such as Google, Facebook, or Twitch OAuth). The user authenticates with their chosen provider, then zkLogin attaches onchain wallet credentials to that account.
 
-The zkLogin wallet uses an ephemeral key pair, and zero knowledge proofs hide the link between user metadata from authorization providers and onchain wallets. Ephemeral key pairs reside on the client side, making zkLogin wallets self-custodial. This eliminates the need for your users to write down seed phrases or otherwise securely store private keys.
+The zkLogin wallet uses an ephemeral key pair, and zero-knowledge proofs hide the link between user metadata from authorization providers and onchain wallets. Ephemeral key pairs reside on the client side, making zkLogin wallets self-custodial. This eliminates the need for your users to write down seed phrases or otherwise securely store private keys.
 
 In their most basic form, zkLogin wallets are siloed to the app that creates them. Users essentially create a new wallet for each application that supports zkLogin. This model is intentional to prevent users from having to remember passports for each wallet instance, and to match their expectations for Web2. If your intent is to keep your users in your game without the need to connect their wallet to another application, the basic zkLogin is a good choice.
 
@@ -131,9 +131,7 @@ There is no guarantee that players have access to their other self-custody walle
 
 ### Off-device 
 
-Off-device games that run on different platforms (like Windows PC) must meet the following requirement:
-
-- Use the Sui [dApp Kit](https://sdk.mystenlabs.com/dapp-kit) to enable cross-platform play with the same wallet.
+Off-device games that run on different platforms (like Windows PC) must use the Sui [dApp Kit](https://sdk.mystenlabs.com/dapp-kit) to enable cross-platform play with the same wallet.
 
 ## Wallet strategies
 
