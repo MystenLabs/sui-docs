@@ -63,15 +63,6 @@ Best practices for writing Move smart contracts on Sui.
 - If your function `f` needs a payment in, for example, SUI from the caller, use `fun f(payment: Coin<SUI>)` not `fun f(payment: &mut Coin<SUI>, amount: u64)`. This is safer for callers; they know exactly how much they are paying, and do not need to trust `f` to extract the right amount.
 - Use the [capability pattern](https://github.com/MystenLabs/sui-move-bootcamp/tree/solution/C1/capability) for access control instead of address checks. Define capability objects like `AdminCap` or `MintCap` with the `key` ability, require them as function parameters for privileged operations, transfer them to delegate access, and destroy them to revoke access. This is more composable than `tx_context::sender()` checks because other modules can hold and pass capabilities on a user's behalf.
 
-The following table compares collection types and when to use them:
-
-| **Collection type** | **Types** | **Use for** |
-|---|---|---|
-| `vector`-backed | `vector`, `VecSet`, `VecMap`, `PriorityQueue` | Collections with a known maximum size of 1000 items or fewer |
-| Dynamic field-backed | `Table`, `Bag`, `ObjectBag`, `ObjectTable`, `LinkedTable` | Collections that allow third-party addition, larger collections, and collections of unknown size |
-
-Any Move object, including one that holds a `vector`-backed collection, has a maximum size of 250KB.
-
 ### Composability
 
 - Use [Sui Object Display](https://move-book.com/programmability/display) to customize how your objects appear in wallets, apps, and explorers.
