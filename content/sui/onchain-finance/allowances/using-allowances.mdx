@@ -61,7 +61,7 @@ answer: >-
   sui::allowance::revoke and the AllowanceCap.
 ---
 
-An allowance is a shared object of type `sui::allowance::Allowance<Balance<T>>` that authorizes one spender to withdraw coin type `T` from the funder's [address balance](/onchain-finance/asset-custody/address-balances). The funder issues it, the spender uses it in their own transactions, and the funder revokes it. Issuing and revoking take the balance type, for example `Balance<0x2::sui::SUI>`, as the type argument, while spending calls take the coin type, for example `0x2::sui::SUI`. For the concepts and use cases, see [What Are Allowances?](/onchain-finance/allowances/allowances-overview). For the full module reference, see `sui::allowance`.
+An allowance is a shared object of type `sui::allowance::Allowance<Balance<T>>` that authorizes one spender to withdraw coin type `T` from the funder's [address balance](/onchain-finance/asset-custody/address-balances). The funder issues it, the spender uses it in their own transactions, and the funder revokes it. Issuing and revoking take the balance type, for example `Balance<0x2::sui::SUI>`, as the type argument, while spending calls take the coin type, for example `0x2::sui::SUI`. The difference comes from the function signatures: `new` and `revoke` are generic over the allowance's full type parameter, `Balance<T>`, while `balance_spend<C>` takes an `Allowance<Balance<C>>` and needs only the coin type `C`. For the concepts and use cases, see [What Are Allowances?](/onchain-finance/allowances/allowances-overview). For the full module reference, see `sui::allowance`.
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
@@ -258,6 +258,8 @@ public fun balance_spend<C>(
 ): Balance<C>
 ```
 
+You do not pass `ctx` as an argument in a PTB. Sui injects the transaction context automatically, as described in [Transaction context in spending calls](#transaction-context-in-spending-calls).
+
 Before the transaction executes, Sui verifies that the allowance is an input of the transaction, that its funder matches the declared funder, that the transaction sender is its spender, and that the coin type matches. Sui rejects a transaction that fails these checks before execution, so it costs no gas. Sui reserves the amount against the funder's balance, exactly like a withdrawal from the sender's own balance.
 
 ### TypeScript SDK
@@ -311,6 +313,8 @@ const balance = tx.moveCall({
 	arguments: [tx.object(allowanceId), withdrawal, tx.object.clock()],
 });
 ```
+
+This snippet continues `spend-allowance.ts`: `tx` is the `Transaction` instance that file creates with `new Transaction()`, and `withdrawal()` is a method of the `Transaction` class from `@mysten/sui/transactions`.
 
 Both forms take the coin type, while the funder issued the allowance with the balance type `Balance<0x2::sui::SUI>`. The spender pays gas.
 
@@ -444,7 +448,7 @@ The funder revokes by passing the `AllowanceCap` and the allowance to `sui::allo
 public fun revoke<T>(self: AllowanceCap<T>, allowance: Allowance<T>)
 ```
 
-From the TypeScript SDK, replace `<ALLOWANCE_ID>` and `<ALLOWANCE_CAP_ID>` with the object IDs from the issuing transaction's effects, as shown in [Issue an allowance](#issue-an-allowance). The allowance is the created shared object, and the `AllowanceCap` is the created object that the funder owns:
+From the TypeScript SDK, replace `<ALLOWANCE_ID>` and `<ALLOWANCE_CAP_ID>` with the object IDs from the issuing transaction's effects, as shown in [Issue an allowance](#issue-an-allowance). The allowance is the created shared object, and the `AllowanceCap` is the created object that the funder owns. The cap enters the transaction as an owned object input, so the funder who owns it must sign. The allowance enters as a shared object input:
 
 ```typescript title='revoke-allowance.ts'
 import { Transaction } from '@mysten/sui/transactions';
