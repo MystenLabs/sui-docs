@@ -36,9 +36,9 @@ questions:
   - What are the trade-offs between owned and shared objects?
 answer: >-
   Address-owned objects avoid contention but need a third-party custodian to
-  match the 2 sides of a swap. A shared object removes the custodian, at the
-  cost of sequencing every access to it. This page implements the same escrow
-  swap both ways so you can compare them directly.
+  match the 2 sides of a swap. A shared object removes the custodian, but
+  consensus must order every transaction that accesses it. This page implements
+  the same escrow swap both ways so you can compare them directly.
 ---
 
 Choosing between [address-owned](/develop/objects/object-ownership/address-owned) and [shared](/develop/objects/object-ownership/shared) objects changes how a service is built, not just how it performs. This page implements the same trustless object swap 2 ways, once with address-owned objects and a custodian (a third party that holds both parties' objects and matches them), and once with a shared object.
@@ -126,7 +126,7 @@ flowchart TB
     end
 ```
 
-Even though the custodian owns both objects, the only valid actions in Move are to match them correctly or return them. The `swap` function verifies that senders and recipients match and that each party wants what the other is offering by comparing key IDs:
+Even though the custodian owns both objects, the only valid actions in Move are to match them correctly or return them to the sender with `return_to_sender`. The `swap` function verifies that senders and recipients match and that each party wants what the other is offering by comparing key IDs:
 
 <ImportContent source="examples/trading/contracts/escrow/sources/owned.move" mode="code" fun="swap" />
 
@@ -211,10 +211,12 @@ Although the `Escrow` object is shared and accessible by anyone, Move ensures on
 
 ## What are the trade-offs between owned and shared objects?
 
-Address-owned objects avoid contention, but the swap needs a third-party custodian to match the 2 sides. A shared object removes the custodian, at the cost of sequencing every access to it.
+Address-owned objects avoid contention, but the swap needs a third-party custodian to match the 2 sides. A shared object removes the custodian, but consensus must order every transaction that accesses it.
 
 In both versions, a party who decides not to proceed can get their object back. In the address-owned version, either party can unlock and exit before sending their object to the custodian, and the custodian can only match the objects correctly or return them. In the shared version, the sender recorded in the `Escrow` object can reclaim it if the swap doesn't complete.
 
 ## What happens if the matching escrow never arrives?
 
-If the matching `Escrow` never arrives, the custodian calls `return_to_sender`. This function deletes the `Escrow` wrapper and transfers the escrowed object back to the address in its `sender` field. Returning the object depends on the custodian, which the protocol trusts to preserve liveness but not safety. Before a party sends an `Escrow` to the custodian, that party can also call `unlock` to recover a locked object if the other party stalls.
+In the address-owned version, if the matching `Escrow` never arrives, the custodian calls `return_to_sender`. This function deletes the `Escrow` wrapper and transfers the escrowed object back to the address in its `sender` field. Returning the object depends on the custodian, which the protocol trusts to preserve liveness but not safety. Before a party sends an `Escrow` to the custodian, that party can also call `unlock` to recover a locked object if the other party stalls.
+
+The shared version has no custodian. The sender recorded in the `Escrow` object calls the shared module's `return_to_sender`, which checks that the caller is that sender, deletes the `Escrow`, and returns the escrowed object to the caller's transaction.
