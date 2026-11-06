@@ -2,8 +2,9 @@
 title: Oracle
 description: >-
   Propbook oracle reference for DeepBook Predict: the OracleRegistry and its
-  canonical bindings, PythFeed spot reads, Block Scholes value and SVI stores,
-  and how Predict pricing, reference ticks, and settlement consume them.
+  canonical bindings, PythFeed spot reads, Block Scholes value and SVI stores
+  with their admin-set SVI decimals, and how Predict pricing,
+  reference ticks, and settlement consume them.
 keywords:
   - deepbook predict oracle
   - propbook
@@ -14,8 +15,10 @@ keywords:
   - oracle read
   - pricer
   - oracle freshness
-last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4); both ProtocolConfig objects read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' freshness windows re-read after Mainnet's reopen
+  - svi_decimals
+  - set_block_scholes_svi_decimals
+last_verified: 2026-11-06
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5, propbook protocol version 2, and deepbook_predict_math version 2); both SVI stores' decimals read before the Mainnet Version 5 upgrade (TBD-DBU-1166 Mainnet SVI store re-read after the cutover); both ProtocolConfig objects read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' freshness windows re-read after Mainnet's reopen
 goal:
   description: >-
     Reader can resolve the canonical Propbook oracle objects for an underlying,
@@ -81,7 +84,7 @@ There is one `OracleRegistry` per deployment, one `PythFeed` per Pyth source, an
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="OracleRegistry,BlockScholesStorePair,OracleMetadata"
 />
 
@@ -96,7 +99,7 @@ Resolve an underlying to its 3 feed objects before building a transaction:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="propbook_pyth_id_for_underlying,propbook_block_scholes_store_pair_for_underlying,block_scholes_value_store_id,block_scholes_svi_store_id"
 	noComments
 />
@@ -110,7 +113,7 @@ Richer metadata is available when you need the source ID behind a binding rather
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="pyth_metadata_for_underlying,propbook_underlying_id,oracle_kind,source_id,propbook_oracle_id,value_kind"
 	noComments
 />
@@ -126,7 +129,7 @@ Creating a Pyth feed object is permissionless, but binding one to an underlying 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="create_and_share_pyth_feed,create_and_share_block_scholes_stores,bind_pyth_to_underlying,replace_pyth_binding_for_underlying"
 	noComments
 />
@@ -157,7 +160,7 @@ Binding changes emit `OracleSourceRegistered`, `OracleBound`, `BlockScholesStore
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="PythFeed,RawSpot"
 />
 
@@ -172,7 +175,7 @@ The feed has 4 accessors that cover the latest observation and an exact historic
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="raw_spot,normalized_spot,raw_spot_at,normalized_spot_at"
 	noComments
 />
@@ -190,7 +193,7 @@ Writes are permissionless because possession of a verified Pyth Lazer update is 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="update,insert_at,migrate"
 	noComments
 />
@@ -222,7 +225,7 @@ The vendor surface lives in 2 shared objects. `BlockScholesValueStore` holds spo
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="BlockScholesValueStore,BlockScholesSVIStore"
 />
 
@@ -252,7 +255,7 @@ Every observation comes back wrapped in a `BsRead`, and SVI values carry an `SVI
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="BsRead,SVIParams"
 />
 
@@ -265,7 +268,7 @@ Read the observations themselves:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="spot,spot_at,forward,svi"
 	noComments
 />
@@ -279,21 +282,21 @@ Live pricing finds its spot in the recent history by source timestamp:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="recent_spot_at"
 	noComments
 />
 
 `recent_spot_at` scans the 10 recent entries and returns the one whose source timestamp equals `source_timestamp_ms`, or `none` when no entry matches. It applies no freshness policy and never reads the minute-boundary history, so it can return `none` for a timestamp that `spot_at` still finds. You do not pass this timestamp to `load_live_pricer`: the pricer calls `recent_spot_at` itself with the latest forward's source timestamp, as [Forward and spot pairing](#forward-spot-pairing) describes.
 
-Compute a series identifier when you need to address a series directly:
+Compute a series identifier when you need to address a series directly. An SVI identifier also covers values the store carries, as [SVI decimals](#svi-decimals) describes:
 
 <ImportContent
 	source="packages/propbook/sources/feeds/block_scholes_store.move"
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="spot_sid,forward_sid,svi_sid"
 	noComments
 />
@@ -307,7 +310,7 @@ Unpack a `BsRead` with the read accessors:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="read_source_timestamp_ms,read_onchain_timestamp_ms,read_writer_digest,read_value"
 	noComments
 />
@@ -315,6 +318,24 @@ Unpack a `BsRead` with the read accessors:
 The 2 timestamps answer 2 different questions. `source_timestamp_ms` is the provider's own time for that observation, the per-update `value_timestamp` of a spot or forward and the `svi_timestamp` of an SVI row, and `onchain_timestamp_ms` is the time the write landed on Sui. Latest ordering, both spot histories, the forward and spot pairing, the freshness windows, and the SVI roll-down all key on the source timestamp; the batch envelope time is transport metadata only and appears nowhere in a `BsRead`. Judge vendor freshness from the source timestamp and landing order from the onchain timestamp, and never sort by source timestamp alone, because an older source observation can land later. There is no model timestamp: `BsRead` carries exactly the 4 fields in its definition, so an integrator decoding `BlockScholesObservationRecorded` payloads from the earlier `predict-8-21` deployment must drop the leading `model_timestamp_ms` it used to read.
 
 `writer_digest` records the transaction digest that wrote the observation. Predict reads it to enforce the same-transaction guard described later on this page.
+
+### SVI decimals {#svi-decimals}
+
+An SVI series identifier also hashes values the store carries as admin-set configuration: the provider model, which `svi_model` returns for relayers, and the decimals the provider signs the parameters at, which `svi_decimals` returns. Read `svi_decimals` with every SVI row you read, because each of `a`, `b`, `rho`, `m`, and `sigma` is the stored value divided by 10 to the power of the decimals:
+
+<ImportContent
+	source="packages/propbook/sources/feeds/block_scholes_store.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="svi_decimals"
+	noComments
+/>
+
+The decimals are `9` until `registry::set_block_scholes_svi_decimals` sets `18`, the only other accepted value. The setter takes the `RegistryAdminCap`, needs the store at the running Propbook version, aborts with `EInvalidSviDecimals` for any other value, and emits `BlockScholesSVIDecimalsSet`. A change applies to every expiry at once: a batch signed at other decimals aborts with `ESeriesIdMismatch`, and until the first observation at the new decimals lands, the store reads `none` and Predict's live pricing for that underlying halts. Both stores run at 9 decimals.
+
+Predict protocol version 5 reads the store's decimals with every SVI row and prices `a` and `b` at 1e18, so an 18-decimal store keeps their full precision and a 9-decimal store prices as before.
 
 ### Write batches
 
@@ -325,7 +346,7 @@ Writes are permissionless because the signed vendor batch is the authority:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="apply_spot_batch,apply_forward_batch,apply_svi_batch"
 	noComments
 />
@@ -350,7 +371,7 @@ Store creation is internal to the package and reachable only through `registry::
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="OracleRead"
 />
 
@@ -361,7 +382,7 @@ Store creation is internal to the package and reachable only through `registry::
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="read_source_timestamp_ms,read_onchain_timestamp_ms,read_writer_digest,read_value"
 	noComments
 />
@@ -398,7 +419,7 @@ Live pricing runs through a `Pricer`, which you build once per transaction from 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="load_live_pricer"
 	noComments
 />
@@ -410,11 +431,11 @@ Live pricing runs through a `Pricer`, which you build once per transaction from 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="Pricer"
 />
 
-`Pricer` has `copy` and `drop` but no `store`. You cannot put it in an object, a dynamic field, or anything that outlives the transaction, so every transaction that quotes, mints, or redeems must call `load_live_pricer` again. Build it once per programmable transaction block and pass the same value into every quote and trade command in that block.
+`Pricer` has `copy` and `drop` but no `store`. You cannot put it in an object, a dynamic field, or anything that outlives the transaction, so every transaction that quotes or values a position must call `load_live_pricer` again. Build it once per programmable transaction block and pass the same value into every quote and trade command in that block.
 
 The pool flush is the one path that carries a mark across transactions, and it uses a second type for it. `snapshot_expiry_pricer` loads a `Pricer` and converts it into a `FrozenPricer`, which has `store` and lives inside the vault's `PoolValuation` until `value_expiry` prices the market from it. `FrozenPricer` is a deliberately stale mark: its constructor `into_frozen` and its consumer `thaw` are package-internal, and no quote, mint, or redeem accepts one, so a persisted mark can never price a trade. `PricingSVI` gained `store` for the same reason and remains without public constructors or accessors.
 
@@ -427,7 +448,7 @@ A pricer feeds 2 read functions:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="up_price,range_price"
 	noComments
 />
@@ -439,7 +460,7 @@ Both take `range_codec::Strike` values, which you build from a tick with `range_
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="RangePrice"
 />
 
@@ -450,7 +471,7 @@ Read a `RangePrice` with its accessors:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="lower_up,higher_up,probability"
 	noComments
 />
@@ -573,9 +594,11 @@ Of those codes, 3 are narrower than their names suggest, and confusing them send
 
 - Spot and forward are both strictly positive.
 - The forward is at most `u64::MAX / 100`, and at most 100 times the spot. That factor of `100` is the basis envelope.
-- The SVI magnitudes `a`, `b`, and `m` are each at most `100e9`.
+- The SVI magnitudes `b` and `m` are each at most `100e9`. `a` has no bound of its own, of either sign: only the minimum-variance check behind code `14` constrains it.
 - The SVI `rho` magnitude is at most `1e9`.
-- Sigma falls between `1e6` and `100e9` inclusive. A sigma below the minimum raises this code, not code `14`.
+- Sigma falls between `100` and `100e9` inclusive, so the floor is 1e-7. A sigma below the minimum raises this code, not code `14`.
+
+These bounds apply at 1e9. For an 18-decimal store, Predict rounds each parameter half up to 1e9 for the checks and keeps `a` and `b` at 1e18 for the price itself.
 
 `EBlockScholesInputTooWide` is not an economic bound at all. It fires in the narrowing step, when a `u128` value the provider stored does not fit in the `u64` width Predict prices in. `EBlockScholesMinVarianceInvalid` fires only when the sum of the minimum variance increment and `a` is not positive, which is a shape problem in the surface rather than a bound on any one parameter.
 
@@ -592,7 +615,7 @@ Outside of live pricing, 2 market functions read oracles, and both are permissio
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="set_reference_tick,try_settle"
 	noComments
 />
@@ -613,7 +636,7 @@ Settlement emits `MarketSettled`, which carries the settlement price and the sou
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="ReferenceTickSet,MarketSettled"
 />
 
