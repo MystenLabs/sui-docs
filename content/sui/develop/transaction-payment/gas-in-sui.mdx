@@ -76,9 +76,11 @@ This pricing mechanism gives you the best user experience without needing to for
 
 Gas fees for any transaction equal:
 
+```text
+gas_fees = computation_units × gas_price + storage_units × storage_price
 ```
-total_gas_fees = computation_units × reference_gas_price + storage_units × storage_price
-```
+
+In this formula, `gas_price` is the gas price you set for the transaction, which must be at least the reference gas price. [Computation gas prices](#computation-prices) explains how the gas price relates to the reference gas price.
 
 A unique feature of the Sui gas price mechanism is that users pay separate fees for transaction execution and for storing the data associated with each transaction. The gas fees associated with an arbitrary transaction τ equal:
 
@@ -86,7 +88,7 @@ $$
 GasFees[\tau] = ComputationUnits[\tau] \times ComputationPrice[\tau] + StorageUnits[\tau] \times StoragePrice
 $$
 
-The gas functions $ComputationUnits[\tau]$ and $StorageUnits[\tau]$ measure the amount of computation and storage resources, respectively, required to process and store the data associated with τ. The gas prices $ComputationPrice[\tau]$ and $StoragePrice$ translate the cost of computation and storage, respectively, into SUI units. The decoupling between gas units and gas prices is useful because SUI market price fluctuates over time in accordance with supply and demand.
+The gas functions $ComputationUnits[\tau]$ and $StorageUnits[\tau]$ measure the amount of computation and storage resources, respectively, required to process and store the data associated with τ. The gas prices $ComputationPrice[\tau]$ and $StoragePrice$ translate the cost of computation and storage, respectively, into SUI units. The [Gas budget examples](#gas-budget-examples) table quotes these prices in MIST, where 1 SUI equals 1,000,000,000 MIST. The decoupling between gas units and gas prices is useful because SUI market price fluctuates over time in accordance with supply and demand.
 
 ## Computation units {#computation}
 
@@ -96,7 +98,7 @@ Sui's computation gas schedule is built coarsely with a bucketing approach. Two 
 
 Using coarse bucketing accomplishes two important goals:
 
-- Frees you from optimizing your smart contracts to deliver marginal gains in gas costs through gas golfing. Instead, you can focus on step-function improvements in your products and services.
+- Frees you from gas golfing, which means optimizing your smart contracts to deliver marginal gains in gas costs. Instead, you can focus on step-function improvements in your products and services.
 
 - Gives you the freedom to adjust per-instruction gas costs and experiment with new gas metering schemes without creating significant development disruption. This can happen frequently, so it is important that you do not rely on per-instruction gas costs remaining stable over time.
 
@@ -116,7 +118,7 @@ Using coarse bucketing accomplishes two important goals:
 
 Similarly, Sui transactions vary depending on the amount of new data written into onchain storage. The variable storage units capture these differences by mapping the amount of bytes held in storage into storage units. The current Sui schedule is linear and maps each byte into 100 storage units. For example, a transaction that stores 25 bytes costs 2,500 storage units, while a transaction that stores 75 bytes costs 7,500 units.
 
-In the Sui [storage fund](/develop/sui-architecture/tokenomics-overview#storage-fund) model, users pay up front for the cost of storing data in perpetuity but can also get a partial rebate on previously stored data if that data is deleted. Hence, the amount of storage fees that you pay can be split into a rebateable and non-rebateable amount. Initially, the rebateable amount equals 99% of the storage fees, while the non-rebateable amount equals the remaining 1%.
+In the Sui [storage fund](/develop/sui-architecture/tokenomics-overview#storage-fund) model, users pay in advance for the cost of storing data in perpetuity but can also get a partial rebate on previously stored data if they delete that data. Hence, the storage fees that you pay split into a rebateable and non-rebateable amount. The rebateable amount currently equals 99.99% of the storage fees, while the non-rebateable amount equals the remaining 0.01%.
 
 ### Storage rebates 
 
@@ -171,9 +173,11 @@ In the long run, the Sui gas price mechanism creates incentives for validators t
 
 You must submit all transactions together with a gas budget. This provides a cap to the amount of gas fees you pay, especially because sometimes it might be hard to perfectly forecast how much a transaction costs before you submit it to the Sui network.
 
-The gas budget for a Sui transaction is defined in SUI units and transactions are successfully executed if:
+You define the gas budget for a Sui transaction in MIST. A transaction executes successfully if it meets the following condition, where `computation_fees` equals `computation_units × gas_price` (the gas price you set for the transaction, which must be at least the reference gas price) and `total_gas_fees` equals `net_gas_fees` from [Storage rebates](#storage-rebates): `computation_fees` plus storage fees minus the storage rebate:
 
-`gas_budget >= max{computation_fees, total_gas_fees}`
+```text
+gas_budget >= max{computation_fees, total_gas_fees}
+```
 
 If the gas budget does not fulfill this condition, then the transaction fails and a portion of the gas budget is charged. In cases where the `gas_budget` is insufficient for covering `computation_fees`, then the entirety of the `gas_budget` is charged. In cases where `gas_budget` is sufficient for covering `computation_fees` but not the `total_gas_fees`, then a portion of the `gas_budget` corresponding to `computation_fees` and the fees associated with mutating the transaction's input objects are charged.
 
@@ -181,7 +185,7 @@ Ultimately, a successful transaction requires the end user to pay the transactio
 
 The minimum gas budget is 2,000 MIST (0.000002 SUI). This ensures validators are compensated with at least 2,000 MIST even if the gas budget is incorrectly specified and the transaction aborts. Additionally, this protects the Sui network from being spammed with a large number of transactions with minimal gas budgets. The maximum gas budget is 50 billion MIST or 50 SUI. This protects the network against overflow of internal multiplications and gas limits for denial of service attacks.
 
-As mentioned previously, the storage rebate currently equals 99% of the originally paid storage fees. Because the gas budget applies to the totality of gas fees, it is often the case that a transaction only goes through if the gas budget is considerably higher than the net gas fees that a user ultimately pays.
+As mentioned previously, the storage rebate currently equals 99.99% of the originally paid storage fees. Because the gas budget applies to the totality of gas fees, it is often the case that a transaction only goes through if the gas budget is considerably higher than the net gas fees that a user ultimately pays.
 
 ### Gas budget examples {#gas-budget-examples}
 
