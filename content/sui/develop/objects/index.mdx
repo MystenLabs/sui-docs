@@ -45,7 +45,7 @@ The Sui object model is the foundation of how Sui stores and manages onchain sta
 On Sui, the base unit of storage is an object. Unlike account-based blockchains where state lives in a single global store keyed by address, Sui organizes state around individual objects. Each object has:
 
 - A globally unique ID
-- An ownership type: owned by an address or another object, shared, immutable, or party (consensus-address owned)
+- An ownership type: owned by an address or another object, shared, immutable, or party (consensus-address owned; see [party objects](/develop/objects/object-ownership/party))
 - A type defined by a Move package
 - A version that increments with each mutation
 
@@ -66,12 +66,6 @@ public struct TodoList has key {
 
 The `key` ability marks this struct as a Sui object. The `id` field of type `UID` gives each instance a unique onchain identifier. When you create a value of this type and transfer it to an address, it becomes an owned object on Sui.
 
-The pages in this section cover the object model, how to use objects, and the different object ownership methods in more detail.
-
-import DocCardList from '@theme/DocCardList';
-
-<DocCardList />
-
 ## What is party object ownership?
 
 A party object combines properties of address-owned and shared objects. When you call `party_transfer`, only the members of the `Party` can use the object as a transaction input, as with an address-owned object. As with a shared object, the `default` permissions of the `Party` value can let anyone use the object. The object must go through consensus.
@@ -82,3 +76,9 @@ The object model has 2 related owner types:
 - **`Party`:** Sui sequences the object through consensus with per-address permissions. Each listed address receives a subset of permission flags, and addresses not explicitly listed fall back to the default permissions.
 
 The `party_transfer` function asserts that the `Party` value has a single owner.
+
+The pages in this section cover the object model, how to use objects, and the different object ownership methods in more detail.
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
