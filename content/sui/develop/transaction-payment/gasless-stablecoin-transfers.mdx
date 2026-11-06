@@ -26,6 +26,9 @@ keywords:
   - programmable transaction block
   - eligible stablecoins
   - stablecoin allowlist
+  - grpc
+  - graphql
+  - minimum transfer balance
 goal:
   description: >-
     Reader understands gasless stablecoin transfers on Sui enable peer-to-peer
@@ -139,7 +142,7 @@ tx.moveCall({
 	target: '0x2::balance::send_funds',
 	typeArguments: [USDC],
 	arguments: [
-		tx.balance({ type: USDC, balance: 1_000_000n }), // 1 USDC
+		tx.balance({ type: USDC, balance: 1_000_000n }), // 1 USDC. Minimum is 10_000n (0.01 USDC)
 		tx.pure.address(recipient),
 	],
 });
