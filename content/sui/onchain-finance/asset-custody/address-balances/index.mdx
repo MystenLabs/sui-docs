@@ -98,7 +98,7 @@ Accumulator operations are not applied to individual objects in real time. Inste
 - A `Merge` event records a deposit (value added to the accumulator).
 - A `Split` event records a withdrawal (value removed from the accumulator).
 
-The protocol periodically reconciles these events through **settlement transactions** that update the canonical accumulator values. Internally, settlement uses a Merkle Mountain Range (MMR) data structure to efficiently batch and verify accumulated changes across checkpoints; you do not interact with it directly.
+The protocol reconciles these events through **settlement transactions** that it adds to each checkpoint. Settlement nets each address's merges and splits and updates the canonical accumulator values. You do not interact with settlement directly.
 
 From a developer's perspective, settlement is transparent. You interact with address balances through the SDK and CLI, and the protocol handles reconciliation automatically. The `derive_balance_changes` algorithm in the SDK computes the net effect of a transaction by combining object-level changes with accumulator events.
 
