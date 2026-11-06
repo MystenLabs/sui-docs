@@ -189,6 +189,8 @@ let cmd = ptb::move_call(
 templates.set_template_command(internal::permit<MyTransferApproval>(), cmd);
 ```
 
+In this example, `templates` is a `&mut Templates` reference to the `Templates` shared object, which `set_template_command` takes as its first parameter.
+
 ### Common argument types for templates
 
 | **Constructor** | **Description** |
