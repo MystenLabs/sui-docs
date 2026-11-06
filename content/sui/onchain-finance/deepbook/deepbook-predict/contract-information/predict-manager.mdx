@@ -73,7 +73,7 @@ Sui Mainnet and Sui Testnet each run a separate deployment of the `account` pack
 
 The registry authorizes `PredictApp`, `SessionsApp`, and `DeepbookCoreAccountApp` on both networks, verified 2026-09-14.
 
-## Lifecycle {#lifecycle}
+## What is the account lifecycle? {#lifecycle}
 
 An account moves through 5 stages. Only creation happens once.
 
@@ -223,7 +223,7 @@ Field order in the table is declaration order. Creation writes the 2 referrer fi
 
 </details>
 
-### The `Auth` hot potato {#auth}
+### What is the `Auth` hot potato? {#auth}
 
 `Auth` carries the authority to open an account mutably:
 
@@ -334,7 +334,7 @@ Both take an `Auth`, and both abort with `EInvalidOwner` when owner authority do
 
 The SDK's `client.predict.tx.deposit(owner, amountUsdc)` sources the quote coin from coin objects or the address balance and can create the account in the same block with `{ create: true }`. Its `client.predict.tx.withdraw(owner, amountUsdc)` sends the result to the owner's address balance by default, or returns a coin object with `{ toCoinObject: true }`.
 
-### Coin types {#supported-coin-types}
+### Which coin types can an account hold? {#supported-coin-types}
 
 `deposit_funds<T>` and `withdraw_funds<T>` are generic over the coin type and place no restriction on `T`. The restriction lives one level up, in Predict: `USDC` is the settlement asset for every trade, and `PLP` is the pool share coin. On Mainnet the quote coin is native USDC, `0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC`. On Testnet it is a mintable test coin at the same `usdc::USDC` module path, `0xc028557a1ed49e42ed091e115aedefd70a442b184c18fbec5c48d5b6c0b8c184::usdc::USDC`, which displays as DUSDC. Read the exact type from `getConfig(network).quoteCoinType`. Depositing an unrelated coin type succeeds and you can always withdraw it again, but you cannot trade with it.
 
@@ -409,7 +409,7 @@ Both return the empty answer rather than aborting when the account has no Predic
 
 To value a position, pass its order ID to the market: `expiry_market::live_order_value` with a market-bound pricer while the market is live, or `expiry_market::settled_order_payout` once it has settled. See [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) for both.
 
-### Builder codes {#builder-codes}
+### How do you set or unset a builder code? {#builder-codes}
 
 An account can carry one builder code, which adds a builder fee to each mint and live close the account makes:
 
@@ -487,11 +487,11 @@ public fun unset_builder_code(wrapper: &mut AccountWrapper, auth: Auth, ctx: &mu
 
 The `account.move` block lists custody functions at 2 layers. `deposit_funds` and `withdraw_funds` are the outer layer: they take the `AccountWrapper` and an `Auth` directly and settle before they act. `deposit` and `withdraw` are the inner layer: they take a `&mut Account`, which only `load_account_mut` produces, so reaching them still costs an `Auth`. `authorize_app` and `deauthorize_app` need the `AccountAdminCap`, and `generate_auth_as_app` needs a `Permit<App>`, so none of the 3 is an integrator call.
 
-## The account SDK subpath {#account-sdk}
+## Which SDK subpath drives account custody? {#account-sdk}
 
 `@mysten/deepbook-v3` publishes the account primitive on its own subpath, `@mysten/deepbook-v3/account`, with `getAccountConfig(network)` for the deployed IDs and an `AccountContract` class whose builders compose into a programmable transaction block of your own. [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) documents every `AccountContract` method, the split between wrapper and account IDs, and the generated bindings.
 
-## End-to-end workflow {#end-to-end-workflow}
+## How do you create, fund, and trade in one transaction? {#end-to-end-workflow}
 
 You can compose creating an account, funding it, and trading into one programmable transaction block, because the wrapper's object ID is derivable before the account exists. You have 2 layers that reach that, and they are not interchangeable.
 
@@ -591,7 +591,7 @@ The module declares 2 further events, `AppAuthorized` and `AppDeauthorized`, whi
 
 Codes repeat across modules, so always resolve an abort against the module named in the abort location rather than against the number alone. Over gRPC or GraphQL the abort also carries the constant name; over JSON-RPC it does not.
 
-## Track a queued fill by its record ID
+## How do you track a queued fill by its record ID? {#track-a-queued-fill-by-its-record-id}
 
 After an enqueue transaction executes with events included, decode its record ID with `client.predict.decode.enqueue(result)` and persist it. The record ID is your handle for following the order, selling the position, and showing the result.
 
