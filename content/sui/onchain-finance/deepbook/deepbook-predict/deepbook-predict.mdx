@@ -15,7 +15,7 @@ keywords:
   - deepbook
   - sui
 last_verified: 2026-11-06
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 5 on both networks (deepbookv3 046ffd1e, Mainnet after its Version 5 cutover); Testnet entry band and cadences read at watermark 5, Mainnet entry band read before its upgrade; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13, and both networks' entry band re-read after Mainnet's reopen
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 5 on both networks (deepbookv3 046ffd1e, Mainnet after its Version 5 cutover); Testnet entry band and cadences read at watermark 5, Mainnet entry band read before its upgrade; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 11eda3e7 type-checked against @mysten/deepbook-v3 2.11.0 (strike selection reads each market's own entry band), and both networks' entry band re-read after Mainnet's reopen
 goal:
   description: >-
     Reader understands what DeepBook Predict is, knows which network to run
@@ -144,13 +144,13 @@ A brand-new market also opens with zero working cash and rejects a mint until po
 
 A mint is a queued order. Plan it first: `client.predict.read.planMint` quotes the order at the current price, turns a slippage in cents per contract into the limits the order carries onchain, and runs a preflight of the queue gates, the balance, and the limits, so `plan.accepting` is false, with a typed `refusal`, when the queue would refuse the order at that moment. A few checks run only onchain at placement, so a plan that accepts can still abort there. `client.predict.tx.enqueuePlan` then builds the enqueue. Once it executes, a keeper fills the order at Pyth's signed price for its price instant, about a second later, within those limits, or refunds it.
 
-<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-mint" />
+<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="queue-mint" />
 
 A directional position is a one-sided range: `side: 'up'` pays when settlement lands above the strike, and `side: 'down'` pays when settlement lands at or below it, `$1` per contract. Slippage is cents per contract, never a percentage: `slippageCents: 10` lets a contract quoted at 42 cents all in, before the fee subsidy, fill at up to 52 cents.
 
 3 rules decide whether the order lands:
 
-- **A strike near the money.** Admission refuses an entry probability outside the market's band, `0.15` to `0.50` on Mainnet and `0.25` to `0.75` on Testnet, or narrower on a market created with a narrower band, and a window's reference strike drifts away from the money as the price moves. The sample picks the strike that prices near 50 cents and snaps it onto the admission grid.
+- **A strike near the money.** Admission refuses an entry probability outside the market's band, `0.15` to `0.50` on Mainnet and `0.25` to `0.75` on Testnet, or narrower on a market created with a narrower band, and a window's reference strike drifts away from the money as the price moves. The sample reads the market's own band with `read.feePolicy`, aims the side's probability at the middle of it, snaps the strike onto the admission grid, and checks that the snapped strike still prices inside the band.
 - **A premium of at least 1 USDC.** The premium is the quantity multiplied by the entry probability, so admission refuses a budget too small to buy 1 USDC of premium.
 - **An order fee on top.** Each queued order pays a flat 0.02 USDC on both networks. `plan.totalDebit` is the budget plus the fee, and unused budget comes back when the order fills.
 

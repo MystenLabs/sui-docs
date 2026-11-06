@@ -22,7 +22,7 @@ keywords:
   - queued order
   - delayed execution
 last_verified: 2026-11-06
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 5 on both networks (deepbookv3 046ffd1e, Mainnet after its Version 5 cutover); Testnet entry band and cadences read at watermark 5; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' cadences and entry band re-read after Mainnet's reopen
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; predict protocol version 5 on both networks (deepbookv3 046ffd1e, Mainnet after its Version 5 cutover); Testnet entry band and cadences read at watermark 5; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued-order examples at MystenLabs/sui 11eda3e7 type-checked against @mysten/deepbook-v3 2.11.0 (strike selection reads each market's own entry band); Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' cadences and entry band re-read after Mainnet's reopen
 goal:
   description: >-
     Reader can complete a full DeepBook Predict flow against the selected
@@ -283,11 +283,11 @@ Both networks run Predict protocol version 5, so a mint is a queued order. You p
 
 A directional position pays `$1` per contract when settlement lands inside its range, and nothing otherwise, so `quantity` is the maximum payout in USD. The sample plans an all-in budget mint: `read.planMint(owner, descriptor, { amount, slippageCents })` quotes the order at the current price and turns the slippage into the limits the order carries onchain, and `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits. A few checks run only onchain at placement, such as the market's SVI age and room in the payout tree for a new strike, so a plan that accepts can still abort there.
 
-<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-mint" />
+<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="queue-mint" />
 
 5 things decide whether the order lands and fills:
 
-- **Pick a strike near the money.** Admission refuses an entry probability outside the market's band, and each market snapshots its band at creation: the template's, `0.15` to `0.50` on Mainnet and `0.25` to `0.75` on Testnet, or a narrower one its creator asked for. A window's reference strike drifts away from the money as the price moves, so the sample takes the strike that prices near 50 cents with `pricer.strikeAtProbability(0.5)` and snaps it onto the admission grid with `snapStrike`. `planMint` throws `entry-band` for a strike outside the band.
+- **Pick a strike near the money.** Admission refuses an entry probability outside the market's band, and each market snapshots its band at creation: the template's, `0.15` to `0.50` on Mainnet and `0.25` to `0.75` on Testnet, or a narrower one its creator asked for. A window's reference strike drifts away from the money as the price moves, so the sample's `strikeInBand` reads the market's own band with `read.feePolicy`, aims the side's probability at the middle of it with `pricer.strikeAtProbability`, snaps the strike onto the admission grid with `snapStrike`, and checks that the snapped strike still prices inside the band. `planMint` throws `entry-band` for a strike outside the band.
 - **Clear the minimum premium.** Admission also requires a premium of at least 1 USDC, and the premium is the quantity multiplied by the entry probability. A budget plan whose budget buys less throws `min-premium`.
 - **Slippage is cents per contract.** It bounds how far the all-in price per `$1` of payout might rise above the quote's price without the fee subsidy, so `slippageCents: 10` lets a contract quoted at 42 cents before the subsidy fill at up to 52 cents, fees included. It is never a percentage. You pass it in cents, as in `read.planMint(owner, descriptor, { amount, slippageCents: 10 })`. The limits leave the subsidy out because placement checks the order without it. A slippage of a few cents leaves the price little room between the quote and τ, so placement often refuses the order with `EOrderFailsLimits`, or the keeper refunds it at the fill, and a refund for the order's own limits keeps the order fee.
 - **The order fee is per order.** Each queued order escrows a flat fee, 0.02 USDC on both networks, on top of its budget. `plan.totalDebit` is the budget plus that fee, and the plan's `amount` includes the fee by default. A fill, or a refund for the order's own limits or for failing admission, keeps the fee, and every other refund returns it.
@@ -307,7 +307,7 @@ The chain treats each finite boundary of a two-sided range as its own leg. It ch
 
 A filled mint does not enter your account. It stays in the market's queue as an Open record that your account owns, so `read.positions(owner)` does not list it: follow it with `read.order(market, recordId)`. The position sits in the market's payout tree like any other, so it is backed and settles the same way. The following sample sells an Open record early, offers a manual refund of an overdue order, and reads a settled result.
 
-<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-sell" />
+<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="queue-sell" />
 
 ### Sell before expiry
 
