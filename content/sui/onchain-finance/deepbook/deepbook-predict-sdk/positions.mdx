@@ -47,25 +47,25 @@ questions:
   - How do I place a queued DeepBook Predict order with the TypeScript SDK?
   - How do I follow a DeepBook Predict queued order until it fills?
   - Why do tx.mint and tx.redeem abort on DeepBook Predict?
-  - How do I claim a settled DeepBook Predict position held in my account?
+  - Why does tx.claimSettled abort on DeepBook Predict?
   - How do I quote what an all-in budget buys on DeepBook Predict?
 answer: >-
-  Both networks run Predict protocol version 4, where every trade is a queued
+  Both networks run Predict protocol version 5, where every trade is a queued
   order. Call `read.planMint` to quote an order and turn a slippage in cents per
   contract into its limits, build it with `tx.enqueuePlan`, read the record ID
   with `decode.enqueue`, and follow it with `read.waitForOutcome`. A filled mint
   is an Open record in the market's queue, which `read.planSell` and
   `tx.enqueuePlan` sell early and the queue pays at settlement. The immediate
   builders `tx.mint`, `tx.mintAmount`, `tx.mintCost`, and `tx.redeem` are
-  deprecated and abort on both networks, and `tx.claimSettled` pays a position
-  held in the account from before the cutover.
-last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 on both networks at deepbookv3 29117434 (Mainnet after its cutover); queued-order examples at MystenLabs/sui 1974d916 type-checked and simulated on Testnet 2026-10-13'
+  deprecated and abort on both networks, and so does `tx.claimSettled`, because
+  protocol version 5 retires the settled redeem it builds.
+last_verified: 2026-11-06
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6); predict protocol version 5 on both networks at deepbookv3 046ffd1e (Mainnet after its Version 5 cutover), where quote_mint_for_account charges no builder fee and redeem_settled aborts; queued-order examples at MystenLabs/sui 11eda3e7 type-checked against @mysten/deepbook-v3 2.11.0 (strike selection reads each market''s own entry band)'
 ---
 
-The position functions in the DeepBook Predict SDK place and follow queued orders, quote a mint, claim a position held in the account, list the positions an account holds, and decode the receipt of each trade. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) explains the mechanics that these builders wrap.
+The position functions in the DeepBook Predict SDK place and follow queued orders, quote a mint, list the positions an account holds, and decode the receipt of each trade. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) explains the mechanics that these builders wrap.
 
-Both networks run Predict protocol version 4, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders). Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. `read.executionMode()` confirms which path a network is on.
+Both networks run Predict protocol version 5, where every trade is a queued order, so use the functions under [Queued orders](#queued-orders). Mainnet needs version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. `read.executionMode()` confirms which path a network is on.
 
 Every function is a member of `client.predict`, which [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) shows how to register. Each builder and quote that targets a market takes the market as a [market descriptor](/onchain-finance/deepbook/deepbook-predict-sdk/markets): an object that names the market by its `underlying`, `expiryMs`, and optional `marketId`, plus the strike, as a binary or range position, where the call needs one. The function then reads the chain to resolve the market object and caches it per client, so those functions are asynchronous. The SDK takes and returns amounts as decimal USDC values and converts them to 6-decimal base units; see [Units](/onchain-finance/deepbook/deepbook-predict-sdk#units).
 
@@ -183,19 +183,19 @@ After expiry, `read.market`, `read.price`, and the quotes abort with `ELivePrici
 
 The following sample checks the execution mode, picks a strike near the money, plans an all-in budget mint, queues it, and waits for the outcome:
 
-<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-mint" />
+<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="queue-mint" />
 
 The following sample sells an Open record early, offers a manual refund only for an overdue order, and reads a settled result:
 
-<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="queue-sell" />
+<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="queue-sell" />
 
 ## How to quote a mint {#mint-functions}
 
-`read.quoteMint` and `read.quoteMintCost` quote a mint without placing it. They read Predict's protocol version 4 quote functions and preview a queued fill at the current clock: the quote has `queued: true`, `fees.penalty` is 0, and the flat order fee is in `orderFee`, on top of `cost`. The fill itself prices at its committed Pyth tick, so a quote is an estimate. For an order form, [`read.planMint`](#plan-mint) is the fuller tool, because it adds the slippage limits and the enqueue builder's preflight. Both quotes read the owner's account, so it must exist, and both throw `PredictInputError` when the configuration lacks the order-flow package or its desk. Neither checks that the balance covers the order, so use a plan or the enqueue preflight for that.
+`read.quoteMint` and `read.quoteMintCost` quote a mint without placing it. They read Predict's account quote functions and preview a queued fill at the current clock: the quote has `queued: true`, `fees.penalty` is 0, and the flat order fee is in `orderFee`, on top of `cost`. The fill itself prices at its committed Pyth tick, so a quote is an estimate. For an order form, [`read.planMint`](#plan-mint) is the fuller tool, because it adds the slippage limits and the enqueue builder's preflight. Both quotes read the owner's account, so it must exist, and both throw `PredictInputError` when the configuration lacks the order-flow package or its desk. Neither checks that the balance covers the order, so use a plan or the enqueue preflight for that.
 
 ### `read.quoteMint` {#quote-mint}
 
-Use `read.quoteMint` to quote an exact payout quantity. It returns a `Promise<MintQuote>`, priced through `quote_mint_for_account`, so the quote carries the account's builder fee. An exact-quantity quote is not capped by the account's balance. It takes the `owner`, the market descriptor `m`, and an object with the payout `quantity`, a whole lot of 0.01 USDC.
+Use `read.quoteMint` to quote an exact payout quantity. It returns a `Promise<MintQuote>`, priced through `quote_mint_for_account`, which charges no builder fee on protocol version 5. An exact-quantity quote is not capped by the account's balance. It takes the `owner`, the market descriptor `m`, and an object with the payout `quantity`, a whole lot of 0.01 USDC.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2261-2265" />
 
@@ -217,7 +217,7 @@ Use `read.quoteMint` to quote an exact payout quantity. It returns a `Promise<Mi
 
 - `trading`: The trading fee before the sponsor subsidy, summed over the finite boundaries of the range.
 - `subsidy`: The sponsor-funded part of the trading fee, which you do not pay.
-- `builder`: The builder add-on, 0 when the account carries no builder code.
+- `builder`: The builder add-on. On protocol version 5 an account quote charges none, because an order pays a builder fee only when it names one, as [Name a builder fee](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees) describes.
 - `penalty`: The retired congestion surcharge, 0 on a queued preview.
 - `referral`: The part of the trading fee that the protocol routes to a referrer, 0 unless the account has a referrer.
 - `inventoryImpact`: The inventory-impact charge, a separate charge that `cost` includes.
@@ -238,9 +238,9 @@ For a preview that costs no chain call at all, [Predict Cost SDK](/onchain-finan
 
 ### `tx.claimSettled` {#claim-settled}
 
-Use `tx.claimSettled` to claim a position held in the account, which only an immediate mint from before the cutover created, once its market has settled. It is the SDK form of the owner-authorized `redeem_settled` and returns a `Promise<Transaction>`. A settled claim always closes the order in full, so the builder takes no quantity, and the order ID identifies the position, so it takes no side or strike. The payout is the full quantity when the settlement price lands inside the position's range and 0 otherwise. It does not pay a queued fill, which the queue's settlement walk pays instead.
+`tx.claimSettled` builds the owner-authorized `redeem_settled` for a position held in the account, which only an immediate mint from before the delayed-execution cutover created. Protocol version 5 retires `redeem_settled`, so the transaction it builds aborts with `EDelayedExecutionRequired` on both networks, as [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. Through protocol version 4 it worked this way, and it returns a `Promise<Transaction>`. A settled claim always closes the order in full, so the builder takes no quantity, and the order ID identifies the position, so it takes no side or strike. The payout is the full quantity when the settlement price lands inside the position's range and 0 otherwise. It does not pay a queued fill, which the queue's settlement walk pays instead.
 
-Before settlement the claim aborts with `EMarketNotSettled`, and expiry alone does not settle a market. Settlement runs through the permissionless `expiry_market::try_settle`, which the SDK does not build. The SDK also builds no `redeem_settled_permissionless`, which only allowlisted keepers can call.
+Before settlement the claim aborted with `EMarketNotSettled`, and expiry alone does not settle a market. Settlement runs through the permissionless `expiry_market::try_settle`, which the SDK does not build.
 
 It takes these parameters:
 

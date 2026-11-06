@@ -46,12 +46,12 @@ answer: >-
   duration of at most 30 days. To list grants, fetch the object at
   `deriveSessionsFieldId(owner)` with its content, decode it with
   `SessionsContract.decodeSessions`, and revoke what `expiredSessions` returns.
-  The session key then signs `mintExactQuantity`, `mintExactAmount`,
-  `mintExactCost`,
-  `redeemLive`, and `redeemSettled`, which require explicit mint caps and accept
-  close-side floors.
-last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 and sessions 3 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434; queued session example simulated on Testnet 2026-10-13, and both DeepBook registry authorizations re-read after Mainnet''s reopen'
+  The session key then signs the queued builders `enqueueExactQuantity`,
+  `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`, which
+  require explicit mint caps and close-side floors. The immediate builders and
+  `redeemSettled` abort on Predict protocol version 5.
+last_verified: 2026-11-06
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa), 2.8.0 (ts-sdks 82a8cdb6), and the sessionsMoveCalls builder-approval bindings in 2.10.0 and 2.11.0; predict protocol version 5 and sessions 4 on both networks (Mainnet after its Version 5 cutover), publication records at deepbookv3 046ffd1e; Testnet SessionsConfig spot pool allowlist read at watermark 4; queued session example simulated on Testnet, and both DeepBook registry authorizations read'
 ---
 
 The `@mysten/deepbook-v3/sessions` subpath exports `SessionsContract`, which builds the owner-signed calls that grant and revoke a time-limited session key and the session-signed calls that trade DeepBook Predict positions for the account. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) explains the contract mechanism behind each call.
@@ -72,12 +72,12 @@ The session lifecycle follows this order:
 
 1. The owner grants the session key with [`authorizeSession`](#authorize-session).
 2. The owner [lists the account's grants](#list) and revokes the expired ones to reclaim their slots.
-3. The session key trades for the account with the [queued-order builders](#queue-as-session) and [`redeemSettled`](#redeem-settled).
+3. The session key trades for the account with the [queued-order builders](#queue-as-session).
 4. The owner removes the grant with [`revokeSession`](#revoke-session), which frees its slot.
 
 ## Configuration {#configuration}
 
-Both networks run Predict protocol version 4 and Sessions protocol version 3. On Mainnet, use version 2.8.0 or later of the SDK, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+Both networks run Predict protocol version 5 and Sessions protocol version 4. On Mainnet, use version TBD-DBU-1166: SDK release or later of the SDK, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
 Build a `SessionsContract` for each network from the deployed IDs that `getSessionsConfig` returns:
 
@@ -288,11 +288,11 @@ The following example lists an account's grants, splits them at the current time
 
 ## How to trade as a session key {#trade}
 
-Both networks run Predict protocol version 4 and Sessions protocol version 3, so use the [queued-order builders](#queue-as-session). Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. An older release still builds a working `revokeSession` on Mainnet, because revocation has no version gate. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them.
+Both networks run Predict protocol version 5 and Sessions protocol version 4, so use the [queued-order builders](#queue-as-session). Mainnet needs version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. An older release still builds a working `revokeSession` on Mainnet, because revocation has no version gate. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them, and `redeemSettled` aborts on protocol version 5.
 
 ### Queue orders as the session key {#queue-as-session}
 
-4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
+4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3 or later. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
 
 Each takes a `SessionsQueuedOrderTarget` that names the market, the owner's wrapper, the order-flow package's `orderDesk` and `queueRegistry`, the Predict `protocolConfig`, the `oracleRegistry`, and the market's 3 oracle objects. Take the order-flow IDs from `client.predict.cfg.objects` and the oracle objects from `client.predict.cfg.underlyings`. `queueId` defaults to the ID derived from `queueRegistry` and the market.
 
@@ -308,11 +308,13 @@ Each takes a `SessionsQueuedOrderTarget` that names the market, the owner's wrap
 
 A session key's raw builder skips the preflight and plan binding that `client.predict.tx.enqueuePlan` runs, so plan the order against the owner with `read.planMint` or `read.planSell`, check `accepting`, and send the plan's own strike and raw limits. An order placed through a session still fills or refunds after the session ends, and a revoked or expired key aborts with `sessions::ESessionNotAuthorized`.
 
-<ImportContent source="examples/deepbook-predict/src/sessions-queue.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="sessions-queue" />
+<ImportContent source="examples/deepbook-predict/src/sessions-queue.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="sessions-queue" />
+
+To name a builder fee as the session key, call the generated `sessionsMoveCalls.enqueueExactQuantityWithBuilder` and its 3 siblings, which take the `BuilderCode` and `builderFeePerContract` on top of the plain arguments. The owner first approves the session's builder with `sessionsMoveCalls.approveSessionBuilder`, in the same transaction as `authorizeSession`, and `sessionsMoveCalls.sessionBuilder` reads the approval. `SessionsContract` wraps none of them. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#queued-wrappers) covers the approval rules.
 
 ### `redeemSettled` {#redeem-settled}
 
-Use `redeemSettled` to claim a settled position in full as the session key. It returns a `(tx: Transaction) => void` function. It takes no pricer, because settlement has already fixed the price, and no quantity, because a settled claim closes the order in full.
+`redeemSettled` builds the session `redeem_settled` wrapper, which aborts through Predict on protocol version 5, because Predict retires settled redemption, as [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. The queue's settlement walk pays every filled position, so a session never needs to claim one. It returns a `(tx: Transaction) => void` function and took no pricer and no quantity.
 
 It takes these parameters:
 
@@ -364,7 +366,7 @@ The following example builds an owner-signed revocation, reads a session's expir
 - `cancelLiveOrders`: Cancels several DeepBook spot orders.
 - `withdrawSettledAmounts`: Sweeps settled DeepBook spot proceeds into account custody.
 
-They need Sessions version 3, so on Mainnet use version 2.8.0 of the SDK or later. Whether they succeed also depends on a DeepBook registry authorization, which both networks' registries hold, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
+They need Sessions version 4, so on Mainnet use version TBD-DBU-1166: SDK release of the SDK or later. `placeLimitOrder` and `placeMarketOrder` also need the pool on the spot pool allowlist, and abort with `session_config::EPoolNotAllowed` otherwise, while the cancels and the settled withdrawal work on any pool. The generated `sessionConfigMoveCalls.allowedPools` reads the list from version TBD-DBU-1166: SDK release. Whether they succeed also depends on a DeepBook registry authorization, which both networks' registries hold, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
 
 Each generated function takes an options object with these fields:
 

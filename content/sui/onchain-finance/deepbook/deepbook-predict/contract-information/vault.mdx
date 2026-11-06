@@ -43,8 +43,8 @@ answer: >-
   return a queue index, and a flush started by a PoolValuationCap holder freezes
   every market's pricer in one snapshot transaction, values each market in later
   transactions, and then fills both queues at that single frozen pool NAV.
-last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (predict protocol version 4 on both networks; Mainnet after its cutover, built from the byte-identical 98128174); Testnet FlushOperatorUpdated event read 2026-10-13; Testnet cadence terms re-read 2026-10-19, Mainnet max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each, and both networks' cadence terms re-read after Mainnet's reopen
+last_verified: 2026-11-06
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet FlushOperatorUpdated event read 2026-10-13; Testnet cadence terms re-read 2026-10-19, Mainnet max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each, and both networks' cadence terms re-read after Mainnet's reopen; cadence terms on both networks read at 1,000 USDC before the Mainnet Version 5 upgrade (TBD-DBU-1166 Mainnet re-read after the cutover)
 ---
 
 The Predict pool is the counterparty to every trade. Liquidity providers deposit USDC, receive PLP shares, and collectively back the payout liability of every active expiry. All of that capital sits in one shared object, `deepbook_predict::plp::PoolVault`.
@@ -53,7 +53,7 @@ Liquidity is asynchronous. Nothing mints or burns PLP at the moment a provider a
 
 :::info
 
-Collateral is the Move type `usdc::usdc::USDC`. On Mainnet that resolves to native USDC. On Testnet it is a mintable test coin at the same module path that displays as DUSDC and has no market value. Read the exact coin type from `getConfig(network).quoteCoinType` rather than assuming a symbol. The Move snippets on this page pin DeepBookV3 at `29117434`, the protocol version 4 source that both networks run. [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information) lists the package and object IDs of each network.
+Collateral is the Move type `usdc::usdc::USDC`. On Mainnet that resolves to native USDC. On Testnet it is a mintable test coin at the same module path that displays as DUSDC and has no market value. Read the exact coin type from `getConfig(network).quoteCoinType` rather than assuming a symbol. The Move snippets on this page pin DeepBookV3 at `046ffd1e`, the protocol version 5 source that both networks run. [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information) lists the package and object IDs of each network.
 
 :::
 
@@ -81,7 +81,7 @@ The struct declares those fields in this order:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="PoolVault"
 />
 
@@ -99,7 +99,7 @@ A queue is a paged list. Each `RequestPage` holds up to 64 entries, and each `Re
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="LpBook,RequestQueue,RequestEntry"
 />
 
@@ -119,7 +119,7 @@ USDC the pool holds directly is its idle balance. USDC that `rebalance_expiry_ca
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="Ledger,ActiveExpiry,RegisteredExpiry"
 />
 
@@ -161,7 +161,7 @@ Whether a flush is in flight is a `ProtocolConfig` read, `protocol_config::valua
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="idle_balance,protocol_reserve_balance,fee_incentive_reserve,plp_total_supply,supply_requests_pending,withdraw_requests_pending,active_expiry_markets,active_live_expiry_count,profit_basis_debits,profit_basis_credits,pending_protocol_profit"
 	noComments
 />
@@ -226,7 +226,7 @@ Minimum sizes apply per request:
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="request_supply,request_withdraw,cancel_supply_request,cancel_withdraw_request"
 	noComments
 />
@@ -334,7 +334,7 @@ The valuation flag no longer gates trading. Trades on a stamped market cannot re
 
 | **Flow** | **During the snapshot transaction** | **During valuation and finish** |
 |---|---|---|
-| Live quotes, mints, `redeem_live`, `redeem_settled` | Blocked with `ESnapshotInProgress`, which only the starter's own transaction can observe | Open |
+| Live quotes | Blocked with `ESnapshotInProgress`, which only the starter's own transaction can observe | Open |
 | On protocol version 4, queued-order admission, fills, and refunds that keep an order fee | Blocked with `ESnapshotInProgress` | Open |
 | On protocol version 4, deadline and admin refunds of queued orders | Open | Open |
 | `try_settle` | Open | Open |
@@ -356,7 +356,7 @@ A market created mid-flush is not in the frozen expected set and joins the next 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="PoolValuationProof,SnapshotStage,PoolValuation"
 />
 
@@ -370,7 +370,7 @@ A market created mid-flush is not in the frozen expected set and joins the next 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="start_pool_valuation,snapshot_expiry_pricer,seal_valuation_snapshot,value_expiry,finish_flush"
 	noComments
 />
@@ -490,18 +490,17 @@ sweep_threshold  = max(required_cash * (1 + 2 * band), initial_expiry_cash)
 
 `band` is `expiry_rebalance_pct`, which is `100_000_000` at 1e9 scale, or 10 percent. Below `target_cash` the pool tops the market up, and above `sweep_threshold` it pulls the excess back to idle. `payout_liability` and `inventory_impact_reserve` are the market's backing terms, which [Per-expiry backing](#max-payout) defines.
 
-Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and both networks run these terms on their 2 enabled cadences:
+Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and both networks run these terms on every enabled cadence, the 1m and 5m cadences on both and the 15m cadence on Testnet:
 
 | **Cadence** | **`initial_expiry_cash` raw** | **Reads as** | **`max_expiry_allocation` raw** | **Reads as** |
 |---|---|---|---|---|
-| 1m | `2_000_000_000` | 2,000 USDC | `2_000_000_000` | 2,000 USDC |
-| 5m | `2_000_000_000` | 2,000 USDC | `2_000_000_000` | 2,000 USDC |
+| 1m, 5m, and Testnet's 15m | `1_000_000_000` | 1,000 USDC | `1_000_000_000` | 1,000 USDC |
 
 The 1h, 1d, 1w, and 1mo cadences are disabled on both networks, with every term at zero. Read `registry::cadence_config` for the network you target.
 
-`constants::expiry_cash_floor!()`, which is `1_000_000_000`, plays no part in the rebalance. It is the minimum admissible `initial_expiry_cash` that cadence validation enforces, so a cadence configured below 1,000 USDC aborts with `EInvalidCadenceConfig`, as does one whose `initial_expiry_cash` exceeds its `max_expiry_allocation`. A market on a cadence configured above that minimum floors its rebalance at the configured figure. Read the live figures with `registry::cadence_config`, and see the cadence table on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).
+From protocol version 5 an enabled cadence takes any positive `initial_expiry_cash` up to its `max_expiry_allocation`, and cadence validation aborts with `EInvalidCadenceConfig` only for one above that cap. The market floors its rebalance at whatever figure its cadence carried at creation. Read the live figures with `registry::cadence_config`, and see the cadence table on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).
 
-A top-up has 2 limits: available idle USDC, and the expiry's remaining funding room. Returns replenish funding room, and the cap is the `max_expiry_allocation` snapshotted from the cadence configuration at market creation, 10,000 USDC on both enabled cadences. Exceeding it aborts with `pool_accounting::EMaxExpiryFundingExceeded`.
+A top-up has 2 limits: available idle USDC, and the expiry's remaining funding room. Returns replenish funding room, and the cap is the `max_expiry_allocation` snapshotted from the cadence configuration at market creation, 1,000 USDC on every enabled cadence. Exceeding it aborts with `pool_accounting::EMaxExpiryFundingExceeded`.
 
 Call `expiry_market::try_settle` first in the same transaction when settlement might be due. An expired unsettled market is a no-op for the rebalance.
 
@@ -515,7 +514,7 @@ A market also carries `waiting_cash_need`, the summed worst-case cash need of it
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="rebalance_expiry_cash"
 	noComments
 />
@@ -567,7 +566,7 @@ public fun fee_incentive_balance(market: &ExpiryMarket): u64
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="ExpiryCash"
 />
 
@@ -585,7 +584,7 @@ PLP is the Predict pool share token, registered as a 6-decimal currency to match
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="PLP"
 />
 
@@ -615,7 +614,7 @@ Protocol version 4 makes 3 incentive rates admin-set on `ProtocolConfig`, each r
 - **`fee_incentive_live_target_rate`:** The incentive balance a live market is topped up to, as a share of its `max_expiry_allocation`, defaulting to 2 percent. `set_fee_incentive_live_target_rate` changes it.
 - **`fee_incentive_lifetime_cap_rate`:** The most a market can receive over its life, as a share of its `max_expiry_allocation`, defaulting to 10 percent. It is a template value that each market snapshots when it registers with the pool, which emits `FeeIncentiveLifetimeCapSnapshotted`, and `set_template_fee_incentive_lifetime_cap_rate` changes it for later markets.
 
-Both networks set the live target rate and the lifetime cap rate to 20 percent each. At a 2,000 USDC maximum expiry allocation, a market's incentive balance tops up to 400 USDC, which is also the most it receives over its life.
+Both networks set the live target rate and the lifetime cap rate to 20 percent each. At a 1,000 USDC maximum expiry allocation, a market's incentive balance tops up to 200 USDC, which is also the most it receives over its life.
 
 `withdraw_fee_incentives` lets an `AdminCap` holder take USDC back out of the pool-level reserve as a `Coin<USDC>`. It never touches a market's balance, aborts with `EInsufficientFeeIncentiveReserve` above the reserve, and emits `FeeIncentivesWithdrawn`. On protocol version 4, a queued mint reserves its subsidy from the market's balance when its price is committed, and returns any unused part at the fill or refund.
 
@@ -657,7 +656,7 @@ A flush in progress blocks the call with `EValuationInProgress`, rather than let
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="add_usdc_to_plp"
 	noComments
 />
@@ -676,7 +675,7 @@ The vault bounds capacity when a market registers, not when it trades. Registeri
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="lock_capital,sponsor_fee_incentives"
 	noComments
 />
@@ -733,7 +732,7 @@ One `FlushExecuted` per flush carries the priced mark and its breakdown, so `poo
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="FlushExecuted,FlushRestarted"
 />
 
