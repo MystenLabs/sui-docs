@@ -91,7 +91,7 @@ If the definitions above do not render, see the enums directly in [`crates/share
 
 The serialization of an `Intent` is a 3-byte array where 1 byte represents each field.
 
-The serialization of an `IntentMessage<T>` is the 3 bytes of the intent concatenated with the BCS (Binary Canonical Serialization) serialized message.
+The serialization of an `IntentMessage<T>` is the 3 bytes of the intent concatenated with the message serialized in Binary Canonical Serialization (BCS). BCS is the binary format that Sui uses to serialize the transaction data and other values that signatures commit to.
 
 ## How are user signatures created?
 
