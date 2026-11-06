@@ -238,11 +238,13 @@ An installed app can access the storage mutably or immutably using one of the fo
 - `storage(_ext: Extension, kiosk: &Kiosk): &Bag`: Returns a reference to the storage of the app. Use the function to read the storage.
 - `storage_mut(_ext: Extension, kiosk: &mut Kiosk): &mut Bag`: Returns a mutable reference to the storage of the app. Use the function to read and write to the storage.
 
+In both functions, the first argument is the app witness. Pass it by value with `Extension {}`, the same way the `place` example in [Accessing protected functions](#accessing-protected-functions) does.
+
 ## Disabling and removing
 
 The kiosk owner can disable any app at any time. Doing so revokes all permissions of the app and prevents it from performing any actions in the kiosk. The kiosk owner can also re-enable the app at any time.
 
-Disabling an app does not remove it from the kiosk. An installed app has access to its storage until the kiosk owner completely removes it from the kiosk.
+Disabling an app does not remove it or its storage from the kiosk. An installed app, including a disabled one, has access to its storage until the kiosk owner completely removes it from the kiosk.
 
 In the following example [programmable transaction blocks](/develop/transactions/ptbs/prog-txn-blocks) (PTBs), replace each `<ID>` with the object ID of your kiosk (`kioskArg`) and of its `KioskOwnerCap` (`capArg`), and replace `<letter_box_package>` with the ID of the package where you published the app.
 
