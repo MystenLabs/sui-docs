@@ -65,6 +65,8 @@ If a single byte changes, then the PCR changes. This is how Sui confirms that th
 
 It generates a new ephemeral key pair inside its isolated memory. The private key never leaves the enclave, while the enclave returns the public key through `/get_attestation`.
 
+The key pair is ephemeral because it exists only for the life of the enclave instance. Each time the enclave starts, it generates a new key pair. After a restart, the enclave's public key no longer matches the public key registered onchain, so signatures from the restarted enclave fail verification until you register the enclave again.
+
 ### Step 2: Enclave signs data
 
 When `process_data` returns `{ response, signature }`, then the enclave signs the data with `signature = sign( response )` using the enclave private key.
