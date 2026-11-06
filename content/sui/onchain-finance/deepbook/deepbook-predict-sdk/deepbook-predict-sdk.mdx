@@ -288,7 +288,7 @@ The following table lists every decoder, the event it reads, and the page that d
 
 ## Compose your own transactions {#compose}
 
-Each `client.predict.tx` call creates and returns its own finished `Transaction`, so 2 facade calls cannot share 1 PTB. The only composed flow the client builds is `tx.deposit` with `{ create: true }`, which creates, funds, and shares an account in a single PTB. To put a Predict call in a PTB with anything else, build that PTB yourself from what version 2.6.1 exports:
+Each `client.predict.tx` call creates and returns its own finished `Transaction`, so 2 facade calls cannot share 1 PTB. `tx.deposit` with `{ create: true }` is one composed flow the client builds: it creates, funds, and shares an account in a single PTB. To put a Predict call in a PTB with anything else, build that PTB yourself from what version 2.6.1 exports:
 
 - `loadLivePricer(config, args)`: Adds the `expiry_market::load_live_pricer` command and returns its result, the market-bound `Pricer` that every live mint and live redeem borrows. The `/sessions` Predict wrappers take this result as their `pricer`.
 - `generateAuth(cfg)`: Adds the command that mints owner authority for the transaction sender, an `Auth` value that the next account-loading call in the same PTB must consume.
