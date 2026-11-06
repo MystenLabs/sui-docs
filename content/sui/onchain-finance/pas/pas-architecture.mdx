@@ -52,7 +52,7 @@ You can use PAS through the [TypeScript package](https://www.npmjs.com/package/@
 
 For each wallet address (or object ID), PAS creates a one-to-one derived Account. An Account is a shared object that holds assets on behalf of that address. The owner can prove ownership through an `Auth` proof, but cannot freely transfer the assets. This creates a proxy of ownership where the assets follow the constraints of PAS modules, and sequentially, the rules that an issuer defines across one or more packages through approval witnesses.
 
-Every time funds move, they go through hot potato requests that must collect a predefined set of approval stamps (witness structs: types defined in an issuer's package that act as type-level proofs of approval) before they can resolve within the transaction. Hot potato requests have no `drop` or `store` ability, so the transaction aborts if it does not resolve the request.
+Every time funds move, they go through requests that must collect a predefined set of approval stamps (witness structs: types defined in an issuer's package that act as type-level proofs of approval) before they can resolve within the transaction. Each request is a hot potato: a value with no `drop` or `store` ability, so the transaction aborts if it does not resolve the request.
 
 The following diagrams compare asset ownership with and without PAS:
 
@@ -161,7 +161,7 @@ The following are the available request types:
 
 ### Approval matching
 
-PAS matches approvals by type identity using `TypeName`. The approval set must be exactly equal (same types, same count, same order through `VecSet` insertion) to the policy required approvals.
+PAS matches approvals by type identity using `TypeName`. The approval set must be exactly equal (same types, same count, same order through `VecSet` insertion) to the policy required approvals. `VecSet` is the set type that holds the collected approvals. It keeps keys in the order you insert them and aborts on duplicate keys, as [Approval order and duplicate approvals](#approval-order-and-duplicate-approvals) describes.
 
 :::info
 
