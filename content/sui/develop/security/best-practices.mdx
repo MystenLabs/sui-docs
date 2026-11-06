@@ -98,7 +98,7 @@ The following practices prevent callers from influencing or selectively rejectin
 
 #### Limit what follows a random call in a PTB
 
-Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable.
+Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable. Sui rejects any command other than `TransferObjects` or `MergeCoins` after the random call with the `PostRandomCommandRestrictions` error. For the full rules, see [Commands allowed after using Random](#commands-allowed-after-using-random).
 
 #### Mark randomness-consuming functions as private `entry`
 
