@@ -49,7 +49,7 @@ answer: >-
 
 Margin trading amplifies both gains and losses. Before using DeepBook Margin, you should understand the risks involved. The key risks are liquidation, variable interest rates, and oracle issues. Concrete examples help you make informed decisions.
 
-## Liquidation risk
+## What is liquidation risk? {#liquidation-risk}
 
 The most significant risk in margin trading is **liquidation**: the forced closure of your position when it becomes too risky for the protocol to maintain.
 
@@ -108,7 +108,7 @@ In this table, **Danger zone** marks the lower part of the warning zone, just ab
 
 With 5x leverage, a mere 15% adverse price movement can trigger liquidation. Without leverage, you would be down 15% on paper.
 
-### Liquidation is immediate
+### Is liquidation immediate? {#liquidation-is-immediate}
 
 Unlike traditional margin calls that give you time to add collateral, DeFi liquidations happen instantly:
 - There's no grace period to deposit more funds
@@ -116,7 +116,7 @@ Unlike traditional margin calls that give you time to add collateral, DeFi liqui
 - You cannot cancel or prevent it once it triggers
 - While partial liquidation preserves some of your position, the equity loss from fees is permanent
 
-### Leverage multiplies losses (and gains)
+### How does leverage multiply losses? {#leverage-multiplies-losses-and-gains}
 
 Cryptocurrency prices are highly volatile. Leverage amplifies this volatility on your equity, whether you're long or short.
 
@@ -126,6 +126,8 @@ Cryptocurrency prices are highly volatile. Leverage amplifies this volatility on
 | 2x | -20% equity | -40% equity | -60% equity |
 | 3x | -30% equity | -60% equity | -90% equity |
 | 5x | -50% equity | Liquidated | Liquidated |
+
+In this table, **Liquidated** means the position falls to or below the Liquidation Risk Ratio before the loss reaches 100% of equity. In the SUI/USDC example, a 5x position becomes liquidatable after about a 15% adverse move, and a partial liquidation then restores the risk ratio to the target.
 
 An adverse move means:
 - **Long positions:** Price moves down (you borrowed USDC to buy SUI, and SUI drops)
@@ -137,7 +139,7 @@ With 5x leverage:
 
 Crypto markets can move 10-20% in hours. Flash crashes, short squeezes, exchange outages, or major news events can trigger rapid price movements that liquidate leveraged positions before you can react.
 
-## Interest rate risk
+## What is interest rate risk? {#interest-rate-risk}
 
 When you borrow funds, you pay interest that accrues continuously. This interest is **variable** and can change significantly based on pool utilization.
 
@@ -182,12 +184,12 @@ Interest accrues to your debt, which means:
 - Risk ratio drops from 1.25 to approximately 1.21
 - You're now closer to liquidation without any price movement
 
-## Oracle risk
+## What is oracle risk? {#oracle-risk}
 
 DeepBook Margin uses Pyth price oracles to value your assets and debts. While the protocol includes several protections, some oracle-related risks remain:
 
 - **Price delays:** Oracle prices might lag behind real market prices during extremely volatile periods. The protocol mitigates this by rejecting prices older than around 60 seconds, but brief delays within this window can still occur.
-- **Price manipulation:** Although Pyth's design resists manipulation and DeepBook validates prices against confidence intervals and EWMA (exponentially weighted moving average) prices, extreme market conditions could still affect price accuracy.
+- **Price manipulation:** Although Pyth's design resists manipulation and DeepBook validates prices against confidence intervals and exponentially weighted moving average (EWMA) prices, extreme market conditions could still affect price accuracy.
 
 ### Oracle protections
 
@@ -216,7 +218,7 @@ Just because you can borrow at 5x doesn't mean you should. Consider:
 ### 2. Monitor your risk ratio actively
 
 - Check your position regularly, especially during volatile markets
-- Set up alerts if possible
+- Set up alerts. To build your own with the DeepBook SDK, see [Monitor your risk ratio programmatically](#monitor-your-risk-ratio-programmatically)
 - Know your liquidation price
 - See the [Leveraged Position Workflow](/onchain-finance/deepbook/deepbook-margin/leveraged-workflow) for reading each risk parameter onchain
 
