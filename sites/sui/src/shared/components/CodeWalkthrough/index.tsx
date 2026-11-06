@@ -126,12 +126,18 @@ export default function CodeWalkthrough({
     return () => { cancelled = true; };
   }, [source, org, repo, branch]);
 
-  // Strip license header
-  const cleanCode = useMemo(() => {
-    if (!code) return "";
-    return code
-      .replace(/^\/\/\s*Copyright.*Mysten Labs.*\n\/\/\s*SPDX-License.*?\n?$/gim, "")
+  // Strip the license header from the top of the file. Step `lines` refer to
+  // the source file as it appears on GitHub, so keep counting from there:
+  // lineOffset is how many lines the strip removed.
+  const { cleanCode, lineOffset } = useMemo(() => {
+    if (!code) return { cleanCode: "", lineOffset: 0 };
+    const stripped = code
+      .replace(/^\/\/\s*Copyright.*Mysten Labs.*\r?\n\/\/\s*SPDX-License.*(?:\r?\n|$)/i, "")
       .replace(/^\s*\n/, "");
+    return {
+      cleanCode: stripped,
+      lineOffset: code.split("\n").length - stripped.split("\n").length,
+    };
   }, [code]);
 
   // Active highlight lines
@@ -221,7 +227,7 @@ export default function CodeWalkthrough({
               {({ className, style, tokens, getLineProps, getTokenProps }) => (
                 <code className={className} style={{ ...style, background: "transparent" }}>
                   {tokens.map((line, i) => {
-                    const lineNum = i + 1;
+                    const lineNum = i + 1 + lineOffset;
                     const isHighlighted = highlightedLines.has(lineNum);
                     const isDimmed = highlightedLines.size > 0 && !isHighlighted;
                     const lineProps = getLineProps({ line, key: i });
