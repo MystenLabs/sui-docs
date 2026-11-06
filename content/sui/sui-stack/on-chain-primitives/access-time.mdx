@@ -61,12 +61,15 @@ Call the `access` entry function with the following format, passing `0x6` as the
 <ImportContent source="info-gas-budget" mode="snippet" />
 
 ```sh
-$ sui client call --package <EXAMPLE> --module 'clock' --function 'access' --args '0x6' --gas-budget <GAS-AMOUNT>
+$ sui client call --package <EXAMPLE> --module 'clock' --function 'access' --args '0x6'
 ```
 
 The `sui::clock::Clock` timestamp advances with each consensus commit, which occurs approximately every 1/4 second.
 
-Successful calls to `sui::clock::timestamp_ms` in the same transaction always produce the same result because transactions take effect instantly, but timestamps from `sui::clock::Clock` are otherwise monotonic across transactions that touch the same shared objects. Successful transactions see a greater or equal timestamp to their predecessors.
+Timestamps from `sui::clock::Clock` follow two rules:
+
+- **Within a transaction:** Every successful call to `sui::clock::timestamp_ms` in the same transaction returns the same value, because transactions take effect instantly.
+- **Across transactions:** Timestamps are monotonic across transactions that touch the same shared objects. A successful transaction sees a timestamp greater than or equal to the timestamps its predecessors saw.
 
 Any transaction that requires access to `sui::clock::Clock` must go through consensus because the only available instance is a shared object. As a result, this technique is not suitable for transactions that must use the single-owner fastpath. See [Epoch timestamps](#epoch-timestamps) for a single-owner-compatible source of timestamps.
 
