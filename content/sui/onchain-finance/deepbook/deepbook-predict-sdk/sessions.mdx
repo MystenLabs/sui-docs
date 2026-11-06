@@ -298,7 +298,14 @@ Each takes a `SessionsQueuedOrderTarget` that names the market, the owner's wrap
 
 <ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="85-113" />
 
-`enqueueExactCost` sizes the fill at τ so its all-in cost fits `maxCost`, at least `minQuantity`. The builder throws for a `maxCost` of 0 or `u64::MAX`, which the chain would abort with `EMintCostCapRequired`, because every queued mint needs a finite cap. `enqueueExactQuantity` takes `quantity`, `maxCost`, and `maxProbability`, and `enqueueExactAmount` takes `maxPremium`, `minQuantity`, and `maxCost`.
+Each builder takes its own limits:
+
+- `enqueueExactQuantity`: `quantity`, `maxCost`, and `maxProbability`
+- `enqueueExactAmount`: `maxPremium`, `minQuantity`, and `maxCost`
+- `enqueueExactCost`: `maxCost` and `minQuantity`
+- `enqueueRedeemOpen`: `recordId`, `closeQuantity`, `minProbability`, and `minProceeds`
+
+`enqueueExactCost` sizes the fill at τ so its all-in cost fits `maxCost`, at least `minQuantity`. The builder throws for a `maxCost` of 0 or `u64::MAX`, which the chain would abort with `EMintCostCapRequired`, because every queued mint needs a finite cap.
 
 <ImportContent source="packages/deepbook-v3/src/sessions.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="577-584" />
 
@@ -364,7 +371,7 @@ The following example builds an owner-signed revocation, reads a session's expir
 - `cancelLiveOrders`: Cancels several DeepBook spot orders.
 - `withdrawSettledAmounts`: Sweeps settled DeepBook spot proceeds into account custody.
 
-They need Sessions version 3, so on Mainnet use version 2.8.0 of the SDK or later. Whether they succeed also depends on a DeepBook registry authorization, which both networks' registries hold, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
+They need Sessions version 3, which both networks run. On Mainnet, use version 2.8.0 or later of the SDK. Whether they succeed also depends on a DeepBook registry authorization, which both networks' registries hold, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
 
 Each generated function takes an options object with these fields:
 
