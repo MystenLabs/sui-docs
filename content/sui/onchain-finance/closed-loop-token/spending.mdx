@@ -79,7 +79,7 @@ You cannot use spent balance in any way, and you cannot withdraw it. The only av
 
 ## How do I gate the spend action?
 
-Normally, assign at least one rule to the `spend` action to prevent aimless spending. The recommended way to authorize the spend in an application that accepts the token is to stamp it right in the function that performs the spend. Stamping means calling `token::add_approval` with a rule-like witness (here `GiftShop {}`), which adds an approval to the `ActionRequest` recording that the rule performed the action. For example:
+Normally, assign at least one rule to the `spend` action to prevent aimless spending. Stamping means calling `token::add_approval` with a rule-like witness, which adds an approval to the `ActionRequest` recording that the rule performed the action. The recommended way to authorize the spend in an application that accepts the token is to stamp it right in the function that performs the spend. In the following example, the rule-like witness is `GiftShop {}`:
 
 ```move
 /// Rule-like witness to stamp the ActionRequest
