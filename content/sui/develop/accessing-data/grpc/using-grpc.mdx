@@ -605,7 +605,7 @@ If you see errors like `cannot find package`, ensure you've generated the proto 
 import pb "your_project/sui/rpc/v2"
 ```
 
-You can replace `your_project` with a module name or relative import path depending on how you define your `go.mod`.
+You can replace `your_project` with a module name or relative import path depending on how you define your `go.mod`. The generated package path also depends on the `go_package` option in the proto files, so check that option before you write the import.
 
 The example assumes that gRPC is available on port `443` which requires SSL. The request provides the digest directly in the `Base58` format, but check if you need to decode from your source format.
 
