@@ -126,7 +126,7 @@ flowchart TB
     end
 ```
 
-Even though the custodian owns both objects, the only valid actions in Move are to match them correctly or return them to the sender with `return_to_sender`. The `swap` function verifies that senders and recipients match and that each party wants what the other is offering by comparing key IDs:
+Even though the custodian owns both objects, the only valid actions in Move are to match them correctly or return them to the sender with `return_to_sender`. Each `Escrow` records the ID of the key its object was locked with and, in `exchange_key`, the ID of the other party's key from step 2. The `swap` function verifies that senders and recipients match and that each party wants what the other is offering by comparing these key IDs:
 
 <ImportContent source="examples/trading/contracts/escrow/sources/owned.move" mode="code" fun="swap" />
 
@@ -150,7 +150,7 @@ Unlike the address-owned version, where both parties lock their objects first, o
 
 1. The first party locks their object with `escrow::lock`.
 2. The second party calls `create` to place their object in a shared `Escrow` object.
-3. The intended recipient calls `swap` with their locked object to complete the trade.
+3. The intended recipient calls `swap` with their locked object to complete the trade, which delivers both objects to their new owners.
 
 <details>
 <summary>`shared.move`</summary>
@@ -190,7 +190,7 @@ flowchart TB
     end
 ```
 
-The intended recipient completes the swap by providing their locked object:
+The intended recipient completes the swap by providing their locked object. The single `swap` call delivers the escrowed object to the recipient and the locked object to the sender:
 
 <ImportContent source="examples/trading/contracts/escrow/sources/shared.move" mode="code" fun="swap" />
 
