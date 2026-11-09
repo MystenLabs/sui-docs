@@ -61,7 +61,7 @@ Input arguments to a PTB are broadly categorized as either objects or pure value
 
 For object inputs, the metadata needed differs depending on the type of [ownership of the object](/develop/objects/object-ownership). The data for the `ObjectArg` enum follows:
 
-- If the object is owned by an address or it is immutable, then use `ObjectArg::ImmOrOwnedObject(ObjectID, SequenceNumber, ObjectDigest)`. The triple respectively specifies the object's ID, its sequence or version number, and the digest of the object's data.
+- If the object is owned by an address or it is immutable, then use `ObjectArg::ImmOrOwnedObject(ObjectID, SequenceNumber, ObjectDigest)`. The triple respectively specifies the object's ID, its sequence or version number (`SequenceNumber`), and the digest of the object's data.
 
 - If an object is shared, then use `ObjectArg::SharedObject { id: ObjectID, initial_shared_version: SequenceNumber, mutable: bool }`. Unlike `ImmOrOwnedObject`, a shared object's version and digest are determined by the network's consensus protocol. The `initial_shared_version` is the version of the object when it was first shared, which is used by consensus when it has not yet seen a transaction with that object. While all shared objects can be mutated, the `mutable` flag indicates whether the object is to be used mutably in this transaction. In the case where the `mutable` flag is set to `false`, the object is read-only and the system can schedule other read-only transactions in parallel.
 
@@ -87,7 +87,7 @@ Bytes are not validated until a command specifies the expected type, for example
 
 Each transaction command produces an array of values. The array can be empty. The type of the value can be any arbitrary Move type, so unlike inputs, the values are not limited to objects or pure values. The number of results generated and their types are specific to each transaction command:
 
-- `MoveCall`: The number of results and their types are determined by the Move function being called. Move calls cannot return references (`&T` or `&mut T`).
+- `MoveCall`: The number of results and their types are determined by the Move function being called. Move calls cannot return references (`&T` or `&mut T`). In TypeScript, if the Move function returns multiple values, destructure the result of `tx.moveCall`: `const [a, b] = tx.moveCall(...)`.
 
 - `SplitCoins`: Produces one or more coins from a single coin. The type of each coin is `sui::coin::Coin<T>` where the specific coin type `T` matches the coin being split.
 
@@ -180,6 +180,5 @@ The PTB cookbook example creates a character, mints a sword, equips the sword, a
 Keep the following in mind when you add the transfer step:
 
 - Results from `tx.moveCall` are `TransactionArgument` references, so the same `character` result that the equip call receives also goes to `tx.transferObjects`.
-- If a Move function returns multiple values, destructure them: `const [a, b] = tx.moveCall(...)`.
 - `tx.pure.address(playerAddress)` supplies the recipient as a pure `address` input. `transferObjects` also accepts a plain address string as the recipient, so `tx.transferObjects([hero], recipientAddress)` works too.
 - All commands run in order. If any command fails, the entire transaction reverts, so the player never receives a partially built object.
