@@ -289,3 +289,21 @@ txb.moveCall({
     typeArguments: [ '<letter_box_package>::letterbox_ext::Extension' ]
 });
 ```
+
+## Should you use a capability or an address allowlist for minting?
+
+For privileged functions such as minting, use a capability object instead of a list of authorized addresses. Capability objects keep your package composable. Another protocol can hold the capability on behalf of a user. An address list ties authorization to the account that signs the transaction.
+
+Object ownership enforces part of this check for you. For an address-owned object, the owner gets read, write, delete, and transfer rights, and every other sender gets none. A function that requires a capability argument therefore only runs for the address that owns that capability. A [shared object](/develop/objects/object-ownership/shared) works differently. Any sender can read, write, and delete it, so you must add your own checks in Move to stop arbitrary callers from changing a shared allowlist.
+
+Follow these guidelines for privileged functions:
+
+- Take an explicit capability parameter rather than relying on sender-only authorization.
+- Use the transaction sender as the authorization check only where the signer is genuinely the only valid actor.
+- When a capability grants rights over a specific object, validate the relationship between the capability and the object, for example by matching an ID stored in the capability.
+- Design a revocation or rotation path from the start.
+- Emit [events](/develop/accessing-data/using-events) for privileged actions so they are auditable.
+
+If you still need a list of addresses in a shared object, gate every function that changes the list with a capability. The Sui framework follows this pattern for `DenyList`, a shared object that stores blocked addresses. It uses `ConfigWriteCap` so that only its own module modifies the list configuration.
+
+For the full guidance, see [Access control](/develop/security/best-practices#access-control).
