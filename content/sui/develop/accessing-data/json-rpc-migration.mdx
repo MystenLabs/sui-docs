@@ -202,7 +202,7 @@ JSON-RPC object queries supported `MatchAll`, `MatchAny`, and `MatchNone` filter
 
 - **gRPC** transaction and event filters support negation through the `negated` field on each literal. Set `negated: true` on a literal to exclude matching items. For example, the following literal matches all transactions except those from a specific sender:
 
-  ```
+  ```typescript
   { negated: true, predicate: { oneofKind: 'sender', sender: { address: '0x...' } } }
   ```
 
@@ -218,7 +218,7 @@ A full node retains a configurable window of recent data and prunes older histor
 
 Not all tools in the Sui ecosystem require manual migration:
 
-- **Sui CLI**: No changes needed. The CLI already uses gRPC internally. The `rpc` field in `~/.sui/sui_config/client.yaml` points at the same `fullnode.*.sui.io:443` URLs, which serve both JSON-RPC and gRPC.
+- **Sui CLI**: No changes needed. The CLI already uses gRPC internally. The `rpc` field in `~/.sui/sui_config/client.yaml` points at the same `fullnode.*.sui.io:443` URLs, which serve gRPC.
 
 - **dApp Kit**: Use `@mysten/dapp-kit-react` (or `@mysten/dapp-kit-core` outside React). Its `createDAppKit` accepts a `SuiGrpcClient` from `createClient`, so a frontend on it can move to gRPC by changing that factory. The deprecated `@mysten/dapp-kit` package (no suffix) only accepts `SuiJsonRpcClient`. Do not pass it a `SuiGrpcClient`; migrate the app to `@mysten/dapp-kit-react` instead ([dApp Kit docs](https://sdk.mystenlabs.com/dapp-kit)).
 
