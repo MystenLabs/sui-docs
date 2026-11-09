@@ -80,6 +80,8 @@ Sui supports a range of payment models, from direct transfers to structured chec
 | Onchain audit trail | Transfer events only | Receipt objects and events |
 | Move code to write | None | None |
 
+In Payment Kit, a `PaymentRegistry` records each payment that it processes and rejects duplicates. Registry payments use a `PaymentRegistry`, and ephemeral payments do not.
+
 ## Which payment model should I use?
 
 - If you only need to move value, such as wallet sends, peer-to-peer payments, or treasury moves, use a [basic transfer](#basic-transfer). Send to an address balance unless the recipient or an integrating contract expects a distinct `Coin<T>` object. An [address balance](/onchain-finance/asset-custody/address-balances) holds an address's funds of one coin type as a single balance. Deposits from different senders merge into it automatically, so the recipient manages no objects.
