@@ -178,7 +178,7 @@ The oracle prices must be fresh. Each pool sets a maximum price age and a price 
 
 <ImportContent source="packages/deepbook_margin/sources/helper/margin_constants.move" mode="code" org="MystenLabs" repo="deepbookv3" lines="25-28" />
 
-If the price is older than the pool's maximum age, valuation reverts rather than acting on a stale price. See [Margin Risks](/onchain-finance/deepbook/deepbook-margin/margin-risks#oracle-risk) for oracle risk.
+If the price is older than the pool's maximum age, valuation reverts rather than acting on a stale price. See [Margin Risks](/onchain-finance/deepbook/deepbook-margin/margin-risks) for oracle risk.
 
 ## What happens if you do nothing and the price moves against you
 
@@ -219,6 +219,6 @@ Withdraw your collateral back to your wallet. A withdraw must leave your risk ra
 - **Borrow aborts on risk ratio:** the borrow would leave your ratio below the pool's min borrow risk ratio. Deposit more collateral or borrow less. Read the current threshold with `getMinBorrowRiskRatio`.
 - **Withdraw aborts on risk ratio:** you are trying to withdraw collateral that a borrow still depends on. Repay first, then withdraw, and keep the ratio at or above the min withdraw ratio.
 - **Borrow fails for insufficient pool liquidity:** the margin pool has no headroom under its max utilization rate. Check `borrowableNow` from [Check borrow liquidity](#check-borrow-liquidity), borrow less, or wait for supply.
-- **Valuation reverts on a stale price:** the Pyth price is older than the pool's maximum price age. Refresh the price feed before the risk-reading or trading call. See [Oracle risk](/onchain-finance/deepbook/deepbook-margin/margin-risks#oracle-risk).
+- **Valuation reverts on a stale price:** the Pyth price is older than the pool's maximum price age. Refresh the price feed before the risk-reading or trading call. See [Margin Risks](/onchain-finance/deepbook/deepbook-margin/margin-risks) for oracle risk.
 - **`Cannot convert <value> to a BigInt`:** `clientOrderId` is encoded as `u64`. The SDK types it as a string, but a non-numeric value fails to encode. Use a numeric string, such as a timestamp.
 - **Every run mints a new manager:** you are not reusing an existing `MarginManager`. Discover or persist the ID and create only when absent, as in [Create a MarginManager](#create-a-marginmanager).
