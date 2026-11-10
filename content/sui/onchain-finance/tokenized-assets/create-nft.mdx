@@ -93,7 +93,7 @@ NFTs on Sui are useful in a wide range of applications:
  
 On Sui, both NFTs and [tokenized assets](/onchain-finance/tokenized-assets/asset-tokenization) are objects. The protocol does not distinguish between them. The difference is in how you design your smart contract.
  
-An NFT is typically an object with a supply of 1 and metadata specific to that instance, such as a name, description, or image URL. A tokenized asset is designed for fractional ownership, with a supply greater than 1 and metadata shared across all fractions. Tokenized asset fractions minted as fungible tokens can also be split into smaller units or joined together when their balance is greater than 1, which NFTs are not designed for. The protocol does not enforce these supply values; your smart contract design determines them.
+An NFT is typically an object with a supply of 1 and metadata specific to that instance, such as a name, description, or image URL. A tokenized asset is designed for fractional ownership, with a supply greater than 1 and metadata shared across all fractions. Tokenized asset fractions can also be split into smaller units or joined back together, which NFTs are not designed for. The protocol does not enforce these supply values; your smart contract design determines them.
  
 The following table summarizes the key design differences:
  

@@ -211,7 +211,7 @@ Replace `<ADDRESS>` with the address that `sui client active-address` returns. C
 
 ##### Step 3: Run setup script 
 
-The bootstrap script prompts you for the address private key you exported in Step 2, then generates a separate key pair, injects its public key into the Move contract, publishes the package, and populates environment variables. 
+The bootstrap script prompts you for the private key you exported in Step 2, unless `.env.local` already sets `ADMIN_PRIVATE_KEY_ED25519`. It then derives the Ed25519 public key from that private key, injects the public key into the Move contract, publishes the package, and populates environment variables. 
 
 ```bash
 $ cd ..

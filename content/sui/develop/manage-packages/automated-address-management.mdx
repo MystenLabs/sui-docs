@@ -97,7 +97,7 @@ sui move manage-package --environment "$(sui client active-env)" \
 
 3. Delete the `published-at` line in your `Move.toml`.
 
-4. Set your package's address to `0x0` in the `[addresses]` section. In this legacy system, the key you use in `[addresses]` is the name your Move source code uses for the package (for example, `kiosk` for `module kiosk::...`); the `name` field in `[package]` is ignored, so the two do not have to match:
+4. Set your package's address to `0x0` in the `[addresses]` section:
 
 ```toml
 [package]
