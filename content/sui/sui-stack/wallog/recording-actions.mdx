@@ -1,0 +1,192 @@
+---
+title: Recording Agent Actions
+description: >-
+  Record AI agent actions with the Wallog Python and TypeScript SDKs. Learn the
+  receipt kinds, how to pair before and after receipts with steps, how to act
+  on deny and needs_approval policy rulings, what data leaves your process, and
+  how idempotency keys work.
+keywords:
+  - wallog
+  - record receipt
+  - agent.record
+  - agent.step
+  - traced
+  - policy ruling
+  - needs_approval
+  - deny
+  - approvals
+  - disclose
+  - idempotency key
+  - labels
+goal:
+  description: >-
+    Reader records actions with the right receipt kinds, acts correctly on
+    policy rulings, and knows what data leaves the agent's process
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '\]\(/[^)]+\)'
+      min: 2
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+questions:
+  - How do I record a before and after receipt with Wallog?
+  - Does a Wallog policy stop my agent?
+  - How do I handle a needs_approval ruling in Wallog?
+  - What data does the Wallog SDK send to the server?
+  - How do Wallog idempotency keys work?
+answer: >-
+  Record a before receipt ahead of an action and an after receipt behind it,
+  sharing action.run, with agent.step() or agent.traced(). The server evaluates
+  policies on each before receipt and records a ruling, but it does not stop
+  the agent. Your code must not act on deny and must wait for approval on
+  needs_approval, which traced() does for you. By default only the digest of
+  the input leaves your process.
+---
+
+[Wallog](/sui-stack/wallog) records each action as 1 or more receipts. The Python and TypeScript SDKs pair the receipts of 1 action, and your code acts on the policy rulings that the server records. For installation, see [Getting Started with Wallog](/sui-stack/wallog/getting-started).
+
+## Receipt kinds
+
+Each receipt has a kind ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md), [source](https://github.com/MystenLabs/wallog/blob/main/docs/FORMAT.md)):
+
+| **Moment** | **Kind** | **Carries** |
+|---|---|---|
+| Before acting | `before` | The digest of the input: what is about to be done. |
+| A policy matched | `ruling` | Issued by the server directly behind the `before`, with the outcome. |
+| After acting | `after` | The digest of the output. |
+| Anything else | `note` | Whatever is worth keeping. |
+| A person approved a ruling | `approval` | Recorded in the approver's chain by `Client.approve`. |
+
+The receipts of 1 action share `action.run`. `agent.step()` and `agent.traced()` set it for you ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+## Record a note
+
+`agent.record()` records a `note` unless you pass another kind. It returns a receipt handle with the following fields ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
+
+- `id`
+- `url`
+- `status`
+- `index`
+- `hash`
+- `body`
+- `ruling`
+
+The quickstart records a note:
+
+<ImportContent source="examples/python/quickstart.py" mode="code" org="MystenLabs" repo="wallog" branch="b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6" lines="9-12" />
+
+`agent.record()` raises when the receipt cannot be recorded. Catch the error and decide whether the action goes on ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+## Pair the receipts of an action with a step
+
+A step is 1 action. Its `before`, its ruling, and its `after` share 1 `run` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)). Use a step as follows:
+
+1. Call `step.before()` ahead of the action. If the `before` cannot be recorded, it raises, and the action must not run.
+1. Read the ruling on the returned receipt, and act on it as [Act on a ruling](#act-on-a-ruling) describes.
+1. Run the action.
+1. Call `step.after()` with the output. Only the digest of the output is sent.
+
+{/* TODO: Import code from MystenLabs/wallog: a Python and a TypeScript example of agent.step() that proceeds only when the ruling is absent or allow, refuses on deny, and waits on needs_approval. No such example exists in the repository yet. examples/python/quickstart.py ignores the ruling, and examples/typescript/quickstart.ts and examples/demo/guarded_delete.py each handle only 1 of the 2 outcomes. */}
+
+In Python, a step is a `with` block. If the block raises, the step records an `after` with `labels.error` set to the exception type, and the exception goes on ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). In TypeScript, call `step.failed(error)` when the action throws ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)).
+
+A step accepts 1 successful `before` and 1 successful `after`. A second call raises an error. A call that raised gives its place back, so you can call it again ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). Each call creates a new idempotency key, so if a call raised after the server already recorded it, calling it again records a second receipt ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py)).
+
+## Act on a ruling
+
+A policy matches an action name with a pattern, where `*` matches within 1 part between colons and `**` matches across parts. A policy gives 1 of 3 outcomes: `allow`, `deny`, or `needs_approval`. The most restrictive match wins. The server evaluates policies on each `before` and writes a `ruling` receipt directly behind it ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+:::danger
+
+A ruling does not stop the agent. The server only records it. Acting on the ruling is your code's job, and an agent that ignores it runs a denied action or an action that still needs approval ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+:::
+
+When you use a step, read the ruling from the `before` receipt and handle every outcome:
+
+| **Ruling** | **What your code does** |
+|---|---|
+| No ruling | No policy matched. Run the action. In Python, `step.before().ruling` is `None`. In TypeScript, `before.ruling` is `undefined`. |
+| `allow` | Run the action. |
+| `deny` | Do not run the action. Do not record an `after`. |
+| `needs_approval` | Wait for a person to approve, then run the action and pass the approvals' receipt hashes in `approved_by` (TypeScript: `approvedBy`) on the `after`. If nobody approves in time, do not run the action. |
+| Any other outcome | Do not run the action. A newer server might add an outcome. |
+
+Sources: [integrating.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md) and [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md).
+
+`ruling.needs_approval` (TypeScript: `ruling.needsApproval`) is true for a ruling that waits, and `ruling.wait_approved()` (TypeScript: `ruling.waitApproved()`) returns the approvals once a person approves. It waits 600 seconds by default ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), [source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/issued.ts)). The outcome itself is in the ruling's body, at `ruling.body["ruling"]["outcome"]` in Python and `before.ruling?.body.ruling?.outcome` in TypeScript ([source](https://github.com/MystenLabs/wallog/blob/main/examples/demo/guarded_delete.py)).
+
+### Let `traced` act on the ruling
+
+`agent.traced()` wraps a function in a step and acts on the ruling for you, in both SDKs ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+
+- **On `deny`:** It does not call the function, records no `after`, and raises `wallog.DeniedError` in Python or `WallogDeniedError` in TypeScript.
+- **On `needs_approval`:** It waits for an approval before the call, for 600 seconds unless `approval_timeout` (seconds, Python) or `approvalTimeoutMs` (TypeScript) sets another limit. If nobody approves in time, it raises `WaitTimeout` in Python or `WallogTimeoutError` in TypeScript, and does not call the function.
+- **After approval:** It calls the function and records the `after` with the approvals' receipt hashes in `approved_by`.
+- **On a ruling it cannot read:** It does not call the function and raises an API error, so a new outcome from a newer server stops the function instead of letting it run.
+
+Use `traced` for functions that return a value. In Python, a generator function runs its body only when it is iterated, so `traced` records the `after` before the body runs. Wrap the loop in a step instead ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+{/* TODO: Import code from MystenLabs/wallog: a Python and a TypeScript example of agent.traced() around a function under a deny or needs_approval policy. The closest existing sample is in docs/guides/python-sdk.md, section Approvals, policies, keys, webhooks, which is Markdown and not an importable source file. */}
+
+### Approvals are receipts
+
+An approval is a receipt in the approver's chain, so a reader can find who approved a ruling and when. The `approved_by` list on the agent's `after` is the agent's own claim. The server checks that each entry is a receipt hash, not that it is an approval of this action, and no verifier looks the hashes up. Whoever relies on an approval compares the hash with the approver's receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+Policies and approvals need a tenant key. An agent token that calls them gets an HTTP 403 error ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+## Control what leaves your process
+
+By default, the SDK hashes the input in your process and sends only the digest (SHA-256 and byte length) and a hint if you give one. The output is never sent, only its digest ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+| **Data** | **Sent to the server** |
+|---|---|
+| Agent name, action name, kind | Always, in plain text. |
+| `run`, `scope`, `labels`, `hint` | When you pass them, in plain text. |
+| `ruling`, `approved_by` | When you pass them, in plain text. |
+| Input | Its digest. The input itself only with `disclose=True`. |
+| Output | Its digest, when you pass an output. Never the output itself. |
+| Idempotency key | Always. |
+
+Source: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md). Everything sent in plain text, except the idempotency key, is part of the signed receipt. A tenant with public pages, which is the default, shows it on its public receipt pages. Agent names are also on the key registry on Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+
+:::caution
+
+A digest has no salt. Anyone who can guess an input can confirm the guess against its digest, and a name, an account number, or a yes or no answer can be confirmed in a moment. Add a random member to any input that must stay secret, and keep the input yourself ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+:::
+
+With `disclose=True` on the agent or on 1 call, the server receives the input, computes the digest itself, and stores the input encrypted for your tenant. You can delete a stored input with `DELETE /v1/receipts/{id}/input`, and the receipt and its digest stay ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+To prove later what a digest covers, keep the input. Every receipt your process records keeps the normalized input and output it hashed, in `receipt.input` and `receipt.output` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+### Pass JSON values
+
+Digests are computed over canonical JSON, which holds integers only. Both SDKs turn `1.0` into `1` and `12.5` into the string `"12.5"` before hashing ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). If you compute digests yourself, follow the conventions in the [Wallog format specification](https://github.com/MystenLabs/wallog/blob/main/docs/FORMAT.md).
+
+## Add your own data with labels
+
+Put any other data you want signed in `labels`, for example a ticket number. Wallog gives labels no meaning. Labels are part of the signed body, so they are sent in plain text and appear on public receipt pages. Do not put the content of an input or an output in a label ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+Labels are signed as they are and are not normalized. They hold integers only, so write a fraction as a string such as `"0.5"`. Labels can be at most 16,384 bytes of canonical JSON and nested at most 32 levels ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+## Use idempotency keys
+
+Every `POST /v1/receipts` carries an idempotency key, either yours (`idempotency_key=` in Python) or a random one. A retry after a lost answer sends the same key and gets the first receipt back, with `receipt.replayed` set to `True` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+If you repeat a `record` by hand after it raised, pass the same `idempotency_key` both times. Then the repeat returns the first receipt when the first call did reach the server ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+The server does not compare the body of a repeated key with the first body. A key that you reuse for another action returns the first receipt, and the second action is recorded nowhere. Give each action its own key, and check `receipt.replayed` where it matters ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+## Order of concurrent receipts
+
+The server gives the next index in an agent's chain to each request when it reaches the agent's turn. Calls made one after another, each waiting for its answer, get rising indexes. Calls made at the same time from threads, tasks, or processes get indexes in no defined order. If the order of overlapping calls matters, put your own sequence number in `labels` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
