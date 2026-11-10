@@ -459,7 +459,7 @@ client.deepbook.poolReferralMultiplier('SUI_DBUSDC', referralId)(tx);
 
 ### Balance manager referral functions
 
-These functions are available on the `balanceManager` contract for associating referrals with balance managers.
+These functions are available on the `balanceManager` contract for associating referrals with balance managers. Each balance manager can have a different referral for each pool. Setting a referral passes the referral ID, which already identifies the pool its `DeepBookPoolReferral` belongs to. Unsetting a referral passes the pool key to identify which pool's referral to remove.
 
 ```tsx
 // Generate a trade cap first (needed for setting referrals)

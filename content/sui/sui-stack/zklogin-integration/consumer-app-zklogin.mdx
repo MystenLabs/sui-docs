@@ -74,7 +74,7 @@ registerEnokiWallets({
 
 ### Add the connect button
 
-The `ConnectButton` renders a **Sign in with Google** flow through Enoki. After sign-in, `useCurrentAccount` returns the user's zkLogin address.
+The `ConnectButton` renders a **Sign in with Google** flow through Enoki. After sign-in, `useCurrentAccount` returns a Wallet Standard account that exposes `address` (the Sui address derived from zkLogin), `chains`, `features`, `publicKey`, and `icon`, not OAuth identity fields like `email` or `sub`.
 
 ```typescript
 import { useCurrentAccount } from '@mysten/dapp-kit-react';
