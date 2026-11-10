@@ -198,6 +198,8 @@ A capability object is a struct with the `key` ability that acts as a permission
 
 Some designs still need an address allowlist, for example a set of accounts that can claim an airdrop. When you use one, store it in a well-defined object, restrict updates to a privileged function, and emit an [event](/develop/accessing-data/using-events) whenever an entry changes. Consider adding a time-lock on updates so that membership changes take effect only after a delay, giving observers time to react to an unexpected change. Events give offchain services and auditors a record of every membership change. Without them, allowlist changes are difficult to monitor.
 
+The Sui framework follows this pattern for `DenyList`, a shared object that stores blocked addresses. Writes to its configuration require the `ConfigWriteCap` type, which only the `deny_list` module can create, so no other module can change the list configuration ([source](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/deny_list.move)).
+
 #### Do not rely on `tx_context::sender()` alone
 
 `tx_context::sender()` returns the address that signed the transaction. Using it as the only authorization check ties a function to a single signer and breaks composability, because another contract cannot call the function on behalf of a user. Prefer capability objects or explicit object ownership checks when composability matters. Reserve `tx_context::sender()` for cases where the signer is genuinely the only valid actor.
