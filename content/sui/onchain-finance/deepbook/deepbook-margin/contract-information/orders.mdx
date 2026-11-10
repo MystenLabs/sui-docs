@@ -94,7 +94,7 @@ To place a reduce-only order, call `place_reduce_only_limit_order_v2` or `place_
 
 :::info
 
-The original `place_limit_order`, `place_market_order`, and `place_reduce_only_*` entries in `pool_proxy` abort with `EDeprecatedUseV2`. `pool_proxy` also has `_v2` twins that read the legacy Pyth feed. They still work in the deployed package but are being retired, so call the `_v2` functions in `pool_proxy_upgraded` instead.
+The original `place_limit_order`, `place_market_order`, and `place_reduce_only_*` entries in `pool_proxy` abort with `EDeprecatedUseV2`. Separately, `pool_proxy` also has `_v2` twins that read the legacy Pyth feed, whereas the `pool_proxy_upgraded` `_v2` functions take the base and quote `PriceInfoObject`s from Pyth's upgraded package (`pyth_upgraded::price_info::PriceInfoObject`). They still work in the deployed package but are being retired, so call the `_v2` functions in `pool_proxy_upgraded` instead.
 
 :::
 

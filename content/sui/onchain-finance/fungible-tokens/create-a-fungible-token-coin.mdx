@@ -75,7 +75,7 @@ This example creates a coin with 9 decimals, the name Silver, a description, the
 
 ##### Step 2: Create the currency
 
-Create the coin using the `coin::create_currency` function. The publisher of the smart contract that creates the coin receives a `TreasuryCap` object:
+Create the coin using the `coin::create_currency` function. The publisher of the smart contract that creates the coin receives a `TreasuryCap` object. Each coin you create also includes a `CoinMetadata` object that describes it. Typically, smart contracts freeze this object upon creation using the `transfer::public_freeze_object` function because the metadata for coins should almost never change, and regulated coins freeze the metadata they create automatically. If you might need to update the name, symbol, description, or icon URL later, do not freeze the `CoinMetadata` object:
 
 <ImportContent
 	source="I1/silver/sources/silver.move"

@@ -190,7 +190,7 @@ flowchart TB
     end
 ```
 
-The intended recipient completes the swap by providing their locked object:
+The intended recipient completes the swap by providing their locked object. Although the recipient (Buyer) submits the transaction, the `swap` call delivers both objects to their new owners, sending the previously locked object on to the Seller:
 
 <ImportContent source="examples/trading/contracts/escrow/sources/shared.move" mode="code" fun="swap" />
 
