@@ -54,7 +54,13 @@ answer: >-
 
 The status that a [Wallog](/sui-stack/wallog) SDK reports, such as `on_sui` or `on_walrus`, is what the server says. The proof is the verdict of a verifier. `wallog-verify`, the reference verifier, reads Sui and Walrus itself and is the only Wallog verifier that reads the network. The Python and TypeScript verifiers check evidence or a proof bundle that you give them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
 
-Install `wallog-verify` from a clone of the repository, as [Getting Started with Wallog](/sui-stack/wallog/getting-started#install-from-a-clone) describes.
+<Tabs className="tabsHeadingCentered--small">
+<TabItem value="prereq" label="Prerequisites">
+
+- [x] Install `wallog-verify` from a clone of the repository, as [Getting Started with Wallog](/sui-stack/wallog/getting-started#install-from-a-clone) describes.
+
+</TabItem>
+</Tabs>
 
 ## Verify a receipt
 
@@ -144,7 +150,14 @@ Without `--to`, `chain` ends at the newest receipt the operator lists, so pass `
 
 ## Verify a proof bundle
 
-A proof bundle is a zip file with the receipts of 1 agent, the segments that hold their manifests, the keys, and the onchain facts that were read for each receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)). Build a bundle from a real deployment, then verify it offline or online:
+A proof bundle is a zip file that holds the following ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)):
+
+- The receipts of 1 agent
+- The segments that hold their manifests
+- The keys
+- The onchain facts that were read for each receipt
+
+Build a bundle from a real deployment, then verify it offline or online:
 
 ```sh
 $ wallog-verify bundle build --agent billing-bot --server SERVER_URL --api-key YOUR_API_KEY --out billing.zip

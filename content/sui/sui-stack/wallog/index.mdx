@@ -77,7 +77,7 @@ The status values are what the server reports. They are not a proof. The proof i
 
 ## What a receipt does not prove
 
-A receipt is evidence about a log entry, not about the action itself. Keep the following limits in mind when you rely on a receipt:
+A receipt is evidence about a log entry, not about the action itself. Consider the following limits when you rely on a receipt:
 
 - **The server signs on the agent's behalf:** The server holds the agents' signing keys, so it can sign a receipt that the agent never asked for. The 2 times still come from Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
 - **A missing receipt leaves no gap:** A receipt that was never recorded leaves no gap in the agent's chain, so an action that an integration failed to record cannot be detected later ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).

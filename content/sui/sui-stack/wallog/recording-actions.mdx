@@ -70,9 +70,19 @@ The receipts of 1 action share `action.run`. `agent.step()` and `agent.traced()`
 
 ## Record a note
 
-`agent.record()` records a `note` unless you pass another kind. It returns a receipt handle with `id`, `url`, `status`, `index`, `hash`, `body`, and `ruling` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
+`agent.record()` records a `note` unless you pass another kind. It returns a receipt handle with the following fields ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
 
-<ImportContent source="examples/python/quickstart.py" mode="code" org="MystenLabs" repo="wallog" lines="9-12" />
+- `id`
+- `url`
+- `status`
+- `index`
+- `hash`
+- `body`
+- `ruling`
+
+The quickstart records a note:
+
+<ImportContent source="examples/python/quickstart.py" mode="code" org="MystenLabs" repo="wallog" branch="b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6" lines="9-12" />
 
 `agent.record()` raises when the receipt cannot be recorded. Catch the error and decide whether the action goes on ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 
@@ -113,14 +123,14 @@ When you use a step, read the ruling from the `before` receipt and handle every 
 
 Sources: [integrating.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md) and [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md).
 
-`ruling.needs_approval` (TypeScript: `ruling.needsApproval`) is true for a ruling that waits, and `ruling.wait_approved()` (TypeScript: `ruling.waitApproved()`) returns the approvals once a person approves. It waits 600 seconds by default ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), [source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/agent.ts)). The outcome itself is in the ruling's body, at `ruling.body["ruling"]["outcome"]` in Python and `before.ruling?.body.ruling?.outcome` in TypeScript ([source](https://github.com/MystenLabs/wallog/blob/main/examples/demo/guarded_delete.py)).
+`ruling.needs_approval` (TypeScript: `ruling.needsApproval`) is true for a ruling that waits, and `ruling.wait_approved()` (TypeScript: `ruling.waitApproved()`) returns the approvals once a person approves. It waits 600 seconds by default ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), [source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/issued.ts)). The outcome itself is in the ruling's body, at `ruling.body["ruling"]["outcome"]` in Python and `before.ruling?.body.ruling?.outcome` in TypeScript ([source](https://github.com/MystenLabs/wallog/blob/main/examples/demo/guarded_delete.py)).
 
 ### Let `traced` act on the ruling
 
 `agent.traced()` wraps a function in a step and acts on the ruling for you, in both SDKs ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
 
 - **On `deny`:** It does not call the function, records no `after`, and raises `wallog.DeniedError` in Python or `WallogDeniedError` in TypeScript.
-- **On `needs_approval`:** It waits for an approval before the call, for 10 minutes unless `approval_timeout` (seconds, Python) or `approvalTimeoutMs` (TypeScript) sets another limit. If nobody approves in time, it raises `WaitTimeout` in Python or `WallogTimeoutError` in TypeScript, and does not call the function.
+- **On `needs_approval`:** It waits for an approval before the call, for 600 seconds unless `approval_timeout` (seconds, Python) or `approvalTimeoutMs` (TypeScript) sets another limit. If nobody approves in time, it raises `WaitTimeout` in Python or `WallogTimeoutError` in TypeScript, and does not call the function.
 - **After approval:** It calls the function and records the `after` with the approvals' receipt hashes in `approved_by`.
 - **On a ruling it cannot read:** It does not call the function and raises an API error, so a new outcome from a newer server stops the function instead of letting it run.
 
@@ -140,14 +150,14 @@ By default, the SDK hashes the input in your process and sends only the digest (
 
 | **Data** | **Sent to the server** |
 |---|---|
-| Agent name, action name, kind | Always, in clear. |
-| `run`, `scope`, `labels`, `hint` | When you pass them, in clear. |
-| `ruling`, `approved_by` | When you pass them, in clear. |
+| Agent name, action name, kind | Always, in plain text. |
+| `run`, `scope`, `labels`, `hint` | When you pass them, in plain text. |
+| `ruling`, `approved_by` | When you pass them, in plain text. |
 | Input | Its digest. The input itself only with `disclose=True`. |
 | Output | Its digest, when you pass an output. Never the output itself. |
 | Idempotency key | Always. |
 
-Source: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md). Everything sent in clear, except the idempotency key, is part of the signed receipt. A tenant with public pages, which is the default, shows it on its public receipt pages. Agent names are also on the key registry on Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+Source: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md). Everything sent in plain text, except the idempotency key, is part of the signed receipt. A tenant with public pages, which is the default, shows it on its public receipt pages. Agent names are also on the key registry on Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
 
 :::caution
 
@@ -165,7 +175,7 @@ Digests are computed over canonical JSON, which holds integers only. Both SDKs t
 
 ## Add your own data with labels
 
-Put any other data you want signed in `labels`, for example a ticket number. Wallog gives labels no meaning. Labels are part of the signed body, so they are sent in clear and appear on public receipt pages. Do not put the content of an input or an output in a label ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+Put any other data you want signed in `labels`, for example a ticket number. Wallog gives labels no meaning. Labels are part of the signed body, so they are sent in plain text and appear on public receipt pages. Do not put the content of an input or an output in a label ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 
 Labels are signed as they are and are not normalized. They hold integers only, so write a fraction as a string such as `"0.5"`. Labels can be at most 16,384 bytes of canonical JSON and nested at most 32 levels ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 

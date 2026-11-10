@@ -171,12 +171,12 @@ An `Agent` is 1 agent name and 1 chain of receipts. `agent.record()` hashes the 
 <Tabs groupId="language">
 <TabItem value="python" label="Python">
 
-<ImportContent source="examples/python/quickstart.py" mode="code" org="MystenLabs" repo="wallog" lines="7-12" />
+<ImportContent source="examples/python/quickstart.py" mode="code" org="MystenLabs" repo="wallog" branch="b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6" lines="7-12" />
 
 </TabItem>
 <TabItem value="typescript" label="TypeScript">
 
-<ImportContent source="examples/typescript/quickstart.ts" mode="code" org="MystenLabs" repo="wallog" lines="4-10" />
+<ImportContent source="examples/typescript/quickstart.ts" mode="code" org="MystenLabs" repo="wallog" branch="b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6" lines="4-10" />
 
 </TabItem>
 </Tabs>
@@ -207,7 +207,7 @@ $ npx tsx examples/typescript/quickstart.ts
 
 :::caution
 
-The rest of the quickstart file records a `before` and `after` step without acting on the policy ruling. Do not copy that part into an agent that has policies. See [Act on a ruling](/sui-stack/wallog/recording-actions#act-on-a-ruling) for the pattern that respects `deny` and `needs_approval`.
+The rest of the quickstart file records a `before` and `after` step without fully acting on the policy ruling. The Python file ignores the ruling, and the TypeScript file handles only `deny`. Do not copy that part into an agent that has policies. See [Act on a ruling](/sui-stack/wallog/recording-actions#act-on-a-ruling) for the pattern that respects `deny` and `needs_approval`.
 
 :::
 

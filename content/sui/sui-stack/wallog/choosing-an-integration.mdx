@@ -97,7 +97,7 @@ A receipt that was never recorded leaves no gap in the agent's chain. An action 
 
 `wallog-mcp` is not a way to record every tool call. When the model records, and what it records, depends on the system prompt and the host's policy. To record every call, put `wallog-gateway` in front of the tool server.
 
-`record_action` also has a `disclose` argument that no host setting turns off. The model, or a prompt injected into it, can send an input in clear even when `WALLOG_DISCLOSE` is off. If you must guarantee that only digests leave the host, use the gateway or the SDK, not `wallog-mcp` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)).
+`record_action` also has a `disclose` argument that no host setting turns off. The model, or a prompt injected into it, can send an input in plain text even when `WALLOG_DISCLOSE` is off. If you must guarantee that only digests leave the host, use the gateway or the SDK, not `wallog-mcp` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)).
 
 ## Choose between the Python and TypeScript SDKs
 
