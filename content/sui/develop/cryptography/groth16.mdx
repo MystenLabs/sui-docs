@@ -165,7 +165,7 @@ You need all these outputs to verify the proof.
 
 The API in Sui for verifying a proof expects a special processed verification key, where the API uses only a subset of the values. Processing, also called preparing, converts the serialized verifying key into the 4 values that the verifier uses. Because the verifying key is fixed for each circuit, you prepare it once and reuse the result for every proof of that circuit. You can perform this processing using the `sui::groth16::prepare_verifying_key` method of the Sui Move API with a serialization of the `pk.vk` value used previously.
 
-The output of the `prepare_verifying_key` function is a vector with four byte arrays, which corresponds to the `vk_gamma_abc_g1_bytes`, `alpha_g1_beta_g2_bytes`, `gamma_g2_neg_pc_bytes`, `delta_g2_neg_pc_bytes`.
+The output of the `prepare_verifying_key` function is a vector with 4 byte arrays, which corresponds to the `vk_gamma_abc_g1_bytes`, `alpha_g1_beta_g2_bytes`, `gamma_g2_neg_pc_bytes`, `delta_g2_neg_pc_bytes`.
 
 To verify a proof, you also need two more inputs, `public_inputs_bytes` and `proof_points_bytes`, which the program above prints.
 
