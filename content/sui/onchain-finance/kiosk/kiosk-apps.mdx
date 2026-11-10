@@ -289,3 +289,9 @@ txb.moveCall({
     typeArguments: [ '<letter_box_package>::letterbox_ext::Extension' ]
 });
 ```
+
+## Should you use a capability or an address allowlist for minting?
+
+For privileged functions such as minting, use a capability object instead of an address allowlist. Another protocol can hold a capability on behalf of a user, while an address allowlist ties authorization to the account that signs the transaction. If you still need an allowlist in a [shared object](/develop/objects/object-ownership/shared), gate every function that changes it with a capability.
+
+For the full guidance, including revocation, capability and object relationships, and events for privileged actions, see [Access control](/develop/security/best-practices#access-control).
