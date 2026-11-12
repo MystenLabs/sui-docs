@@ -2,8 +2,9 @@
 title: Connect a Frontend to a Move Package
 sidebar_label: Connect a Frontend
 description: >-
-  Connect a React interface to a basic Move package to create a full stack
-  application.
+  Connect a React frontend to your published "Hello, World!" Move package using
+  the Sui dApp Kit, covering wallet connection with ConnectButton, reading the
+  connected account, and signing and submitting transactions from the browser.
 keywords:
   - first dapp
   - first package
@@ -124,7 +125,7 @@ If your package no longer exists, or if you need to obtain the package ID again,
 
 ## What files does the frontend contain?
 
-In the "Hello, World!" example project, the subdirectory `sui-stack-hello-world/ui` contains the frontend interface source code files:
+In the "Hello, World!" example project, the Move package is in the `sui-stack-hello-world/move/hello-world` subdirectory, and the `sui-stack-hello-world/ui` subdirectory contains the frontend interface source code files:
 
 ```
 .
@@ -173,7 +174,7 @@ The `dapp-kit.ts` file creates the dApp Kit instance with `createDAppKit`, confi
 
 ## How do I connect the React interface to my Move package?
 
-The `constants.ts` file is where you connect the React app to your Move package. This file contains a single line that sets your Move package ID as a constant `TESTNET_HELLO_WORLD_PACKAGE_ID`. By default, this file contains a sample package ID. 
+The `sui-stack-hello-world/ui/src/constants.ts` file is where you connect the React app to your Move package. This file contains a single line that sets your Move package ID as a constant `TESTNET_HELLO_WORLD_PACKAGE_ID`. By default, this file contains a sample package ID. 
 
 Modify this file to include your Move package ID instead. Use the same package ID you verified with `sui client object <PACKAGE_ID>` earlier in this guide. The frontend's transactions call the `new` and `update_text` functions of the package with this ID, so it must match the package you published from the CLI in the ["Hello, World!"](/getting-started/onboarding/hello-world) guide.
 
