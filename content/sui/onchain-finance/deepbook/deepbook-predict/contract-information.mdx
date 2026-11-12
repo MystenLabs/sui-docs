@@ -372,7 +372,7 @@ The only finite boundary a market admits off its admission grid is its own refer
 | Pyth spot freshness | `2000` ms | `2000` ms | Live pricing falls back to the Block Scholes forward on an older observation |
 | Block Scholes price freshness | `2000` ms | `2000` ms | Spot and forward |
 | Block Scholes SVI freshness | `10000` ms | `10000` ms | The stochastic volatility inspired (SVI) surface changes more slowly |
-| `no_trade_window_ms` | `15000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `10000` | A queued order's price instant must not fall inside the window before expiry. Mainnet runs the contract maximum. Every market reads the live value, so a change applies to all of them at once |
+| `no_trade_window_ms` | `15000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `15000` | A queued order's price instant must not fall inside the last 15 seconds before expiry, the contract maximum. Every market reads the live value, so a change applies to all of them at once |
 | `max_valuation_window_ms` | `300000` | `300000` | A pool flush must finish within 5 minutes of its snapshot, or a cap holder restarts it |
 | `max_lp_pool_value` | `20000000000` | `500000000000` | The pool accepts at most 20,000 USDC of liquidity on Mainnet and 500,000 USDC on Testnet |
 | `lp_request_limit_flush_attempts` | `1` | `1` | The first flush whose mark misses a queued request's floor cancels and refunds it |
@@ -393,13 +393,13 @@ The strike-exposure template is the policy each new market snapshots at creation
 
 | **Term** | **Mainnet** | **Testnet** |
 | --- | --- | --- |
-| Base fee | `232000000`, 23.2 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `204000000`, 20.4 percent |
-| Minimum fee | `49000000`, 4.9 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `22000000`, 2.2 percent |
+| Base fee | `232000000`, 23.2 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `232000000`, 23.2 percent |
+| Minimum fee | `49000000`, 4.9 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `49000000`, 4.9 percent |
 | Entry probability band | `150000000` to `750000000`, 15 to 75 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `150000000` to `750000000`, 15 to 75 percent |
 | Backing buffer lambda | `310000000`, 0.31 | `310000000`, 0.31 |
 | Inventory impact rate | `0` | `0` |
 | Expiry fee window | `60000` ms | `60000` ms |
-| Expiry fee maximum multiplier | `1500000000`, 1.5x (TBD-DBU-1166: verify on Mainnet after the cutover) | `3000000000`, 3x |
+| Expiry fee maximum multiplier | `1500000000`, 1.5x (TBD-DBU-1166: verify on Mainnet after the cutover) | `1500000000`, 1.5x |
 
 The contract charges the fee, and applies its minimum, separately at each finite boundary of a range, so a two-sided range pays at least twice the minimum fee. It also applies the entry-probability band to each finite boundary as well as to the range. The lifecycle-cap holder can give a new market a band narrower than the template, never wider. A market keeps the template it snapshotted for its whole life, so read a live market's own values with the SDK's `read.feePolicy` rather than from the template. [Design](/onchain-finance/deepbook/deepbook-predict/design) explains the fee.
 

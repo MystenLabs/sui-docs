@@ -560,7 +560,7 @@ An early sell moves the whole position, with its receipt, out of its source reco
 
 The deadline is `min(τ + stall_timeout_ms, expiry)`, never earlier than the market's last deadline. At or past its deadline, the queue can only refund an order in full. The cutoff is `expiry - max(no_trade_window_ms, stall_timeout_ms + 5_000)`, and an order whose τ would fall at or past it aborts with `EPastCutoff`. Every deadline therefore falls at least 5 seconds before expiry, so every waiting order is due before the market can settle.
 
-Both networks run an 800 ms delay on the 200 ms channel and a 5-second stall timeout. The no-trade window is 15 seconds on Mainnet (TBD-DBU-1166: verify on Mainnet after the cutover) and 10 seconds on Testnet. τ then falls 600 to 800 ms after placement, the deadline falls 5 seconds after τ, and the cutoff falls one no-trade window before expiry, so new orders stop about 16 seconds before expiry on Mainnet and about 11 seconds on Testnet. Each order keeps the τ, deadline, channel, and order fee from its placement, so a change to those reaches only new orders. A change to `pyth_price_buffer_ms` or `gap_wait_ms` also reaches cohorts already waiting, because `commit` reads both from the desk when it runs.
+Both networks run an 800 ms delay on the 200 ms channel, a 5-second stall timeout, and a 15-second no-trade window (TBD-DBU-1166: verify on Mainnet after the cutover). τ then falls 600 to 800 ms after placement, the deadline falls 5 seconds after τ, and the cutoff falls 15 seconds before expiry, so new orders stop about 16 seconds before expiry. Each order keeps the τ, deadline, channel, and order fee from its placement, so a change to those reaches only new orders. A change to `pyth_price_buffer_ms` or `gap_wait_ms` also reaches cohorts already waiting, because `commit` reads both from the desk when it runs.
 
 ### Commit and resolve {#commit-and-resolve}
 
@@ -879,7 +879,7 @@ Version 2.7.0 of the TypeScript SDK deprecates `tx.mint`, `tx.mintAmount`, `tx.m
 
 ## The no-trade window {#no-trade-window}
 
-Trading stops shortly before each expiry. `ProtocolConfig.no_trade_window_ms` defines a window at the end of a market's life, `15000` on Mainnet, the most an admin can set (TBD-DBU-1166: verify on Mainnet after the cutover), and `10000` on Testnet, both above its compiled default of `2000`. Admission refuses a queued order whose τ would fall at or past `expiry - no_trade_window_ms`, with `EInvalidOrderTiming`, and the window is one term of the order-flow package's cutoff, so new orders stop about 16 seconds before expiry on Mainnet and about 11 seconds on Testnet. See [τ, cohorts, the deadline, and the cutoff](#order-timing).
+Trading stops shortly before each expiry. `ProtocolConfig.no_trade_window_ms` defines a window at the end of a market's life, `15000` on both networks, the most an admin can set (TBD-DBU-1166: verify on Mainnet after the cutover), above its compiled default of `2000`. Admission refuses a queued order whose τ would fall at or past `expiry - no_trade_window_ms`, with `EInvalidOrderTiming`, and the window is one term of the order-flow package's cutoff, so new orders stop about 16 seconds before expiry. See [τ, cohorts, the deadline, and the cutoff](#order-timing).
 
 The window does not apply to the quotes, `try_settle`, `set_reference_tick`, `load_live_pricer`, or any read accessor. A position still open when the window closes is therefore neither stranded nor force-closed: it settles at expiry, and the queue's settlement walk pays it.
 
