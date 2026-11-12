@@ -1,14 +1,13 @@
 ---
-title: Choosing a Wallog Integration
+title: Choosing a Verify SDK Integration
 description: >-
-  Compare the ways to record AI agent actions with Wallog: the Python and
+  Compare the ways to record AI agent actions with the Verify SDK: the Python and
   TypeScript SDKs, the LangChain and OpenAI Agents integrations, the Claude Code
   hooks, the MCP gateway and MCP server, and the HTTP API. Learn which ones can
   stop an action when recording fails.
 keywords:
-  - wallog
-  - wallog integration
-  - wallog sdk
+  - verify sdk
+  - verify sdk integration
   - claude code hooks
   - mcp gateway
   - mcp server
@@ -18,7 +17,7 @@ keywords:
   - fail open
 goal:
   description: >-
-    Reader picks the Wallog integration that matches how much of the agent's code
+    Reader picks the Verify SDK integration that matches how much of the agent's code
     they control and understands what each integration can guarantee
   requires:
     - has_frontmatter:
@@ -36,9 +35,9 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - Which Wallog integration should I use?
-  - Can Wallog record an agent without code changes?
-  - Which Wallog integrations fail closed?
+  - Which Verify SDK integration should I use?
+  - Can the Verify SDK record an agent without code changes?
+  - Which Verify SDK integrations fail closed?
   - What is the difference between wallog-gateway and wallog-mcp?
 answer: >-
   Use the Python or TypeScript SDK when you write the agent's code, because only
@@ -48,7 +47,7 @@ answer: >-
   effort basis and never stop a tool.
 ---
 
-[Wallog](/sui-stack/wallog) offers several ways to record what an agent does. The right one depends on how much of the agent's code you control, and on whether an action must stop when its receipt cannot be recorded.
+The [Verify SDK](/sui-stack/verify-sdk) offers several ways to record what an agent does. The right one depends on how much of the agent's code you control, and on whether an action must stop when its receipt cannot be recorded.
 
 ## Compare the options
 
@@ -60,7 +59,7 @@ answer: >-
 | Any MCP host | `wallog-gateway` in front of a tool server, or `wallog-mcp` | 1 entry in the host configuration |
 | Anything that can make an HTTP request | `POST /v1/receipts` | See the [HTTP API reference](https://github.com/MystenLabs/wallog/blob/main/docs/API.md) |
 
-This table comes from the [Wallog integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md). For the integrations that need no change to the agent's code, see [Recording Without Code Changes](/sui-stack/wallog/recording-without-code-changes).
+This table comes from the [Verify SDK integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md). For the integrations that need no change to the agent's code, see [Recording Without Code Changes](/sui-stack/verify-sdk/recording-without-code-changes).
 
 ## Decide whether recording must block the action
 

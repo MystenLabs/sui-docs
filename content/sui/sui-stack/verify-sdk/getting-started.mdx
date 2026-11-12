@@ -1,21 +1,21 @@
 ---
-title: Getting Started with Wallog
+title: Getting Started with the Verify SDK
 description: >-
-  Install the Wallog SDKs from a clone, run a local Wallog server, create an
+  Install the Verify SDKs from a clone, run a local Verify SDK server, create an
   agent token, record your first receipt from Python or TypeScript, and verify
   it as a proof bundle.
 keywords:
-  - wallog
+  - verify sdk
   - getting started
-  - install wallog
-  - wallog python sdk
-  - wallog typescript sdk
+  - install verify sdk
+  - verify sdk python
+  - verify sdk typescript
   - agent token
   - first receipt
   - proof bundle
 goal:
   description: >-
-    Reader installs Wallog, runs a local server, records a receipt from Python
+    Reader installs the Verify SDK, runs a local server, records a receipt from Python
     or TypeScript, and verifies it offline
   requires:
     - has_frontmatter:
@@ -36,19 +36,19 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - How do I install Wallog?
-  - How do I run a local Wallog server?
-  - How do I record my first Wallog receipt?
-  - What is the difference between a Wallog tenant key and an agent token?
+  - How do I install the Verify SDK?
+  - How do I run a local Verify SDK server?
+  - How do I record my first Verify SDK receipt?
+  - What is the difference between a Verify SDK tenant key and an agent token?
 answer: >-
-  Install the Wallog SDKs from a clone of the repository, start a local server
+  Install the Verify SDKs from a clone of the repository, start a local server
   with wallog-server, create a tenant, and record a receipt with
   agent.record() in Python or TypeScript. A local server uses an in-memory
   stand-in for Sui and Walrus, so you verify its receipts offline as a proof
   bundle.
 ---
 
-[Wallog](/sui-stack/wallog) records a signed receipt for each action an AI agent takes. To try it, you run a local Wallog server, record a receipt from Python or TypeScript, and verify it as a proof bundle.
+The [Verify SDK](/sui-stack/verify-sdk) records a signed receipt for each action an AI agent takes. To try it, you run a local Verify SDK server, record a receipt from Python or TypeScript, and verify it as a proof bundle.
 
 A local server uses an in-memory stand-in for Sui and Walrus. It runs the whole pipeline, and its receipts verify as proof bundles. The stand-in proves nothing about time, because its checkpoints are made up ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
 
@@ -61,16 +61,16 @@ A local server uses an in-memory stand-in for Sui and Walrus. It runs the whole 
 
 - [x] Install [Node.js](https://nodejs.org/) 18 or later, if you use the TypeScript SDK or the MCP programs.
 
-- [x] Clone the [Wallog repository](https://github.com/MystenLabs/wallog).
+- [x] Clone the [Verify SDK repository](https://github.com/MystenLabs/wallog).
 
 </TabItem>
 </Tabs>
 
-These versions come from the [Wallog README](https://github.com/MystenLabs/wallog/blob/main/README.md). An older Python stops the install. pip before 21.3 reports `File "setup.py" or "setup.cfg" not found`, and a newer pip reports that the package `requires a different Python`.
+These versions come from the [Verify SDK README](https://github.com/MystenLabs/wallog/blob/main/README.md). An older Python stops the install. pip before 21.3 reports `File "setup.py" or "setup.cfg" not found`, and a newer pip reports that the package `requires a different Python`.
 
 ## Install from a clone
 
-The Wallog packages are not published to PyPI or npm, so you install them from your clone ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)). Run the following commands from the root of the clone.
+The Verify SDK packages are not published to PyPI or npm, so you install them from your clone ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)). Run the following commands from the root of the clone.
 
 Create a virtual environment and install the `wallog` package. The `wallog` command that later sections use comes from this package, so install it even if your agent uses TypeScript:
 
@@ -141,7 +141,7 @@ The stand-in chain lives in memory and starts empty on every run. When you stop 
 
 ## Create an agent token
 
-Wallog has 2 kinds of credential ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+The Verify SDK has 2 kinds of credential ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
 
 - **Tenant key (`wlt_`):** Manages the tenant, including its agents, policies, API keys, and webhooks.
 - **Agent token (`wla_`):** Records receipts for 1 agent, for the actions you allow, and reads that agent's receipts and proof bundle. It cannot reach another agent or a management route.
@@ -207,7 +207,7 @@ $ npx tsx examples/typescript/quickstart.ts
 
 :::caution
 
-The rest of the quickstart file records a `before` and `after` step without fully acting on the policy ruling. The Python file ignores the ruling, and the TypeScript file handles only `deny`. Do not copy that part into an agent that has policies. See [Act on a ruling](/sui-stack/wallog/recording-actions#act-on-a-ruling) for the pattern that respects `deny` and `needs_approval`.
+The rest of the quickstart file records a `before` and `after` step without fully acting on the policy ruling. The Python file ignores the ruling, and the TypeScript file handles only `deny`. Do not copy that part into an agent that has policies. See [Act on a ruling](/sui-stack/verify-sdk/recording-actions#act-on-a-ruling) for the pattern that respects `deny` and `needs_approval`.
 
 :::
 
@@ -232,4 +232,4 @@ OK: 3 of 3 receipts are proven (on-chain facts as recorded in the bundle)
 
 If the output shows `INCOMPLETE` with `manifest for height N not supplied`, the segment is not stored yet. Wait a few seconds and download the bundle again ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
 
-Do not use `wallog-verify receipt --url` against a local server. That command reads a real Sui node, so it ends with `INCOMPLETE (evidence missing)` for a stand-in receipt. To verify receipts from a real deployment, see [Verifying Wallog Receipts](/sui-stack/wallog/verifying-receipts).
+Do not use `wallog-verify receipt --url` against a local server. That command reads a real Sui node, so it ends with `INCOMPLETE (evidence missing)` for a stand-in receipt. To verify receipts from a real deployment, see [Verifying Receipts](/sui-stack/verify-sdk/verifying-receipts).

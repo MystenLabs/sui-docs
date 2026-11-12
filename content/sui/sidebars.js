@@ -671,15 +671,15 @@ suiStackSidebar: [
     },
     {
       type: 'category',
-      label: 'Wallog',
-      link: { type: 'doc', id: 'sui-stack/wallog/index' },
+      label: 'Verify SDK',
+      link: { type: 'doc', id: 'sui-stack/verify-sdk/index' },
       items: [
-        'sui-stack/wallog/getting-started',
-        'sui-stack/wallog/choosing-an-integration',
-        'sui-stack/wallog/recording-actions',
-        'sui-stack/wallog/recording-without-code-changes',
-        'sui-stack/wallog/handling-failures',
-        'sui-stack/wallog/verifying-receipts',
+        'sui-stack/verify-sdk/getting-started',
+        'sui-stack/verify-sdk/choosing-an-integration',
+        'sui-stack/verify-sdk/recording-actions',
+        'sui-stack/verify-sdk/recording-without-code-changes',
+        'sui-stack/verify-sdk/handling-failures',
+        'sui-stack/verify-sdk/verifying-receipts',
         {
           type: 'link',
           label: 'GitHub Repo',

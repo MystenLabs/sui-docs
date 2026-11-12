@@ -1,12 +1,12 @@
 ---
-title: Verifying Wallog Receipts
+title: Verifying Receipts
 description: >-
-  Verify a Wallog receipt against Sui and Walrus with wallog-verify. Learn which
+  Check a Verify SDK receipt against Sui and Walrus with wallog-verify. Learn which
   checks the verifier makes, what each verdict means, how to stop trusting the
   full node with a light client, how to check the input behind a digest, and
   what a proof bundle does and does not prove.
 keywords:
-  - wallog
+  - verify sdk
   - wallog-verify
   - verify receipt
   - proof bundle
@@ -18,7 +18,7 @@ keywords:
   - audit log
 goal:
   description: >-
-    Reader verifies a Wallog receipt or proof bundle with wallog-verify, reads
+    Reader verifies a Verify SDK receipt or proof bundle with wallog-verify, reads
     the verdict correctly, and knows which facts are proven and which are taken
     on trust
   requires:
@@ -40,10 +40,10 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - How do I verify a Wallog receipt?
-  - What does PROVEN ON SUI mean in Wallog?
-  - Does a Wallog proof bundle prove anything offline?
-  - How do I verify a Wallog receipt without trusting the full node?
+  - How do I verify a Verify SDK receipt?
+  - What does PROVEN ON SUI mean in the Verify SDK?
+  - Does a Verify SDK proof bundle prove anything offline?
+  - How do I verify a Verify SDK receipt without trusting the full node?
 answer: >-
   Run wallog-verify receipt with the receipt's URL or file and the 4 ids of the
   log (network, package, log, and registry) from a source you trust. The
@@ -52,12 +52,12 @@ answer: >-
   light client instead of trusting the full node.
 ---
 
-The status that a [Wallog](/sui-stack/wallog) SDK reports, such as `on_sui` or `on_walrus`, is what the server says. The proof is the verdict of a verifier. `wallog-verify`, the reference verifier, reads Sui and Walrus itself and is the only Wallog verifier that reads the network. The Python and TypeScript verifiers check evidence or a proof bundle that you give them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+The status that the [Verify SDK](/sui-stack/verify-sdk) reports, such as `on_sui` or `on_walrus`, is what the server says. The proof is the verdict of a verifier. `wallog-verify`, the reference verifier, reads Sui and Walrus itself and is the only Verify SDK verifier that reads the network. The Python and TypeScript verifiers check evidence or a proof bundle that you give them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
 
-- [x] Install `wallog-verify` from a clone of the repository, as [Getting Started with Wallog](/sui-stack/wallog/getting-started#install-from-a-clone) describes.
+- [x] Install `wallog-verify` from a clone of the repository, as [Getting Started with the Verify SDK](/sui-stack/verify-sdk/getting-started#install-from-a-clone) describes.
 
 </TabItem>
 </Tabs>
@@ -170,13 +170,13 @@ The exit status is 0 only when every receipt meets `--require`, which accepts `p
 
 :::danger
 
-Offline, a bundle proves nothing about the onchain facts. The keys, manifests, segments, and roots are the word of whoever made the bundle, and all 3 Wallog verifiers answer `PROVEN` for a bundle whose maker invented them. For a bundle from someone you do not trust, run `bundle verify` with `--online` and the 4 ids from a source you trust, and add `--trust-committee` and `--tenant` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+Offline, a bundle proves nothing about the onchain facts. The keys, manifests, segments, and roots are the word of whoever made the bundle, and all 3 Verify SDK verifiers answer `PROVEN` for a bundle whose maker invented them. For a bundle from someone you do not trust, run `bundle verify` with `--online` and the 4 ids from a source you trust, and add `--trust-committee` and `--tenant` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
 
 :::
 
 A bundle checks that its receipts are the range that `bundle.json` states, with none missing inside it. `bundle.json` is not signed, so a bundle cut at the start or at the end is proven for the receipts it holds. Use `chain --to` to learn where a chain should end ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
 
-Verify a bundle only with a Wallog verifier. Do not extract it with another zip tool to read its receipts, because a zip file can hold entries that a streaming extractor reads and the Wallog verifiers never read ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
+Verify a bundle only with a Verify SDK verifier. Do not extract it with another zip tool to read its receipts, because a zip file can hold entries that a streaming extractor reads and the Verify SDK verifiers never read ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/verifying.md)).
 
 ### Verify a bundle in your own code
 

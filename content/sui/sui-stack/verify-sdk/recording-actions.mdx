@@ -1,12 +1,12 @@
 ---
 title: Recording Agent Actions
 description: >-
-  Record AI agent actions with the Wallog Python and TypeScript SDKs. Learn the
+  Record AI agent actions with the Verify SDK for Python and TypeScript. Learn the
   receipt kinds, how to pair before and after receipts with steps, how to act
   on deny and needs_approval policy rulings, what data leaves your process, and
   how idempotency keys work.
 keywords:
-  - wallog
+  - verify sdk
   - record receipt
   - agent.record
   - agent.step
@@ -38,11 +38,11 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - How do I record a before and after receipt with Wallog?
-  - Does a Wallog policy stop my agent?
-  - How do I handle a needs_approval ruling in Wallog?
-  - What data does the Wallog SDK send to the server?
-  - How do Wallog idempotency keys work?
+  - How do I record a before and after receipt with the Verify SDK?
+  - Does a Verify SDK policy stop my agent?
+  - How do I handle a needs_approval ruling in the Verify SDK?
+  - What data does the Verify SDK send to the server?
+  - How do Verify SDK idempotency keys work?
 answer: >-
   Record a before receipt ahead of an action and an after receipt behind it,
   sharing action.run, with agent.step() or agent.traced(). The server evaluates
@@ -52,7 +52,7 @@ answer: >-
   the input leaves your process.
 ---
 
-[Wallog](/sui-stack/wallog) records each action as 1 or more receipts. The Python and TypeScript SDKs pair the receipts of 1 action, and your code acts on the policy rulings that the server records. For installation, see [Getting Started with Wallog](/sui-stack/wallog/getting-started).
+The [Verify SDK](/sui-stack/verify-sdk) records each action as 1 or more receipts. The Python and TypeScript SDKs pair the receipts of 1 action, and your code acts on the policy rulings that the server records. For installation, see [Getting Started with the Verify SDK](/sui-stack/verify-sdk/getting-started).
 
 ## Receipt kinds
 
@@ -171,11 +171,11 @@ To prove later what a digest covers, keep the input. Every receipt your process 
 
 ### Pass JSON values
 
-Digests are computed over canonical JSON, which holds integers only. Both SDKs turn `1.0` into `1` and `12.5` into the string `"12.5"` before hashing ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). If you compute digests yourself, follow the conventions in the [Wallog format specification](https://github.com/MystenLabs/wallog/blob/main/docs/FORMAT.md).
+Digests are computed over canonical JSON, which holds integers only. Both SDKs turn `1.0` into `1` and `12.5` into the string `"12.5"` before hashing ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). If you compute digests yourself, follow the conventions in the [Verify SDK format specification](https://github.com/MystenLabs/wallog/blob/main/docs/FORMAT.md).
 
 ## Add your own data with labels
 
-Put any other data you want signed in `labels`, for example a ticket number. Wallog gives labels no meaning. Labels are part of the signed body, so they are sent in plain text and appear on public receipt pages. Do not put the content of an input or an output in a label ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+Put any other data you want signed in `labels`, for example a ticket number. The Verify SDK gives labels no meaning. Labels are part of the signed body, so they are sent in plain text and appear on public receipt pages. Do not put the content of an input or an output in a label ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 
 Labels are signed as they are and are not normalized. They hold integers only, so write a fraction as a string such as `"0.5"`. Labels can be at most 16,384 bytes of canonical JSON and nested at most 32 levels ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 

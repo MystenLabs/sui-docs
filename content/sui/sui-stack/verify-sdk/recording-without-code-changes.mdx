@@ -1,12 +1,12 @@
 ---
 title: Recording Without Code Changes
 description: >-
-  Record AI agent tool calls with Wallog without changing the agent's code. Set
+  Record AI agent tool calls with the Verify SDK without changing the agent's code. Set
   up the Claude Code hooks, the wallog-gateway MCP proxy, the wallog-mcp server,
   the LangChain callback handler, and the OpenAI Agents trace processor, and
-  learn what each one records and how it behaves when Wallog is down.
+  learn what each one records and how it behaves when the Verify SDK is down.
 keywords:
-  - wallog
+  - verify sdk
   - claude code hooks
   - wallog hooks install
   - wallog-gateway
@@ -17,8 +17,8 @@ keywords:
   - best effort recording
 goal:
   description: >-
-    Reader installs a Wallog plugin for their agent framework or host, knows what
-    it records, and knows how it behaves when the Wallog server is slow or down
+    Reader installs a Verify SDK plugin for their agent framework or host, knows what
+    it records, and knows how it behaves when the Verify SDK server is slow or down
   requires:
     - has_frontmatter:
         - title
@@ -38,31 +38,31 @@ goal:
     - has_answer: true
       label: Needs answer summary for AI citation
 questions:
-  - How do I record Claude Code tool calls with Wallog?
-  - How do I record MCP tool calls with Wallog?
-  - How do I use Wallog with LangChain?
-  - How do I use Wallog with the OpenAI Agents SDK?
-  - Does a Wallog hook slow down my agent?
+  - How do I record Claude Code tool calls with the Verify SDK?
+  - How do I record MCP tool calls with the Verify SDK?
+  - How do I use the Verify SDK with LangChain?
+  - How do I use the Verify SDK with the OpenAI Agents SDK?
+  - Does a Verify SDK hook slow down my agent?
 answer: >-
   Run wallog hooks install claude-code for Claude Code, put wallog-gateway in
   front of an MCP tool server, or register WallogCallbackHandler in LangChain or
   WallogTraceProcessor in the OpenAI Agents SDK. Each records a before and an
   after receipt per tool call. Recording is best effort: it never stops a tool,
-  but a slow Wallog server can delay one.
+  but a slow Verify SDK server can delay one.
 ---
 
-[Wallog](/sui-stack/wallog) plugins record an agent's tool calls without changes to the agent's code. Each plugin records a `before` receipt ahead of a call and an `after` receipt behind it. Capture by hooks, by the gateway, and by the framework callbacks is best effort: it never stops a tool, but it can delay one ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+The [Verify SDK](/sui-stack/verify-sdk) plugins record an agent's tool calls without changes to the agent's code. Each plugin records a `before` receipt ahead of a call and an `after` receipt behind it. Capture by hooks, by the gateway, and by the framework callbacks is best effort: it never stops a tool, but it can delay one ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
 
-To decide whether a plugin fits your needs, see [Choosing a Wallog Integration](/sui-stack/wallog/choosing-an-integration).
+To decide whether a plugin fits your needs, see [Choosing a Verify SDK Integration](/sui-stack/verify-sdk/choosing-an-integration).
 
 <Tabs className="tabsHeadingCentered--small">
 <TabItem value="prereq" label="Prerequisites">
 
-- [x] Install the Wallog packages from a clone, as [Getting Started with Wallog](/sui-stack/wallog/getting-started#install-from-a-clone) describes.
+- [x] Install the Verify SDK packages from a clone, as [Getting Started with the Verify SDK](/sui-stack/verify-sdk/getting-started#install-from-a-clone) describes.
 
-- [x] Have a running Wallog server and a tenant key.
+- [x] Have a running Verify SDK server and a tenant key.
 
-- [x] Create an agent token for the agent the plugin records as, as [Create an agent token](/sui-stack/wallog/getting-started#create-an-agent-token) describes.
+- [x] Create an agent token for the agent the plugin records as, as [Create an agent token](/sui-stack/verify-sdk/getting-started#create-an-agent-token) describes.
 
 </TabItem>
 </Tabs>
@@ -85,7 +85,7 @@ $ wallog hooks install claude-code --agent my-laptop
 
 `keys create` needs a tenant key in `WALLOG_API_KEY` when you run it. Set `WALLOG_URL` too if the server is not on `http://127.0.0.1:8080`. You can also put the token in the `env` block of the Claude Code settings file, but keep it out of any settings file you commit to version control.
 
-`hooks install` merges the hooks into `$CLAUDE_CONFIG_DIR/settings.json` when that variable is set, and into `~/.claude/settings.json` otherwise. `--settings PATH` writes another file. Your other settings and hooks stay, and running the command again replaces the Wallog entries. `wallog hooks uninstall claude-code` removes them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+`hooks install` merges the hooks into `$CLAUDE_CONFIG_DIR/settings.json` when that variable is set, and into `~/.claude/settings.json` otherwise. `--settings PATH` writes another file. Your other settings and hooks stay, and running the command again replaces the Verify SDK entries. `wallog hooks uninstall claude-code` removes them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 
 | **Claude Code event** | **Receipt** |
 |---|---|
@@ -101,7 +101,7 @@ A hook receipt is what Claude Code told the hook. It does not show that the tool
 - A `before` can exist for a call that never ran, because a permission rule denied it, another hook blocked it, or it was interrupted.
 - The tool calls of a subagent look like the main agent's.
 
-### When the hooks cannot reach Wallog
+### When the hooks cannot reach the Verify SDK server
 
 A hook always exits 0, so Claude Code counts it as a success, and a failure is 1 line on stderr. A hook makes 1 attempt with a 4-second timeout and no retry, and it ends by itself after 9 seconds. A server that accepts connections and does not answer costs each tool call about 8 seconds, 4 for each of its 2 hooks. A refused connection fails at once ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 
@@ -193,4 +193,4 @@ The LangChain handler and the OpenAI Agents processor with `blocking=True` recor
 
 With the default `max_retries=3`, a server that refuses connections costs only the retry pauses, about 1 to 2.5 seconds per receipt. A server that accepts connections and does not answer costs about 42 seconds per receipt once the agent has recorded a receipt. Until the first receipt of an agent object succeeds, every receipt allows 120 seconds per attempt, because the SDK treats it as the receipt that registers the agent's key on Sui. If the server is unreachable from the start of the process, every callback can block about 482 seconds ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py), [source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 
-To bound the delay, give the agent an explicit `timeout=` and `max_retries=0`. An explicit `timeout=` replaces the 120-second allowance as well as the 10-second default ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). For more about timeouts and retries, see [Handling Recording Failures](/sui-stack/wallog/handling-failures).
+To bound the delay, give the agent an explicit `timeout=` and `max_retries=0`. An explicit `timeout=` replaces the 120-second allowance as well as the 10-second default ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). For more about timeouts and retries, see [Handling Recording Failures](/sui-stack/verify-sdk/handling-failures).
