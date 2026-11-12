@@ -56,13 +56,13 @@ Recording must not take your agent down, and it must not fail silently. The [Ver
 Both SDKs retry a request that got no answer, a `429`, or a `5xx` response up to 3 times, with a growing pause, about 1 to 2.5 seconds in all ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). In Python, the pause before retry n is `min(backoff * 2**(n - 1), 5)` seconds times a random factor between 0.5 and 1, and `backoff` defaults to 0.25 ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 
 - **Receipts and reads:** Retried after connection errors, timeouts, `5xx`, and `429`. A retry of a receipt carries the same idempotency key, so a lost answer cannot create 2 receipts.
-- **`create_policy`, `create_api_key`, `rotate_key`, `revoke_key`:** Retried only after a `429` or a connection that could not open. After a `5xx` or a lost answer they raise, so list what exists before you try again.
-- **Never retried:** Other `4xx` responses and redirects. A redirect is never followed, so the key cannot travel to another host.
-- **`Retry-After`:** A valid value replaces the pause, up to 30 seconds.
+- `create_policy`, `create_api_key`, `rotate_key`, `revoke_key`: Retried only after a `429` or a connection that could not open. After a `5xx` or a lost answer they raise, so list what exists before you try again.
+- **Never retried:** Other `4xx` responses and redirects. The SDKs never follow a redirect, so the key cannot travel to another host.
+- `Retry-After`: A valid value replaces the pause, up to 30 seconds.
 
-Sources: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md) and [integrating.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md). The 2 SDKs differ in some of these settings. For a side-by-side list, see [Using both SDKs on one tenant](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdk-interoperability.md).
+Sources: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md) and [Integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md). The 2 SDKs differ in some of these settings. For a side-by-side list, see [Using both SDKs on one tenant](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdk-interoperability.md).
 
-## Timeouts for 1 attempt
+## Per-attempt timeouts
 
 | **Call** | **Timeout per attempt** |
 |---|---|
@@ -70,7 +70,7 @@ Sources: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/gui
 | A receipt before the agent object has recorded one successfully, `create_agent`, `approve`, `rotate_key`, `revoke_key` | 120 seconds, because they can wait for a transaction on Sui |
 | A proof bundle | 240 seconds |
 
-Sources: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), [client.py](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py), and [agent.ts](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/agent.ts). Passing `timeout=` in Python or `timeoutMs` in TypeScript replaces all of these.
+Sources: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), [Python client source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py), and [TypeScript agent source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/agent.ts). Passing `timeout=` in Python or `timeoutMs` in TypeScript replaces all of these.
 
 Each agent object tracks whether it has recorded a receipt. Until 1 succeeds, every receipt it records gets the 120-second allowance, not only the first one ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py)).
 
@@ -87,7 +87,7 @@ Against a server that accepts the connection and then does not answer, such as a
 | A call answered with `429` and `Retry-After: 30` | 90 seconds |
 | The `after` that `traced()` or a failed step records by itself | 2 seconds |
 
-Sources: [integrating.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md) and [client.py](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py).
+Sources: [Integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md) and [Python client source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py).
 
 The `after` that the SDK records by itself once the action ran gets 2 seconds from its start, so a frozen server holds the caller for that long and no longer. The `before` keeps the whole budget, because the action must not run without it ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 
@@ -121,7 +121,7 @@ After the last attempt, a call raises an error ([source](https://github.com/Myst
 | `DeniedError` | `WallogDeniedError` | A policy ruled `deny` on the `before` of a `traced` function. |
 | `WaitTimeout` | `WallogTimeoutError` | A wait, such as for an approval or for `on_sui`, ran out of time. |
 
-Sources: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md) and [typescript-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md). In Python, all of these derive from `wallog.WallogError`. In TypeScript, they derive from `WallogSdkError` ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/errors.ts)). A request that the SDK refuses before it sends anything, such as a step called twice, raises the built-in `ValueError` or `TypeError`, which `except wallog.WallogError` does not catch ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+Sources: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md) and [TypeScript SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md). In Python, all of these derive from `wallog.WallogError`. In TypeScript, they derive from `WallogSdkError` ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/errors.ts)). A request that the SDK refuses before it sends anything, such as a step called twice, raises the built-in `ValueError` or `TypeError`, which `except wallog.WallogError` does not catch ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 
 ## Retry a receipt by hand
 

@@ -60,7 +60,7 @@ To decide whether a plugin fits your needs, see [Choosing a Verify SDK Integrati
 
 - [x] Install the Verify SDK packages from a clone, as [Getting Started with the Verify SDK](/sui-stack/verify-sdk/getting-started#install-from-a-clone) describes.
 
-- [x] Have a running Verify SDK server and a tenant key.
+- [x] Have a running Verify SDK server and a tenant key, as [Run a local server](/sui-stack/verify-sdk/getting-started#run-a-local-server) describes.
 
 - [x] Create an agent token for the agent the plugin records as, as [Create an agent token](/sui-stack/verify-sdk/getting-started#create-an-agent-token) describes.
 
@@ -83,7 +83,7 @@ $ export WALLOG_API_KEY=wla_YOUR_AGENT_TOKEN
 $ wallog hooks install claude-code --agent my-laptop
 ```
 
-`keys create` needs a tenant key in `WALLOG_API_KEY` when you run it. Set `WALLOG_URL` too if the server is not on `http://127.0.0.1:8080`. You can also put the token in the `env` block of the Claude Code settings file, but keep it out of any settings file you commit to version control.
+`keys create` needs a tenant key in `WALLOG_API_KEY` when you run it. Set `WALLOG_URL` too if the server is not on `http://127.0.0.1:8080`. You can also put the token in the `env` block of the Claude Code settings file, but keep it out of any settings file you commit to version control ([source](https://github.com/MystenLabs/wallog/blob/main/examples/claude-code/README.md)).
 
 `hooks install` merges the hooks into `$CLAUDE_CONFIG_DIR/settings.json` when that variable is set, and into `~/.claude/settings.json` otherwise. `--settings PATH` writes another file. Your other settings and hooks stay, and running the command again replaces the Verify SDK entries. `wallog hooks uninstall claude-code` removes them ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 
@@ -93,7 +93,7 @@ $ wallog hooks install claude-code --agent my-laptop
 | `PostToolUse` | `after`, the same action and run, with the digest of `tool_response` |
 | `PostToolUseFailure` | `after`, with the digest of `error` and `labels.error` set to `{"type": "ToolFailure", "interrupt": false}` |
 
-Source: [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md). The `PostToolUseFailure` hook needs Claude Code 2.0.56 or later. A Claude Code release before 2.0.56 does not know that event and ignores the whole settings file, including your permissions and `env` block. From 2.1.101, Claude Code skips only the unknown hook. Add `--disclose` to send each tool's input to the server instead of its digest.
+Source: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md). The `PostToolUseFailure` hook needs Claude Code 2.0.56 or later. A Claude Code release before 2.0.56 does not know that event and ignores the whole settings file, including your permissions and `env` block. From 2.1.101, Claude Code skips only the unknown hook. Add `--disclose` to send each tool's input to the server instead of its digest.
 
 A hook receipt is what Claude Code told the hook. It does not show that the tool did what it should ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
 
@@ -103,13 +103,13 @@ A hook receipt is what Claude Code told the hook. It does not show that the tool
 
 ### When the hooks cannot reach the Verify SDK server
 
-A hook always exits 0, so Claude Code counts it as a success, and a failure is 1 line on stderr. A hook makes 1 attempt with a 4-second timeout and no retry, and it ends by itself after 9 seconds. A server that accepts connections and does not answer costs each tool call about 8 seconds, 4 for each of its 2 hooks. A refused connection fails at once ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+A hook always exits 0, so Claude Code counts it as a success, and a failure is 1 line on stderr. A hook makes 1 attempt with a 4-second timeout and no retry, and it ends by itself after 9 seconds. A server that accepts connections and does not answer costs each tool call about 8 seconds, 4 for each of its 2 hooks. A refused connection fails immediately ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 
-A receipt that fails is neither recorded nor queued. There is no retry, and the chain shows no gap. Nothing checks the URL or the credential at install time.
+The hook neither records nor queues a receipt that fails. There is no retry, and the chain shows no gap. Nothing checks the URL or the credential at install time ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
 
 ## The MCP gateway
 
-`wallog-gateway` sits between an MCP host and a tool server and records a `before` and an `after` for every `tools/call` that passes through it. It speaks MCP over stdio. To start it in front of your tool server, run the following command, or put the same command and arguments in your MCP host's server configuration ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)):
+`wallog-gateway` sits between a Model Context Protocol (MCP) host and a tool server and records a `before` and an `after` for every `tools/call` that passes through it. It speaks MCP over stdio. To start it in front of your tool server, run the following command, or put the same command and arguments in your MCP host's server configuration ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)):
 
 ```sh
 $ node sdks/typescript/packages/mcp/dist/bin/wallog-gateway.js --agent fs-agent -- YOUR_MCP_SERVER_COMMAND
@@ -133,8 +133,8 @@ The gateway behaves as follows ([source](https://github.com/MystenLabs/wallog/bl
 - For each `tools/call`, it records a `before` with the action `tool:NAME` and waits for it for at most 5 seconds before it forwards the call.
 - After a `before` fails because the server does not answer, it forwards the calls of the next 30 seconds without waiting.
 - It records the `after` in the background, with the digest of the answer. An error answer carries `labels.tool_error: true`.
-- It does not stop a call. When a policy denies the `before`, the gateway forwards the call all the same.
-- At most 100 receipts are recorded in the background at once. While there are 100, the gateway refuses to record a new one and writes a line on stderr.
+- It does not stop a call. When a policy denies the `before`, the gateway still forwards the call.
+- The gateway records at most 100 receipts in the background at the same time. While there are 100, the gateway refuses to record a new one and writes a line on stderr.
 
 Because the `before` keeps going in the background after the 5-second wait, and the `after` is sent as soon as the tool answers, a slow server can record a call's `after` ahead of its `before` in the chain ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/mcp/src/gateway.ts)).
 
@@ -162,12 +162,12 @@ Pass the handler in the callbacks of a run:
 
 | **Part** | **Value** |
 |---|---|
-| Action | `chain:NAME`, `llm:NAME`, or `tool:NAME` |
-| Run | The LangChain run id, shared by the 2 receipts of a run |
-| Input | `{"inputs": ...}` for a chain, `{"prompts": [...]}` for an LLM, `{"messages": ...}` for a chat model, `{"input": ...}` for a tool |
-| Labels | `parent_run` on the `before` of a nested run. A failed run gets `error: {"type": "EXCEPTION_TYPE"}` |
+| Action | `chain:NAME`, `llm:NAME`, or `tool:NAME`. |
+| Run | The LangChain run ID, shared by the 2 receipts of a run. |
+| Input | `{"inputs": ...}` for a chain, `{"prompts": [...]}` for an LLM, `{"messages": ...}` for a chat model, `{"input": ...}` for a tool. |
+| Labels | `parent_run` on the `before` of a nested run. A failed run gets `error: {"type": "EXCEPTION_TYPE"}`. |
 
-Source: [integrations/langchain/README.md](https://github.com/MystenLabs/wallog/blob/main/integrations/langchain/README.md). Choose what to record with `record_chains`, `record_llm`, and `record_tools`, which are all on by default. The handler needs a synchronous `wallog.Agent`.
+Source: [LangChain integration README](https://github.com/MystenLabs/wallog/blob/main/integrations/langchain/README.md). Choose what to record with `record_chains`, `record_llm`, and `record_tools`, which are all on by default. The handler needs a synchronous `wallog.Agent`.
 
 If the `before` of a run fails, the handler still records the run's `after` when the run ends, so the chain can hold an `after` with no matching `before` ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/langchain/wallog_langchain/__init__.py)).
 
@@ -185,7 +185,7 @@ Register the processor once, with `add_trace_processor()`, before you run agents
 
 The `span_types` option chooses the kinds of span to record. It defaults to `("function",)`. `blocking=True`, the default, records inside the span callback, so the `before` is signed ahead of the tool body. `blocking=False` records on 1 background thread, in order ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/openai-agents/README.md)).
 
-With `blocking=False`, call `processor.shutdown()` at exit so that queued receipts are sent. The queue has no size limit, and `shutdown()` waits for every queued receipt with no timeout of its own, so an outage can hold your process at exit ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/openai-agents/wallog_openai_agents/__init__.py)).
+With `blocking=False`, call `processor.shutdown()` at exit so that the processor sends queued receipts. The queue has no size limit, and `shutdown()` waits for every queued receipt with no timeout of its own, so an outage can hold your process at exit ([source](https://github.com/MystenLabs/wallog/blob/main/integrations/openai-agents/wallog_openai_agents/__init__.py)).
 
 ## How long a framework callback can block
 

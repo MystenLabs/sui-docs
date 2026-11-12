@@ -47,7 +47,7 @@ answer: >-
   effort basis and never stop a tool.
 ---
 
-The [Verify SDK](/sui-stack/verify-sdk) offers several ways to record what an agent does. The right one depends on how much of the agent's code you control, and on whether an action must stop when its receipt cannot be recorded.
+The [Verify SDK](/sui-stack/verify-sdk) offers several ways to record what an agent does. The right one depends on how much of the agent's code you control, and on whether an action must stop when the integration cannot record its receipt.
 
 ## Compare the options
 
@@ -63,9 +63,9 @@ This table comes from the [Verify SDK integration guide](https://github.com/Myst
 
 ## Decide whether recording must block the action
 
-The integrations differ in what happens when a receipt cannot be recorded ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+The integrations differ in what happens when they cannot record a receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
 
-- **Fail closed:** The action does not run when its `before` receipt cannot be recorded. `agent.step()` and `agent.traced()` in the SDKs fail closed.
+- **Fail closed:** The action does not run when the SDK cannot record its `before` receipt. `agent.step()` and `agent.traced()` in the SDKs fail closed.
 - **Fail open:** The action runs, its receipt is missing, and the failure goes to the error output or the log. The Claude Code hooks, `wallog-gateway`, and the LangChain and OpenAI Agents integrations fail open.
 
 | **Integration** | **When recording fails** | **Acts on policy rulings** |
@@ -74,10 +74,10 @@ The integrations differ in what happens when a receipt cannot be recorded ([sour
 | SDK `agent.step()` | The `before` fails closed. The `after` of an action that ran is best effort. | No. Your code reads the ruling. |
 | SDK `agent.traced()` | The `before` fails closed. The `after` is best effort. | Yes. It refuses on `deny` and waits for approval on `needs_approval`. |
 | Claude Code hooks | Fails open, with 1 line on stderr. | No. The tool runs. |
-| `wallog-gateway` | Fails open. It waits at most 5 seconds for a `before` receipt. | No. The call is forwarded. |
+| `wallog-gateway` | Fails open. It waits at most 5 seconds for a `before` receipt. | No. It forwards the call. |
 | LangChain, OpenAI Agents | Fails open, unless you set `raise_errors=True`. | No. |
 
-Sources: [integrating.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md), [python-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), and [typescript-sdk.md](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md).
+Sources: [Integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md), [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), and [TypeScript SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md).
 
 If recording is mandatory for you, so that there is no action without a receipt, use `agent.step()` or `agent.traced()`, or check the `before` receipt before you act. A hook or the gateway cannot give you that guarantee ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 
@@ -89,10 +89,10 @@ A receipt that was never recorded leaves no gap in the agent's chain. An action 
 
 ## Choose between the gateway and the MCP server
 
-`@wallog/mcp` provides 2 programs for MCP hosts, and they record different things ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)):
+`@wallog/mcp` provides 2 programs for Model Context Protocol (MCP) hosts, and they record different things ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)):
 
-- **`wallog-gateway`:** A proxy in front of an MCP tool server. It records a `before` and an `after` for every `tools/call` that passes through it. The model does not know the gateway is there.
-- **`wallog-mcp`:** An MCP server whose tools, `record_action` and `record_ruling`, the model can call. It records only what the model asks it to record.
+- `wallog-gateway`: A proxy in front of an MCP tool server. It records a `before` and an `after` for every `tools/call` that passes through it. The model does not know the gateway is there.
+- `wallog-mcp`: An MCP server whose tools, `record_action` and `record_ruling`, the model can call. It records only what the model asks it to record.
 
 `wallog-mcp` is not a way to record every tool call. When the model records, and what it records, depends on the system prompt and the host's policy. To record every call, put `wallog-gateway` in front of the tool server.
 
@@ -105,4 +105,4 @@ Both SDKs call the same HTTP API, hold no signing keys, and hash inputs the same
 - **Python:** The `wallog` package. It also provides the `wallog` command, the Claude Code hooks, and the base for the LangChain and OpenAI Agents integrations. See the [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md).
 - **TypeScript:** `@wallog/sdk`. It requires Node.js 18 or later and is an ES module only. See the [TypeScript SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md).
 
-A value that is not JSON, such as a set, a date, bytes, or an object of your own class, is converted by each SDK in its own way, and the 2 SDKs do not agree. Pass JSON values when both SDKs record the same input on 1 tenant ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). For every difference, see [Using both SDKs on one tenant](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdk-interoperability.md).
+Each SDK converts a value that is not JSON, such as a set, a date, bytes, or an object of your own class, in its own way, and the 2 SDKs do not agree. Pass JSON values when both SDKs record the same input on 1 tenant ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). For every difference, see [Using both SDKs on one tenant](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdk-interoperability.md).

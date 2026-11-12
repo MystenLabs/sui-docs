@@ -38,17 +38,17 @@ questions:
   - How do I record what my AI agent does on Sui?
 answer: >-
   The Verify SDK gives every action an AI agent takes a signed receipt. The receipts of
-  each agent form a hash chain, the Merkle root of each batch of receipts is
-  written to Sui every 30 seconds, and batch manifests are stored on Walrus.
-  Anyone can then check who made a receipt, the 2 points in time it was made
-  between, and that nothing around it was changed or removed.
+  each agent form a hash chain, the server writes the Merkle root of each batch
+  of receipts to Sui every 30 seconds, and Walrus stores the batch manifests.
+  Anyone can then check who made a receipt, the earliest and latest times it
+  could have been made, and that nobody changed or removed anything around it.
 ---
 
-The Verify SDK is a tamper-evident audit log for AI agents. Each action an agent takes gets a signed receipt. Later, anyone can check who made a receipt, the 2 points in time it was made between, and that nothing around it was changed or removed. A reader needs no Verify SDK account to check a receipt, and the 2 times come from Sui, not from the Verify SDK server ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+The Verify SDK is a tamper-evident audit log for AI agents. Each action an agent takes gets a signed receipt. Later, anyone can check who made a receipt, the earliest and latest times it could have been made, and that nobody changed or removed anything around it. You need no Verify SDK account to check a receipt, and the 2 times come from Sui, not from the Verify SDK server ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
 
 :::info
 
-The Verify SDK is in development. The SDKs and integrations are not published to PyPI or npm, so you install them from a clone of the [Verify SDK repository](https://github.com/MystenLabs/wallog). The package, log, and registry of a reference deployment are published on Sui Testnet for development, and that package can still be upgraded ([source](https://github.com/MystenLabs/wallog/blob/main/deploy/README.md)).
+The Verify SDK is in development. The SDKs and integrations are not on PyPI or npm, so you install them from a clone of the [Verify SDK repository](https://github.com/MystenLabs/wallog). A reference deployment has its package, log, and registry on Sui Testnet for development, and that package can still be upgraded ([source](https://github.com/MystenLabs/wallog/blob/main/deploy/README.md)).
 
 :::
 
@@ -60,10 +60,10 @@ A signature shows who wrote a log entry, but not when. A log that its owner keep
 |---|---|
 | Was the receipt made no earlier than claimed? | Each receipt contains the newest Sui [checkpoint](/develop/sui-architecture/checkpoint-verification) at the time it was signed, in its `not_before` field. Nobody can know a checkpoint before it exists. |
 | Was the receipt made no later than claimed? | Every 30 seconds, the server writes the Merkle root of the new receipts in a Sui transaction. The receipt existed before that transaction. |
-| Was anything removed or reordered? | The receipts of each agent form a hash chain, and every batch manifest records where each chain stands. |
+| Was anything removed or reordered? | The receipts of each agent form a hash chain, and every batch manifest records the latest receipt in each chain. |
 | Can the operator withhold the proof? | Batch manifests are stored on [Walrus](/sui-stack/walrus), so a proof can be rebuilt without the operator. |
 | Who can check a receipt? | Anyone, with the open verifiers and a Sui full node. |
-| What does it cost? | 1 Sui transaction per batch, whatever the number of receipts, and 1 Walrus blob per hour or per 1 MiB of manifests, whichever comes first. |
+| What does it cost? | 1 Sui transaction per batch, whatever the number of receipts, and 1 Walrus blob per hour or per about 1MB of manifests, whichever comes first. |
 
 ## How a receipt moves through the system
 
@@ -80,7 +80,7 @@ The status values are what the server reports. They are not a proof. The proof i
 A receipt is evidence about a log entry, not about the action itself. Consider the following limits when you rely on a receipt:
 
 - **The server signs on the agent's behalf:** The server holds the agents' signing keys, so it can sign a receipt that the agent never asked for. The 2 times still come from Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
-- **A missing receipt leaves no gap:** A receipt that was never recorded leaves no gap in the agent's chain, so an action that an integration failed to record cannot be detected later ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+- **A missing receipt leaves no gap:** A receipt that nobody recorded leaves no gap in the agent's chain, so an action that an integration failed to record cannot be detected later ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 - **A policy ruling does not stop the agent:** The server records a ruling, but acting on it is the job of your code ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). See [Recording Agent Actions](/sui-stack/verify-sdk/recording-actions).
 - **A digest has no salt:** Anyone who can guess an input can confirm the guess against the digest in a receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
 
@@ -95,7 +95,7 @@ The Verify SDK repository contains the following packages ([source](https://gith
 | `wallog` (Python) | The Python client, the `wallog` command with the Claude Code hooks, a verifier for proof bundles, and webhook helpers. |
 | `@wallog/sdk` | The TypeScript `Agent` and `Client` classes and webhook helpers. |
 | `@wallog/verify` | The TypeScript receipt format and a verifier for evidence and proof bundles. It reads no network. |
-| `@wallog/mcp` | `wallog-mcp`, an MCP server, and `wallog-gateway`, a proxy that records the tool calls of another MCP server. |
+| `@wallog/mcp` | `wallog-mcp`, a Model Context Protocol (MCP) server, and `wallog-gateway`, a proxy that records the tool calls of another MCP server. |
 | `wallog-langchain`, `wallog-openai-agents` | A LangChain callback handler and an OpenAI Agents trace processor, built on the Python SDK. |
 | `wallog-verify` | The reference verifier, a Rust command-line tool. It is the only verifier that reads Sui and Walrus. |
 | `wallog-server` | The service that signs, chains, batches, and anchors receipts. |
