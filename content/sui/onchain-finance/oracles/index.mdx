@@ -61,7 +61,7 @@ The stakes are high: a wrong or stale price can drain a lending pool or liquidat
 
 Two models put a price onchain, and the difference shapes your integration.
 
-- **Pull (on-demand):** Nobody keeps the onchain price current for you. Your transaction fetches a fresh, signed update offchain, applies it onchain, and reads it, all in one atomic transaction. You pay for the update only when you use it, and the price is as fresh as the moment you transact. Pyth and Switchboard on Sui are both pull oracles.
+- **Pull (on-demand):** Nobody keeps the onchain price current for you. Your transaction fetches a fresh, signed update offchain, applies it onchain, and reads it, all in one atomic transaction. You pay for the update only when you use it, and the price is as fresh as the moment you transact. On Sui, Pyth and Switchboard both work as pull oracles.
 - **Push:** A separate service, a keeper, posts prices to an onchain object on a schedule or when the price moves past a threshold. Consumers read the last posted value. The freshness of a push feed is only as good as the keeper's cadence, so a push consumer must still check how old the stored price is.
 
 The pull model is the default on Sui because it puts freshness in the consumer's control: the update and the read happen together, so a consumer never acts on a price the transaction did not just refresh.
@@ -112,8 +112,8 @@ The Pyth staleness check aborts on a stale feed. Move cannot catch an abort, so 
 
 To keep a transaction alive when the primary feed is stale, use a fallback feed:
 
-1. Read the primary feed with the unchecked Pyth reader.
+1. Read the primary feed with the unchecked Pyth reader, `pyth::get_price_unsafe`.
 2. Test its freshness yourself, without aborting.
-3. If the primary is stale, read a secondary feed with the checked reader. This read still aborts if the secondary feed is also stale.
+3. If the primary is stale, read a secondary feed with the checked reader, `pyth::get_price_no_older_than`. This read still aborts if the secondary feed is also stale.
 
 In the pull model, the transaction applies the Hermes update before the read. A stale read through a staleness bound means the update did not land, and the read aborts. The [Move Adapter Pattern](move-adapter) implements this fallback.

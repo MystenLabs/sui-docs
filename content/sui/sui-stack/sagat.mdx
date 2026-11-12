@@ -16,7 +16,6 @@ keywords:
   - multisig threshold
   - external proposers
   - Slush wallet
-  - Suilet wallet
   - TypeScript SDK
   - Testnet
   - Mainnet
@@ -56,7 +55,7 @@ Use the [Sagat web interface](https://sagat.mystenlabs.com/) for signing transac
 
 [Multisig](/develop/transactions/transaction-auth/multisig) is a type of authentication that requires multiple signatures from different parties before a transaction can execute. You can invite several addresses to a multisig group. On Sagat, invited parties can accept or reject multisig invitations after the multisig's creation.
 
-Each multisig can have a different voting threshold. For example, in a multisig that contains 3 users, only 2 of the users might need to sign the proposed transaction for approval. In other scenarios, the multisig might require all users to sign the transaction, and if one rejects it, Sagat cancels the proposed transaction. You can assign each member a different approval weight, which is how much their signature counts toward the threshold. This enables endless combinations, such as 5 out of 6 with just 2 addresses.
+Each multisig can have a different voting threshold. For example, in a multisig that contains 3 users, only 2 of the users might need to sign the proposed transaction for approval. In other scenarios, the multisig might require all users to sign the transaction, and if one rejects it, Sagat cancels the proposed transaction. You can assign each member a different approval weight, which is how much their signature counts toward the threshold. This enables endless combinations, such as a threshold of 5 out of a total weight of 6 split between just 2 addresses.
 
 Learn how to use the [TypeScript SDK for multisig](https://sdk.mystenlabs.com/typescript/cryptography/multisig).
 
@@ -115,7 +114,7 @@ A typical end-to-end workflow in the web interface is:
 
 ### Connecting a wallet 
 
-First, connect a wallet, such as [Slush](https://slush.app/) or [Suilet](https://suiet.app/), to the Sagat web interface:
+First, connect a wallet, such as [Slush](https://slush.app/), to the Sagat web interface:
 
 ![Sagat connect Slush](./images/sagat-1.png "Screenshot showing how to connect Slush wallet to Sagat.")
 

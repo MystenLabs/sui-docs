@@ -57,6 +57,8 @@ $ sui client ptb \
     --gas-budget 50000000
 ```
 
+In this command, `@0xa` is the address of the `AddressAliasState` singleton object, described in [How do I manage aliases?](#how-do-i-manage-aliases).
+
 The enable transaction creates the `AddressAliases` object. Save its object ID: the `add` and `remove` commands on this page take it as their first argument (`<ADDRESS_ALIASES_OBJECT_ID>`), so you reuse the same ID every time you change the aliases for that address.
 
 ## How do I rotate keys without migrating assets?
@@ -125,5 +127,7 @@ entry fun remove(aliases: &mut AddressAliases, alias: address) {
     aliases.aliases.remove(&alias);
 }
 ```
+
+In this function, `aliases` is the `AddressAliases` object you pass as the first argument, and `aliases.aliases` is the field of that object that holds the alias set.
 
 The call fails if the address is not in the alias set, or if it is the last remaining alias.

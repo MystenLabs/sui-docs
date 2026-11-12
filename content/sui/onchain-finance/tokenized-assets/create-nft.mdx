@@ -64,7 +64,7 @@ sequenceDiagram
  
 Imagine you create a Rare Reef Shark NFT collection on Sui and another blockchain that is not object based. To get an attribute like the shark's name on the other blockchain, you would need to interact with the smart contract that created the NFT to get that information (typically from offchain storage) using the NFT ID. On Sui, the name attribute is a field on the object that defines the NFT itself. This construct provides a more direct process for accessing NFT metadata because the smart contract that needs the information can return the name directly from the object.
 
-The following diagram shows the same request on Sui. The smart contract reads the name field directly from the NFT object, with no offchain storage involved.
+The following diagram shows the same request on Sui. The caller passes the NFT object's ID as a transaction input, and Sui gives the smart contract an immutable reference to the object. The smart contract reads the name field directly from the NFT object, with no offchain storage involved.
 
 ```mermaid
 
@@ -72,7 +72,7 @@ sequenceDiagram
     participant C as Caller
     participant S as Smart contract
     participant N as NFT object
-    C->>S: NFT object
+    C->>S: NFT object ID
     S->>N: Read name field
     N-->>S: name value
     S-->>C: name value
@@ -93,7 +93,7 @@ NFTs on Sui are useful in a wide range of applications:
  
 On Sui, both NFTs and [tokenized assets](/onchain-finance/tokenized-assets/asset-tokenization) are objects. The protocol does not distinguish between them. The difference is in how you design your smart contract.
  
-An NFT is typically an object with a supply of 1 and metadata specific to that instance, such as a name, description, or image URL. A tokenized asset is designed for fractional ownership, with a supply greater than 1 and metadata shared across all fractions. Tokenized assets can also be split or merged, which NFTs are not designed for. The protocol does not enforce these supply values; your smart contract design determines them.
+An NFT is typically an object with a supply of 1 and metadata specific to that instance, such as a name, description, or image URL. A tokenized asset is designed for fractional ownership, with a supply greater than 1 and metadata shared across all fractions. Tokenized asset fractions can also be split into smaller units or joined back together, which NFTs are not designed for. The protocol does not enforce these supply values; your smart contract design determines them.
  
 The following table summarizes the key design differences:
  

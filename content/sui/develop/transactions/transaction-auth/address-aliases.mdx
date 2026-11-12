@@ -68,6 +68,8 @@ Some constraints for modifying aliases:
 
 Each transaction on Sui has two configured addresses: a `sender` and a `gas_owner` (which might or might not be the same). For each configured address, the transaction requires a signature from one of the signers in its alias set.
 
+If an address has no aliases configured, such as before you call `enable`, Sui authenticates its transactions against the address itself, so the address's own key signs for it.
+
 For example, with the following transaction and aliases:
 ```
 transaction T {
@@ -134,6 +136,8 @@ $ sui client ptb \
         vector[@<ALIAS_ADDRESS>] \
     --gas-budget 50000000
 ```
+
+The literal `vector[...]` argument passes the alias addresses inline as a pure Move vector value, without a separate `--make-move-vec` command. To set more than one alias, list each address inside the vector. For the rules on literal vectors, see [Vector arguments in alias commands](#vector-arguments-in-alias-commands).
 
 :::warning
 

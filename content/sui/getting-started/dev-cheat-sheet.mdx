@@ -1,6 +1,6 @@
 ---
 title: Developer Cheat Sheet
-description: A quick reference document regarding best practices for Sui developers.
+description: Quick-reference best practices for Sui developers, covering Move smart contracts, package upgrades, app development, transaction signing, and zkLogin.
 keywords:
   - cheat sheet
   - quick reference
@@ -116,6 +116,9 @@ A bag or table must be empty before you call `destroy_empty` on it.
 
 ## Sign with dApp Kit and execute separately
 
-To sign a transaction in the wallet without executing it, call the `signTransaction` action of dApp Kit. In a React app, get the dApp Kit instance from the `useDAppKit` hook in `@mysten/dapp-kit-react`. The action resolves to the transaction `bytes` as a base64-encoded BCS string and the base64-encoded `signature`.
+To sign a transaction in the wallet without executing it, then execute it on your app's full node:
 
-To execute the signed transaction on your app's full node, decode `bytes` to a `Uint8Array` and pass it with the signature to `executeTransaction` on a `SuiGrpcClient`. `executeTransaction` takes the transaction as `transaction` and the signatures as a `signatures` array.
+1. Get the dApp Kit instance. In a React app, get it from the `useDAppKit` hook in `@mysten/dapp-kit-react`.
+2. Call the `signTransaction` action of dApp Kit. The action resolves to the transaction `bytes` as a base64-encoded BCS string and the base64-encoded `signature`.
+3. Decode `bytes` to a `Uint8Array`.
+4. Pass the decoded bytes and the signature to `executeTransaction` on a `SuiGrpcClient`. `executeTransaction` takes the transaction as `transaction` and the signatures as a `signatures` array.

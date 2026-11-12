@@ -97,12 +97,27 @@ public fun transfer_unlocked(object: Object, to: address) {
 }
 ```
 
-You can define multiple different transfer rules for the same object. Each of these rules might have different restrictions that execution of the transaction can dynamically enforce. If you wanted to allow only locked objects to be transferred to a specific address you could add the following function to the previous module:
+You can define multiple different transfer rules for the same object. Each of these rules might have different restrictions that execution of the transaction can dynamically enforce. To allow transfers of locked objects only to a specific address, add a `transfer_locked` function to the previous module. The complete module is:
 
 ```move
-// Add to module examples::custom_transfer
+module examples::custom_transfer;
+
+// Error code for trying to transfer a locked object
+const EObjectLocked: u64 = 0;
 const EObjectNotLocked: u64 = 1;
-const HOME_ADDRESS = @0xCAFE;
+const HOME_ADDRESS: address = @0xCAFE;
+
+public struct Object has key {
+    id: UID,
+    // An `Object` object can only be transferred if this field is `true`
+    unlocked: bool,
+}
+
+// Check that `Object` is unlocked before transferring it
+public fun transfer_unlocked(object: Object, to: address) {
+    assert!(object.unlocked, EObjectLocked);
+    transfer::transfer(object, to)
+}
 
 public fun transfer_locked(object: Object) {
     assert!(!object.unlocked, EObjectNotLocked);

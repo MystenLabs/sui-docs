@@ -55,7 +55,7 @@ The process for protocol upgrades includes the following steps:
 
 1. When the validator process starts, it continues to use the previous version of `ProtocolConfig` (flag set to false). All validators behave identically regardless of whether they have the new software.
 
-1. As validators are upgraded, they signal to the validator committee that they are prepared to switch to the new version of the configuration (flag enabled).
+1. As operators upgrade their validators, each upgraded validator signals to the other validators, through consensus, that it is prepared to switch to the new version of the configuration (flag enabled).
 
 1. If 2/3 or more of validators vote to switch to the new protocol version, the new version takes effect at the beginning of the next epoch.
 

@@ -116,7 +116,7 @@ Every priced call rebuilds a transaction-local `Pricer` from those objects throu
 
 Freshness bounds are protocol configuration, and pricing aborts on a stale Block Scholes input. Both networks require the Block Scholes spot and forward within 2 seconds and the SVI surface within 10 seconds. Read the live values from the `ProtocolConfig` shared object rather than assuming them, because the deployment manifest records only an initial snapshot.
 
-A queued order uses the oracles twice. Placement snapshots the Block Scholes spot, forward, and SVI surface into the order. The spot it fills at comes later, from Pyth Lazer's signed update for the order's τ, which the keeper verifies and commits to the queue. The SDK resolves the oracle objects for placement, and you never handle a Lazer update unless you run a filler yourself.
+A queued order uses the oracles twice. Placement snapshots the Block Scholes spot, forward, and SVI surface into the order. The spot it fills at comes later, from Pyth Lazer's signed update for the order's price instant (τ), which the keeper verifies and commits to the queue. The SDK resolves the oracle objects for placement, and you never handle a Lazer update unless you run a filler yourself.
 
 ### Discover markets
 
@@ -127,7 +127,7 @@ A queued order uses the oracles twice. Placement snapshots the Block Scholes spo
 | `id` | The `ExpiryMarket` shared object ID |
 | `expiryMs` | Expiry as a Unix millisecond timestamp, typed `bigint` |
 | `tickSize` | Strike grid granularity in USD |
-| `admissionTickSize` | The coarser grid a numeric strike must land on |
+| `admissionTickSize` | The coarser grid a numeric strike must land on, which [Ticks, strikes, and position shape](#ticks-strikes-and-position-shape) explains |
 | `mintPaused` | Whether minting is paused for this market |
 | `referencePrice` | The window's anchor strike in USD, or `null` until the market records its reference tick |
 
@@ -279,7 +279,7 @@ All 3 services share 4 conventions:
 
 ## How do I queue a directional mint? {#queue-a-mint}
 
-Both networks run Predict protocol version 5, so a mint is a queued order. You place it with its limits and its money, it waits in the market's queue until Pyth Lazer publishes its signed price for the order's price instant, about 800 ms after placement, and a keeper then fills it at that price or refunds it. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) covers the onchain side, and [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) documents every builder and read.
+Both networks run Predict protocol version 5, so a mint is a queued order. You place it with its limits and its money, it waits in the market's queue until Pyth Lazer publishes its signed price for the order's price instant (τ), about 800 ms after placement, and a keeper then fills it at that price or refunds it. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) covers the onchain side, and [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) documents every builder and read.
 
 A directional position pays `$1` per contract when settlement lands inside its range, and nothing otherwise, so `quantity` is the maximum payout in USD. The sample plans an all-in budget mint: `read.planMint(owner, descriptor, { amount, slippageCents })` quotes the order at the current price and turns the slippage into the limits the order carries onchain, and `tx.enqueuePlan` builds the enqueue after a preflight of the queue gates, the balance, and the limits. A few checks run only onchain at placement, such as the market's SVI age and room in the payout tree for a new strike, so a plan that accepts can still abort there.
 
@@ -370,7 +370,7 @@ A request you leave queued eventually fills, and the fill is what turns escrowed
 
 <ImportContent source="examples/deepbook-predict/src/withdraw.ts" mode="code" tag="withdraw" />
 
-Cancel a queued withdrawal with `tx.cancelWithdrawPlp(owner, index)`, using the index from `decode.plpRequest`. The minimum withdrawal request is 1 PLP, which is `1000000` raw at 6 decimals, and the sample checks that floor itself rather than letting a dust holder take a Move abort. Both deployments' initial configuration charges a 0.2 percent withdrawal fee and no supply fee, and caps the pool at 500,000 USDC. Read the live rates from the `ProtocolConfig` shared object, because the manifest records only the initial snapshot.
+Cancel a queued withdrawal with `tx.cancelWithdrawPlp(owner, index)`, using the index from `decode.plpRequest`. While a flush is in flight, the cancel aborts, so retry after the flush finishes. The minimum withdrawal request is 1 PLP, which is `1000000` raw at 6 decimals, and the sample checks that floor itself rather than letting a dust holder take a Move abort. Both deployments' initial configuration charges a 0.2 percent withdrawal fee and no supply fee, and caps the pool at 500,000 USDC. Read the live rates from the `ProtocolConfig` shared object, because the manifest records only the initial snapshot.
 
 ### Read vault state
 

@@ -54,7 +54,7 @@ Following are the functions for managing supply referrals. Each section describe
 <details>
 <summary>Mint a `SupplyReferral`</summary>
 
-Create a new supply referral for earning fees from referred suppliers. The returned `SupplyReferral` object is transferable and can be used to claim accumulated fees.
+Create a new supply referral for earning fees from referred suppliers. The function shares a new `SupplyReferral` object, records the caller as its owner, and returns its ID for suppliers to pass to `supply`. Each referral applies to the specific margin pool you mint it for.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -84,7 +84,7 @@ Supply assets to a margin pool with an optional referral ID. When a referral ID 
 <details>
 <summary>Withdraw referral fees</summary>
 
-Withdraw accumulated referral fees. Only the owner of the `SupplyReferral` object can claim its fees.
+Withdraw accumulated referral fees. Only the address that minted the `SupplyReferral`, recorded in its `owner` field, can claim its fees. You can withdraw accumulated fees at any time.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool.move"
@@ -99,7 +99,7 @@ Withdraw accumulated referral fees. Only the owner of the `SupplyReferral` objec
 <details>
 <summary>Query referral tracker</summary>
 
-Query the current shares and unclaimed fees for a referral.
+Query the current shares and unclaimed fees for a referral. Use this function to check how many shares a referral holds and how many fees it can claim with `withdraw_referral_fees`.
 
 <ImportContent
 	source="packages/deepbook_margin/sources/margin_pool/protocol_fees.move"
@@ -149,7 +149,7 @@ The system emits this event when the referral owner claims referral fees.
 
 There is no separate referral spread parameter. Each margin pool sets a protocol spread, capped at 20% by the contract, that determines what portion of borrower interest the pool keeps as protocol fees instead of paying out to suppliers. The Mainnet SUI margin pool, for example, uses a 20% protocol spread.
 
-Each time fees accrue, the pool splits them pool-wide in fixed proportions:
+Each time fees accrue, the pool splits them pool-wide in proportions that the contract fixes. Unlike the protocol spread, a pool does not configure these proportions:
 
 - **Protocol:** 1/4 of the accrued fees
 - **Maintainer:** 1/4 of the accrued fees

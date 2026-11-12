@@ -98,7 +98,7 @@ The following practices prevent callers from influencing or selectively rejectin
 
 #### Limit what follows a random call in a PTB
 
-Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable.
+Sui restricts which commands can follow a `MoveCall` that consumes `Random` in the same [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) (PTB). Do not depend on post-random commands other than the allowed object transfers and coin merges. This prevents `test-and-abort` attacks, where an attacker inspects the result and aborts the transaction if the outcome is unfavorable. Sui rejects any command other than `TransferObjects` or `MergeCoins` after the random call with the `PostRandomCommandRestrictions` error. For the full rules, see [Commands allowed after using Random](#commands-allowed-after-using-random).
 
 #### Mark randomness-consuming functions as private `entry`
 
@@ -197,6 +197,8 @@ A capability object is a struct with the `key` ability that acts as a permission
 #### Manage address allowlists deliberately
 
 Some designs still need an address allowlist, for example a set of accounts that can claim an airdrop. When you use one, store it in a well-defined object, restrict updates to a privileged function, and emit an [event](/develop/accessing-data/using-events) whenever an entry changes. Consider adding a time-lock on updates so that membership changes take effect only after a delay, giving observers time to react to an unexpected change. Events give offchain services and auditors a record of every membership change. Without them, allowlist changes are difficult to monitor.
+
+The Sui framework follows this pattern for `DenyList`, a shared object that stores blocked addresses. Writes to its configuration require the `ConfigWriteCap` type, which only the `deny_list` module can create, so no other module can change the list configuration ([source](https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/packages/sui-framework/sources/deny_list.move)).
 
 #### Do not rely on `tx_context::sender()` alone
 

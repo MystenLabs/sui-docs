@@ -209,7 +209,7 @@ Custody keys and privileged capabilities are the highest-value assets in an exch
 
 ## SUI staking
 
-The Sui blockchain uses a delegated proof-of-stake (DPoS) mechanism. SUI token holders stake to a validator's staking pool. When a user stakes, the network locks those tokens for the duration of the epoch in which the user adds the stake. New staking requests become active at the start of the next epoch. A user can request a withdrawal at any time. Stake withdrawals process immediately using the previous epoch's exchange rate and include the principal plus rewards accumulated through the previous epoch. The withdrawn stake stops contributing starting the next epoch.
+The Sui blockchain uses a delegated proof-of-stake (DPoS) mechanism. SUI token holders stake to a validator's staking pool. When a user stakes, the network locks those tokens for the duration of the epoch in which the user adds the stake. New staking requests become active at the start of the next epoch. A user can request a withdrawal at any time. A stake withdrawal returns funds in the same transaction that requests it, during the current epoch; because the payout uses the previous epoch's exchange rate, it includes the principal plus rewards accumulated through the previous epoch. The withdrawn stake stops contributing starting the next epoch.
 
 SUI holders who stake to validators earn rewards for helping secure the Sui network. Sui determines staking rewards based on stake performance and distributes them at the end of each epoch.
 
@@ -290,7 +290,7 @@ Treat deposit and withdrawal pipelines as event-driven and idempotent. The follo
 
 ## When do stake withdrawals settle?
 
-A stake withdrawal returns funds in the same transaction that requests it, during the current epoch. The withdrawal combines the principal and its rewards into a single SUI balance and returns it to the caller. You do not wait for an epoch boundary to receive the funds.
+A stake withdrawal returns funds in the same transaction that requests it, during the current epoch, valued at the previous epoch's exchange rate. The withdrawal combines the principal and its rewards into a single SUI balance and returns it to the caller. You do not wait for an epoch boundary to receive the funds.
 
 The staking pool records a proportional pool token withdrawal as pending and processes that internal bookkeeping at the next epoch change. This accounting step does not delay the payout.
 

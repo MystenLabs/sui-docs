@@ -48,6 +48,8 @@ To create a pool, you need to specify three sizing parameters: tick size, lot si
 
 `10^(9 - base_decimals + quote_decimals - decimal_desired)`
 
+In the formula, `decimal_desired` is the number of decimal places you want in the price increment. For example, a value of 3 gives a price increment of 0.001.
+
 For a SUI (9 decimals) / USDC (6 decimals) pool with a desired decimal of 3 (0.001):
 
 `10^(9 - 9 + 6 - 3) = 10^3 = 1000`

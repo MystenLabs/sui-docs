@@ -120,7 +120,7 @@ Every transaction that creates or modifies objects incurs a storage fee.
 
 Compute is relatively fixed on Sui, with hundreds of validators running 24-core, 128GB RAM machines. However, because Sui achieves high throughput compared to other blockchains, storage costs can vary significantly. Periodically, a governance proposal on the network sets the storage fee. However, there are some underlying factors that contribute to the data storage measurement.
 
-Currently, the storage fee is 76 MIST or 0.000000076 SUI per storage unit. MIST is the smallest unit of SUI; 1 SUI equals 1,000,000,000 MIST.
+MIST is the smallest unit of SUI; 1 SUI equals 1,000,000,000 MIST. Currently, the storage fee is 76 MIST or 0.000000076 SUI per storage unit.
 
 :::tip
 
@@ -167,10 +167,25 @@ The storage fund is locked and staked each epoch to compensate active validators
 
 The design of the storage fund also incentivizes users to delete data if the cost of storing it exceeds the value of keeping it onchain. By offering a rebate on storage fees, the system encourages users to free up space.
 
-If data is deleted from Sui, it would stop using storage resources and a portion of the original storage fee, currently set at 99%, would be returned to the gas fee payer as a rebate. The non-refundable portion of the storage fee (1%) is never returned. Immutable objects lock both their storage fee forever and cannot receive a rebate, as they cannot be deleted or modified.
+If you delete data from Sui, the data stops using storage resources and Sui returns a portion of the original storage fee, currently 99.99%, to the gas fee payer as a rebate. Sui never returns the non-refundable portion of the storage fee (0.01%). Immutable objects lock their storage fee forever and cannot receive a rebate, because you cannot delete or modify them.
+
+As a formula, using the current rebate rate:
+
+```
+storage rebate (MIST) = original storage fee (MIST) × 0.9999, rounded to the nearest MIST
+non-refundable fee (MIST) = original storage fee (MIST) - storage rebate (MIST)
+
+Example: 7,600,000 MIST × 0.9999 = 7,599,240 MIST rebate
+```
 
 ## How is the rebate calculated when an object shrinks?
 
 Sui handles a modified object the same way it handles a deleted one for its old version. The storage fee recorded on the old version goes into the transaction's potential rebate. Sui keeps the non-refundable portion in the storage fund and credits the rest as the storage rebate. Sui then charges a new storage fee based on the object's size after the transaction and records that fee on the new version as its future rebate.
 
 The amount deducted from your gas coins is the computation cost plus the new storage fee minus the storage rebate. When an object shrinks, its new storage fee is lower than the rebate from its old version, so the difference reduces the total amount you pay for the transaction.
+
+As a formula:
+
+```
+amount deducted (MIST) = computation cost + new storage fee - storage rebate
+```
