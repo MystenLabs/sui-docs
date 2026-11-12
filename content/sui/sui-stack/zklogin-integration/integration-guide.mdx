@@ -272,7 +272,7 @@ Choose a salt management strategy:
 | **Strategy** | **Description** | **Trade-offs** |
 | --- | --- | --- |
 | User-provided | Ask the user to enter and remember the salt. | Basic but poor UX; users forget salts. |
-| Browser or device storage | Store in `localStorage` or mobile secure storage. | Easy but lost on device or browser change. Email the salt to the user as a backup. |
+| Browser or device storage | Store in `localStorage` or mobile secure storage. | For development and testing only. The salt is lost when the user clears storage or changes device or browser, and the user loses access to the address. Do not use in production. |
 | Database mapping | Map user identifier (`sub`) to a salt in your backend database. | Reliable; requires a backend service. Salt is unique per user. |
 | Derived from master seed | Use `HKDF(ikm = seed, salt = iss \|\| aud, info = sub)` to derive salts deterministically from a master seed (`\|\|` denotes concatenation). | No per-user storage needed, but you cannot rotate the master seed, and you cannot change the client ID (`aud`) without deriving a different address. |
 
