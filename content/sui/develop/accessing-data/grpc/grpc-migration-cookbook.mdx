@@ -374,7 +374,7 @@ The List APIs differ from JSON-RPC pagination in the following ways:
   - `ITEM_LIMIT`: returned the requested number of items. Use the cursor to fetch the next page.
   - `SCAN_LIMIT`: the server exhausted its internal scan budget before finding enough matches. Resume from the cursor to continue scanning.
   - `LEDGER_TIP`: reached the current tip of the chain (the request specified no `end_checkpoint`).
-  - `CHECKPOINT_BOUND`: reached the specified `end_checkpoint`.
+  - `CHECKPOINT_BOUND`: reached the specified `end_checkpoint`, or the request's starting cursor (`options.after` when ascending, `options.before` when descending) already lies past the requested checkpoint range. In the second case, the closing cursor resumes where the request's cursor does.
   - `CURSOR_BOUND`: reached a cursor-derived boundary (for example, the `options.before` cursor used during backfill).
 
 `ListCheckpoints` and `ListEvents` follow the same streaming pattern with the same watermark and `QueryEnd` semantics. `ListCheckpoints` accepts a `TransactionFilter` (filtering checkpoints that contain matching transactions), while `ListEvents` accepts an `EventFilter`.
