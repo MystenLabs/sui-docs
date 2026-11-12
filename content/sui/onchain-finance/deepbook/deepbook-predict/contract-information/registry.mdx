@@ -25,7 +25,7 @@ keywords:
   - set_builder_fee_cap
   - set_template_fee_bands
 last_verified: 2026-11-12
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet cadence table and cadence terms re-read 2026-11-12 at watermark 5, Mainnet cadence terms read 2026-11-12 at watermark 4 (TBD-DBU-1166 Mainnet re-read after the cutover)
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet cadence table, cadence terms, and no_trade_window_ms re-read 2026-11-12 at watermark 5, Mainnet cadence terms read 2026-11-12 at watermark 4 (TBD-DBU-1166 Mainnet re-read after the cutover)
 goal:
   description: >-
     Reader can look up markets and cadence terms in the Predict Registry, and
@@ -362,7 +362,7 @@ An order names a code through the `_with_builder` queued entrypoints, as [Name a
 
 | **Setter** | **Field** | **Bounds** | **Deployed** | **Blocked during a flush** | **Abort** |
 | --- | --- | --- | --- | --- | --- |
-| `set_no_trade_window_ms` | `no_trade_window_ms` | `0` to `15000` ms, where `0` disables the window | `10000` on both networks, over a compiled default of `2000` | No | `config_constants::EInvalidNoTradeWindowMs` (`24`) |
+| `set_no_trade_window_ms` | `no_trade_window_ms` | `0` to `15000` ms, where `0` disables the window | `15000` on Mainnet, the maximum (TBD-DBU-1166: verify on Mainnet after the cutover), and `10000` on Testnet, over a compiled default of `2000` | No | `config_constants::EInvalidNoTradeWindowMs` (`24`) |
 | `set_max_valuation_window_ms` | `max_valuation_window_ms` | 1 minute to 4 hours | `300000` | Yes, with `EValuationInProgress` | `config_constants::EInvalidMaxValuationWindowMs` (`23`) |
 
 `no_trade_window_ms` is the interval before each expiry in which no queued order's price instant might fall. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window) covers it. A flush deliberately does not block it, matching `set_trading_paused`, so a stalled flush cannot trap a safety control. A change emits `NoTradeWindowUpdated`. `max_valuation_window_ms` is the deadline after which an in-flight flush can no longer finish and the operator must restart it, as [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#valuation-window) explains. The setter aborts while a flush is in flight, so no one can move a started flush's deadline under it.
