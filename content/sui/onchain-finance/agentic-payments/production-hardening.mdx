@@ -87,7 +87,7 @@ The `sui::allowance` module has no pause. Revocation is the only way to stop an 
 
 ### Pause or revoke a SuiPay spend account
 
-SuiPay, a managed payment gateway for agents that runs on Testnet only, is published as `@mysten-incubation/suipay`, `@mysten-incubation/suipay-buyer`, and `@mysten-incubation/suipay-mcp`. The SuiPay gateway holds the owner's funds in a `spend_account` Move module. Its `Account<T>` holds the funds, `SpendPolicy` entries in the account set per-service ceilings, and a spend account grant (`Grant<T>`) gives 1 delegate key a budget, an expiry, and a list of the policies it can use. Only the owner can pause, resume, or revoke each of the 3 levels. {/* TODO: link SuiPay docs once public */}
+SuiPay, a managed payment gateway for agents that runs on Testnet only, is published as `@mysten-incubation/suipay`, `@mysten-incubation/suipay-buyer`, and `@mysten-incubation/suipay-mcp`. The SuiPay gateway holds the owner's funds in a `spend_account` Move module. Its `Account<T>` holds the funds, `SpendPolicy` entries in the account set per-service ceilings, and a spend account grant (`Grant<T>`) gives 1 delegate key a budget, an expiry, and a list of the policies it can use. Only the owner can pause, resume, or revoke each of the 3 levels.
 
 | **Level** | **Pause and resume** | **Revoke (permanent)** | **What it stops** |
 | --- | --- | --- | --- |
@@ -99,8 +99,9 @@ Pausing is reversible, so it is the right response while you investigate. Revoki
 
 Choose the narrowest level that contains the problem. Pause the grant when 1 agent key misbehaves, the policy when 1 service is the problem, and the account when you do not yet know the cause.
 
-{/* TODO: Import code from SUIPAY_REPO/PATH_TO_FILE — function: pause_grant, resume_grant, revoke_grant */}
-{/* Description: spend_account functions that pause, resume, and revoke an account, policy, or grant */}
+The grant-level functions in the `spend_account` module check that the caller is the owner before they change the grant:
+
+<ImportContent source="move/suipay/sources/spend_account.move" org="MystenLabs" repo="suipay" mode="code" fun="pause_grant,resume_grant,revoke_grant" />
 
 ## Safe retries with idempotency keys
 

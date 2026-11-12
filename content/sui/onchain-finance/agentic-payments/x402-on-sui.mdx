@@ -197,8 +197,9 @@ The client builds one Sui transaction that credits `payTo` with exactly `amount`
 
 Verification looks only at the result. In the TypeScript SDK, `tx.balance()` chooses between the address balance and coins automatically ([Gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers#how-txbalance-funds-a-transfer)).
 
-{/* TODO: Import code from x402-foundation/x402/typescript/packages/mechanisms/sui/src/exact/client/scheme.ts (PR #3082, once merged), function: FUNCTION_NAME */}
-{/* Description: Client builds an exact-scheme Sui payment transaction that credits payTo with exactly amount */}
+The SuiPay buyer package builds this transaction from the payment requirements. It splits exactly `amount` of `asset` from the payer's coins, transfers the result to `payTo`, and then inspects the built bytes before it returns them:
+
+<ImportContent source="packages/buyer/src/native-transfer.ts" org="MystenLabs" repo="suipay" mode="code" fun="buildNativeTransferBytes" />
 
 ### Set the expiration {#expiration}
 
@@ -319,7 +320,3 @@ The [SuiPay gateway](/onchain-finance/agentic-payments#payment-roles) uses an x4
 - **Its own `extra` fields.** The SuiPay gateway carries its signed offer terms in `extra.suipay`, including `challengeId`, the offer digest, the payment path, and the sponsor gas pins (`sponsorGasOwner`, `sponsorGasBudget`, `sponsorGasPrice`, `sponsorGasPayment`), and declares `extra.paymentFlow` as `upfront`. It does not emit `extra.feePayer`, `extra.maxGasBudget`, or `extra.nonce`.
 - **Replay returns the stored receipt.** When a client presents a byte-identical copy of an already-settled payment, the SuiPay gateway returns the stored success receipt with the same transaction digest and moves no funds, rather than returning `duplicate_settlement`. A resource server that settles through the SuiPay gateway records each delivery by settled digest so that a replayed payment header does not unlock the resource again.
 - **Testnet only.** The SuiPay gateway settles on `sui:testnet` only. It does not support `sui:mainnet`.
-
-{/* TODO: link SuiPay docs once public */}
-
-{/* TODO(verify): recheck this list against the SuiPay gateway and the merged x402 spec before publishing. */}

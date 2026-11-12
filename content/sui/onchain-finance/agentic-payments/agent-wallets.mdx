@@ -87,7 +87,7 @@ Use Ed25519 for agent keys unless your custody setup requires another scheme. Ed
 $ sui keytool generate ed25519
 ```
 
-The command prints the new address, public key, key scheme, and a 12-word recovery phrase, and writes the key pair to a file named `<SUI_ADDRESS>.key` in the current directory. The file holds the key as a Base64 string of the 33-byte `flag || privkey`. Add `--json` to get machine-readable output for provisioning scripts. Other supported schemes are `secp256k1` and `secp256r1`. Sui CLI v1.84 and later also accept `mldsa65`. {/* TODO(verify): confirm Mainnet acceptance of ML-DSA-65 signatures before publishing */} See [Sui Keytool CLI](/references/cli/keytool#generate-a-new-key-pair-and-store-it-in-a-file) for the full command reference.
+The command prints the new address, public key, key scheme, and a 12-word recovery phrase, and writes the key pair to a file named `<SUI_ADDRESS>.key` in the current directory. The file holds the key as a Base64 string of the 33-byte `flag || privkey`. Add `--json` to get machine-readable output for provisioning scripts. Other supported schemes are `secp256k1` and `secp256r1`. See [Sui Keytool CLI](/references/cli/keytool#generate-a-new-key-pair-and-store-it-in-a-file) for the full command reference.
 
 Most tools, including the TypeScript SDK, load keys in the Bech32 format that starts with `suiprivkey`. Convert the Base64 value from the `.key` file:
 
@@ -107,8 +107,13 @@ The TypeScript SDK in `@mysten/sui` provides the same operations in code:
 - `Ed25519Keypair.fromSecretKey()` loads a key pair from a `suiprivkey` string, and rejects a string encoded for a different scheme.
 - `Ed25519Keypair.deriveKeypair()` restores a key pair from a recovery phrase.
 
-{/* TODO: Import code from MystenLabs/ts-sdks/PATH_TO_FILE, function: FUNCTION_NAME (no verified public example file exists yet) */}
-{/* Description: Generate an Ed25519Keypair, print its address, and load it with fromSecretKey from an environment variable */}
+SuiPay generates an agent's delegate key and derives the address that the owner authorizes:
+
+<ImportContent source="apps/docs/src/snippets/agent-keypair.ts" org="MystenLabs" repo="suipay" mode="code" />
+
+The SuiPay gateway loads a stored `suiprivkey` secret into a signer that never exports the key:
+
+<ImportContent source="apps/gateway/src/chain/sui.ts" org="MystenLabs" repo="suipay" mode="code" fun="suiWalletFromSecretKey" />
 
 See [Keypairs](https://sdk.mystenlabs.com/sui/cryptography/keypairs) in the TypeScript SDK documentation for details.
 
@@ -153,23 +158,16 @@ The `@mysten/signers` package re-exports the Mysten Labs external signers under 
 
 For a backend agent, use `AwsKmsSigner` (created with `AwsKmsSigner.fromKeyId()`) or `GcpKmsSigner` (created with `GcpKmsSigner.fromOptions()`). The curve of the KMS key determines the Sui signature scheme. GCP KMS supports Secp256k1 and Secp256r1 keys. A KMS-backed agent therefore usually has a Secp256k1 or Secp256r1 address, not an Ed25519 one, so check that every service the agent pays through accepts that scheme before you choose KMS.
 
-{/* TODO(verify): The ts-sdks signers index page lists AwsKmsSigner as Secp256k1 or Secp256r1, while the AWS KMS signer page and aws-kms-signer.ts also handle Ed25519. Confirm whether AWS KMS Ed25519 keys are supported before stating the AWS scheme list. */}
-
-{/* TODO: Import code from MystenLabs/ts-sdks/PATH_TO_FILE, function: FUNCTION_NAME (no verified public example file exists yet) */}
-{/* Description: Create an AwsKmsSigner with fromKeyId and pass it as the signer to signAndExecuteTransaction */}
-
 See [Signers](https://sdk.mystenlabs.com/sui/cryptography/signers) in the TypeScript SDK documentation for setup and credentials for each signer.
 
 ### SuiPay delegate keys
 
-The [SuiPay gateway](/onchain-finance/agentic-payments#payment-roles) is published as the `@mysten-incubation/suipay`, `@mysten-incubation/suipay-buyer`, and `@mysten-incubation/suipay-mcp` npm packages, and runs on Testnet only. {/* TODO: link SuiPay docs once public */}
+The [SuiPay gateway](/onchain-finance/agentic-payments#payment-roles) is published as the `@mysten-incubation/suipay`, `@mysten-incubation/suipay-buyer`, and `@mysten-incubation/suipay-mcp` npm packages, and runs on Testnet only.
 
 The SuiPay gateway calls the agent's key a delegate key. SuiPay delegate keys have 2 requirements:
 
 - **The Model Context Protocol (MCP) server keeps the delegate key locally.** The `@mysten-incubation/suipay-mcp` server generates the agent's key itself and stores it in `~/.suipay/credentials.json` with file mode `0600`, in a directory with mode `0700`. The private key never leaves that process. The owner's spend account grant binds to the key's address. If the file is unreadable or malformed, the server refuses to continue rather than creating a new key. Protect this file like any other private key: anyone who reads it can spend the remaining grant budget until the owner revokes the spend account grant.
 - **x402 settlement requires an Ed25519 delegate key.** The SuiPay gateway does not support zkLogin or multisig delegate addresses for x402 settlement. If the agent pays through x402 on SuiPay, generate an Ed25519 key.
-
-{/* TODO(verify): confirm the SuiPay credentials path, file modes, fail-closed read, and Ed25519-only x402 delegate keys against SuiPay docs once public. */}
 
 ## Sign transactions
 
@@ -178,8 +176,9 @@ An agent signs transactions the same way a wallet does, but without an approval 
 - **Sign and execute:** The agent builds a transaction, signs it, and submits it to a full node through the gRPC or GraphQL API. Use this flow when the agent pays its own gas.
 - **Sign only:** The agent builds and signs the transaction bytes, then hands them to someone else to submit. Use this flow for [sponsored transactions](/develop/transaction-payment/sponsor-txn), where the sponsor adds its own signature. Also use it for x402: the agent sends the signed transaction in a payment header, and the seller or its facilitator submits it. See [Offline Signing](/develop/transactions/transaction-auth/offline-signing) for the dual-signature flow.
 
-{/* TODO: Import code from MystenLabs/ts-sdks/PATH_TO_FILE, function: FUNCTION_NAME (no verified public example file exists yet) */}
-{/* Description: Sign and execute a transaction with SuiGrpcClient and a key pair, and sign transaction bytes only for a sponsored flow */}
+The SuiPay buyer package uses the sign-only flow for x402. It builds the payment transaction, signs the exact bytes, and returns the transaction and signature for the payment header:
+
+<ImportContent source="packages/buyer/src/native-transfer.ts" org="MystenLabs" repo="suipay" mode="code" fun="createNativeTransferSigner" />
 
 Because nothing prompts the agent, limits must come from onchain authorization, not from the agent's own code. Spend through an [allowance](/onchain-finance/allowances) or an escrow grant so that the network enforces the cap, rate, and expiry on every payment, even if the agent misbehaves. Add offchain checks as an early warning, not as the only control. See [Production Hardening](/onchain-finance/agentic-payments/production-hardening) for kill switches and monitoring.
 
@@ -210,10 +209,8 @@ An agent needs 2 things to pay for a service: a way to pay gas, and authority to
 Every transaction pays gas in SUI, except an eligible gasless stablecoin transfer. Choose who pays it:
 
 - **The agent holds a small SUI balance:** Keep enough SUI in the agent's address balance or gas coins for a few days of activity, and top it up from an operator account. This is the most straightforward option and works with any transaction. See [Gas Fees](/develop/transaction-payment/gas-in-sui).
-- **A sponsor pays gas:** With [sponsored transactions](/develop/transaction-payment/sponsor-txn), a sponsor adds the gas payment and a second signature, so the agent's address never needs SUI. In [the proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui), the facilitator can sponsor gas ([x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081), sponsored payments section). The SuiPay gateway sponsors gas for its delegate keys after the agent proves it holds the delegate key. {/* TODO: Citation needed: SuiPay gateway delegate gas sponsorship and proof of key possession */}
+- **A sponsor pays gas:** With [sponsored transactions](/develop/transaction-payment/sponsor-txn), a sponsor adds the gas payment and a second signature, so the agent's address never needs SUI. In [the proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui), the facilitator can sponsor gas ([x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081), sponsored payments section). The SuiPay gateway sponsors gas for its delegate keys after the agent proves it holds the delegate key.
 - **The transfer is gasless:** A plain transfer of an allowlisted stablecoin through `balance::send_funds` qualifies for [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers), so the network charges no gas. A payment that calls any other Move function, including a spend from an allowance or a SuiPay gateway settlement, does not qualify.
-
-{/* TODO(verify): the x402 exact scheme for Sui is proposed in x402 PR #3081 (open, not merged) and describes facilitator sponsorship through extra.feePayer. Recheck when this page publishes. */}
 
 ### Fund the budget, not the agent
 
@@ -226,9 +223,4 @@ Either way, a leaked agent key exposes only the remaining authorized budget, and
 
 ### Get Testnet funds
 
-On Testnet, use faucets for both gas and stablecoin test funds, which have no monetary value:
-
-- **SUI for gas:** Use the [online faucet](https://faucet.sui.io/) or the other methods in [Get SUI from Faucet](/getting-started/onboarding/get-coins).
-- **Testnet USDC:** Use [Circle's USDC faucet](https://faucet.circle.com/) and select Sui Testnet. Fund your own address, not the agent's, and then authorize the agent through an allowance or spend account grant.
-
-{/* TODO(verify): Confirm that faucet.circle.com currently lists Sui Testnet; it was not fetched during drafting. */}
+On Testnet, get SUI for gas from the [online faucet](https://faucet.sui.io/) or the other methods in [Get SUI from Faucet](/getting-started/onboarding/get-coins). Testnet funds have no monetary value. Fund your own address, not the agent's, and then authorize the agent through an allowance or spend account grant.

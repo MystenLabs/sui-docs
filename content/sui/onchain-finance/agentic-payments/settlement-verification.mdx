@@ -91,8 +91,9 @@ A successful submission response means a full node accepted the bytes. It does n
 
 To wait for finality and read the result, look up the transaction digest with gRPC `LedgerService.GetTransaction` or the GraphQL `Query.transaction` field ([Life of a Transaction](/develop/transactions/transaction-lifecycle#how-do-i-resend-or-verify-a-pending-transaction)). In the TypeScript SDK, `client.waitForTransaction` and `client.getTransaction` wrap the same lookup. Request the effects and the balance changes explicitly. With gRPC, include `effects` and `balance_changes` in the read mask ([Querying Data with gRPC](/develop/accessing-data/grpc/using-grpc#field-path-reference)). The [proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui) makes the same requirement for facilitators: ask for balance changes when the RPC returns them only on request, and treat a missing set as a failure, not a match (Effects check section of [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
 
-{/* TODO: Import code from MystenLabs/ts-sdks/PATH_TO_FILE — function: FUNCTION_NAME */}
-{/* Description: gRPC client that waits for a transaction digest with waitForTransaction and reads its effects and balanceChanges */}
+SuiPay looks up a transaction by digest over gRPC and treats a not-found response as pending rather than failed:
+
+<ImportContent source="packages/core/src/chain/grpc-finality.ts" org="MystenLabs" repo="suipay" mode="code" fun="fetchGrpcTransaction" />
 
 ## Check the execution status
 
@@ -116,7 +117,7 @@ To verify a payment:
 
 Use exact equality, not a minimum. The amount you expected is the price you quoted, so a different credit means the transaction does not match the payment you asked for, even when it is larger. The `exact` scheme defines the check the same way: the facilitator sums the [`payTo`](/onchain-finance/agentic-payments/x402-on-sui#payment-requirements) entries for `asset` and requires the total to equal `amount`, and it does not inspect what the agent spent or who else the transaction paid (Effects check section of [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
 
-When the payment is in SUI and the recipient is also the gas owner, Sui folds gas into the same balance change, so the credit never matches the price. Avoid that combination rather than trying to correct for it. {/* TODO: Citation needed — verify this claim and add source */}
+When the payment is in SUI and the recipient is also the gas owner, Sui folds gas into the same balance change, so the credit never matches the price. Avoid that combination rather than trying to correct for it (Effects check section of [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
 
 Checking balance changes works the same way whether the agent drew from coins or from an [address balance](/onchain-finance/asset-custody/address-balances), and regardless of who paid gas.
 
@@ -165,7 +166,7 @@ A not-found result is conclusive only after all of the following are true:
 - The digest lookup returned a definite not found. A network error or timeout means the outcome is unknown. It does not mean the transaction was not found.
 - The node you asked still holds history from before you first submitted the transaction, so a pruned result cannot pass for a missing one.
 
-SuiPay, a managed payment gateway for agents that runs on Testnet only, applies these rules to x402 payments whose outcome is unknown. The SuiPay gateway records the signed bytes and digest as pending before it broadcasts them. A background job marks a pending payment failed only when it can prove the bytes can never execute. The proof requires 3 conditions: the `ValidDuring` window closed at least 1 epoch ago, the digest lookup returns not found, and every configured full node still holds history from when the record was written. Any unreadable input leaves the payment pending. For transactions that pin gas coins instead of carrying `ValidDuring`, the proof is that every pinned gas coin has moved to a newer version. {/* TODO: link SuiPay docs once public */}
+SuiPay, a managed payment gateway for agents that runs on Testnet only, applies these rules to x402 payments whose outcome is unknown. The SuiPay gateway records the signed bytes and digest as pending before it broadcasts them. A background job marks a pending payment failed only when it can prove the bytes can never execute. The proof requires 3 conditions: the `ValidDuring` window closed at least 1 epoch ago, the digest lookup returns not found, and every configured full node still holds history from when the record was written. Any unreadable input leaves the payment pending. For transactions that pin gas coins instead of carrying `ValidDuring`, the proof is that every pinned gas coin has moved to a newer version.
 
 ## Poll or stream
 

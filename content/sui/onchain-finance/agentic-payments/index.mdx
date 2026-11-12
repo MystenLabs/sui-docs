@@ -90,9 +90,9 @@ Sui typically finalizes a transaction in 400 to 700 ms ([Life of a Transaction](
 A dialect is the way HTTP encodes a 402 exchange. Sui payments use 2 dialects:
 
 - **x402:** The server sends its payment requirements in a `PAYMENT-REQUIRED` header, the client sends its payment in a `PAYMENT-SIGNATURE` header, and the server reports the result in a `PAYMENT-RESPONSE` header ([x402 HTTP transport](https://github.com/x402-foundation/x402/blob/main/specs/transports-v2/http.md)). [The proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui) defines what the Sui transaction must contain and how a facilitator verifies and settles it ([x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
-- **MPP:** The Machine Payments Protocol (MPP) sends the challenge and the payment in HTTP authentication headers. The server sends `WWW-Authenticate: Payment`, the client answers with `Authorization: Payment`, and the server returns a `Payment-Receipt` header. {/* TODO(verify): confirm the MPP expansion and add a link to the public MPP specification. */}
+- **MPP:** MPP sends the challenge and the payment in HTTP authentication headers. The server sends `WWW-Authenticate: Payment`, the client answers with `Authorization: Payment`, and the server returns a `Payment-Receipt` header.
 
-Both dialects describe the same economic exchange. A server can advertise both in one `402` response, as the SuiPay gateway does, and the client picks the one it supports. {/* TODO: Citation needed: the SuiPay gateway advertises both dialects in one 402 response */}
+Both dialects describe the same economic exchange. A server can advertise both in one `402` response, as the SuiPay gateway does, and the client picks the one it supports.
 
 ## Building blocks on Sui
 
@@ -137,8 +137,6 @@ A seller registers a paid service with the SuiPay gateway, and the gateway answe
 - `payment::settle` settles a direct payment that the agent funds from coins it owns.
 - `spend_account` holds an owner-funded account. The owner sets spending policies and issues a spend account grant to the agent's delegate key, and `spend_account::settle_policy` enforces the policy and grant limits on every payment. The owner can pause or revoke the account, a policy, or a grant.
 - `subscription` holds a prepaid escrow that a recipient can charge a fixed amount at most once per billing period, and `refund_vault` holds proceeds during an optional refund window.
-
-{/* TODO: Citation needed: SuiPay gateway registration and suipay Move package functions; link SuiPay docs once public */}
 
 SuiPay ships as 3 npm packages:
 
