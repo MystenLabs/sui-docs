@@ -19,6 +19,9 @@ keywords:
   - coin send_funds
   - payment receipt
   - payment URI
+  - x402
+  - MPP
+  - agent payments
 goal:
   description: >-
     Reader can choose between basic transfer and Payment Kit, decide whether
@@ -55,6 +58,7 @@ questions:
   - How do I pay gas for a payment transaction on Sui?
   - What is a gasless stablecoin transfer on Sui?
   - How do sponsored transactions work for Sui payments?
+  - How do AI agents pay per call on Sui?
 answer: >-
   Sui supports two main payment models out of the box. Basic transfers move
   value directly using balance::send_funds (address balances) or
@@ -88,6 +92,7 @@ In Payment Kit, a `PaymentRegistry` records each payment that it processes and r
 - If you need receipts or duplicate prevention, use [Payment Kit](#payment-kit), then choose a processing mode:
   - If you need duplicate prevention, or compliance, accounting, or retry safety requires payment history, use registry payments.
   - If an external system already tracks payments, you need no duplicate prevention, and you want lower gas cost, use ephemeral payments.
+- If an AI agent pays for an API or other resource per request, use [agent pay-per-call](#agent-pay-per-call-x402-and-mpp) with x402 or MPP.
 - Then pick a [gas strategy](#gas-strategies). Each model works with any gas strategy.
 
 ## Basic transfer
@@ -166,6 +171,12 @@ Percent-encode every parameter value according to RFC 3986. The `amount` value i
 Verify the receiver, amount, coin type, and package ID against your own expected values rather than trusting client-supplied or URI-supplied data, and confirm payment against onchain receipts and events rather than client state. For broader guidance, see [Security Best Practices](/develop/security/best-practices).
 
 :::
+
+## Agent pay-per-call (x402 and MPP)
+
+When an AI agent pays for an API call, a file, or another resource per request, use an HTTP 402 payment protocol such as x402 or the Machine Payments Protocol (MPP). The server answers an unpaid request with HTTP status 402 and the payment terms. The agent signs a Sui payment that matches those terms and retries the request with proof of payment, and the server delivers the resource after the payment settles onchain.
+
+Do not fund the agent with the money it spends. Have the owner issue an [allowance](/onchain-finance/allowances) or an escrow grant to the agent's address, so the network enforces a spending cap, rate, and expiry on every payment and the owner can revoke at any time. Gas comes from the agent, a sponsor, or the facilitator that settles the payment. See [Agentic Payments](/onchain-finance/agentic-payments) for the protocol flow, agent wallets, and settlement.
 
 ## Common payment pitfalls
 

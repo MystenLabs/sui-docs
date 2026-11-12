@@ -33,14 +33,16 @@ builder_paths:
 questions:
   - How do I get SUI into a wallet?
   - How do I bridge tokens from Ethereum to Sui?
+  - How do I fund an AI agent's wallet?
 answer: >-
   Fund wallets through exchange withdrawals, cross-chain bridges
   (Wormhole, Sui Bridge), or
-  Testnet faucets. For agents, use a gas station to sponsor transactions
-  instead of direct funding.
+  Testnet faucets. For AI agents, sponsor gas or use gasless stablecoin
+  transfers, and fund an allowance or escrow that the agent spends from
+  instead of funding the agent directly.
 ---
 
-Before users or agents can transact on Sui, their wallets need tokens. A new wallet that holds nothing cannot pay gas, so it cannot send any transaction until it is funded. Either fund the wallet directly using one of the methods on this page, or have someone else pay gas for its transactions. For agents, use a gas station to sponsor transactions instead of direct funding.
+Before users or agents can transact on Sui, their wallets need tokens. A new wallet that holds nothing cannot pay gas, so it cannot send any transaction until it is funded. Either fund the wallet directly using one of the methods on this page, or have someone else pay gas for its transactions. For agents, use [sponsored transactions](/develop/transaction-payment/sponsor-txn) or [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers) instead of direct funding. See [How do I fund an AI agent's wallet?](#how-do-i-fund-an-ai-agents-wallet).
 
 ## Which funding method should I use?
 
@@ -72,3 +74,9 @@ Bridged assets arrive as wrapped tokens on Sui. The wrapped token's coin type ad
 For development and testing on Testnet and Devnet, see [Get SUI from Faucet](/getting-started/onboarding/get-coins) for CLI and programmatic faucet access.
 
 Faucet tokens have no monetary value and cannot be transferred to Mainnet.
+
+## How do I fund an AI agent's wallet?
+
+Do not send an AI agent the money it spends. The owner keeps the funds and authorizes the agent's address to spend within limits, through an [allowance](/onchain-finance/allowances) on the owner's address balance or an escrow grant from a payment service. A leaked agent key then exposes only the remaining authorized budget, and the owner can revoke at any time.
+
+The agent still needs a way to pay gas. Keep a small SUI balance at the agent's address, or use a [sponsor](/develop/transaction-payment/sponsor-txn) so the agent never holds SUI. See [Setting Up Agent Wallets and Signers](/onchain-finance/agentic-payments/agent-wallets#funding-an-agent) for gas options, funding, and Testnet faucets for SUI and USDC.

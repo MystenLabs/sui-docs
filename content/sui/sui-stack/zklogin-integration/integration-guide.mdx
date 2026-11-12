@@ -292,6 +292,25 @@ The service returns the salt as a decimal string. The SDK functions `jwtToAddres
 
 The salt's purpose is to disconnect the OAuth identifier (`sub`) from the onchain Sui address. Leaking the salt enables linking Web2 and Web3 identities but does not compromise fund control.
 
+{/* DRAFT: from sui#27423, pending review */}
+
+:::warning Do not keep salts only in browser storage in production
+
+Many zkLogin examples store the salt in browser `localStorage` for simplicity. If the user clears site data, switches browsers or devices, or signs in from a private browsing window, the salt is gone and so is access to the address and every asset it holds. For production apps, keep the salt in a backend salt service (database mapping) or derive it from a master seed, and treat any browser copy as a cache only.
+
+:::
+
+### Migrate users off browser-stored salts
+
+If you shipped with salts stored only in `localStorage`, move returning users to a durable strategy the next time they sign in, while their browser still holds the salt:
+
+1. After the user signs in, read the existing salt from `localStorage`.
+1. **Database mapping:** Write that existing salt to your salt service, keyed by the user's `iss`, `aud`, and `sub`. The salt does not change, so the user's address does not change. This is the simplest migration because it preserves every address.
+1. **Derived salts (including a managed salt service such as Enoki):** Request the salt from the service for the user's JWT and compare it with the stored salt. If they match, nothing changes. Salts generated at random in the browser almost never match a derived salt, so in practice the user now has 2 addresses: the old one from the stored salt and a new one from the derived salt.
+1. When the user has 2 addresses, move their assets from the old address to the new one before the browser copy of the old salt is lost. Signing from the old address needs a zero-knowledge proof generated with the old salt (the prover takes the salt as an input), so request one proof per salt. Explain the change to the user, because the address they shared with others changes.
+
+To avoid the 2-address case, choose a durable salt strategy before any user holds assets, including during development and on Testnet.
+
 ## Step 5: Derive the user's Sui address
 
 With the JWT and salt, derive the zkLogin address:
@@ -594,6 +613,23 @@ Cache the ephemeral key pair and zero-knowledge proof for the duration of the se
 - **Use session storage, not local storage** on browsers. Session storage clears automatically when the browser session ends.
 - **Never persist them** in an insecure location on any platform.
 - If an attacker compromises both the ephemeral private key and the zero-knowledge proof, the attacker can sign transactions on the user's behalf.
+
+{/* DRAFT: from sui#27423, pending review */}
+
+## How do I renew a session before `maxEpoch`?
+
+Validators accept a zkLogin signature while the current epoch is less than or equal to its `maxEpoch` and reject it with `ZKLogin expired at epoch ...` once the current epoch is greater. They also reject a `maxEpoch` more than 30 epochs past the current epoch (the `zklogin_max_epoch_upper_bound_delta` protocol setting), so you cannot avoid renewal by choosing a distant `maxEpoch`. The user's address does not change on renewal, because it depends only on `iss`, `aud`, `sub`, and the salt.
+
+The nonce commits to one ephemeral public key, so renewal always starts with a new key pair and a new OAuth login. To renew without interrupting the user:
+
+1. Compare the current epoch with the session's `maxEpoch`. Start renewal before the session expires, for example when the current epoch reaches `maxEpoch - 1`.
+1. Generate a **new** ephemeral key pair, a new `maxEpoch`, and new randomness, as in [Step 1](#step-1-generate-an-ephemeral-key-pair-and-nonce).
+1. Compute the nonce from the new ephemeral public key, the new `maxEpoch`, and the new randomness **before** you send the user to the provider.
+1. Send the user through the OAuth login with the new nonce, as in [Step 2](#step-2-direct-the-user-to-the-oauth-login). The provider returns a new JWT that carries that nonce.
+1. Request a new zero-knowledge proof with the new JWT, the new extended ephemeral public key, the new `maxEpoch` and randomness, and the same salt, as in [Step 6](#step-6-get-the-zero-knowledge-proof).
+1. Switch new transactions to the new key pair and proof, and discard the old ones. The old session keeps working through its `maxEpoch`, so transactions already in flight do not fail while the user renews.
+
+Do not try to renew by requesting a fresh JWT with a refresh token. A JWT from a refresh does not carry a nonce for your new ephemeral key, so the prover cannot bind it to that key.
 
 ## How much prover capacity do I need?
 

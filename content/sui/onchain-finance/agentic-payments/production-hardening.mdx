@@ -1,0 +1,194 @@
+---
+title: Hardening Payment Agents for Production
+sidebar_label: Production Hardening
+description: >-
+  Stop a misbehaving payment agent with offchain flags and onchain revocation,
+  make retries safe with idempotency keys bound to signed transaction digests,
+  and monitor spending before you run an agent on Sui Mainnet.
+keywords:
+  - production hardening
+  - kill switch
+  - idempotency
+  - retry safety
+  - circuit breaker
+  - rate limiting
+  - agent monitoring
+  - allowance revocation
+  - spend account
+goal:
+  description: >-
+    Reader can plan kill switches, safe retries, circuit breakers, rate limits,
+    and monitoring for a payment agent on Sui
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '\]\(/[^)]+\)'
+      min: 3
+      label: Links to related documentation
+    - has_tables: 1
+      label: Has a kill-switch comparison table
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+builder_paths:
+  - path_id: agentic-payments
+    path_name: Agentic Payments
+    step: Production hardening
+    stage: Ship
+questions:
+  - How do I add a kill switch to a payment agent on Sui?
+  - Can I pause a Sui allowance?
+  - How do I make agent payment retries idempotent on Sui?
+  - When can I delete an idempotency key for a Sui transaction?
+  - What should I monitor for a payment agent in production?
+answer: >-
+  A production payment agent needs an offchain stop for instant response and
+  an onchain stop the agent cannot ignore, such as revoking its sui::allowance
+  or pausing the account, policy, or grant it spends through. Retries are safe
+  when the agent records an idempotency key bound to the signed transaction
+  digest before submission, resubmits only those bytes, and keeps the record
+  until the transaction's ValidDuring window has passed. Add circuit breakers,
+  rate limits, and monitoring for spend, pending payments, and revocations.
+---
+
+:::info Draft
+
+This page is a draft pending review. Details can change before publication.
+
+:::
+
+A payment agent in production needs safety controls beyond correct business logic. Bugs, compromised keys, and flaky networks all lead to the same failures: an agent that keeps spending when it should stop, or that pays twice for one purchase. The controls that prevent those failures fall into 4 groups: kill switches, safe retries, failure and rate limits, and monitoring.
+
+## Kill switches
+
+A kill switch halts an agent's spending immediately. Use 2 layers. An offchain stop takes effect fastest, but it works only if the agent honors it. An onchain stop takes a transaction, but it holds even when the agent is buggy, compromised, or running stale configuration, because Sui rejects the spend itself.
+
+### Offchain stop
+
+Have the agent check a flag before it signs any transaction. Keep the flag in a feature flag service or configuration store that on-call operators can change without a deploy. When the flag is set, the agent refuses to sign and reports why. The check costs nothing onchain, so it is the right first response to any incident.
+
+An offchain stop does not protect against a leaked key. Whoever holds the key can sign without asking your flag service, so also plan an onchain stop.
+
+### Revoke a `sui::allowance`
+
+If the agent spends from an owner's [address balance](/onchain-finance/asset-custody/address-balances) through an [allowance](/onchain-finance/allowances/allowances-overview), the owner's onchain kill switch is revocation. The funder calls `sui::allowance::revoke` with the `AllowanceCap` they received at issuance. The call deletes both the allowance and the cap ([Using Allowances](/onchain-finance/allowances/using-allowances#revoke-an-allowance)). Sui rejects any spend that reaches the network after that, and a spend already in flight fails when it executes, so no funds move after the revoke takes effect ([Allowances FAQ](/onchain-finance/allowances/allowances-faq#what-happens-to-an-in-flight-spend-during-revocation)).
+
+The `sui::allowance` module has no pause. Revocation is the only way to stop an allowance, and it is permanent. To resume after an incident, issue a new allowance, which is also how you change an allowance's limits ([Allowances FAQ](/onchain-finance/allowances/allowances-faq#can-you-change-the-limits-of-an-existing-allowance)). Plan for this:
+
+- Keep the funder's key, which holds the `AllowanceCap`, separate from the agent's key and available to operators during an incident.
+- Set an expiration on every allowance as a backstop. An expired allowance stops spends without any action, although each attempted spend still fails during execution and costs the spender gas ([Allowances FAQ](/onchain-finance/allowances/allowances-faq#what-is-the-difference-between-expiration-and-revocation)).
+- For an app-bound allowance, the app can replace a compromised agent key with `rotate_spender` without the funder reissuing the allowance. A direct allowance has a fixed spender, so revoke and reissue instead ([Allowances FAQ](/onchain-finance/allowances/allowances-faq#can-you-change-the-spender)).
+
+### Pause or revoke a SuiPay spend account
+
+SuiPay, a managed payment gateway published as `@mysten-incubation/suipay`, `@mysten-incubation/suipay-buyer`, and `@mysten-incubation/suipay-mcp`, holds buyer funds in a `spend_account` Move module. Its `Account<T>` holds the funds, `SpendPolicy` entries in the account set per-service ceilings, and a `Grant<T>` gives one delegate key a budget, an expiry, and a list of the policies it can use. Each of the 3 levels can be paused, resumed, or revoked, and only the owner can do it. SuiPay runs on Testnet only. {/* TODO: link SuiPay docs once public */}
+
+| **Level** | **Pause and resume** | **Revoke (permanent)** | **What it stops** |
+| --- | --- | --- | --- |
+| Account | `pause_account`, `resume_account` | `revoke_account_and_refund_balance`, which also returns the remaining balance to the owner | Every payment from the account, through any grant |
+| Policy | `pause_policy`, `resume_policy` | `revoke_policy` | Payments to the services that policy covers |
+| Grant | `pause_grant`, `resume_grant` | `revoke_grant` | Payments by the delegate that holds the grant |
+
+Pausing is reversible, so it is the right response while you investigate. Revoking is terminal: a revoked account, policy, or grant also counts as paused and cannot be resumed. Payment functions check these flags before moving funds, so a paused or revoked level makes the payment abort. Each change emits an event (`PoolPauseSet`, `PolicyPauseSet`, `GrantPauseSet`, `PoolRevoked`, `PolicyRevoked`, or `GrantRevoked`) that your monitoring can alert on.
+
+Choose the narrowest level that contains the problem. Pause the grant when 1 agent key misbehaves, the policy when 1 service is the problem, and the account when you do not yet know the cause.
+
+{/* TODO: Import code from a public SuiPay repo once available: spend_account pause, resume, and revoke functions */}
+
+## Safe retries with idempotency keys
+
+A Sui transaction is atomic: it either fully succeeds or does nothing. A network failure can still make the outcome unknown, because the transaction might have executed even though the response never arrived. If the agent reacts by building and signing a new payment, and the original also executes, the payer pays twice. Idempotency keys prevent that.
+
+An idempotency key is an identifier the agent generates once for each logical operation, for example 1 per purchase. Every retry of that operation reuses the key. The key protects you only when it is bound to a single signed transaction and recorded before that transaction reaches the network.
+
+### Record the key before submission
+
+For each operation:
+
+1. Check the idempotency store for the key. If a record exists, do not sign anything new. Go to step 5 with the stored bytes.
+1. Build and sign the transaction. Give it a `ValidDuring` expiration so that it has a known last epoch. Transactions that pay gas from an address balance already require one ([Using Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances#how-do-i-pay-for-gas-from-an-address-balance)).
+1. Compute the transaction digest from the signed bytes.
+1. Write a durable record for the key that holds the digest, the signed bytes, the `maxEpoch`, and a pending state. Make the write an atomic insert, so that when 2 workers race on the same key, only the winner submits.
+1. Submit the signed bytes.
+1. Move the record to a terminal state only when the outcome is known, as described in [Verifying Payment Settlement for Agents](/onchain-finance/agentic-payments/settlement-verification#handle-each-outcome).
+
+Never record the key after submission. If the process crashes between submitting and recording, the next attempt finds no record, signs a second transaction, and pays twice. Recording first means a crash leaves a pending record with the exact bytes to resubmit. The Sui docs give the same rule for pending transactions: store each signed transaction before you send it, and remove it only after a full node confirms its finality or invalidity ([Life of a Transaction](/develop/transactions/transaction-lifecycle#how-do-i-resend-or-verify-a-pending-transaction)).
+
+Never re-sign to retry. Signing the same intent again usually produces different bytes, for example with a different gas payment or expiration, and therefore a different digest that Sui treats as a separate transaction. Resubmitting the stored bytes is always safe, because Sui executes a given transaction at most once.
+
+The proposed x402 Sui exact scheme applies this pattern to facilitators: the claim key is the transaction digest, the facilitator claims it before submitting, and the check-and-record step must be atomic across concurrent requests ([x402#3081, Settlement deduplication](https://github.com/x402-foundation/x402/pull/3081)). SuiPay's managed gateway does the same with a durable execution record. It writes the digest and signed bytes as pending before broadcast, lets only the winner of the insert submit, and marks a record settled or failed only when it finds the effects or proves the bytes can never execute.
+
+### Keep the key until the window has passed
+
+Do not expire idempotency keys on a timer. A record deleted while its transaction can still execute is as dangerous as no record. The agent forgets the payment is pending, signs a new one, and the original can still land.
+
+Keep each record until its transaction can no longer execute: the current epoch is past the transaction's `maxEpoch`, plus a margin of at least 1 more epoch. The x402 Sui exact scheme requires a successful claim to be kept until at least 1 epoch after `maxEpoch` ends, because a node running an epoch behind could otherwise accept the payment again ([x402#3081, Settlement deduplication](https://github.com/x402-foundation/x402/pull/3081)). Pending records follow the rules in [When a pending transaction can no longer execute](/onchain-finance/agentic-payments/settlement-verification#when-a-pending-transaction-can-no-longer-execute). After that point you can archive or delete the record.
+
+Store keys somewhere that survives process restarts and that every agent instance shares. An in-memory store forgets pending payments on restart, and 2 instances with separate stores can each submit a payment for the same operation.
+
+### Onchain duplicate prevention
+
+If the agent pays merchants that use [Payment Kit](/onchain-finance/payment-kit) registry payments, the registry adds an onchain guard. It rejects a second payment with the same nonce, amount, coin type, and receiver, so reuse a stable nonce for every retry of the same purchase ([Payment Kit Standard](/onchain-finance/payment-kit#how-do-i-retry-a-payment-safely)). This guard complements an idempotency store. It does not replace one.
+
+## Circuit breaker
+
+A circuit breaker stops the agent after repeated failures, so an upstream problem does not burn gas on transactions that keep failing. Count consecutive failures, such as reverted transactions, RPC errors, or verification mismatches. When the count reaches a threshold, open the breaker: refuse new payments, alert an operator, and keep processing pending records so that in-flight payments still resolve. Close the breaker after a cool-down period, or only after an operator resets it if the failures involved money moving to the wrong place.
+
+Count a pending payment as neither a success nor a failure. A burst of pending results usually means an RPC or network problem, which is a reason to switch endpoints, not to sign more transactions.
+
+## Rate limiting
+
+Cap how many payments, and how much value, each agent can send per time window. A rate limit contains bugs that cause rapid-fire submissions and bounds the damage from a leaked key. Enforce limits in 2 places:
+
+- **Offchain:** The agent or its gateway counts payments and value per window and refuses to sign past the limit.
+- **Onchain:** The spending authority enforces limits that hold even if the agent ignores its own. A `sui::allowance` supports a lifetime cap and a recurring rate limit per window ([What Are Allowances?](/onchain-finance/allowances/allowances-overview#limits-you-can-set)). A SuiPay spend account enforces a per-payment maximum and a total cap per policy, and a budget and expiry per grant.
+
+Set the onchain limits as the hard ceiling and the offchain limits lower, so the offchain check fires first and the onchain check is the backstop.
+
+## Monitoring checklist
+
+Track these signals for every production agent:
+
+- [ ] **Payment success rate.** Alert when it drops, for example below 95% over 5 minutes.
+- [ ] **Gas spend.** Alert when spend exceeds the expected budget, for example by more than 20% in an hour.
+- [ ] **Remaining authority.** For a `sui::allowance`, compare the current spend with the lifetime cap and rate limit. For a SuiPay spend account, compare each policy's spend with its cap and each grant's total spend with its budget. Alert before either runs out.
+- [ ] **Pending payments.** Track how many records are pending and the age of the oldest. A pending record that outlives its `ValidDuring` window needs attention.
+- [ ] **Pause and revoke events.** Alert on every pause, resume, and revoke, whether or not your team triggered it.
+- [ ] **Circuit breaker state.** Log every open and close.
+- [ ] **Settlement latency.** Measure the time from submission to certified effects. Finality typically takes 400 to 700 ms ([Life of a Transaction](/develop/transactions/transaction-lifecycle#how-long-does-a-sui-transaction-take-to-finalize)), so sustained delays of several seconds point to an RPC or network problem.
+- [ ] **Verification mismatches.** Alert on every successful transaction whose balance changes do not match the expected payment.
+
+Emit a structured log line for each payment attempt that includes the idempotency key, the digest, the `maxEpoch`, the state, the amount, the coin type, and the recipient. With the digest in every line, you can look up the onchain outcome of any attempt later.
+
+## Pre-production checklist
+
+Before you run an agent on Mainnet:
+
+- [ ] The agent's key lives in a secrets manager or cloud KMS, for example through the `@mysten/signers` package, not in source code or committed configuration. See [Setting Up Agent Wallets and Signers](/onchain-finance/agentic-payments/agent-wallets).
+- [ ] The agent spends through bounded authority, such as an allowance or a spend account grant, with a short expiration and caps sized to the expected workload.
+- [ ] The offchain stop is tested and on-call operators can reach it.
+- [ ] The onchain stop is tested: you have revoked an allowance or paused a grant on Testnet and confirmed the agent's next payment fails.
+- [ ] The key that can revoke or pause is separate from the agent's key and is available during an incident.
+- [ ] Every payment carries a `ValidDuring` expiration.
+- [ ] The idempotency store is durable, shared by every agent instance, written before submission, and retained until each transaction's window has passed.
+- [ ] Retries resubmit stored signed bytes and never re-sign.
+- [ ] Settlement verification checks status and exact balance changes before the agent releases any goods or services. See [Verifying Payment Settlement for Agents](/onchain-finance/agentic-payments/settlement-verification).
+- [ ] The circuit breaker and rate limits have thresholds sized to the workload.
+- [ ] Monitoring alerts cover success rate, gas spend, remaining authority, pending payments, and pause and revoke events.
+- [ ] A key rotation procedure is documented and tested.
+- [ ] A backup gRPC or GraphQL endpoint is configured for failover. See [Data Access Interfaces](/develop/accessing-data/data-serving).
+
+For package-level launch checks, see [Production Readiness](/develop/production-readiness).
+
+## Related pages
+
+- [Verifying Payment Settlement for Agents](/onchain-finance/agentic-payments/settlement-verification): Verify-then-settle and pending transactions.
+- [Setting Up Agent Wallets and Signers](/onchain-finance/agentic-payments/agent-wallets): Key storage, rotation, and funding.
+- [Using Allowances](/onchain-finance/allowances/using-allowances): Issue, spend from, and revoke allowances.
+- [Payment Kit](/onchain-finance/payment-kit): Onchain duplicate prevention for merchant payments.
