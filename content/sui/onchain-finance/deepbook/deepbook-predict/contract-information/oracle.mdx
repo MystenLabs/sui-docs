@@ -17,8 +17,8 @@ keywords:
   - oracle freshness
   - svi_decimals
   - set_block_scholes_svi_decimals
-last_verified: 2026-11-06
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5, propbook protocol version 2, and deepbook_predict_math version 2); both SVI stores' decimals read before the Mainnet Version 5 upgrade (TBD-DBU-1166 Mainnet SVI store re-read after the cutover); both ProtocolConfig objects read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' freshness windows re-read after Mainnet's reopen
+last_verified: 2026-11-12
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5, propbook protocol version 2, and deepbook_predict_math version 2); Testnet SVI store decimals re-read 2026-11-12 at 18, Mainnet's read the same day at the default 9 (TBD-DBU-1166 Mainnet SVI store re-read after the cutover); both ProtocolConfig objects read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' freshness windows re-read after Mainnet's reopen
 goal:
   description: >-
     Reader can resolve the canonical Propbook oracle objects for an underlying,
@@ -333,7 +333,7 @@ An SVI series identifier also hashes values the store carries as admin-set confi
 	noComments
 />
 
-The decimals are `9` until `registry::set_block_scholes_svi_decimals` sets `18`, the only other accepted value. The setter takes the `RegistryAdminCap`, needs the store at the running Propbook version, aborts with `EInvalidSviDecimals` for any other value, and emits `BlockScholesSVIDecimalsSet`. A change applies to every expiry at once: a batch signed at other decimals aborts with `ESeriesIdMismatch`, and until the first observation at the new decimals lands, the store reads `none` and Predict's live pricing for that underlying halts. Both stores run at 9 decimals.
+The decimals are `9` until `registry::set_block_scholes_svi_decimals` sets `18`, the only other accepted value. The setter takes the `RegistryAdminCap`, needs the store at the running Propbook version, aborts with `EInvalidSviDecimals` for any other value, and emits `BlockScholesSVIDecimalsSet`. A change applies to every expiry at once: a batch signed at other decimals aborts with `ESeriesIdMismatch`, and until the first observation at the new decimals lands, the store reads `none` and Predict's live pricing for that underlying halts. Both stores run at 18 decimals (TBD-DBU-1166: verify on Mainnet after the cutover).
 
 Predict protocol version 5 reads the store's decimals with every SVI row and prices `a` and `b` at 1e18, so an 18-decimal store keeps their full precision and a 9-decimal store prices as before.
 

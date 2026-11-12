@@ -25,7 +25,7 @@ keywords:
   - order fee
   - fee band
   - builder_fee_cap
-last_verified: 2026-11-06
+last_verified: 2026-11-12
 verified_against: deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover, TBD-DBU-1166 Mainnet re-read after the cutover); Testnet and Mainnet max_lp_pool_value and no fee-band template read before the Mainnet upgrade; deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; live referral_fee_rate read from both ProtocolConfig objects on 2026-09-28 and 2026-10-13; builder-code ID derivation checked against existing Mainnet and Testnet codes on 2026-10-01; Testnet OrderDesk and no_trade_window_ms read 2026-10-13; Mainnet block_scholes_svi_freshness_ms read after its cutover, and both networks' referral fee rate re-read after Mainnet's reopen
 goal:
   description: >-
@@ -188,7 +188,7 @@ An admin sets fee bands with `protocol_config::set_template_fee_bands`, which ta
 - **What follows from it:** The referral share and the sponsor subsidy grow with the larger fee, the subsidy only up to the reserve the order's commit set aside, and on a mint the larger fee counts toward the rule that the all-in cost cannot exceed the quantity. An early sell's fee stays capped at its redeem value.
 - **Which markets:** Each market copies the template when it is created, like the rest of its fee policy, so a change reaches only markets created afterwards. A market created before any table was set pays 1x at every price.
 
-No public function returns a market's copy, and `MarketCreated` does not carry it, so a market's bands are the table of the last `FeeBandsUpdated` before its creation. Testnet has no table set, so every Testnet market pays 1x. TBD-DBU-1166: Mainnet fee-band table at launch, or none.
+No public function returns a market's copy, and `MarketCreated` does not carry it, so a market's bands are the table of the last `FeeBandsUpdated` before its creation. Neither network has a table set (TBD-DBU-1166: verify on Mainnet after the cutover), so every market pays 1x.
 
 A referral share is not another charge: it is split out of fees the trader has already paid, and it never changes `cost`. [Referrals](#referrals) covers the whole mechanism.
 

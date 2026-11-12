@@ -50,7 +50,7 @@ answer: >-
   events into typed receipts. The SDK throws PredictInputError for input it
   rejects before building anything and PredictMoveError for a Move abort during
   a simulation.
-last_verified: 2026-11-06
+last_verified: 2026-11-12
 verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa), 2.8.0 (ts-sdks 82a8cdb6), and the Testnet call targets of 2.9.0, 2.10.0, and 2.11.0 read from their npm packages (2.10.0 is the first whose Testnet targets compile Predict 5, deepbook_predict_orders 2, and Sessions 4); predict protocol version 5, deepbook_predict_orders 2, and sessions 4 on both networks (Mainnet after its Version 5 cutover), publication records at deepbookv3 046ffd1e; TBD-DBU-1166 SDK release and its @mysten/sui peer dependency read from npm'
 ---
 
@@ -58,7 +58,7 @@ The DeepBook Predict SDK builds every Predict transaction, reads live Predict st
 
 ## How do I install the Predict SDK? {#install}
 
-Install `@mysten/deepbook-v3` version TBD-DBU-1166: SDK release or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with the `@mysten/sui` peer dependency at the version that release names, TBD-DBU-1166: sui peer floor. The package requires Node.js 22 or later. That release is the first that targets Predict protocol version 5 on both networks, as [Create the client](#client) explains.
+Install `@mysten/deepbook-v3` version TBD-DBU-1166: SDK release or later from [npm](https://www.npmjs.com/package/@mysten/deepbook-v3), together with the `@mysten/sui` peer dependency at the version that release names, TBD-DBU-1166: sui peer floor. The package requires Node.js 22 or later. That release is the first that targets Predict protocol version 5 on both networks, and session calls on Mainnet need version TBD-DBU-1166: Sessions v4 SDK release or later, the first that targets Sessions protocol version 4 there, as [Create the client](#client) explains.
 
 ```sh npm2yarn
 npm install @mysten/deepbook-v3 @mysten/sui
@@ -104,7 +104,7 @@ The Predict client exposes 3 groups of members:
 
 The client also carries `wrapperIdFor(owner)`, which [Predict Accounts SDK](/onchain-finance/deepbook/deepbook-predict-sdk/accounts) covers, `queueIdFor(marketId)`, which derives a market's queue ID, and `cfg`, the `PredictConfig` that the client uses.
 
-Both networks run Predict protocol version 5, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders, and `tx.mint`, its siblings, and `tx.claimSettled` always abort. Testnet works from version 2.10.0, the first release whose Testnet call targets compile Predict version 5, `deepbook_predict_orders` version 2, and Sessions version 4, and Mainnet needs version TBD-DBU-1166: SDK release or later. Earlier releases resolve Mainnet's Predict protocol version 4, `deepbook_predict_orders` version 1, and Sessions version 3 call targets, which the watermarks of 5, 2, and 4 retire, so every version-gated call they build there aborts with `EPackageVersionDisabled`. `packages.predictCurrentVersion` and `packages.predictOrdersCurrentVersion` record the versions each network's call targets compile, and `packages.accountLatest` is the account call target, because a transaction cannot call an account version older than the one Predict links. `client.predict.read.executionMode()` reports `'delayed'` once the configuration records the deployment. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers the queued path.
+Both networks run Predict protocol version 5, where every mint and early sell is a queued order placed with `tx.enqueuePlan` and the other `enqueue*` builders, and `tx.mint`, its siblings, and `tx.claimSettled` always abort. Testnet works from version 2.10.0, the first release whose Testnet call targets compile Predict version 5, `deepbook_predict_orders` version 2, and Sessions version 4, and Mainnet needs version TBD-DBU-1166: SDK release or later, with version TBD-DBU-1166: Sessions v4 SDK release or later for session calls. Earlier releases resolve Mainnet's Predict protocol version 4, `deepbook_predict_orders` version 1, and Sessions version 3 call targets, which the watermarks of 5, 2, and 4 retire, so every version-gated call they build there aborts with `EPackageVersionDisabled`. `packages.predictCurrentVersion` and `packages.predictOrdersCurrentVersion` record the versions each network's call targets compile, and `packages.accountLatest` is the account call target, because a transaction cannot call an account version older than the one Predict links. `client.predict.read.executionMode()` reports `'delayed'` once the configuration records the deployment. [Predict Positions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/positions#queued-orders) covers the queued path.
 
 ## Configuration {#configuration}
 

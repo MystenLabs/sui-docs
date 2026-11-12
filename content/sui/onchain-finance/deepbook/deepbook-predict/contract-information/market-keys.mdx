@@ -42,7 +42,7 @@ answer: >-
   half-open region (lower, higher]. Tick 0 is the negative-infinity sentinel and
   tick 1073741823 is the positive-infinity sentinel. A minted position is a
   packed u256 order ID that is unique only within one expiry market.
-last_verified: 2026-09-23
+last_verified: 2026-11-12
 verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8, and both networks' cadence terms re-read after Mainnet's reopen
 ---
 
@@ -114,7 +114,7 @@ Both deployments run one underlying, BTC. Each network's registry enables its ow
 | 1m | `10_000_000` | 0.01 USD | `1_000_000_000` | 1 USD |
 | 5m | `10_000_000` | 0.01 USD | `1_000_000_000` | 1 USD |
 
-The 1h, 1d, 1w, and 1mo cadences are disabled on both networks, and a disabled cadence reads back as an all-zero configuration. Read the live values with `registry::cadence_config` or `registry::cadence_configs`, or as `tickSize` and `admissionTickSize` from `read.markets()`, rather than hardcoding them, because an admin can change a cadence and each market keeps the terms it received at creation.
+The 1h, 1d, 1w, 1mo, and 15m cadences are disabled on both networks (TBD-DBU-1166: verify on Mainnet after the cutover), and a disabled cadence reads back as an all-zero configuration. Read the live values with `registry::cadence_config` or `registry::cadence_configs`, or as `tickSize` and `admissionTickSize` from `read.markets()`, rather than hardcoding them, because an admin can change a cadence and each market keeps the terms it received at creation.
 
 ## A position is a tick pair {#range-key}
 

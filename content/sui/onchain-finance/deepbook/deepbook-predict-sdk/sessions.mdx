@@ -50,7 +50,7 @@ answer: >-
   `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`, which
   require explicit mint caps and close-side floors. The immediate builders and
   `redeemSettled` abort on Predict protocol version 5.
-last_verified: 2026-11-06
+last_verified: 2026-11-12
 verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa), 2.8.0 (ts-sdks 82a8cdb6), and the sessionsMoveCalls builder-approval bindings in 2.10.0 and 2.11.0; predict protocol version 5 and sessions 4 on both networks (Mainnet after its Version 5 cutover), publication records at deepbookv3 046ffd1e; Testnet SessionsConfig spot pool allowlist read at watermark 4; queued session example simulated on Testnet, and both DeepBook registry authorizations read'
 ---
 
@@ -77,7 +77,7 @@ The session lifecycle follows this order:
 
 ## Configuration {#configuration}
 
-Both networks run Predict protocol version 5 and Sessions protocol version 4. On Mainnet, use version TBD-DBU-1166: SDK release or later of the SDK, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+Both networks run Predict protocol version 5 and Sessions protocol version 4. On Mainnet, use version TBD-DBU-1166: Sessions v4 SDK release or later of the SDK, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
 Build a `SessionsContract` for each network from the deployed IDs that `getSessionsConfig` returns:
 
@@ -288,7 +288,7 @@ The following example lists an account's grants, splits them at the current time
 
 ## How to trade as a session key {#trade}
 
-Both networks run Predict protocol version 5 and Sessions protocol version 4, so use the [queued-order builders](#queue-as-session). Mainnet needs version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. An older release still builds a working `revokeSession` on Mainnet, because revocation has no version gate. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them, and `redeemSettled` aborts on protocol version 5.
+Both networks run Predict protocol version 5 and Sessions protocol version 4, so use the [queued-order builders](#queue-as-session). Mainnet needs version TBD-DBU-1166: Sessions v4 SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. An older release still builds a working `revokeSession` on Mainnet, because revocation has no version gate. The immediate mint and live-close builders are deprecated, because protocol version 4 always aborts them, and `redeemSettled` aborts on protocol version 5.
 
 ### Queue orders as the session key {#queue-as-session}
 

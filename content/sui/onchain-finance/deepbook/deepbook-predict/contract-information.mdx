@@ -25,8 +25,8 @@ keywords:
   - delayed execution
   - protocol version 5
   - cadence table
-last_verified: 2026-11-06
-verified_against: publication records at deepbookv3 046ffd1e (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, recorded by deepbookv3 #1431; Mainnet predict publish 5, predict_orders 2, deepbook_core_account 2, and sessions 4: TBD-DBU-1166 Mainnet Version 5 records), each Testnet package and the Mainnet propbook, predict_math, and account packages read on chain as the latest of its family; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, cadence terms, SVI store decimals, and session pool allowlist read before the Mainnet upgrade; Mainnet cadence terms, strike-exposure template, and SVI store read before its Version 5 upgrade; TBD-DBU-1166 Mainnet re-read after the cutover
+last_verified: 2026-11-12
+verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 TBD-DBU-1166 Mainnet Sessions record), each Testnet package and every Mainnet package except sessions read on chain on 2026-11-12 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, cadence terms, entry band, SVI store decimals, and session pool allowlist re-read 2026-11-12; Mainnet cadence terms, strike-exposure template, and SVI store read 2026-11-12 at watermarks 4, 1, and 3; TBD-DBU-1166 Mainnet re-read after the cutover
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -79,7 +79,7 @@ The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://git
 | 2 | The [`mint_exact_cost`](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) all-in budget entrypoint and its session wrapper, in `predict` and `sessions` version 2. Protocol version 4 retired both in favor of the `enqueue_exact_cost` queued order. | [`8d7d42a0`](https://github.com/MystenLabs/deepbookv3/tree/8d7d42a0f48bc6434bc282d45d2403809b4e492c/packages/predict) |
 | 3 | [`plp::add_usdc_to_plp`](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#add-usdc) | [`abb4cfd9`](https://github.com/MystenLabs/deepbookv3/tree/abb4cfd93b2e51f7925941fe5d53b3fe70fc140c/packages/predict) |
 | 4 | Delayed execution: the queued-order flow, `sessions` protocol version 3, and the new `deepbook_predict_orders` and `deepbook_predict_math` packages. The immediate mint and live-redeem entrypoints abort. | [`29117434`](https://github.com/MystenLabs/deepbookv3/tree/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/predict), with Mainnet built from the byte-identical `98128174` |
-| 5 | [Builder fees named on each order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees), [fee bands](/onchain-finance/deepbook/deepbook-predict/design#fee-bands), the admin-managed [cadence table](/onchain-finance/deepbook/deepbook-predict/contract-information/registry#cadence-configuration), narrower entry bands at market creation, and SVI priced at 1e18, together with `deepbook_predict_orders` protocol version 2, `sessions` protocol version 4, and new versions of `propbook`, `deepbook_predict_math`, `account`, and `deepbook_core_account`. `redeem_settled` and `redeem_settled_permissionless` abort. | [`046ffd1e`](https://github.com/MystenLabs/deepbookv3/tree/046ffd1e2af6ae511146a0fcb92f5eb8a7e843af/packages/predict) |
+| 5 | [Builder fees named on each order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees), [fee bands](/onchain-finance/deepbook/deepbook-predict/design#fee-bands), the admin-managed [cadence table](/onchain-finance/deepbook/deepbook-predict/contract-information/registry#cadence-configuration), narrower entry bands at market creation, and SVI priced at 1e18, together with `deepbook_predict_orders` protocol version 2, `sessions` protocol version 4, and new versions of `propbook`, `deepbook_predict_math`, and `account`. `redeem_settled` and `redeem_settled_permissionless` abort. | [`046ffd1e`](https://github.com/MystenLabs/deepbookv3/tree/046ffd1e2af6ae511146a0fcb92f5eb8a7e843af/packages/predict) |
 
 An integration built for protocol version 4 meets these differences:
 
@@ -101,12 +101,13 @@ Two different numbers share the name version, and they have come apart. Protocol
 | --- | --- | --- |
 | Mainnet `predict` | 5 | 5 |
 | Mainnet `predictOrders` | 2 | 2 |
-| Mainnet `sessions` | 4 | 4 |
+| Mainnet `sessions` | 4 (TBD-DBU-1166: Mainnet Sessions v4 upgrade) | 4 |
 | Testnet `predict` | 10 | 5 |
 | Testnet `predictOrders` | 5 | 2 |
 | Testnet `sessions` | 9 | 4 |
 | `propbook` | 2 on Mainnet, 3 on Testnet | 2 on both networks |
-| `predictMath`, `account`, and `deepbookCoreAccount` | 2 on each network | None. These packages have no version gate |
+| `predictMath` and `account` | 2 on each network | None. These packages have no version gate |
+| `deepbookCoreAccount` | 1 on Mainnet, 2 on Testnet | None. This package has no version gate |
 
 - **Publishes** is what `Published.toml` records: how many publishes that package has had on that network. It only counts events, so a Testnet-only rehearsal of an upgrade leaves Testnet permanently a publish ahead.
 - **Protocol version** is `constants::current_version!()`, compiled into the code. It gates behavior: [`assert_version`](#version-gate) aborts unless it is at or above the `ProtocolConfig` watermark, and it is what determines whether an entrypoint exists.
@@ -126,7 +127,7 @@ A Move package upgrade publishes at a new address and keeps its original one. Th
 - **Call target:** the latest published address. Every `moveCall` target, and every `Auth` or capability argument resolved against the package, uses it.
 - **Original ID:** the address of the package's first publish. Every type tag keeps it forever, so struct types, event type prefixes, the PLP coin type, and dynamic-field keys all derive from the original ID, never from the call target.
 
-A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` version that introduced them: the Testnet version 5 address `0x0654ecbe…` and the Mainnet version 4 address `0x98235c58…`. The types that protocol version 5 added, such as `config_events::FeeBandsUpdated`, carry the Mainnet version 5 call target, while Testnet introduced them across several rehearsal publishes. The version numbers do not line up across networks, so check the defining ID on each one.
+A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` version that introduced them: the Testnet version 5 address `0x0654ecbe…` and the Mainnet version 4 address `0x98235c58…`. The types that protocol version 5 added, such as `config_events::FeeBandsUpdated`, carry the Mainnet version 5 call target, `0xb0aaafe0…`, while Testnet introduced them across several rehearsal publishes. The version numbers do not line up across networks, so check the defining ID on each one.
 
 The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. A Mainnet integration needs version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
@@ -150,31 +151,32 @@ The deployment manifest is the stable identity record. It names the chain, the s
 | Network | Mainnet |
 | Chain ID | `35834a8a` |
 | Deployment source commit | `7b169bde2c2a25fee3ac9aa4686e346309bfe570` |
-| Upgrade source commits | `8d7d42a0f48bc6434bc282d45d2403809b4e492c`, `9a32854c`, `98128174`, then for Version 5 `705b7c06` (`propbook`, `predictMath`), `b199c598` (`account`), `046ffd1e` (`predict`), and TBD-DBU-1166: build commits of predictOrders, deepbookCoreAccount, and sessions |
+| Upgrade source commits | `8d7d42a0f48bc6434bc282d45d2403809b4e492c`, `9a32854c`, `98128174`, then for Version 5 `705b7c06` (`propbook`, `predictMath`), `b199c598` (`account`), `046ffd1e` (`predict`), `8fcba9d6` (`predictOrders`), and TBD-DBU-1166: build commit of sessions |
 | `predict` publishes / protocol version | 5 / 5 |
 | `predictOrders` publishes / protocol version | 2 / 2 |
-| `sessions` publishes / protocol version | 4 / 4 |
-| `predictMath`, `propbook`, `account`, and `deepbookCoreAccount` publishes | 2 each |
-| Version watermarks | `ProtocolConfig` 5, `OrderDesk` 2, `SessionsConfig` 4 |
+| `sessions` publishes / protocol version | 4 / 4 (TBD-DBU-1166: Mainnet Sessions v4 upgrade) |
+| `predictMath`, `propbook`, and `account` publishes | 2 each |
+| `deepbookCoreAccount` publishes | 1 |
+| Version watermarks | `ProtocolConfig` 5, `OrderDesk` 2, `SessionsConfig` 4 (TBD-DBU-1166: verify on Mainnet after the cutover) |
 | Indexing start checkpoint | `321804009` |
 
 ### Mainnet packages {#packages}
 
-Predict is 9 packages rather than one. Move call targets, event type prefixes, and the PLP coin type all derive from these IDs. Every package except `fixedMath` and `usdc` has been upgraded here, so each carries 2 addresses: call the **call target**, and build every type tag from the **original ID**. For `fixedMath` and `usdc` the 2 columns coincide. The `usdc` entry is Circle's native USDC package, which Predict links against rather than publishes:
+Predict is 9 packages rather than one. Move call targets, event type prefixes, and the PLP coin type all derive from these IDs. Every package except `fixedMath`, `deepbookCoreAccount`, and `usdc` has been upgraded here, so each carries 2 addresses: call the **call target**, and build every type tag from the **original ID**. For `fixedMath`, `deepbookCoreAccount`, and `usdc` the 2 columns coincide. The `usdc` entry is Circle's native USDC package, which Predict links against rather than publishes:
 
 | **Package** | **Call target** | **Original ID** | **Contents** |
 | --- | --- | --- | --- |
-| `predict` | `TBD-DBU-1166: Mainnet predict v5 call target` | `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba` | Markets, pricing, fills, protocol configuration, registry, and the PLP pool |
-| `predictOrders` | `TBD-DBU-1166: Mainnet predict_orders v2 call target` | `0x7cd41de311f8f3efb2c239b38773a4010fce3bef0120cd55f479843077c98903` | `deepbook_predict_orders`: the order desk, the market queues, and every queued-order entrypoint |
+| `predict` | `0xb0aaafe0d7ddd754243202fb6337e503be98d8f363f6343a46c59540180be463` | `0x89aea622e7bb3bdd598bde87dde40ee31c9eed4971b9546e23ec83de3c48bbba` | Markets, pricing, fills, protocol configuration, registry, and the PLP pool |
+| `predictOrders` | `0x48e78879ee871c7c94807ee895e83a87c16bb37c8a558ac23584a315a2312dce` | `0x7cd41de311f8f3efb2c239b38773a4010fce3bef0120cd55f479843077c98903` | `deepbook_predict_orders`: the order desk, the market queues, and every queued-order entrypoint |
 | `predictMath` | `0x2919b07ab2b995075cf2d0f9a72aeeb2d45636d3ba2a87dda35ac6b26f124c8e` | `0x19262d18a3ce9f1c304defbacc89f36585152acde73e626231200d10617fb9a7` | `deepbook_predict_math`: pricing math and Pyth-verified Lazer prices |
 | `propbook` | `0x94e674522a94803a8b9310144462ecd62ddf4c51f2f515e8a48c4c5b11023f0c` | `0xa6c8f32015b5b41d34ee09995a2e9d7a21cdecf0e1910a50b264fd252cd33831` | Oracle registry, Pyth feeds, and Block Scholes stores |
 | `account` | `0x3dbf966f4d02a3ae4b996f5d2e81603164b598f9ff5db2bd8a2bf03ffebb4316` | `0x4e1dd01465713c9d832313fed5f45c222a4d5c62a533d6da96764c8b2a245d58` | Account custody, balances, the `Auth` authorization type, and coin receipt |
 | `fixedMath` | `0x52ec2d263bb9ad545d1be1c00f6779cc577ed7c0408cdea8d589c2664adc22db` | Same | Fixed-point arithmetic used by the pricing math |
-| `deepbookCoreAccount` | `TBD-DBU-1166: Mainnet deepbook_core_account v2 call target` | `0xd71b5a341dc8dc7e187517849edf61e54670b60fe496e07186c09a65fa7afdb7` | DeepBook core account app type |
+| `deepbookCoreAccount` | `0xd71b5a341dc8dc7e187517849edf61e54670b60fe496e07186c09a65fa7afdb7` | Same | DeepBook core account app type |
 | `sessions` | `TBD-DBU-1166: Mainnet sessions v4 call target` | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | Session support, including the queued-order wrappers |
 | `usdc` | `0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7` | Same | Circle native USDC, linked as an existing dependency |
 
-Every upgrade kept its original ID, so every object, position, account, and session grant created before them stays valid, and the PLP coin type below is unchanged. The delayed-execution types and events that `predict` protocol version 4 introduced carry the version 4 call target, `0x98235c58…`, as their defining ID, and the types protocol version 5 introduced carry the version 5 call target.
+Every upgrade kept its original ID, so every object, position, account, and session grant created before them stays valid, and the PLP coin type below is unchanged. The delayed-execution types and events that `predict` protocol version 4 introduced carry the version 4 call target, `0x98235c58…`, as their defining ID, and the types protocol version 5 introduced carry the version 5 call target, `0xb0aaafe0…`.
 
 ### Mainnet shared objects {#shared-objects}
 
@@ -300,7 +302,7 @@ One underlying is live on each network. Oracle data lives in the separate `propb
 | `PythFeed` | `0x4c5d2b4c8238f04b7687c3a8df915b69c50d5f4d291fc49aea44bdb6b52e1a20` | `0x8ef99c3d14e57612d09a67bcc9b5bff568a80992df6beca2bfcd922973192faa` |
 | `BlockScholesValueStore` | `0xe83f843b15ae63045b2cea445fb8ea7ad85c5fc2a05f66db122a511e1f2c67bc` | `0x1e5142471311505a7428b072230c9ffe8a747b3b9392720e39246af4aea08216` |
 | `BlockScholesSVIStore` | `0xfdd447be39d847747caf18ecf3355031bb33979c472581f1a5481375d3748bfb` | `0x0f1cbefd1dd2ba08ae700a7067c32e0718edf926fa18cea80bd231c02d509ece` |
-| SVI decimals of the SVI store | `9` | `9` |
+| SVI decimals of the SVI store | `18` (TBD-DBU-1166: verify on Mainnet after the cutover) | `18` |
 
 Passing an oracle object that is not the current canonical binding aborts rather than pricing against the wrong feed, so resolve the 3 oracle IDs from `OracleRegistry` at runtime instead of trusting a cached copy. See [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) for the binding accessors, the freshness windows, and which call needs which object.
 
@@ -329,7 +331,7 @@ Predict mixes 2 scales, and confusing them is the fastest way to misprice a trad
 
 A probability of `500000000` is 0.5. A price of `110000000000000` is 110,000.00. An amount of `1000000` is 1 USDC. A position quantity of `10000` is one lot, 0.01 contracts.
 
-The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `850000000` on both networks. The smallest quantity such a market accepts is therefore about 1.18 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
+The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `750000000` on both networks (TBD-DBU-1166: verify on Mainnet after the cutover). The smallest quantity such a market accepts is therefore about 1.34 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
 
 Read every quantity that arrives as a JSON string with decimal or bigint tooling. Postgres `NUMERIC` columns serialize as strings, and `parseFloat` silently loses precision on them.
 
@@ -339,27 +341,27 @@ The values below are each network's current configuration. Configuration is muta
 
 ### Cadences
 
-Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences, with the same terms, and Testnet also enables a 15m cadence at ID 6 (TBD-DBU-1166: Mainnet cadences added after the cutover, if any):
+Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences with the same terms, and both register a 15m cadence at ID 6 and leave it disabled (TBD-DBU-1166: verify on Mainnet after the cutover):
 
 | **ID** | **Name** | **Period (ms)** | **Enabled** | **Tick size** | **Admission tick size** | **Maximum expiry allocation** | **Initial expiry cash** | **Window size** |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 | 1m | `60000` | Yes | `10000000` | `1000000000` | `1000000000` | `1000000000` | `2` |
-| 1 | 5m | `300000` | Yes | `10000000` | `1000000000` | `1000000000` | `1000000000` | `2` |
+| 0 | 1m | `60000` | Yes | `10000000` | `1000000000` | `500000000` | `500000000` | `2` |
+| 1 | 5m | `300000` | Yes | `10000000` | `1000000000` | `500000000` | `500000000` | `2` |
 | 2 | 1h | `3600000` | No | `0` | `0` | `0` | `0` | `0` |
 | 3 | 1d | `86400000` | No | `0` | `0` | `0` | `0` | `0` |
 | 4 | 1w | `604800000` | No | `0` | `0` | `0` | `0` | `0` |
 | 5 | 1mo | `2592000000` | No | `0` | `0` | `0` | `0` | `0` |
-| 6 | 15m, Testnet only | `900000` | Yes | `10000000` | `1000000000` | `1000000000` | `1000000000` | `2` |
+| 6 | 15m | `900000` | No | `0` | `0` | `0` | `0` | `0` |
 
 Read each column as follows:
 
 - **Tick size:** The price-axis resolution, in fixed-point price units. Every enabled cadence uses `10000000`, which is 0.01 USD.
 - **Admission tick size:** The coarser grid a finite position boundary must land on, also in fixed-point price units. Every enabled cadence uses `1000000000`, which is 1 USD, or every 100 ticks. A boundary tick must be a multiple of `admission_tick_size / tick_size` ticks.
-- **Maximum expiry allocation:** The cadence cap on cash allocated to one expiry market, in USDC base units: 1,000 USDC. This same value also scales the market's inventory-impact curve.
-- **Initial expiry cash:** The cash the vault seeds a new market with, in USDC base units: 1,000 USDC. From protocol version 5 an enabled cadence takes any positive value up to the maximum expiry allocation.
+- **Maximum expiry allocation:** The cadence cap on cash allocated to one expiry market, in USDC base units: 500 USDC. This same value also scales the market's inventory-impact curve.
+- **Initial expiry cash:** The cash the vault seeds a new market with, in USDC base units: 500 USDC. From protocol version 5 an enabled cadence takes any positive value up to the maximum expiry allocation.
 - **Window size:** How many expiries of this cadence can be live at once, so 2 markets of each enabled cadence are live at any time. Zero disables the cadence.
 
-When 2 enabled cadences could create the same expiry, the one with the longer period owns it, so with the 1m, 5m, and 15m cadences enabled, quarter hours go to 15m, other 5-minute marks to 5m, and every other minute to 1m.
+When 2 enabled cadences could create the same expiry, the one with the longer period owns it, so if the 15m cadence were enabled alongside 1m and 5m, quarter hours would go to 15m, other 5-minute marks to 5m, and every other minute to 1m.
 
 The only finite boundary a market admits off its admission grid is its own reference tick. Read `admission_tick_size` from the market rather than assuming a grid, because cadence terms are mutable. Market creation on a disabled cadence aborts.
 
@@ -379,10 +381,10 @@ The only finite boundary a market admits off its admission grid is its own refer
 | Protocol reserve profit share | `0` | `0` | |
 | Referral fee rate | `100000000` | `100000000` | 10 percent |
 | Fee incentive subsidy rate | `200000000` | `200000000` | The subsidy covers 20 percent of each trading fee, while the market's incentive balance lasts |
-| Fee incentive live target rate | `200000000` | `200000000` | A live market's incentive balance tops up to 20 percent of its maximum expiry allocation, 200 USDC at a 1,000 USDC allocation |
-| Fee incentive lifetime cap rate | `200000000` | `200000000` | A market receives at most 20 percent of its maximum expiry allocation over its life, 200 USDC at a 1,000 USDC allocation |
-| Builder fee cap | `TBD-DBU-1166: Mainnet builder_fee_cap after the cutover` | `50000000` | A builder fee charges at most 5 cents per contract, the default |
-| Fee bands | `TBD-DBU-1166: Mainnet fee bands at launch` | None | Every contract price pays 1x the trading fee |
+| Fee incentive live target rate | `200000000` | `200000000` | A live market's incentive balance tops up to 20 percent of its maximum expiry allocation, 100 USDC at a 500 USDC allocation |
+| Fee incentive lifetime cap rate | `200000000` | `200000000` | A market receives at most 20 percent of its maximum expiry allocation over its life, 100 USDC at a 500 USDC allocation |
+| Builder fee cap | `50000000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `50000000` | A builder fee charges at most 5 cents per contract, the default |
+| Fee bands | None (TBD-DBU-1166: verify on Mainnet after the cutover) | None | Every contract price pays 1x the trading fee |
 | Exponentially weighted moving average (EWMA) congestion penalty | Retired | Retired | Protocol version 4 retires the surcharge |
 
 On both networks the [delayed-execution policy](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#delayed-execution-policy) on the `OrderDesk` adds its own values: an 800 ms delay on Pyth Lazer's 200 ms channel, so an order prices 600 to 800 ms after it is placed, a 5-second stall timeout, an order fee of 0.02 USDC, and capacities of 100 mints and 100 sells per market with at most 5 waiting orders per account.
@@ -391,7 +393,7 @@ The strike-exposure template is the policy each new market snapshots at creation
 
 - Base fee of 20.4 percent
 - Minimum fee of 2.2 percent
-- Entry probability band of 15 percent to 50 percent on Mainnet and 25 percent to 75 percent on Testnet
+- Entry probability band of 15 percent to 75 percent on both networks (TBD-DBU-1166: verify on Mainnet after the cutover)
 - Backing buffer lambda of 0.31
 - Inventory impact rate of 0
 - Expiry fee window of 60 seconds with a 3x maximum multiplier
@@ -626,7 +628,7 @@ Subscriptions begin at the current tip and accept no resume point, so recovering
 
 ## Source pointers
 
-The links below pin every module to DeepBookV3 `main` at `046ffd1e2af6ae511146a0fcb92f5eb8a7e843af`, the protocol version 5 source that Testnet runs and Mainnet's `predict` version 5 builds from. There is no `entry fun` in any Predict package: every integrator call is a `public fun` invoked as a `moveCall`, and several of them return values that a later command in the same transaction must consume.
+The links below pin every module to DeepBookV3 `main` at `046ffd1e2af6ae511146a0fcb92f5eb8a7e843af`, the protocol version 5 source that Testnet runs and that Mainnet's Version 5 upgrades build from, because the commits after it change no Move source. There is no `entry fun` in any Predict package: every integrator call is a `public fun` invoked as a `moveCall`, and several of them return values that a later command in the same transaction must consume.
 
 | **Area** | **Source** |
 | --- | --- |
@@ -654,7 +656,7 @@ A Move abort names the module it came from and a number. Error numbers restart a
 | `pricing` and the propbook modules | [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) |
 | `registry`, `market_manager` | [Registry](/onchain-finance/deepbook/deepbook-predict/contract-information/registry) |
 | `account`, `account_registry`, `predict_account` | [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) |
-| `sessions` | [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) |
+| `sessions`, `session_config` | [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) |
 | `protocol_config`, whose gates run ahead of every call | [Registry](/onchain-finance/deepbook/deepbook-predict/contract-information/registry) |
 
 These deployments renumbered or extended several tables, so a code memorized from an earlier deployment can point at the wrong constant:

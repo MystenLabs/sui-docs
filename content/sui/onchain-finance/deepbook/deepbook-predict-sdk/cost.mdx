@@ -52,8 +52,8 @@ answer: >-
   namespace exports each fee component separately. These are local previews for
   a UI. The read.planMint and read.planSell plans remain the pre-trade check
   against real account and market state.
-last_verified: 2026-11-06
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa), 2.8.0 (ts-sdks 82a8cdb6), and the cost port in ts-sdks main, whose builderFee keeps the protocol version 4 formula and whose trading fee applies no fee band; predict protocol version 5 on both networks (Mainnet after its Version 5 cutover), publication records at deepbookv3 046ffd1e, and both networks'' strike-exposure template read before the Mainnet upgrade'
+last_verified: 2026-11-12
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa), 2.8.0 (ts-sdks 82a8cdb6), and the cost port in ts-sdks main, whose builderFee keeps the protocol version 4 formula and whose trading fee applies no fee band; predict protocol version 5 on both networks (Mainnet after its Version 5 cutover), publication records at deepbookv3 046ffd1e, Testnet''s strike-exposure template re-read 2026-11-12, and Mainnet''s read the same day at watermark 4 (TBD-DBU-1166 Mainnet template re-read after the cutover)'
 ---
 
 The `cost` namespace on `@mysten/deepbook-v3/predict` prices a Predict trade without touching the chain. It is an exact integer port of the deployed fee path, not an estimate: feed it the same inputs the execution sees and it returns the same raw amounts the contract charges. That makes it the right tool for an order ticket that has to re-price on every keystroke, for a board of candidate strikes, and for sizing a spend before a transaction exists.
@@ -80,7 +80,7 @@ Every entry point in this namespace takes the same 3 kinds of input.
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="136-155" />
 
-`cost.SHIPPED_FEE_POLICY` is the template the contracts compile in: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Neither deployment runs it. Both charge a 20.4 percent base fee, ramp the fee to 3 times over the last 60 seconds, and admit entries in a narrow band, 15 to 50 percent on Mainnet and 25 to 75 percent on Testnet, so a preview built from it comes out low. Version 2.7.0 adds `read.feePolicy(market)`, one object read that returns the policy a market snapshotted at creation, ready to pass as `fees`. Use that for a live market:
+`cost.SHIPPED_FEE_POLICY` is the template the contracts compile in: a 10 percent Bernoulli fee, a 2.2 percent per-leg floor, a one-day ramp window that is inert at a 1.0 multiplier, a 1 to 99 percent entry band, and inventory impact disabled. Neither deployment runs it. Both charge a 20.4 percent base fee, ramp the fee to 3 times over the last 60 seconds, and admit entries in a narrow band, 15 to 75 percent on both networks (TBD-DBU-1166: verify on Mainnet after the cutover), so a preview built from it comes out low. Version 2.7.0 adds `read.feePolicy(market)`, one object read that returns the policy a market snapshotted at creation, ready to pass as `fees`. Use that for a live market:
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="164-174" />
 
@@ -213,7 +213,7 @@ The fee subsidy rate became admin-set in Predict protocol version 4, so version 
 
 <ImportContent source="packages/deepbook-v3/src/predict/cost.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="45-58" />
 
-Protocol version 5 changes 2 fee terms that the port in versions through 2.11.0 does not model. A builder fee is a fee per contract that the order names, capped at `builder_fee_cap`, rather than a share of the trading fee, and an order that names none pays nothing, so pass `builderCode: false` for a plain order. Fee bands multiply the trading fee for contracts priced inside them, on markets created after an admin sets them, and the port charges 1x everywhere. [Fee components](/onchain-finance/deepbook/deepbook-predict/design#fee-components) describes both. TBD-DBU-1166: confirm how the SDK release models builder fees and fee bands.
+Protocol version 5 changes 2 fee terms that the port in versions through 2.11.0 does not model. A builder fee is a fee per contract that the order names, capped at `builder_fee_cap`, rather than a share of the trading fee, and an order that names none pays nothing, so pass `builderCode: false` for a plain order. Fee bands multiply the trading fee for contracts priced inside them, on markets created after an admin sets them, and the port charges 1x everywhere. Neither network sets fee bands (TBD-DBU-1166: verify on Mainnet after the cutover), so 1x matches every market until an admin sets some. [Fee components](/onchain-finance/deepbook/deepbook-predict/design#fee-components) describes both. TBD-DBU-1166: confirm how the SDK release models builder fees and fee bands.
 
 ## Related links {#related-links}
 

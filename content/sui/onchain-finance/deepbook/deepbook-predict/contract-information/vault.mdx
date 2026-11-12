@@ -43,8 +43,8 @@ answer: >-
   return a queue index, and a flush started by a PoolValuationCap holder freezes
   every market's pricer in one snapshot transaction, values each market in later
   transactions, and then fills both queues at that single frozen pool NAV.
-last_verified: 2026-11-06
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet FlushOperatorUpdated event read 2026-10-13; Testnet cadence terms re-read 2026-10-19, Mainnet max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each, and both networks' cadence terms re-read after Mainnet's reopen; cadence terms on both networks read at 1,000 USDC before the Mainnet Version 5 upgrade (TBD-DBU-1166 Mainnet re-read after the cutover)
+last_verified: 2026-11-12
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet FlushOperatorUpdated event read 2026-10-13; Testnet cadence terms re-read 2026-10-19, Mainnet max_lp_pool_value read after its cutover; both networks' fee incentive live target and lifetime cap rates at 20 percent each, and both networks' cadence terms re-read after Mainnet's reopen; Testnet cadence terms re-read 2026-11-12 at 500 USDC, and Mainnet's read the same day at 1,000 USDC at watermark 4 (TBD-DBU-1166 Mainnet re-read after the cutover)
 ---
 
 The Predict pool is the counterparty to every trade. Liquidity providers deposit USDC, receive PLP shares, and collectively back the payout liability of every active expiry. All of that capital sits in one shared object, `deepbook_predict::plp::PoolVault`.
@@ -490,17 +490,17 @@ sweep_threshold  = max(required_cash * (1 + 2 * band), initial_expiry_cash)
 
 `band` is `expiry_rebalance_pct`, which is `100_000_000` at 1e9 scale, or 10 percent. Below `target_cash` the pool tops the market up, and above `sweep_threshold` it pulls the excess back to idle. `payout_liability` and `inventory_impact_reserve` are the market's backing terms, which [Per-expiry backing](#max-payout) defines.
 
-Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and both networks run these terms on every enabled cadence, the 1m and 5m cadences on both and the 15m cadence on Testnet:
+Both floors are the market's own `initial_expiry_cash`, snapshotted from its cadence at market creation, not one protocol-wide constant. Each network's registry sets its own cadences, and both networks run these terms on their 2 enabled cadences, 1m and 5m (TBD-DBU-1166: verify on Mainnet after the cutover):
 
 | **Cadence** | **`initial_expiry_cash` raw** | **Reads as** | **`max_expiry_allocation` raw** | **Reads as** |
 |---|---|---|---|---|
-| 1m, 5m, and Testnet's 15m | `1_000_000_000` | 1,000 USDC | `1_000_000_000` | 1,000 USDC |
+| 1m and 5m | `500_000_000` | 500 USDC | `500_000_000` | 500 USDC |
 
-The 1h, 1d, 1w, and 1mo cadences are disabled on both networks, with every term at zero. Read `registry::cadence_config` for the network you target.
+The 1h, 1d, 1w, 1mo, and 15m cadences are disabled on both networks, with every term at zero. Read `registry::cadence_config` for the network you target.
 
 From protocol version 5 an enabled cadence takes any positive `initial_expiry_cash` up to its `max_expiry_allocation`, and cadence validation aborts with `EInvalidCadenceConfig` only for one above that cap. The market floors its rebalance at whatever figure its cadence carried at creation. Read the live figures with `registry::cadence_config`, and see the cadence table on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).
 
-A top-up has 2 limits: available idle USDC, and the expiry's remaining funding room. Returns replenish funding room, and the cap is the `max_expiry_allocation` snapshotted from the cadence configuration at market creation, 1,000 USDC on every enabled cadence. Exceeding it aborts with `pool_accounting::EMaxExpiryFundingExceeded`.
+A top-up has 2 limits: available idle USDC, and the expiry's remaining funding room. Returns replenish funding room, and the cap is the `max_expiry_allocation` snapshotted from the cadence configuration at market creation, 500 USDC on every enabled cadence. Exceeding it aborts with `pool_accounting::EMaxExpiryFundingExceeded`.
 
 Call `expiry_market::try_settle` first in the same transaction when settlement might be due. An expired unsettled market is a no-op for the rebalance.
 
@@ -614,7 +614,7 @@ Protocol version 4 makes 3 incentive rates admin-set on `ProtocolConfig`, each r
 - **`fee_incentive_live_target_rate`:** The incentive balance a live market is topped up to, as a share of its `max_expiry_allocation`, defaulting to 2 percent. `set_fee_incentive_live_target_rate` changes it.
 - **`fee_incentive_lifetime_cap_rate`:** The most a market can receive over its life, as a share of its `max_expiry_allocation`, defaulting to 10 percent. It is a template value that each market snapshots when it registers with the pool, which emits `FeeIncentiveLifetimeCapSnapshotted`, and `set_template_fee_incentive_lifetime_cap_rate` changes it for later markets.
 
-Both networks set the live target rate and the lifetime cap rate to 20 percent each. At a 1,000 USDC maximum expiry allocation, a market's incentive balance tops up to 200 USDC, which is also the most it receives over its life.
+Both networks set the live target rate and the lifetime cap rate to 20 percent each. At a 500 USDC maximum expiry allocation, a market's incentive balance tops up to 100 USDC, which is also the most it receives over its life.
 
 `withdraw_fee_incentives` lets an `AdminCap` holder take USDC back out of the pool-level reserve as a `Coin<USDC>`. It never touches a market's balance, aborts with `EInsufficientFeeIncentiveReserve` above the reserve, and emits `FeeIncentivesWithdrawn`. On protocol version 4, a queued mint reserves its subsidy from the market's balance when its price is committed, and returns any unused part at the fill or refund.
 
