@@ -1,16 +1,15 @@
 ---
-title: Pay per Request with x402 on Sui
+title: Pay-Per-Call with x402 on Sui
 sidebar_label: x402 on Sui
 description: >-
   The proposed x402 exact scheme for Sui defines how a client pays for an HTTP
   resource with a signed Sui transaction and how a facilitator verifies and
-  settles it from transaction effects. Learn the payment requirements, payload,
-  construction rules, sponsorship, verification, and settlement.
+  settles it from transaction effects.
 keywords:
   - x402
   - HTTP 402
   - exact scheme
-  - pay per request
+  - pay per call
   - facilitator
   - PaymentRequirements
   - PaymentPayload
@@ -51,7 +50,6 @@ questions:
   - How does an x402 facilitator verify a Sui payment?
   - Can a facilitator sponsor gas for an x402 payment on Sui?
   - How does an x402 facilitator prevent settling the same payment twice?
-  - Does SuiPay follow the x402 exact scheme for Sui?
 answer: >-
   In the proposed x402 exact scheme for Sui, the client signs a complete Sui
   transaction that credits payTo with exactly the required amount, and sends it
@@ -64,7 +62,7 @@ answer: >-
 
 :::info Draft
 
-This page is a draft pending review. It describes a proposed specification that can change before it merges.
+This page is a draft pending review. Its content can change.
 
 :::
 
@@ -72,26 +70,28 @@ x402 is an open protocol for paying for HTTP resources with the `402 Payment Req
 
 :::caution
 
-The Sui `exact` scheme on this page is a proposed specification in [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081), which is open and not merged. Its reference implementation, `@x402/sui`, is in [x402 PR #3082](https://github.com/x402-foundation/x402/pull/3082) and is not yet published to npm. Unless noted otherwise, every rule on this page comes from the proposed `specs/schemes/exact/scheme_exact_sui.md` in PR #3081.
+The proposed x402 `exact` scheme for Sui is a specification in [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081), which is open and not merged. Its reference implementation, `@x402/sui`, is in [x402 PR #3082](https://github.com/x402-foundation/x402/pull/3082) and is not yet published to npm. Unless noted otherwise, every rule on this page comes from the proposed `specs/schemes/exact/scheme_exact_sui.md` in x402 PR #3081.
 
 :::
 
-## Roles
+## Payment roles {#roles}
 
 An x402 payment involves 3 parties:
 
 - **Client:** The payer, such as an agent. It requests the resource, builds and signs the payment transaction, and retries the request with the payment attached. The transaction's sender is the payer.
-- **Resource server:** The seller. It answers unpaid requests with `402` and its payment requirements, asks the facilitator to verify and settle the payment, and serves the resource.
+- **Resource server:** The payee, also called the seller. It answers unpaid requests with `402` and its payment requirements, asks the facilitator to verify and settle the payment, and serves the resource.
 - **Facilitator:** A service that verifies payments and submits them to Sui. When it sponsors gas, it co-signs the transaction as the gas owner at settlement.
 
 ## How a payment flows
 
+The following sequence diagram shows the default flow:
+
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Server as Resource server
-    participant Facilitator
-    participant Sui
+    participant Client as CLIENT
+    participant Server as RESOURCE SERVER
+    participant Facilitator as FACILITATOR
+    participant Sui as SUI
 
     Client->>Server: GET /resource
     Server-->>Client: 402 Payment Required (PaymentRequirements)
@@ -109,6 +109,8 @@ sequenceDiagram
     Server-->>Client: 200 OK with resource
 ```
 
+The flow has 9 steps:
+
 1. The client requests a resource and receives `402 Payment Required` with the `PaymentRequirements`.
 2. The client reads the current epoch, and any balance or gas data it needs, from a Sui full node.
 3. The client builds a transaction that credits `payTo` with exactly `amount` and arranges gas.
@@ -119,13 +121,13 @@ sequenceDiagram
 8. The facilitator submits the transaction, waits for finality, and reports the result.
 9. The resource server returns the response to the client.
 
-This order is the default `authorization` flow. Sui also supports `upfront`, where the resource server settles before step 6. Sui finalizes in under a second, so `upfront` adds little latency, and a resource server can use it when the work is expensive.
+This order is the default `authorization` flow. The scheme also allows an `upfront` flow on Sui, where the resource server settles before step 6. Sui typically finalizes a transaction in 400 to 700 ms ([Life of a Transaction](/develop/transactions/transaction-lifecycle#how-long-does-a-sui-transaction-take-to-finalize)), so `upfront` adds little latency, and a resource server can use it when the work is expensive.
 
 Over HTTP, the requirements travel in the `PAYMENT-REQUIRED` header, the payload in the `PAYMENT-SIGNATURE` header, and the settlement result in the `PAYMENT-RESPONSE` header ([x402 HTTP transport](https://github.com/x402-foundation/x402/blob/main/specs/transports-v2/http.md)).
 
 ## Payment requirements
 
-x402 v2 identifies networks with CAIP-2 identifiers. The Sui identifiers are `sui:mainnet`, `sui:testnet`, and `sui:devnet`.
+x402 v2 identifies networks with Chain Agnostic Improvement Proposal 2 (CAIP-2) identifiers. The Sui identifiers are `sui:mainnet`, `sui:testnet`, and `sui:devnet`.
 
 The following example is illustrative. It asks for 0.01 USDC on Mainnet:
 
@@ -153,14 +155,14 @@ The following example is illustrative. It asks for 0.01 USDC on Mainnet:
 | `extra.maxGasBudget` | Optional. The largest gas budget the sponsor accepts, in MIST, as an integer string. Present whenever `extra.feePayer` is present. |
 | `extra.nonce` | Optional. A Base64 value the resource server issues for each challenge, which ties the payment to that challenge. |
 
-The resource server must not put the epoch or other build hints in `extra`. The server compares the client's copy of `extra` to its own, and the epoch changes every 24 hours on Mainnet.
+The resource server must not put the epoch or other build hints in `extra`. The server compares the client's copy of `extra` to its own, and a Mainnet epoch lasts approximately 24 hours ([Networks](/develop/sui-architecture/networks)).
 
 ## Payment payload
 
 The `payload` field of the `PaymentPayload` holds 2 values:
 
-- **`transaction`:** The BCS-serialized Sui transaction, Base64-encoded.
-- **`signature`:** One Base64 Sui signature per required signer, as a string or an array. The required signers are the sender and, if different, the gas owner. When the facilitator's sponsor is the gas owner, the client leaves the sponsor's signature out, and the facilitator adds it at settlement.
+- `transaction`: The Sui transaction, serialized with Binary Canonical Serialization (BCS) and Base64-encoded.
+- `signature`: One Base64 Sui signature per required signer, as a string or an array. The required signers are the sender and, if different, the gas owner. When the facilitator's sponsor is the gas owner, the client leaves the sponsor's signature out, and the facilitator adds it at settlement.
 
 The full `PaymentPayload` also echoes the requirements the client accepted (illustrative values):
 
@@ -185,13 +187,22 @@ The full `PaymentPayload` also echoes the requirements the client accepted (illu
 
 ## Build the payment transaction
 
-The client builds one Sui transaction that credits `payTo` with exactly `amount` of `asset`. The funds can come from anywhere: an [address balance](/onchain-finance/asset-custody/address-balances), `Coin<T>` objects, a swap, a contract withdrawal, or any mix. Verification looks only at the result. In the TypeScript SDK, `tx.balance()` chooses between the address balance and coins automatically ([Gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers#how-txbalance-funds-a-transfer)).
+The client builds one Sui transaction that credits `payTo` with exactly `amount` of `asset`. The funds can come from any source, including:
 
-{/* TODO: Import code from x402-foundation/x402 typescript/packages/mechanisms/sui/src/exact/client/scheme.ts (PR #3082, once merged and public on main): client building an exact-scheme Sui payment transaction */}
+- An [address balance](/onchain-finance/asset-custody/address-balances)
+- `Coin<T>` objects
+- A swap
+- A contract withdrawal
+- Any mix of these
 
-### Expiration
+Verification looks only at the result. In the TypeScript SDK, `tx.balance()` chooses between the address balance and coins automatically ([Gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers#how-txbalance-funds-a-transfer)).
 
-The client must set a `ValidDuring` or `Validity` expiration with both `minEpoch` and `maxEpoch`, where `maxEpoch - minEpoch` is at most 1. It should use the current epoch and the next one. It must not set `minTimestamp` or `maxTimestamp`, because validators do not accept timestamps yet. The validity window is at most 2 epochs, about 48 hours on Mainnet.
+{/* TODO: Import code from x402-foundation/x402/typescript/packages/mechanisms/sui/src/exact/client/scheme.ts (PR #3082, once merged), function: FUNCTION_NAME */}
+{/* Description: Client builds an exact-scheme Sui payment transaction that credits payTo with exactly amount */}
+
+### Set the expiration {#expiration}
+
+The client must set a `ValidDuring` or `Validity` expiration with both `minEpoch` and `maxEpoch`, where `maxEpoch - minEpoch` is at most 1. It should use the current epoch and the next one. It must not set `minTimestamp` or `maxTimestamp`, because validators do not accept timestamps yet. The validity window is at most 2 epochs, about 48 hours on Mainnet ([Networks](/develop/sui-architecture/networks)).
 
 Sui already requires this kind of expiration on transactions that use no owned objects, such as [gas paid from an address balance](/onchain-finance/asset-custody/address-balances#gas-payment-from-address-balances), and remembers their digests until the window passes so they cannot run twice. Object versions protect transactions that use owned objects instead. The scheme requires an expiration on every payment so that all payments share the same window. The expiration also names the chain, so a payment signed for one network cannot run on another ([`TransactionExpiration` source](https://github.com/MystenLabs/sui/blob/main/crates/sui-types/src/transaction.rs)).
 
@@ -203,7 +214,7 @@ The resource server returns the same nonce whenever it rebuilds the requirements
 
 A payment with a nonce longer than 32 bytes is not eligible for a gasless transfer.
 
-### Gas
+### Cover gas
 
 The client has 3 ways to cover gas:
 
@@ -239,7 +250,7 @@ A sponsored transaction that Sui rejects for lack of funds costs the sponsor not
 The facilitator verifies a payment from its effects. Steps 1 to 5 are offline checks:
 
 1. **Envelope:** `x402Version` is `2`, the scheme is `exact`, the network matches the requirements and is a supported Sui network, the payload has the shape `{ transaction, signature }`, the transaction bytes decode, and `amount` is a positive integer.
-2. **Signatures:** The transaction has a sender, and the payload carries exactly one valid signature per required signer.
+2. **Signatures:** The transaction has a sender, and the payload carries exactly 1 valid signature per required signer.
 3. **Nonce:** When the requirements declare `extra.nonce`, it is valid Base64 and a `Pure` input equals the decoded bytes.
 4. **Expiration:** The transaction carries a `ValidDuring` or `Validity` expiration with both epochs set and a span of at most 1.
 5. **Sponsorship:** When the gas owner is one of the facilitator's sponsors, the transaction passes the sponsorship checks.
@@ -251,7 +262,7 @@ On success, the facilitator returns a `VerifyResponse` with `payer` set to the t
 
 ### Effects check
 
-A balance change records a coin type, an address, and an amount. Sui combines balance changes per address and coin type, so `payTo` normally has one entry. The facilitator adds up the `payTo` entries for `asset` and requires the total to equal `amount`, no more and no less. It does not check what the payer spent or who else was paid.
+A balance change records a coin type, an address, and an amount. Sui combines balance changes per address and coin type, so `payTo` normally has 1 entry. The facilitator adds up the `payTo` entries for `asset` and requires the total to equal `amount`, no more and no less. It does not check what the payer spent or who else was paid.
 
 When `asset` is SUI and `payTo` is also the gas owner, gas folds into the same balance change, so the payment cannot match.
 
@@ -267,7 +278,7 @@ At settlement, the facilitator:
 
 On success, the facilitator returns a `SettlementResponse` with the digest as `transaction`, the `network`, and the `payer`.
 
-If submitting or waiting for finality fails, the facilitator looks the transaction up by digest and reports what actually happened. If the lookup also fails, it releases the claim and returns the digest in `transaction` so the resource server can follow up. When Sui acknowledged the submission but the facilitator could not establish finality, the facilitator returns `settlement_pending`, which allows the resource server one automatic retry of the same signed transaction. When the submission itself failed without an acknowledgement, it returns `transaction_failed`.
+If submitting or waiting for finality fails, the facilitator looks the transaction up by digest and reports what actually happened. If the lookup also fails, it releases the claim and returns the digest in `transaction` so the resource server can follow up. When Sui acknowledged the submission but the facilitator could not establish finality, the facilitator returns `settlement_pending`, which allows the resource server one automatic retry of the same signed transaction. When the submission itself failed without an acknowledgment, it returns `transaction_failed`.
 
 ### Settlement deduplication
 
@@ -296,19 +307,19 @@ Sui executes a transaction at most once, but submitting an executed transaction 
 | `transaction_failed` | settle | Execution failed or the outcome is unknown. |
 | `settlement_effects_mismatch` | settle | Executed effects do not credit `payTo` with exactly `amount`. |
 
-For the full list, see the reason code appendix in [PR #3081](https://github.com/x402-foundation/x402/pull/3081).
+For the full list, see the reason code appendix in [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081).
 
-## SuiPay and the exact scheme
+## SuiPay and the `exact` scheme
 
-SuiPay's gateway speaks an x402 v2 dialect on Sui, but it does not yet follow the proposed `exact` scheme. A client that follows the scheme exactly cannot settle against a deployed SuiPay gateway today. The current differences are:
+The [SuiPay gateway](/onchain-finance/agentic-payments#payment-roles) uses an x402 v2 dialect on Sui, but it does not yet follow the proposed x402 `exact` scheme for Sui. A client that follows the scheme exactly cannot settle against a deployed SuiPay gateway today. The current differences are:
 
-- **Guarded Move call instead of any transfer.** An onchain exclusion marker guards every offer that a deployed SuiPay gateway issues, so the transaction must contain exactly one Move call, to `payment::settle` (or `payment::settle_direct_to_refund_vault` for a refundable offer). The gateway refuses a plain transfer to `payTo`. The gateway accepts a transfer with no Move call only for an unguarded offer, and only when it uses `SplitCoins`, `MergeCoins`, and `TransferObjects`, so funds held only in an address balance cannot pay it.
+- **Guarded Move call instead of any transfer.** An onchain exclusion marker guards every offer that a deployed SuiPay gateway issues, so the transaction must contain exactly 1 Move call, to `payment::settle` (or `payment::settle_direct_to_refund_vault` for a refundable offer). The gateway refuses a plain transfer to `payTo`. The gateway accepts a transfer with no Move call only for an unguarded offer, and only when it uses `SplitCoins`, `MergeCoins`, and `TransferObjects`, so funds held only in an address balance cannot pay it.
 - **Event check instead of effects-only verification.** For the `payment::settle` path, the gateway matches the `PaymentMade` event that the Move call emits against the offer, rather than checking balance changes alone.
-- **Pinned gas coin instead of an empty gas payment.** On the spend-account rail, which is experimental and off by default for x402, the gateway's default gas source pins one leased sponsor coin in the offer and uses an `Epoch` expiration. An experimental address-balance gas source uses an empty gas payment with a `ValidDuring` window of at most 2 epochs, as the scheme does. On the direct rail, the payer pays its own gas, or uses an optional interactive gas station.
-- **Its own `extra` fields.** SuiPay carries its signed offer terms in `extra.suipay`, including `challengeId`, the offer digest, the rail, and the sponsor gas pins (`sponsorGasOwner`, `sponsorGasBudget`, `sponsorGasPrice`, `sponsorGasPayment`), and declares `extra.paymentFlow` as `upfront`. It does not emit `extra.feePayer`, `extra.maxGasBudget`, or `extra.nonce`.
-- **Replay returns the stored receipt.** When a client presents a byte-identical copy of an already-settled payment, the SuiPay facilitator returns the stored success receipt with the same transaction digest and moves no funds, rather than returning `duplicate_settlement`. A seller that settles through SuiPay records each delivery by settled digest so that a replayed payment header does not unlock the resource again.
-- **Testnet only.** SuiPay settles on `sui:testnet` only. It does not support `sui:mainnet`.
+- **Pinned gas coin instead of an empty gas payment.** When the payer spends from a SuiPay spend account (an experimental path, off by default for x402), the gateway's default gas source pins 1 leased sponsor coin in the offer and uses an `Epoch` expiration. An experimental address-balance gas source uses an empty gas payment with a `ValidDuring` window of at most 2 epochs, as the `exact` scheme does. When the payer pays from its own coins, it pays its own gas or uses an optional SuiPay gas sponsor.
+- **Its own `extra` fields.** The SuiPay gateway carries its signed offer terms in `extra.suipay`, including `challengeId`, the offer digest, the payment path, and the sponsor gas pins (`sponsorGasOwner`, `sponsorGasBudget`, `sponsorGasPrice`, `sponsorGasPayment`), and declares `extra.paymentFlow` as `upfront`. It does not emit `extra.feePayer`, `extra.maxGasBudget`, or `extra.nonce`.
+- **Replay returns the stored receipt.** When a client presents a byte-identical copy of an already-settled payment, the SuiPay gateway returns the stored success receipt with the same transaction digest and moves no funds, rather than returning `duplicate_settlement`. A resource server that settles through the SuiPay gateway records each delivery by settled digest so that a replayed payment header does not unlock the resource again.
+- **Testnet only.** The SuiPay gateway settles on `sui:testnet` only. It does not support `sui:mainnet`.
 
 {/* TODO: link SuiPay docs once public */}
 
-{/* TODO(verify): recheck this list against the SuiPay gateway and the merged x402 spec before publishing; SuiPay tracks its x402 conformance decision as open. */}
+{/* TODO(verify): recheck this list against the SuiPay gateway and the merged x402 spec before publishing. */}

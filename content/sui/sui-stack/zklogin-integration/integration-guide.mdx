@@ -272,7 +272,7 @@ Choose a salt management strategy:
 | **Strategy** | **Description** | **Trade-offs** |
 | --- | --- | --- |
 | User-provided | Ask the user to enter and remember the salt. | Basic but poor UX; users forget salts. |
-| Browser or device storage | Store in `localStorage` or mobile secure storage. | For development and testing only. The salt is lost when the user clears storage or changes device or browser, and the user loses access to the address. Do not use in production. |
+| Browser or device storage | Store in `localStorage` or mobile secure storage. | For local development only. The salt is lost when the user clears storage or changes device or browser, and the user loses access to the address. Do not use in production or for any address that holds assets. |
 | Database mapping | Map user identifier (`sub`) to a salt in your backend database. | Reliable; requires a backend service. Salt is unique per user. |
 | Derived from master seed | Use `HKDF(ikm = seed, salt = iss \|\| aud, info = sub)` to derive salts deterministically from a master seed (`\|\|` denotes concatenation). | No per-user storage needed, but you cannot rotate the master seed, and you cannot change the client ID (`aud`) without deriving a different address. |
 
@@ -294,9 +294,9 @@ The salt's purpose is to disconnect the OAuth identifier (`sub`) from the onchai
 
 {/* DRAFT: from sui#27423, pending review */}
 
-:::warning Do not keep salts only in browser storage in production
+:::danger Do not keep salts only in browser storage in production
 
-Many zkLogin examples store the salt in browser `localStorage` for simplicity. If the user clears site data, switches browsers or devices, or signs in from a private browsing window, the salt is gone and so is access to the address and every asset it holds. For production apps, keep the salt in a backend salt service (database mapping) or derive it from a master seed, and treat any browser copy as a cache only.
+Many zkLogin examples store the salt in browser `localStorage` for convenience. If the user clears site data, switches browsers or devices, or signs in from a private browsing window, the salt is gone and so is access to the address and every asset it holds. For production apps, keep the salt in a backend salt service (database mapping) or derive it from a master seed, and treat any browser copy as a cache only.
 
 :::
 
@@ -305,11 +305,12 @@ Many zkLogin examples store the salt in browser `localStorage` for simplicity. I
 If you shipped with salts stored only in `localStorage`, move returning users to a durable strategy the next time they sign in, while their browser still holds the salt:
 
 1. After the user signs in, read the existing salt from `localStorage`.
-1. **Database mapping:** Write that existing salt to your salt service, keyed by the user's `iss`, `aud`, and `sub`. The salt does not change, so the user's address does not change. This is the simplest migration because it preserves every address.
-1. **Derived salts (including a managed salt service such as Enoki):** Request the salt from the service for the user's JWT and compare it with the stored salt. If they match, nothing changes. Salts generated at random in the browser almost never match a derived salt, so in practice the user now has 2 addresses: the old one from the stored salt and a new one from the derived salt.
-1. When the user has 2 addresses, move their assets from the old address to the new one before the browser copy of the old salt is lost. Signing from the old address needs a zero-knowledge proof generated with the old salt (the prover takes the salt as an input), so request one proof per salt. Explain the change to the user, because the address they shared with others changes.
+1. Move the salt to your durable strategy:
+   - **Database mapping:** Write the existing salt to your salt service, keyed by the user's `iss`, `aud`, and `sub`. The salt does not change, so the user's address does not change. This is the most direct migration because it preserves every address.
+   - **Derived salts, including a managed salt service such as Enoki:** Request the salt from the service for the user's JWT and compare it with the stored salt. If they match, nothing changes. Salts generated at random in the browser almost never match a derived salt, so in practice the user now has 2 addresses: the old one from the stored salt and a new one from the derived salt.
+1. If the user has 2 addresses, move their assets from the old address to the new one before the browser copy of the old salt is lost. Signing from the old address needs a zero-knowledge proof generated with the old salt (the prover takes the salt as an input), so request one proof per salt. Explain the change to the user, because the address they shared with others changes.
 
-To avoid the 2-address case, choose a durable salt strategy before any user holds assets, including during development and on Testnet.
+To avoid the 2-address case, choose a durable salt strategy before any user holds assets, including on Testnet.
 
 ## Step 5: Derive the user's Sui address
 
@@ -618,7 +619,7 @@ Cache the ephemeral key pair and zero-knowledge proof for the duration of the se
 
 ## How do I renew a session before `maxEpoch`?
 
-Validators accept a zkLogin signature while the current epoch is less than or equal to its `maxEpoch` and reject it with `ZKLogin expired at epoch ...` once the current epoch is greater. They also reject a `maxEpoch` more than 30 epochs past the current epoch (the `zklogin_max_epoch_upper_bound_delta` protocol setting), so you cannot avoid renewal by choosing a distant `maxEpoch`. The user's address does not change on renewal, because it depends only on `iss`, `aud`, `sub`, and the salt.
+Validators accept a zkLogin signature while the current epoch is less than or equal to its `maxEpoch` and reject it with `ZKLogin expired at epoch ...` once the current epoch is greater. They also reject a `maxEpoch` more than 30 epochs past the current epoch (the `zklogin_max_epoch_upper_bound_delta` setting in the [protocol configuration](https://github.com/MystenLabs/sui/blob/main/crates/sui-protocol-config/src/lib.rs)), so you cannot avoid renewal by choosing a distant `maxEpoch`. The user's address does not change on renewal, because it depends only on `iss`, `aud`, `sub`, and the salt.
 
 The nonce commits to one ephemeral public key, so renewal always starts with a new key pair and a new OAuth login. To renew without interrupting the user:
 
