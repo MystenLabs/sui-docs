@@ -195,26 +195,24 @@ To generate a custom genesis, use the `sui genesis` command and pass the desired
 
 To start the network from a configuration directory that `sui genesis` generated, pass that directory with `--network.config`. The `-f` flag of `sui genesis` overwrites an existing configuration directory, so use it with caution.
 
-To view the transaction history for your local network, use the following command to retrieve the local total transaction count:
+To check the transaction history for your local network, request the latest checkpoint from the local full node's gRPC API and read its total transaction count. The example uses [`grpcurl`](https://github.com/fullstorydev/grpcurl):
 
 ```sh
-$ curl --location --request POST 'http://127.0.0.1:9000' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "sui_getTotalTransactionBlocks",
-  "params": []
-}'
+$ grpcurl -plaintext -d '{
+  "read_mask": { "paths": ["sequence_number", "summary.total_network_transactions"] }
+}' 127.0.0.1:9000 sui.rpc.v2.LedgerService/GetCheckpoint
 ```
 
 If successful, the response resembles the following:
 
 ```json
 {
-	"jsonrpc": "2.0",
-	"result": 168,
-	"id": 1
+  "checkpoint": {
+    "sequenceNumber": "42",
+    "summary": {
+      "totalNetworkTransactions": "168"
+    }
+  }
 }
 ```
 
