@@ -1,0 +1,304 @@
+---
+title: Move compiler diagnostics
+description: >-
+  Every diagnostic code the Move compiler can report, by category and in both code formats, and every lint with the attribute that suppresses it.
+keywords:
+  - move compiler
+  - compiler errors
+  - diagnostic codes
+  - lints
+  - allow lint
+  - EC01003
+  - error reference
+---
+
+<!-- generated: error_pages.py -->
+
+Generated from the Sui source ([MystenLabs/sui](https://github.com/MystenLabs/sui) at commit [`b213ae65b`](https://github.com/MystenLabs/sui/tree/b213ae65bfd71de996e5caa7e2869a1a31bdff2b)) on 2026-11-13 by `error_pages.py` in [MystenLabs/docs-data-dashboard](https://github.com/MystenLabs/docs-data-dashboard). Do not edit this page by hand: the weekly run regenerates it from the source. To change a message, edit the `codes!` table in `external-crates/move/crates/move-compiler/src/diagnostics/codes.rs`, or the `lints!` table in `external-crates/move/crates/move-compiler/src/sui_mode/linters/mod.rs` or `linters/mod.rs`.
+
+Every diagnostic the Move compiler can report, 162 codes in 16 categories, and the 27 lints it checks. The compiler prints a code as `EC01003`: a severity letter (`E` for an error, `W` for a warning), `C` for the compiler as the origin, then the category number and the code number. Older versions printed it without the origin letter, as `E01003`, and that form still appears in questions and issues, so both are listed.
+
+## Diagnostic codes
+
+### Uncategorized
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `WC00001` | `W00001` | `DeprecatedWillBeRemoved` | `Warning` | `DEPRECATED. will be removed` |
+| `EC00002` | `E00002` | `DeprecatedSpecItem` | `NonblockingError` | `DEPRECATED. unexpected spec item` |
+| `EC00003` | `E00003` | `UnableToMigrate` | `NonblockingError` | `migration failed` |
+
+### Syntax
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC01001` | `E01001` | `InvalidCharacter` | `NonblockingError` | `invalid character` |
+| `EC01002` | `E01002` | `UnexpectedToken` | `NonblockingError` | `unexpected token` |
+| `EC01003` | `E01003` | `InvalidModifier` | `NonblockingError` | `invalid modifier` |
+| `WC01004` | `W01004` | `InvalidDocComment` | `Warning` | `invalid documentation comment` |
+| `EC01005` | `E01005` | `InvalidAddress` | `NonblockingError` | `invalid address` |
+| `EC01006` | `E01006` | `InvalidNumber` | `NonblockingError` | `invalid number literal` |
+| `EC01007` | `E01007` | `InvalidByteString` | `NonblockingError` | `invalid byte string` |
+| `EC01008` | `E01008` | `InvalidHexString` | `NonblockingError` | `invalid hex string` |
+| `EC01009` | `E01009` | `InvalidLValue` | `NonblockingError` | `invalid assignment` |
+| `EC01010` | `E01010` | `SpecContextRestricted` | `BlockingError` | `syntax item restricted to spec contexts` |
+| `EC01011` | `E01011` | `InvalidSpecBlockMember` | `NonblockingError` | `invalid spec block member` |
+| `EC01012` | `E01012` | `InvalidRestrictedIdentifier` | `NonblockingError` | `invalid identifier escape` |
+| `EC01013` | `E01013` | `InvalidMoveOrCopy` | `NonblockingError` | `invalid 'move' or 'copy'` |
+| `EC01014` | `E01014` | `InvalidLabel` | `NonblockingError` | `invalid expression label` |
+| `EC01015` | `E01015` | `AmbiguousCast` | `NonblockingError` | `ambiguous 'as'` |
+| `EC01016` | `E01016` | `InvalidName` | `BlockingError` | `invalid name` |
+| `EC01017` | `E01017` | `InvalidMacro` | `BlockingError` | `invalid macro invocation` |
+| `EC01018` | `E01018` | `InvalidMatch` | `BlockingError` | `invalid 'match'` |
+| `EC01019` | `E01019` | `InvalidString` | `NonblockingError` | `invalid string literal` |
+
+### Declarations
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC02001` | `E02001` | `DuplicateItem` | `NonblockingError` | `duplicate declaration, item, or annotation` |
+| `EC02002` | `E02002` | `UnnecessaryItem` | `NonblockingError` | `unnecessary or extraneous item` |
+| `EC02003` | `E02003` | `InvalidAddress` | `NonblockingError` | `invalid 'address' declaration` |
+| `EC02004` | `E02004` | `InvalidModule` | `NonblockingError` | `invalid 'module' declaration` |
+| `EC02005` | `E02005` | `InvalidScript` | `NonblockingError` | `invalid 'script' declaration` |
+| `EC02006` | `E02006` | `InvalidConstant` | `NonblockingError` | `invalid 'const' declaration` |
+| `EC02007` | `E02007` | `InvalidFunction` | `NonblockingError` | `invalid 'fun' declaration` |
+| `EC02008` | `E02008` | `InvalidStruct` | `NonblockingError` | `invalid 'struct' declaration` |
+| `EC02009` | `E02009` | `InvalidSpec` | `NonblockingError` | `invalid 'spec' declaration` |
+| `EC02010` | `E02010` | `InvalidName` | `BlockingError` | `invalid declaration name` |
+| `EC02011` | `E02011` | `InvalidFriendDeclaration` | `NonblockingError` | `invalid 'friend' declaration` |
+| `EC02012` | `E02012` | `DeprecatedInvalidAcquiresItem` | `NonblockingError` | `DEPRECATED. invalid 'acquires' item` |
+| `EC02013` | `E02013` | `InvalidPhantomUse` | `NonblockingError` | `invalid phantom type parameter usage` |
+| `WC02014` | `W02014` | `InvalidNonPhantomUse` | `Warning` | `invalid non-phantom type parameter usage` |
+| `EC02015` | `E02015` | `InvalidAttribute` | `NonblockingError` | `invalid attribute` |
+| `EC02016` | `E02016` | `InvalidVisibilityModifier` | `NonblockingError` | `invalid visibility modifier` |
+| `EC02017` | `E02017` | `InvalidUseFun` | `NonblockingError` | `invalid 'use fun' declaration` |
+| `WC02018` | `W02018` | `UnknownAttribute` | `Warning` | `unknown attribute` |
+| `EC02019` | `E02019` | `InvalidSyntaxMethod` | `NonblockingError` | `invalid 'syntax' method type` |
+| `EC02020` | `E02020` | `MissingSyntaxMethod` | `BlockingError` | `no valid 'syntax' declaration found` |
+| `WC02021` | `W02021` | `DuplicateAlias` | `Warning` | `duplicate alias` |
+| `EC02022` | `E02022` | `InvalidEnum` | `NonblockingError` | `invalid 'enum' declaration` |
+| `WC02023` | `W02023` | `AmbiguousAddress` | `Warning` | `ambiguous address` |
+
+### NameResolution
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC03001` | `E03001` | `AddressWithoutValue` | `NonblockingError` | `address with no value` |
+| `EC03002` | `E03002` | `UnboundModule` | `BlockingError` | `unbound module` |
+| `EC03003` | `E03003` | `UnboundModuleMember` | `BlockingError` | `unbound module member` |
+| `EC03004` | `E03004` | `UnboundType` | `BlockingError` | `unbound type` |
+| `EC03005` | `E03005` | `UnboundUnscopedName` | `BlockingError` | `unbound unscoped name` |
+| `EC03006` | `E03006` | `NamePositionMismatch` | `BlockingError` | `unexpected name in this position` |
+| `EC03007` | `E03007` | `TooManyTypeArguments` | `NonblockingError` | `too many type arguments` |
+| `EC03008` | `E03008` | `TooFewTypeArguments` | `BlockingError` | `too few type arguments` |
+| `EC03009` | `E03009` | `UnboundVariable` | `BlockingError` | `unbound variable` |
+| `EC03010` | `E03010` | `UnboundField` | `NonblockingError` | `unbound field` |
+| `EC03011` | `E03011` | `ReservedName` | `BlockingError` | `invalid use of reserved name` |
+| `EC03012` | `E03012` | `UnboundMacro` | `BlockingError` | `unbound macro` |
+| `EC03013` | `E03013` | `PositionalCallMismatch` | `NonblockingError` | `positional call mismatch` |
+| `EC03014` | `E03014` | `InvalidLabel` | `BlockingError` | `invalid use of label` |
+| `EC03015` | `E03015` | `UnboundLabel` | `BlockingError` | `unbound label` |
+| `EC03016` | `E03016` | `InvalidMut` | `NonblockingError` | `invalid 'mut' declaration` |
+| `EC03017` | `E03017` | `InvalidMacroParameter` | `NonblockingError` | `invalid macro parameter` |
+| `EC03018` | `E03018` | `InvalidTypeParameter` | `NonblockingError` | `invalid type parameter` |
+| `EC03019` | `E03019` | `InvalidPattern` | `BlockingError` | `invalid pattern` |
+| `EC03020` | `E03020` | `UnboundVariant` | `BlockingError` | `unbound variant` |
+| `EC03021` | `E03021` | `InvalidTypeAnnotation` | `NonblockingError` | `invalid type annotation` |
+| `EC03022` | `E03022` | `InvalidPosition` | `NonblockingError` | `invalid usage position` |
+
+### TypeSafety
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC04001` | `E04001` | `Visibility` | `NonblockingError` | `restricted visibility` |
+| `EC04002` | `E04002` | `ScriptContext` | `NonblockingError` | `requires script context` |
+| `EC04003` | `E04003` | `BuiltinOperation` | `BlockingError` | `built-in operation not supported` |
+| `EC04004` | `E04004` | `ExpectedBaseType` | `BlockingError` | `expected a single non-reference type` |
+| `EC04005` | `E04005` | `ExpectedSingleType` | `BlockingError` | `expected a single type` |
+| `EC04006` | `E04006` | `SubtypeError` | `BlockingError` | `invalid subtype` |
+| `EC04007` | `E04007` | `JoinError` | `BlockingError` | `incompatible types` |
+| `EC04008` | `E04008` | `RecursiveType` | `BlockingError` | `recursive type not allowed` |
+| `EC04009` | `E04009` | `ExpectedSpecificType` | `BlockingError` | `expected specific type` |
+| `EC04010` | `E04010` | `UninferredType` | `BlockingError` | `cannot infer type` |
+| `EC04011` | `E04011` | `ScriptSignature` | `NonblockingError` | `invalid script signature` |
+| `EC04012` | `E04012` | `TypeForConstant` | `BlockingError` | `invalid type for constant` |
+| `EC04013` | `E04013` | `UnsupportedConstant` | `BlockingError` | `invalid statement or expression in constant` |
+| `EC04014` | `E04014` | `InvalidLoopControl` | `BlockingError` | `invalid loop control` |
+| `EC04015` | `E04015` | `InvalidNativeUsage` | `BlockingError` | `invalid use of native item` |
+| `EC04016` | `E04016` | `TooFewArguments` | `NonblockingError` | `too few arguments` |
+| `EC04017` | `E04017` | `TooManyArguments` | `NonblockingError` | `too many arguments` |
+| `EC04018` | `E04018` | `CyclicData` | `NonblockingError` | `cyclic data` |
+| `EC04019` | `E04019` | `CyclicInstantiation` | `NonblockingError` | `cyclic type instantiation` |
+| `EC04020` | `E04020` | `DeprecatedMissingAcquires` | `NonblockingError` | `DEPRECATED. missing acquires annotation` |
+| `EC04021` | `E04021` | `InvalidNum` | `NonblockingError` | `numeric literal out of range` |
+| `EC04022` | `E04022` | `InvalidMethodCall` | `BlockingError` | `invalid method call` |
+| `EC04023` | `E04023` | `InvalidImmVariableUsage` | `NonblockingError` | `invalid usage of immutable variable` |
+| `EC04024` | `E04024` | `InvalidControlFlow` | `BlockingError` | `invalid control flow` |
+| `EC04025` | `E04025` | `InvalidCopyOp` | `NonblockingError` | `invalid 'copy' usage` |
+| `EC04026` | `E04026` | `InvalidMoveOp` | `NonblockingError` | `invalid 'move' usage` |
+| `WC04027` | `W04027` | `ImplicitConstantCopy` | `Warning` | `implicit copy of a constant` |
+| `EC04028` | `E04028` | `InvalidCallTarget` | `BlockingError` | `invalid function call` |
+| `EC04029` | `E04029` | `UnexpectedFunctionType` | `BlockingError` | `invalid usage of lambda type` |
+| `EC04030` | `E04030` | `UnexpectedLambda` | `BlockingError` | `invalid usage of lambda` |
+| `EC04031` | `E04031` | `CannotExpandMacro` | `BlockingError` | `unable to expand macro function` |
+| `EC04032` | `E04032` | `InvariantError` | `BlockingError` | `types are not equal` |
+| `EC04033` | `E04033` | `IncompatibleSyntaxMethods` | `BlockingError` | `'syntax' method types differ` |
+| `EC04034` | `E04034` | `InvalidErrorUsage` | `BlockingError` | `invalid constant usage in error context` |
+| `EC04035` | `E04035` | `IncompletePattern` | `BlockingError` | `non-exhaustive pattern` |
+| `WC04036` | `W04036` | `DeprecatedUsage` | `Warning` | `deprecated usage` |
+| `EC04037` | `E04037` | `InvalidString` | `NonblockingError` | `invalid string after type inference` |
+| `WC04038` | `W04038` | `MissingLiteralType` | `Warning` | `unable to determine literal's type` |
+
+### AbilitySafety
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC05001` | `E05001` | `Constraint` | `NonblockingError` | `ability constraint not satisfied` |
+| `EC05002` | `E05002` | `ImplicitlyCopyable` | `NonblockingError` | `type not implicitly copyable` |
+
+### MoveSafety
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC06001` | `E06001` | `UnusedUndroppable` | `NonblockingError` | `unused value without 'drop'` |
+| `EC06002` | `E06002` | `UnassignedVariable` | `NonblockingError` | `use of unassigned variable` |
+
+### ReferenceSafety
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC07001` | `E07001` | `RefTrans` | `BlockingError` | `referential transparency violated` |
+| `EC07002` | `E07002` | `MutOwns` | `NonblockingError` | `mutable borrow rule violated` |
+| `EC07003` | `E07003` | `Dangling` | `NonblockingError` | `invalid operation, could create a dangling reference` |
+| `EC07004` | `E07004` | `InvalidReturn` | `NonblockingError` | `invalid return of locally borrowed state` |
+| `EC07005` | `E07005` | `InvalidTransfer` | `NonblockingError` | `invalid reference transfer` |
+| `EC07006` | `E07006` | `AmbiguousVariableUsage` | `NonblockingError` | `ambiguous variable usage` |
+
+### CodeGeneration
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC08001` | `E08001` | `UnfoldableConstant` | `NonblockingError` | `cannot compute constant value` |
+| `WC08002` | `W08002` | `AlwaysErrors` | `Warning` | `operation always errors` |
+
+### UnusedItem
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `WC09001` | `W09001` | `Alias` | `Warning` | `unused alias` |
+| `WC09002` | `W09002` | `Variable` | `Warning` | `unused variable` |
+| `WC09003` | `W09003` | `Assignment` | `Warning` | `unused assignment` |
+| `WC09004` | `W09004` | `TrailingSemi` | `Warning` | `unnecessary trailing semicolon` |
+| `WC09005` | `W09005` | `DeadCode` | `Warning` | `dead or unreachable code` |
+| `WC09006` | `W09006` | `StructTypeParam` | `Warning` | `unused struct type parameter` |
+| `WC09007` | `W09007` | `Attribute` | `Warning` | `unused attribute` |
+| `WC09008` | `W09008` | `Function` | `Warning` | `unused function` |
+| `WC09009` | `W09009` | `StructField` | `Warning` | `unused struct field` |
+| `WC09010` | `W09010` | `FunTypeParam` | `Warning` | `unused function type parameter` |
+| `WC09011` | `W09011` | `Constant` | `Warning` | `unused constant` |
+| `WC09012` | `W09012` | `MutModifier` | `Warning` | `unused 'mut' modifiers` |
+| `WC09013` | `W09013` | `MutReference` | `Warning` | `unused mutable reference '&mut'` |
+| `WC09014` | `W09014` | `MutParam` | `Warning` | `unused mutable reference '&mut' parameter` |
+
+### Attributes
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC10001` | `E10001` | `Duplicate` | `NonblockingError` | `invalid duplicate attribute` |
+| `EC10002` | `E10002` | `InvalidName` | `NonblockingError` | `invalid attribute name` |
+| `EC10003` | `E10003` | `InvalidValue` | `NonblockingError` | `invalid attribute value` |
+| `EC10004` | `E10004` | `InvalidUsage` | `NonblockingError` | `invalid usage of known attribute` |
+| `EC10005` | `E10005` | `InvalidTest` | `NonblockingError` | `unable to generate test` |
+| `EC10006` | `E10006` | `InvalidBytecodeInst` | `NonblockingError` | `unknown bytecode instruction function` |
+| `WC10007` | `W10007` | `ValueWarning` | `Warning` | `issue with attribute value` |
+| `EC10008` | `E10008` | `AmbiguousAttributeValue` | `NonblockingError` | `ambiguous attribute value` |
+| `WC10009` | `W10009` | `UnfulfilledExpectation` | `Warning` | `unfulfilled '#[expect(...)]'` |
+
+### Tests
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC11001` | `E11001` | `TestFailed` | `BlockingError` | `test failure` |
+
+### Bug
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `ICEC12001` | `ICE12001` | `BytecodeGeneration` | `Bug` | `BYTECODE GENERATION FAILED` |
+| `ICEC12002` | `ICE12002` | `BytecodeVerification` | `Bug` | `BYTECODE VERIFICATION FAILED` |
+| `ICEC12003` | `ICE12003` | `ICE` | `Bug` | `INTERNAL COMPILER ERROR` |
+
+### Editions
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC13001` | `E13001` | `FeatureTooNew` | `NonblockingError` | `feature is not supported in specified edition` |
+| `EC13002` | `E13002` | `DeprecatedFeature` | `NonblockingError` | `feature is deprecated in specified edition` |
+| `EC13003` | `E13003` | `FeatureInDevelopment` | `BlockingError` | `feature is under active development` |
+
+### Migration
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC14001` | `E14001` | `NeedsPublic` | `NonblockingError` | `move 2024 migration: public struct` |
+| `EC14002` | `E14002` | `NeedsLetMut` | `NonblockingError` | `move 2024 migration: let mut` |
+| `EC14003` | `E14003` | `NeedsRestrictedIdentifier` | `NonblockingError` | `move 2024 migration: restricted identifier` |
+| `EC14004` | `E14004` | `NeedsGlobalQualification` | `NonblockingError` | `move 2024 migration: global qualification` |
+| `EC14005` | `E14005` | `RemoveFriend` | `NonblockingError` | `move 2024 migration: remove 'friend'` |
+| `EC14006` | `E14006` | `MakePubPackage` | `NonblockingError` | `move 2024 migration: make 'public(package)'` |
+| `EC14007` | `E14007` | `AddressRemove` | `NonblockingError` | `move 2024 migration: address remove` |
+| `EC14008` | `E14008` | `AddressAdd` | `NonblockingError` | `move 2024 migration: address add` |
+
+### IDE
+
+| Code | Legacy code | Name | Severity | Message |
+| --- | --- | --- | --- | --- |
+| `EC15001` | `E15001` | `DotAutocomplete` | `Note` | `IDE dot autocomplete` |
+| `EC15002` | `E15002` | `MacroCallInfo` | `Note` | `IDE macro call info` |
+| `EC15003` | `E15003` | `ExpandedLambda` | `Note` | `IDE expanded lambda` |
+| `EC15004` | `E15004` | `MissingMatchArms` | `Note` | `IDE missing match arms` |
+| `EC15005` | `E15005` | `EllipsisExpansion` | `Note` | `IDE ellipsis expansion` |
+| `EC15006` | `E15006` | `PathAutocomplete` | `Note` | `IDE path autocomplete` |
+| `EC15007` | `E15007` | `StringValue` | `Note` | `IDE string value` |
+
+## Lints
+
+A lint is a warning the compiler reports by its filter name, which is also how the `#[allow(lint(...))]` attribute names it. Suppress one for a function or a module with the attribute in the last column.
+
+### Sui lints
+
+| Filter | Category | Description | Suppress with |
+| --- | --- | --- | --- |
+| `share_owned` | `Suspicious` | `possible owned object share` | `#[allow(lint(share_owned))]` |
+| `self_transfer` | `Conventions` | `non-composable transfer to sender` | `#[allow(lint(self_transfer))]` |
+| `custom_state_change` | `Suspicious` | `potentially unenforceable custom transfer/share/freeze policy` | `#[allow(lint(custom_state_change))]` |
+| `coin_field` | `Conventions` | `sub-optimal 'sui::coin::Coin' field type` | `#[allow(lint(coin_field))]` |
+| `freeze_wrapped` | `Suspicious` | `attempting to freeze wrapped objects` | `#[allow(lint(freeze_wrapped))]` |
+| `collection_equality` | `Suspicious` | `possibly useless collections compare` | `#[allow(lint(collection_equality))]` |
+| `public_random` | `Security` | `risky use of 'sui::random'` | `#[allow(lint(public_random))]` |
+| `missing_key` | `Suspicious` | `struct with id but missing key ability` | `#[allow(lint(missing_key))]` |
+| `freezing_capability` | `Suspicious` | `freezing potential capability` | `#[allow(lint(freezing_capability))]` |
+| `prefer_mut_tx_context` | `Conventions` | `prefer '&mut TxContext' over '&TxContext'` | `#[allow(lint(prefer_mut_tx_context))]` |
+| `public_entry` | `Complexity` | `` unnecessary `entry` on a `public` function `` | `#[allow(lint(public_entry))]` |
+| `uncallable_function` | `Correctness` | `it will not be possible to call this function` | `#[allow(lint(uncallable_function))]` |
+| `unused_object_with_fields` | `Suspicious` | `unused object with fields` | `#[allow(lint(unused_object_with_fields))]` |
+
+### Move lints
+
+| Filter | Category | Description | Suppress with |
+| --- | --- | --- | --- |
+| `constant_naming` | `Style` | `constant should follow naming convention` | `#[allow(lint(constant_naming))]` |
+| `while_true` | `Style` | `unnecessary 'while (true)', replace with 'loop'` | `#[allow(lint(while_true))]` |
+| `unnecessary_math` | `Complexity` | `math operator can be simplified` | `#[allow(lint(unnecessary_math))]` |
+| `unneeded_return` | `Style` | `unneeded return` | `#[allow(lint(unneeded_return))]` |
+| `abort_without_constant` | `Style` | `'abort' or 'assert' without named constant` | `#[allow(lint(abort_without_constant))]` |
+| `loop_without_exit` | `Suspicious` | `'loop' without 'break' or 'return'` | `#[allow(lint(loop_without_exit))]` |
+| `unnecessary_conditional` | `Complexity` | `'if' expression can be removed` | `#[allow(lint(unnecessary_conditional))]` |
+| `self_assignment` | `Suspicious` | `assignment preserves the same value` | `#[allow(lint(self_assignment))]` |
+| `redundant_ref_deref` | `Complexity` | `redundant reference/dereference` | `#[allow(lint(redundant_ref_deref))]` |
+| `unnecessary_unit` | `Style` | `` unit `()` expression can be removed or simplified `` | `#[allow(lint(unnecessary_unit))]` |
+| `always_equal_operands` | `Suspicious` | `redundant, always-equal operands for binary operation` | `#[allow(lint(always_equal_operands))]` |
+| `combinable_comparisons` | `Complexity` | `comparison operations condition can be simplified` | `#[allow(lint(combinable_comparisons))]` |
+| `unused_return_value` | `Suspicious` | `return value of a non-mutating call is discarded` | `#[allow(lint(unused_return_value))]` |
+| `mutation_in_match_guard` | `Suspicious` | `mutation in match guard` | `#[allow(lint(mutation_in_match_guard))]` |
