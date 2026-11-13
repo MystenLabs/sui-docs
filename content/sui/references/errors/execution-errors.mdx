@@ -1,0 +1,191 @@
+---
+title: Execution errors
+description: >-
+  Every error a Sui transaction can fail with, by enum, with the message the node renders and the page that explains it.
+keywords:
+  - execution errors
+  - ExecutionErrorKind
+  - CommandArgumentError
+  - PackageUpgradeError
+  - TypeArgumentError
+  - UserInputError
+  - transaction failed
+  - error reference
+---
+
+<!-- generated: error_pages.py -->
+
+Generated from the Sui source ([MystenLabs/sui](https://github.com/MystenLabs/sui) at commit [`b213ae65b`](https://github.com/MystenLabs/sui/tree/b213ae65bfd71de996e5caa7e2869a1a31bdff2b)) on 2026-11-13 by `error_pages.py` in [MystenLabs/docs-data-dashboard](https://github.com/MystenLabs/docs-data-dashboard). Do not edit this page by hand: the weekly run regenerates it from the source. To change a message, edit the `#[error(...)]` attribute on the variant in `crates/sui-types/src/error.rs` or `crates/sui-types/src/execution_status.rs`.
+
+Every error the Sui execution layer and the transaction input checks can return, as the `ExecutionErrorKind`, `CommandArgumentError`, `PackageUpgradeError`, `TypeArgumentError`, and `UserInputError` enums in `crates/sui-types` define them, with the message each one renders. A placeholder in a message, shown as `{...}`, is filled in with the value at the time. The last column links the page that explains the error, when one does. For the most common failures and their fixes, see [Troubleshooting common errors](/develop/testing-debugging/common-errors).
+
+## ExecutionErrorKind
+
+42 variants, defined in `crates/sui-types/src/execution_status.rs`.
+
+| Error | Message | Explained on |
+| --- | --- | --- |
+| `InsufficientGas` | `Insufficient Gas.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidGasObject` | `Invalid Gas Object. Possibly not address-owned or possibly not a SUI coin.` |  |
+| `InvariantViolation` | `INVARIANT VIOLATION.` | [Sui Validator Alert Reference](/operators/validator/alerts) |
+| `FeatureNotYetSupported` | `Attempted to used feature that is not supported yet` |  |
+| `MoveObjectTooBig` | `Move object with size {...} is larger than the maximum object size {...}` |  |
+| `MovePackageTooBig` | `Move package with size {...} is larger than the maximum object size {...}` |  |
+| `CircularObjectOwnership` | `Circular Object Ownership, including object {...}.` |  |
+| `InsufficientCoinBalance` | `Insufficient coin balance for operation.` |  |
+| `CoinBalanceOverflow` | `The coin balance overflows u64` |  |
+| `PublishErrorNonZeroAddress` | `Publish Error, Non-zero Address. The modules in the package must have their self-addresses set to zero.` |  |
+| `SuiMoveVerificationError` | `Sui Move Bytecode Verification Error. Please run the Sui Move Verifier for more information.` |  |
+| `MovePrimitiveRuntimeError` | `Move Primitive Runtime Error. Location: {...}. Arithmetic error, stack overflow, max value depth, etc.` |  |
+| `MoveAbort` | `Move Runtime Abort. Location: {...}, Abort Code: {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `VMVerificationOrDeserializationError` | `Move Bytecode Verification Error. Please run the Bytecode Verifier for more information.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `VMInvariantViolation` | `MOVE VM INVARIANT VIOLATION.` |  |
+| `FunctionNotFound` | `Function Not Found.` |  |
+| `ArityMismatch` | `Arity mismatch for Move function. The number of arguments does not match the number of parameters` |  |
+| `TypeArityMismatch` | `Type arity mismatch for Move function. Mismatch between the number of actual versus expected type arguments.` |  |
+| `NonEntryFunctionInvoked` | `Non Entry Function Invoked. Move Call must start with an entry function` |  |
+| `CommandArgumentError` | `Invalid command argument at {...}. {...}` |  |
+| `TypeArgumentError` | `Error for type argument at index {...}: {...}` |  |
+| `UnusedValueWithoutDrop` | `Unused result without the drop ability. Command result {...}, return value {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors), [Staking Rewards](/onchain-finance/examples-patterns/staking-rewards) |
+| `InvalidPublicFunctionReturnType` | `Invalid public Move function signature. Unsupported return type for return value {...}` |  |
+| `InvalidTransferObject` | `Invalid Transfer Object, object does not have public transfer.` |  |
+| `EffectsTooLarge` | `Effects of size {...} bytes too large. Limit is {...} bytes` |  |
+| `PublishUpgradeMissingDependency` | `Publish/Upgrade Error, Missing dependency. A dependency of a published or upgraded package has not been assigned an on-chain address.` |  |
+| `PublishUpgradeDependencyDowngrade` | `Publish/Upgrade Error, Dependency downgrade. Indirect (transitive) dependency of published or upgraded package has been assigned an on-chain version that is less than the version required by one of the package's transitive dependencies.` |  |
+| `PackageUpgradeError` | `Invalid package upgrade. {...}` |  |
+| `WrittenObjectsTooLarge` | `Written objects of {...} bytes too large. Limit is {...} bytes` |  |
+| `CertificateDenied` | `Certificate is on the deny list` |  |
+| `SuiMoveVerificationTimedout` | `Sui Move Bytecode Verification Timeout. Please run the Sui Move Verifier for more information.` |  |
+| `SharedObjectOperationNotAllowed` | `The shared object operation is not allowed.` |  |
+| `InputObjectDeleted` | `Certificate cannot be executed due to a dependency on a deleted shared object or an object that was transferred out of consensus` |  |
+| `ExecutionCancelledDueToSharedObjectCongestion` | `Certificate is cancelled due to congestion on shared objects: {...}` |  |
+| `AddressDeniedForCoin` | `Address {...} is denied for coin {...}` |  |
+| `CoinTypeGlobalPause` | `Coin type is globally paused for use: {...}` |  |
+| `ExecutionCancelledDueToRandomnessUnavailable` | `Certificate is cancelled because randomness could not be generated this epoch` |  |
+| `MoveVectorElemTooBig` | `Move vector element (passed to MakeMoveVec) with size {...} is larger than the maximum size {...}. Note that this maximum is scaled based on the type of the vector element.` |  |
+| `MoveRawValueTooBig` | `Move value (possibly an upgrade ticket or a dev-inspect value) with size {...} is larger than the maximum size {...}. Note that this maximum is scaled based on the type of the value.` |  |
+| `InvalidLinkage` | `A valid linkage was unable to be determined for the transaction` |  |
+| `InsufficientFundsForWithdraw` | `Insufficient funds for funds accumulator withdrawal` |  |
+| `NonExclusiveWriteInputObjectModified` | `Non-exclusive write input object {...} has been modified` |  |
+
+## CommandArgumentError
+
+20 variants, defined in `crates/sui-types/src/execution_status.rs`.
+
+| Error | Message | Explained on |
+| --- | --- | --- |
+| `TypeMismatch` | `The type of the value does not match the expected type` |  |
+| `InvalidBCSBytes` | `The argument cannot be deserialized into a value of the specified type` |  |
+| `InvalidUsageOfPureArg` | `The argument cannot be instantiated from raw bytes` |  |
+| `InvalidArgumentToPrivateEntryFunction` | `Invalid argument to private entry function. These functions cannot take arguments from other Move functions` |  |
+| `IndexOutOfBounds` | `Out of bounds access to input or result vector {...}` |  |
+| `SecondaryIndexOutOfBounds` | `Out of bounds secondary access to result vector {...} at secondary index {...}` |  |
+| `InvalidResultArity` | `Invalid usage of result {...}, expected a single result but found either no return values or multiple.` |  |
+| `InvalidGasCoinUsage` | `Invalid taking of the Gas coin. It can only be used by-value with TransferObjects` |  |
+| `InvalidValueUsage` | `Invalid usage of value. Mutably borrowed values require unique usage. Immutably borrowed values cannot be taken or borrowed mutably. Taken values cannot be used again.` |  |
+| `InvalidObjectByValue` | `Immutable objects cannot be passed by-value.` |  |
+| `InvalidObjectByMutRef` | `Immutable objects cannot be passed by mutable reference, &mut.` |  |
+| `SharedObjectOperationNotAllowed` | `Shared object operations such a wrapping, freezing, or converting to owned are not allowed.` |  |
+| `InvalidArgumentArity` | `Invalid argument arity. Expected a single argument but found a result that expanded to multiple arguments.` |  |
+| `InvalidTransferObject` | `` Object passed to TransferObject does not have public transfer, i.e. the `store` ability `` |  |
+| `InvalidMakeMoveVecNonObjectArgument` | `First argument to MakeMoveVec is not an object. If no type is specified for MakeMoveVec, all arguments must be the same object type.` |  |
+| `ArgumentWithoutValue` | `Specified argument location does not have a value and cannot be used` |  |
+| `CannotMoveBorrowedValue` | `` Cannot move a borrowed value. The value's type does resulted in this argument usage being inferred as a move. This is likely due to the type not having the `copy` ability; although in rare cases, it could also be this is the last usage of a value without the `drop` ability. `` |  |
+| `CannotWriteToExtendedReference` | `Cannot write to an argument location that is still borrowed, and where that borrow is an extension of that reference. This is likely due to this argument being used in a Move call that returns a reference, and that reference is used in a later command.` |  |
+| `InvalidReferenceArgument` | `The argument specified cannot be used as a reference argument in the Move call. Either the argument is a mutable reference and it conflicts with another argument to the call, or the argument is mutable and another reference extends it and will be used in a later command.` |  |
+| `InvalidTxContext` | `` Invalid usage of TxContext in the function signature. TxContext can only be used by reference, `&TxContext` or `&mut TxContext`. If used mutably, it must be the only TxContext parameter, and TxContext can never be returned from a Move call. `` |  |
+
+## PackageUpgradeError
+
+6 variants, defined in `crates/sui-types/src/execution_status.rs`.
+
+| Error | Message | Explained on |
+| --- | --- | --- |
+| `UnableToFetchPackage` | `Unable to fetch package at {...}` |  |
+| `NotAPackage` | `Object {...} is not a package` |  |
+| `IncompatibleUpgrade` | `New package is incompatible with previous version` |  |
+| `DigestDoesNotMatch` | `Digest in upgrade ticket and computed digest disagree` |  |
+| `UnknownUpgradePolicy` | `Upgrade policy {...} is not a valid upgrade policy` |  |
+| `PackageIDDoesNotMatch` | `Package ID {...} does not match package ID in upgrade ticket {...}` |  |
+
+## TypeArgumentError
+
+2 variants, defined in `crates/sui-types/src/execution_status.rs`.
+
+| Error | Message | Explained on |
+| --- | --- | --- |
+| `TypeNotFound` | `A type was not found in the module specified.` |  |
+| `ConstraintNotSatisfied` | `A type provided did not match the specified constraints.` |  |
+
+## UserInputError
+
+66 variants, defined in `crates/sui-types/src/error.rs`.
+
+| Error | Message | Explained on |
+| --- | --- | --- |
+| `MutableObjectUsedMoreThanOnce` | `Mutable object {...} cannot appear more than one in one transaction` |  |
+| `ObjectInputArityViolation` | `Wrong number of parameters for the transaction` |  |
+| `ObjectNotFound` | `Could not find the referenced object {...} at version {...}` |  |
+| `ObjectVersionUnavailableForConsumption` | `Transaction needs to be rebuilt because object {...} version {...} ({...}) is unavailable for consumption, current version: {...}` |  |
+| `PackageVerificationTimeout` | `Package verification failed: {...}` |  |
+| `DependentPackageNotFound` | `Dependent package not found on-chain: {...}` |  |
+| `ImmutableParameterExpectedError` | `Mutable parameter provided, immutable parameter expected` |  |
+| `SizeLimitExceeded` | `Size limit exceeded: {...} is {...}` |  |
+| `InvalidChildObjectArgument` | `Object {...} is owned by object {...}. Objects owned by other objects cannot be used as input arguments` |  |
+| `InvalidObjectDigest` | `Invalid Object digest for object {...}. Expected digest : {...}` |  |
+| `InvalidSequenceNumber` | `Sequence numbers above the maximal value are not usable for transfers` |  |
+| `MovePackageAsObject` | `A move object is expected, instead a move package is passed: {...}` |  |
+| `MoveObjectAsPackage` | `A move package is expected, instead a move object is passed: {...}` |  |
+| `IncorrectUserSignature` | `Transaction was not signed by the correct sender: {...}` |  |
+| `NotSharedObjectError` | `Object used as shared is not shared` |  |
+| `DuplicateObjectRefInput` | `The transaction inputs contain duplicated ObjectRef's` |  |
+| `MissingGasPayment` | `Transaction gas payment missing` |  |
+| `GasObjectNotOwnedObject` | `Gas object is not an owned object with owner: {...}` |  |
+| `GasBudgetTooHigh` | `Gas budget: {...} is higher than max: {...}` |  |
+| `GasBudgetTooLow` | `Gas budget: {...} is lower than min: {...}` |  |
+| `GasBalanceTooLow` | `Balance of gas object {...} is lower than the needed amount: {...}` |  |
+| `UnsupportedSponsoredTransactionKind` | `Transaction kind does not support Sponsored Transaction` |  |
+| `GasPriceUnderRGP` | `Gas price {...} under reference gas price (RGP) {...}` |  |
+| `GasPriceTooHigh` | `Gas price cannot exceed {...} mist` |  |
+| `InvalidGasObject` | `Object {...} is not a gas object` |  |
+| `InsufficientBalanceToCoverMinimalGas` | `Gas object does not have enough balance to cover minimal gas spend` |  |
+| `ObjectSequenceNumberTooHigh` | `Could not find the referenced object {...} as the asked version {...} is higher than the latest {...}` |  |
+| `ObjectDeleted` | `Object deleted at reference ({...}, {...}, {...})` |  |
+| `InvalidBatchTransaction` | `Invalid Batch Transaction: {...}` |  |
+| `BlockedMoveFunction` | `This Move function is currently disabled and not available for call` |  |
+| `EmptyInputCoins` | `Empty input coins for Pay related transaction` |  |
+| `UnexpectedGasPaymentObject` | `SUI payment transactions use first input coin for gas payment, but found a different gas object` |  |
+| `SharedObjectStartingVersionMismatch` | `Wrong initial version given for shared object` |  |
+| `TransferObjectWithoutPublicTransferError` | `Attempt to transfer object {...} that does not have public transfer. Object transfer must be done instead using a distinct Move function call` |  |
+| `EmptyCommandInput` | `TransferObjects, MergeCoin, and Publish cannot have empty arguments. If MakeMoveVec has empty arguments, it must have a type specified` |  |
+| `TransactionDenied` | `Transaction is denied: {...}` |  |
+| `Unsupported` | `Feature is not supported: {...}` |  |
+| `MoveFunctionInputError` | `Query transactions with move function input error: {...}` |  |
+| `VerifiedCheckpointNotFound` | `Verified checkpoint not found for sequence number: {...}` |  |
+| `VerifiedCheckpointDigestNotFound` | `Verified checkpoint not found for digest: {...}` |  |
+| `LatestCheckpointSequenceNumberNotFound` | `Latest checkpoint sequence number not found` |  |
+| `CheckpointContentsNotFound` | `Checkpoint contents not found for digest: {...}` |  |
+| `GenesisTransactionNotFound` | `Genesis transaction not found` |  |
+| `TransactionCursorNotFound` | `Transaction {...} not found` |  |
+| `InaccessibleSystemObject` | `Object {...} is a system object and cannot be accessed by user transactions` |  |
+| `MaxPublishCountExceeded` | `{...} max publish/upgrade commands allowed, {...} provided` |  |
+| `MutableParameterExpected` | `Immutable parameter provided, mutable parameter expected` |  |
+| `AddressDeniedForCoin` | `Address {...} is denied for coin {...}` |  |
+| `PostRandomCommandRestrictions` | `Commands following a command with Random can only be TransferObjects or MergeCoins` |  |
+| `InvalidArgumentIndex` | `Invalid argument at command {...}, argument {...}: index {...} is out of bounds` |  |
+| `TooManyTransactionsInBatch` | `Number of transactions ({...}) exceeds the maximum allowed ({...}) in a batch` |  |
+| `TotalTransactionSizeTooLargeInBatch` | `Total transactions size ({...}) bytes exceeds the maximum allowed ({...}) bytes in a Soft Bundle` |  |
+| `NoSharedObjectError` | `Transaction {...} in Soft Bundle contains no shared objects` |  |
+| `AlreadyExecutedInSoftBundleError` | `Transaction {...} in Soft Bundle has already been executed` |  |
+| `CertificateAlreadyProcessed` | `At least one certificate in Soft Bundle has already been processed` |  |
+| `TransactionAlreadyExecuted` | `Transaction {...} was already executed` |  |
+| `GasPriceMismatchError` | `Gas price for transaction {...} in Soft Bundle mismatch: want {...}, have {...}` |  |
+| `CoinTypeGlobalPause` | `Coin type is globally paused for use: {...}` |  |
+| `InvalidIdentifier` | `Invalid identifier found in the transaction: {...}` |  |
+| `NotOwnedObjectError` | `Object used as owned is not owned` |  |
+| `InvalidWithdrawReservation` | `Invalid withdraw reservation: {...}` |  |
+| `MissingTransactionExpiration` | `Transaction with empty gas payment must specify an expiration.` |  |
+| `InvalidExpiration` | `Invalid transaction expiration: {...}` |  |
+| `InvalidChainId` | `Transaction chain ID {...} does not match network chain ID {...}.` |  |
+| `RepeatedTransactions` | `Transaction {...} appears more than once in the request` |  |
+| `ProposerNotAllowed` | `Validator {...} is not an allowed proposer of this transaction` |  |

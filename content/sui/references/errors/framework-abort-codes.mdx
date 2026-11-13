@@ -1,0 +1,1015 @@
+---
+title: Framework abort codes
+description: >-
+  Every abort constant in the Sui framework packages, by package and module, with its abort code or clever error message.
+keywords:
+  - abort codes
+  - MoveAbort
+  - clever errors
+  - sui framework
+  - sui-system
+  - move-stdlib
+  - deepbook
+  - bridge
+  - error reference
+---
+
+<!-- generated: error_pages.py -->
+
+Generated from the Sui source ([MystenLabs/sui](https://github.com/MystenLabs/sui) at commit [`b213ae65b`](https://github.com/MystenLabs/sui/tree/b213ae65bfd71de996e5caa7e2869a1a31bdff2b)) on 2026-11-13 by `error_pages.py` in [MystenLabs/docs-data-dashboard](https://github.com/MystenLabs/docs-data-dashboard). Do not edit this page by hand: the weekly run regenerates it from the source. To change a message, edit the constant's doc comment, or its `#[error]` string, in the package's `sources` directory under `crates/sui-framework/packages`.
+
+Every `const E...` the framework packages declare, 389 constants in 5 packages, with the module that declares it. A transaction that aborts inside one of these modules fails with the `MoveAbort` execution error, which carries the module and the abort code, so this page maps the code back to the constant and its doc comment. A clever error (62 of them, marked `#[error]` in the source) carries its message instead of a number. The execution errors themselves are on [Execution errors](/references/errors/execution-errors).
+
+## bridge
+
+### bridge::bridge
+
+Defined in `crates/sui-framework/packages/bridge/sources/bridge.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EVM_ADDRESS_LENGTH` | `20` |  |
+| `EUnexpectedMessageType` | `0` |  |
+| `EUnauthorisedClaim` | `1` |  |
+| `EMalformedMessageError` | `2` |  |
+| `EUnexpectedTokenType` | `3` |  |
+| `EUnexpectedChainID` | `4` |  |
+| `ENotSystemAddress` | `5` |  |
+| `EUnexpectedSeqNum` | `6` |  |
+| `EWrongInnerVersion` | `7` |  |
+| `EBridgeUnavailable` | `8` |  |
+| `EUnexpectedOperation` | `9` |  |
+| `EInvariantSuiInitializedTokenTransferShouldNotBeClaimed` | `10` |  |
+| `EMessageNotFoundInRecords` | `11` |  |
+| `EUnexpectedMessageVersion` | `12` |  |
+| `EBridgeAlreadyPaused` | `13` |  |
+| `EBridgeNotPaused` | `14` |  |
+| `ETokenAlreadyClaimedOrHitLimit` | `15` |  |
+| `EInvalidBridgeRoute` | `16` |  |
+| `EMustBeTokenMessage` | `17` |  |
+| `EInvalidEvmAddress` | `18` |  |
+| `ETokenValueIsZero` | `19` |  |
+
+### bridge::chain_ids
+
+Defined in `crates/sui-framework/packages/bridge/sources/chain_ids.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidBridgeRoute` | `0` |  |
+
+### bridge::committee
+
+Defined in `crates/sui-framework/packages/bridge/sources/committee.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ESignatureBelowThreshold` | `0` |  |
+| `EDuplicatedSignature` | `1` |  |
+| `EInvalidSignature` | `2` |  |
+| `ENotSystemAddress` | `3` |  |
+| `EValidatorBlocklistContainsUnknownKey` | `4` |  |
+| `ESenderNotActiveValidator` | `5` |  |
+| `EInvalidPubkeyLength` | `6` |  |
+| `ECommitteeAlreadyInitiated` | `7` |  |
+| `EDuplicatePubkey` | `8` |  |
+| `ESenderIsNotInBridgeCommittee` | `9` |  |
+| `ECDSA_COMPRESSED_PUBKEY_LENGTH` | `33` |  |
+
+### bridge::limiter
+
+Defined in `crates/sui-framework/packages/bridge/sources/limiter.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ELimitNotFoundForRoute` | `0` |  |
+
+### bridge::message
+
+Defined in `crates/sui-framework/packages/bridge/sources/message.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ECDSA_ADDRESS_LENGTH` | `20` |  |
+| `ETrailingBytes` | `0` |  |
+| `EInvalidAddressLength` | `1` |  |
+| `EEmptyList` | `2` |  |
+| `EInvalidMessageType` | `3` |  |
+| `EInvalidEmergencyOpType` | `4` |  |
+| `EInvalidPayloadLength` | `5` |  |
+| `EMustBeTokenMessage` | `6` |  |
+| `EInvalidMessageVersion` | `7` |  |
+
+### bridge::treasury
+
+Defined in `crates/sui-framework/packages/bridge/sources/treasury.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EUnsupportedTokenType` | `1` |  |
+| `EInvalidUpgradeCap` | `2` |  |
+| `ETokenSupplyNonZero` | `3` |  |
+| `EInvalidNotionalValue` | `4` |  |
+
+## deepbook
+
+### deepbook::clob
+
+Defined in `crates/sui-framework/packages/deepbook/sources/clob.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidOrderId` | `3` |  |
+| `EUnauthorizedCancel` | `4` |  |
+| `EInvalidQuantity` | `6` |  |
+| `EInvalidTickPrice` | `11` |  |
+| `EInvalidUser` | `12` |  |
+
+### deepbook::clob_v2
+
+Defined in `crates/sui-framework/packages/deepbook/sources/clob_v2.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EIncorrectPoolOwner` | `1` |  |
+| `EInvalidOrderId` | `3` |  |
+| `EUnauthorizedCancel` | `4` |  |
+| `EInvalidQuantity` | `6` |  |
+| `EInvalidTickPrice` | `11` |  |
+| `EInvalidUser` | `12` |  |
+| `ENotEqual` | `13` |  |
+| `EInvalidExpireTimestamp` | `19` |  |
+
+### deepbook::critbit
+
+Defined in `crates/sui-framework/packages/deepbook/sources/critbit.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EExceedCapacity` | `2` |  |
+| `ETreeNotEmpty` | `3` |  |
+| `EKeyAlreadyExist` | `4` |  |
+| `ELeafNotExist` | `5` |  |
+| `EIndexOutOfRange` | `7` |  |
+| `ENullParent` | `8` |  |
+
+### deepbook::custodian_v2
+
+Defined in `crates/sui-framework/packages/deepbook/sources/custodian_v2.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EAdminAccountCapRequired` | `2` |  |
+
+### deepbook::math
+
+Defined in `crates/sui-framework/packages/deepbook/sources/math.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EUnderflow` | `1` |  |
+
+## move-stdlib
+
+### std::ascii
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/ascii.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidASCIICharacter` | `0x10000` | An invalid ASCII character was encountered when creating an ASCII string. |
+| `EInvalidIndex` | `0x10001` | An invalid index was encountered when creating a substring. |
+
+### std::bit_vector
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/bit_vector.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EINDEX` | `0x20000` | The provided index is out of bounds |
+| `ELENGTH` | `0x20001` | An invalid length of bitvector was given |
+
+### std::fixed_point32
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/fixed_point32.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EDENOMINATOR` | `0x10001` | The denominator provided was zero |
+| `EDIVISION` | `0x20002` | The quotient value would be too large to be held in a `u64` |
+| `EMULTIPLICATION` | `0x20003` | The multiplied value would be too large to be held in a `u64` |
+| `EDIVISION_BY_ZERO` | `0x10004` | A division by zero was encountered |
+| `ERATIO_OUT_OF_RANGE` | `0x20005` | The computed ratio when converting to a `FixedPoint32` would be unrepresentable |
+
+### std::option
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/option.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EOPTION_IS_SET` | `0x40000` | The `Option` is in an invalid state for the operation attempted. The `Option` is `Some` while it should be `None`. |
+| `EOPTION_NOT_SET` | `0x40001` | The `Option` is in an invalid state for the operation attempted. The `Option` is `None` while it should be `Some`. |
+
+### std::string
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/string.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidUTF8` | `1` | An invalid UTF8 encoding. |
+| `EInvalidIndex` | `2` | Index out of range. |
+
+### std::type_name
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/type_name.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENonModuleType` | `0` | The type is not from a package/module. It is a primitive type. |
+
+### std::uq32_32
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/uq32_32.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EDenominator` | clever error | `Quotient specified with a zero denominator` |
+| `EQuotientTooSmall` | clever error | `Quotient specified is too small, and is outside of the supported range` |
+| `EQuotientTooLarge` | clever error | `Quotient specified is too large, and is outside of the supported range` |
+| `EOverflow` | clever error | `Overflow from an arithmetic operation` |
+| `EDivisionByZero` | clever error | `Division by zero` |
+
+### std::uq64_64
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/uq64_64.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EDenominator` | clever error | `Quotient specified with a zero denominator` |
+| `EQuotientTooSmall` | clever error | `Quotient specified is too small, and is outside of the supported range` |
+| `EQuotientTooLarge` | clever error | `Quotient specified is too large, and is outside of the supported range` |
+| `EOverflow` | clever error | `Overflow from an arithmetic operation` |
+| `EDivisionByZero` | clever error | `Division by zero` |
+
+### std::vector
+
+Defined in `crates/sui-framework/packages/move-stdlib/sources/vector.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EINDEX_OUT_OF_BOUNDS` | `0x20000` | The index into the vector is out of bounds |
+
+## sui-framework
+
+### sui::accumulator
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/accumulator.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` |  |
+
+### sui::accumulator_metadata
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/accumulator_metadata.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvariantViolation` | `0` |  |
+
+### sui::accumulator_settlement
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/accumulator_settlement.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` |  |
+| `EInvalidSplitAmount` | `1` |  |
+
+### sui::address
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/address.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EAddressParseError` | `0` | Error from `from_bytes` when it is supplied too many or too few bytes. |
+
+### sui::address_alias
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/address_alias.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | clever error | `Only the system can create the alias state object.` |
+| `ENoSuchAlias` | clever error | `Given alias does not exist.` |
+| `EAliasAlreadyExists` | clever error | `Alias already exists.` |
+| `ECannotRemoveLastAlias` | clever error | `Cannot remove the last alias.` |
+| `ETooManyAliases` | clever error | `The number of aliases exceeds the maximum allowed.` |
+
+### sui::allowance
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/allowance.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSpender` | clever error |  |
+| `EWrongApp` | clever error |  |
+| `EExpired` | clever error |  |
+| `EExceedsLifetimeCap` | clever error |  |
+| `EExceedsRateLimit` | clever error |  |
+| `ENoLimit` | clever error |  |
+| `EWrongAllowance` | clever error |  |
+| `EBadRateLimit` | clever error |  |
+| `ENotStarted` | clever error |  |
+| `EHasApp` | clever error |  |
+| `EWrongFunder` | clever error |  |
+| `EWrongCap` | clever error |  |
+| `ENameTooLong` | clever error |  |
+| `EZeroLifetimeCap` | clever error |  |
+| `EBadTimeWindow` | clever error |  |
+| `ENoExpiration` | clever error |  |
+| `ENotEnabled` | clever error |  |
+| `ESponsorWithdrawalNotEnabled` | clever error |  |
+
+### sui::authenticator_state
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/authenticator_state.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` | Sender is not @0x0 the system address. |
+| `EWrongInnerVersion` | `1` |  |
+| `EJwksNotSorted` | `2` |  |
+
+### sui::bag
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/bag.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EBagNotEmpty` | `0` |  |
+
+### sui::balance
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/balance.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENonZero` | `0` | For when trying to destroy a non-zero balance. |
+| `EOverflow` | `1` | For when an overflow is happening on Supply operations. |
+| `ENotEnough` | `2` | For when trying to withdraw more than there is. |
+| `ENotSystemAddress` | `3` | Sender is not @0x0 the system address. |
+| `ENotSUI` | `4` | System operation performed for a coin other than SUI |
+
+### sui::bcs
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/bcs.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EOutOfRange` | `0` | For when bytes length is less than required for deserialization. |
+| `ENotBool` | `1` | For when the boolean value different than `0` or `1`. |
+| `ELenOutOfRange` | `2` | For when ULEB byte is out of range (or not found). |
+
+### sui::borrow
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/borrow.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EWrongBorrow` | `0` | The `Borrow` does not match the `Referent`. |
+| `EWrongValue` | `1` | An attempt to swap the `Referent.value` with another object of the same type. |
+
+### sui::clock
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/clock.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` | Sender is not @0x0 the system address. |
+| `ETimestampDecreased` | `1` | The test Clock was set to a timestamp earlier than its current one. |
+
+### sui::coin
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/coin.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EBadWitness` | `0` | A type passed to create_supply is not a one-time witness. |
+| `EInvalidArg` | `1` | Invalid arguments are passed to a function. |
+| `ENotEnough` | `2` | Trying to split a coin more times than its balance allows. |
+| `EGlobalPauseNotAllowed` | `3` |  |
+
+### sui::config
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/config.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EAlreadySetForEpoch` | `0` |  |
+| `ENotSetForEpoch` | `1` |  |
+| `EBCSSerializationFailure` | `2` |  |
+
+### sui::ecdsa_k1
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/ecdsa_k1.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EFailToRecoverPubKey` | `0` | Error if the public key cannot be recovered from the signature. |
+| `EInvalidSignature` | `1` | Error if the signature is invalid. |
+| `EInvalidPubKey` | `2` | Error if the public key is invalid. |
+| `EInvalidPrivKey` | `3` | Error if the private key is invalid. |
+| `EInvalidHashFunction` | `4` | Error if the given hash function does not exist. |
+| `EInvalidSeed` | `5` | Error if the seed is invalid. |
+
+### sui::ecdsa_r1
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/ecdsa_r1.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EFailToRecoverPubKey` | `0` | Error if the public key cannot be recovered from the signature. |
+| `EInvalidSignature` | `1` | Error if the signature is invalid. |
+
+### sui::ecvrf
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/ecvrf.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidHashLength` | `1` |  |
+| `EInvalidPublicKeyEncoding` | `2` |  |
+| `EInvalidProofEncoding` | `3` |  |
+
+### sui::groth16
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/groth16.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidVerifyingKey` | `0` |  |
+| `EInvalidCurve` | `1` |  |
+| `ETooManyPublicInputs` | `2` |  |
+| `EInvalidScalar` | `3` |  |
+
+### sui::group_ops
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/group_ops.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSupported` | `0` |  |
+| `EInvalidInput` | `1` |  |
+| `EInputTooLong` | `2` |  |
+| `EInvalidBufferLength` | `3` |  |
+
+### sui::nitro_attestation
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/nitro_attestation.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSupportedError` | `0` | Error that the feature is not available on this network. |
+| `EParseError` | `1` | Error that the attestation input failed to be parsed. |
+| `EVerifyError` | `2` | Error that the attestation failed to be verified. |
+| `EInvalidPCRsError` | `3` | Error that the PCRs are invalid. |
+
+### sui::poseidon
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/poseidon.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENonCanonicalInput` | `0` | Error if any of the inputs are larger than or equal to the BN254 field size. |
+| `EEmptyInput` | `1` | Error if an empty vector is passed as input. |
+| `ETooManyInputs` | `2` | Error if more than MAX_INPUTS inputs are given. |
+
+### sui::rangeproofs
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/rangeproofs.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSupported` | `0` |  |
+| `EInvalidProof` | `1` |  |
+| `EInvalidRange` | `2` |  |
+| `EInvalidBatchSize` | `3` |  |
+| `EUnsupportedVersion` | `4` |  |
+| `EInvalidDst` | `5` |  |
+
+### sui::vdf
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/vdf.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidInput` | `0` |  |
+
+### sui::zklogin_verified_id
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/zklogin_verified_id.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EFunctionDisabled` | `0` |  |
+
+### sui::zklogin_verified_issuer
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/crypto/zklogin_verified_issuer.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidInput` | `0` | Error if the proof consisting of the inputs provided to the verification function is invalid. |
+| `EInvalidProof` | `1` | Error if the proof consisting of the inputs provided to the verification function is invalid. |
+
+### sui::deny_list
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/deny_list.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` | Trying to create a deny list object when not called by the system address. |
+| `ENotDenied` | `1` | The specified address to be removed is not already in the deny list. |
+| `EInvalidAddress` | `1` | The specified address cannot be added to the deny list. |
+
+### sui::derived_object
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/derived_object.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EObjectAlreadyExists` | clever error | `Derived object is already claimed.` |
+| `EObjectNotClaimed` | clever error | `Derived object is not claimed by this parent.` |
+| `ESharedObjectRelease` | clever error | `Shared objects cannot be released.` |
+
+### sui::display
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/display.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotOwner` | `0` | For when T does not belong to the package `Publisher`. |
+| `EVecLengthMismatch` | `1` | For when vectors passed into one of the multiple insert functions don't match in their lengths. |
+| `ENoLongerSupported` | `2` | Creation of Display V1 is no longer available, see `display_registry` for options for creating Display V2. |
+
+### sui::dynamic_field
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/dynamic_field.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EFieldAlreadyExists` | `0` | The object already has a dynamic field with this name (with the value and type specified) |
+| `EFieldDoesNotExist` | `1` | Cannot load dynamic field. The object does not have a dynamic field with this name (with the value and type specified) |
+| `EFieldTypeMismatch` | `2` | The object has a field with that name, but the value type does not match |
+| `EBCSSerializationFailure` | `3` | Failed to serialize the field's name |
+| `ESharedObjectOperationNotSupported` | `4` | The object added as a dynamic field was previously a shared object |
+
+### sui::forwarding_address
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/forwarding_address.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | clever error | `Only the system can create the forwarding address registry.` |
+
+### sui::funds_accumulator
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/funds_accumulator.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EOverflow` | `0` |  |
+| `EInvalidSubLimit` | clever error | `Sub-limit exceeds current withdrawal limit` |
+| `EOwnerMismatch` | clever error | `Withdrawal owners do not match` |
+| `EObjectFundsWithdrawNotEnabled` | clever error | `Object funds withdraw is not enabled` |
+| `EAccumulatorTypeTooLarge` | `4` |  |
+| `EObjectFundsInsufficient` |  |  |
+
+### sui::hex
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/hex.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidHexLength` | `0` |  |
+| `ENotValidHexCharacter` | `1` |  |
+
+### sui::kiosk
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/kiosk/kiosk.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotOwner` | `0` | Trying to withdraw profits and sender is not owner. |
+| `EIncorrectAmount` | `1` | Coin paid does not match the offer price. |
+| `ENotEnough` | `2` | Trying to withdraw higher amount than stored. |
+| `ENotEmpty` | `3` | Trying to close a Kiosk and it has items in it. |
+| `EListedExclusively` | `4` | Attempt to take an item that has a `PurchaseCap` issued. |
+| `EWrongKiosk` | `5` | `PurchaseCap` does not match the `Kiosk`. |
+| `EAlreadyListed` | `6` | Trying to exclusively list an already listed item. |
+| `EUidAccessNotAllowed` | `7` | Trying to call `uid_mut` when `allow_extensions` set to false. |
+| `EItemLocked` | `8` | Attempt to `take` an item that is locked. |
+| `EItemIsListed` | `9` | Taking or mutably borrowing an item that is listed. |
+| `EItemMismatch` | `10` | Item does not match `Borrow` in `return_val`. |
+| `EItemNotFound` | `11` | An is not found while trying to borrow. |
+| `ENotListed` | `12` | Delisting an item that is not listed. |
+
+### sui::kiosk_extension
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/kiosk/kiosk_extension.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotOwner` | `0` | Trying to add an extension while not being the owner of the Kiosk. |
+| `EExtensionNotAllowed` | `2` | Extension is trying to access a permissioned action while not having the required permission. |
+| `EExtensionNotInstalled` | `3` | Extension is not installed in the Kiosk. |
+
+### sui::transfer_policy
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/kiosk/transfer_policy.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EPolicyNotSatisfied` | `0` | The number of receipts does not match the `TransferPolicy` requirement. |
+| `EIllegalRule` | `1` | A completed rule is not set in the `TransferPolicy`. |
+| `EUnknownRequirement` | `2` | A Rule is not set. |
+| `ERuleAlreadySet` | `3` | Attempting to create a Rule that is already set. |
+| `ENotOwner` | `4` | Trying to `withdraw` or `close_and_withdraw` with a wrong Cap. |
+| `ENotEnough` | `5` | Trying to `withdraw` more than there is. |
+
+### sui::linked_table
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/linked_table.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ETableNotEmpty` | `0` |  |
+| `ETableIsEmpty` | `1` |  |
+
+### sui::object
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/object.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` | Sender is not @0x0 the system address. |
+
+### sui::object_bag
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/object_bag.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EBagNotEmpty` | `0` |  |
+
+### sui::object_table
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/object_table.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ETableNotEmpty` | `0` |  |
+
+### sui::package
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/package.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotOneTimeWitness` | `0` | Tried to create a `Publisher` using a type that isn't a one-time witness. |
+| `ETooPermissive` | `1` | Tried to set a less restrictive policy than currently in place. |
+| `EAlreadyAuthorized` | `2` | This `UpgradeCap` has already authorized a pending upgrade. |
+| `ENotAuthorized` | `3` | This `UpgradeCap` has not authorized an upgrade. |
+| `EWrongUpgradeCap` | `4` | Trying to commit an upgrade to the wrong `UpgradeCap`. |
+| `EUpgradeInProgress` | `5` | Trying to read the current package ID from the `UpgradeCap` while an upgrade is in progress. |
+| `EInvalidPackageVersion` | `6` | Invalid package version in the `UpgradeCap`, or there was a mismatch between the package ID and version supplied (in the native). |
+
+### sui::pay
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/pay.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENoCoins` | `0` | For when empty vector is supplied into join function. |
+
+### sui::priority_queue
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/priority_queue.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EPopFromEmptyHeap` | `0` | For when heap is empty and there's no data to pop. |
+| `ELengthMismatch` | `1` | For when the value vector and priority vector have mismatched lengths |
+| `EIndexOutOfBounds` | `2` | For when access a node of a priority_queue at an invalid index |
+
+### sui::random
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/random.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` |  |
+| `EWrongInnerVersion` | `1` |  |
+| `EInvalidRandomnessUpdate` | `2` |  |
+| `EInvalidRange` | `3` |  |
+| `EInvalidLength` | `4` |  |
+
+### sui::coin_registry
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/registries/coin_registry.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EMetadataCapAlreadyClaimed` | clever error | `Metadata cap already claimed` |
+| `ENotSystemAddress` | clever error | `Only the system can create the registry.` |
+| `ECurrencyAlreadyExists` | clever error | `Currency for this coin type already exists.` |
+| `EDenyListStateAlreadySet` | clever error | `Cannot set the deny list state as it has already been set.` |
+| `ECannotUpdateManagedMetadata` | clever error | `` Cannot update metadata whose `MetadataCap` has already been claimed `` |
+| `EInvalidSymbol` | clever error | `Symbol has to be ASCII printable` |
+| `EDenyCapAlreadyCreated` | clever error | `Cannot claim the deny cap twice` |
+| `ECurrencyAlreadyRegistered` | clever error | `Currency already registered` |
+| `EEmptySupply` | clever error | `Supply cannot be empty` |
+| `ESupplyNotBurnOnly` | clever error | `Cannot burn on a non burn-only supply` |
+| `EInvariantViolation` | clever error | `Code invariant violation` |
+| `EDeletionNotSupported` | clever error | `Deleting legacy metadata is not supported` |
+| `ENotOneTimeWitness` | clever error | `Type is expected to be OTW` |
+| `EBorrowLegacyMetadata` | clever error | `Cannot borrow legacy metadata for migrated currency` |
+| `EDuplicateBorrow` | clever error | `Attempt to return duplicate borrowed CoinMetadata` |
+
+### sui::display_registry
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/registries/display_registry.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | clever error | `This is only callable from system address.` |
+| `EDisplayAlreadyExists` | clever error | `Display for the supplied type already exists.` |
+| `ECapAlreadyClaimed` | clever error | `Cap for this display object has already been claimed.` |
+| `ENotValidPublisher` | clever error | `The publisher is not valid for the supplied type.` |
+| `EFieldDoesNotExist` | clever error | `Field does not exist in the display.` |
+| `ECapNotClaimed` | clever error | `Cap for this display object has not been claimed so you cannot delete the legacy display yet.` |
+
+### sui::scratch
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/scratch.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EEntryAlreadyExists` | `0` | The scratch store already has an entry for this key. |
+| `EEntryDoesNotExist` | `1` | The scratch store does not have an entry for this key. |
+| `EEntryTypeMismatch` | `2` | The scratch store has an entry for this key, but the value type does not match. |
+| `EBorrowMarkerMismatch` | `3` | A borrow-style macro found a different `BorrowMarker` than it left in the slot. |
+
+### sui::sui
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/sui.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EAlreadyMinted` | `0` |  |
+| `ENotSystemAddress` | `1` | Sender is not @0x0 the system address. |
+
+### sui::table
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/table.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ETableNotEmpty` | `0` |  |
+
+### sui::table_vec
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/table_vec.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EIndexOutOfBound` | `0` |  |
+| `ETableNonEmpty` | `1` |  |
+
+### sui::test_scenario
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/test/test_scenario.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ECouldNotGenerateEffects` | `0` | the transaction failed when generating these effects. For example, a circular ownership of objects was created |
+| `EInvalidSharedOrImmutableUsage` | `1` | Transaction ended without all shared and immutable objects being returned or with those objects being transferred or wrapped |
+| `ECantReturnObject` | `2` | Attempted to return an object to the inventory that was not previously removed from the inventory during the current transaction. Can happen if the user attempts to call `return_to_address` on a locally constructed object rather than one returned from a `test_scenario` function such as `take_from_address`. |
+| `EEmptyInventory` | `3` | Attempted to retrieve an object of a particular type from the inventory, but it is empty. Can happen if the user already transferred the object or a previous transaction failed to transfer the object to the user. |
+| `EObjectNotFound` | `4` | Object of that ID was not found in that inventory. It was possibly already taken |
+| `EUnableToAllocateReceivingTicket` | `5` | Unable to allocate a receiving ticket for the object |
+| `EReceivingTicketAlreadyAllocated` | `6` | A receiving ticket for the object was already allocated in the transaction |
+| `EUnableToDeallocateReceivingTicket` | `7` | Unable to deallocate the receiving ticket |
+| `EInsufficientFunds` | `8` | The funds withdrawals reserved from an address in this transaction exceed its settled funds |
+| `EBalanceOverflow` | `9` | The settled `Balance<T>` of an owner exceeds `u64::MAX`, which a real balance cannot |
+| `EZeroWithdrawal` | `10` | A funds withdrawal from an address must be for a non-zero amount, as a transaction's funds withdrawal input must |
+| `EUnbackedWithdrawal` | `11` | A transaction withdrew more funds from an owner than it had, through a withdrawal that was not reserved against those funds (for example one kept from an earlier transaction) |
+| `EClockTimestampNotIncreased` | `12` | A `TxContextBuilder` set the Clock to a timestamp that is not later than its current one |
+
+### sui::token
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/token.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EUnknownAction` | `0` | The action is not allowed (defined) in the policy. |
+| `ENotApproved` | `1` | The rule was not approved. |
+| `ENotAuthorized` | `2` | Trying to perform an admin action with a wrong cap. |
+| `EBalanceTooLow` | `3` | The balance is too low to perform the action. |
+| `ENotZero` | `4` | The balance is not zero. |
+| `ECantConsumeBalance` | `5` | The balance is not zero when trying to confirm with `TransferPolicyCap`. |
+| `ENoConfig` | `6` | Rule is trying to access a missing config (with type). |
+| `EUseImmutableConfirm` | `7` | Using `confirm_request_mut` without `spent_balance`. Immutable version of the function must be used instead. |
+
+### sui::transfer
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/transfer.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ESharedNonNewObject` | `0` | Shared an object that was previously created. Shared objects must currently be constructed in the transaction they are created. |
+| `EBCSSerializationFailure` | `1` | Serialization of the object failed. |
+| `EReceivingObjectTypeMismatch` | `2` | The object being received is not of the expected type. |
+| `EUnableToReceiveObject` | `3` | Represents both the case where the object does not exist and the case where the object is not able to be accessed through the parent that is passed-in. |
+| `ESharedObjectOperationNotSupported` | `4` | Shared object operations such as wrapping, freezing, and converting to owned are not allowed. |
+| `ENotSupported` | `5` | Operation is not yet supported by the network. The functionality might still be in development. |
+| `EInvalidPartyPermissions` | clever error | `Party transfer is currently limited to one party.` |
+
+### sui::tx_context
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/tx_context.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EBadTxHashLength` | `0` | Expected an tx hash of length 32, but found a different length |
+
+### sui::vec_map
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/vec_map.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EKeyAlreadyExists` | `0` | This key already exists in the map |
+| `EKeyDoesNotExist` | `1` | This key does not exist in the map |
+| `EMapNotEmpty` | `2` | Trying to destroy a map that is not empty |
+| `EIndexOutOfBounds` | `3` | Trying to access an element of the map at an invalid index |
+| `EMapEmpty` | `4` | Trying to pop from a map that is empty |
+| `EUnequalLengths` | `5` | Trying to construct a map from keys and values of different lengths |
+
+### sui::vec_set
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/vec_set.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EKeyAlreadyExists` | `0` | This key already exists in the map |
+| `EKeyDoesNotExist` | `1` | This key does not exist in the map |
+
+### sui::versioned
+
+Defined in `crates/sui-framework/packages/sui-framework/sources/versioned.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidUpgrade` | `0` | Failed to upgrade the inner object due to invalid capability or new version. |
+
+## sui-system
+
+### sui_system::genesis
+
+Defined in `crates/sui-framework/packages/sui-system/sources/genesis.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotCalledAtGenesis` | `0` | The `create` function was called at a non-genesis epoch. |
+| `EDuplicateValidator` | `1` | The `create` function was called with duplicate validators. |
+| `ENotAValidator` | `2` | The validator address is not in the validator set. |
+
+### sui_system::stake_subsidy
+
+Defined in `crates/sui-framework/packages/sui-system/sources/stake_subsidy.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ESubsidyDecreaseRateTooLarge` | `0` |  |
+
+### sui_system::staking_pool
+
+Defined in `crates/sui-framework/packages/sui-system/sources/staking_pool.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInsufficientPoolTokenBalance` | `0` |  |
+| `EWrongPool` | `1` |  |
+| `EWithdrawAmountCannotBeZero` | `2` |  |
+| `EInsufficientSuiTokenBalance` | `3` |  |
+| `EInsufficientRewardsPoolBalance` | `4` |  |
+| `EDestroyNonzeroBalance` | `5` |  |
+| `ETokenTimeLockIsSome` | `6` |  |
+| `EWrongDelegation` | `7` |  |
+| `EPendingDelegationDoesNotExist` | `8` |  |
+| `ETokenBalancesDoNotMatchExchangeRate` | `9` |  |
+| `EDelegationToInactivePool` | `10` |  |
+| `EDeactivationOfInactivePool` | `11` |  |
+| `EIncompatibleStakedSui` | `12` |  |
+| `EWithdrawalInSameEpoch` | `13` |  |
+| `EPoolAlreadyActive` | `14` |  |
+| `EPoolPreactiveOrInactive` | `15` |  |
+| `EActivationOfInactivePool` | `16` |  |
+| `EDelegationOfZeroSui` | `17` |  |
+| `EStakedSuiBelowThreshold` | `18` |  |
+| `ECannotMintFungibleStakedSuiYet` | `19` |  |
+| `EInvariantFailure` | `20` |  |
+
+### sui_system::sui_system
+
+Defined in `crates/sui-framework/packages/sui-system/sources/sui_system.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotSystemAddress` | `0` |  |
+| `EWrongInnerVersion` | `1` |  |
+
+### sui_system::sui_system_state_inner
+
+Defined in `crates/sui-framework/packages/sui-system/sources/sui_system_state_inner.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENotValidator` | `0` |  |
+| `ELimitExceeded` | `1` |  |
+| `ENotSystemAddress` | `2` |  |
+| `ECannotReportOneself` | `3` |  |
+| `EReportRecordNotFound` | `4` |  |
+| `EBpsTooLarge` | `5` |  |
+| `ESafeModeGasNotProcessed` | `7` |  |
+| `EAdvancedToWrongEpoch` | `8` |  |
+| `EXTRA_FIELD_EXECUTION_TIME_ESTIMATES_KEY` | `0` |  |
+| `EXTRA_FIELD_EXECUTION_TIME_ESTIMATES_CHUNK_COUNT_KEY` | `1` |  |
+
+### sui_system::validator
+
+Defined in `crates/sui-framework/packages/sui-system/sources/validator.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidProofOfPossession` | `0` | Invalid proof_of_possession field in ValidatorMetadata |
+| `EMetadataInvalidPubkey` | `1` | Invalid pubkey_bytes field in ValidatorMetadata |
+| `EMetadataInvalidNetPubkey` | `2` | Invalid network_pubkey_bytes field in ValidatorMetadata |
+| `EMetadataInvalidWorkerPubkey` | `3` | Invalid worker_pubkey_bytes field in ValidatorMetadata |
+| `EMetadataInvalidNetAddr` | `4` | Invalid net_address field in ValidatorMetadata |
+| `EMetadataInvalidP2pAddr` | `5` | Invalid p2p_address field in ValidatorMetadata |
+| `EMetadataInvalidPrimaryAddr` | `6` | Invalid primary_address field in ValidatorMetadata |
+| `EMetadataInvalidWorkerAddr` | `7` | Invalid worker_address field in ValidatorMetadata |
+| `ECommissionRateTooHigh` | `8` | Commission rate set by the validator is higher than the threshold |
+| `EValidatorMetadataExceedingLengthLimit` | `9` | Validator Metadata is too long |
+| `ENotValidatorCandidate` | `10` | Intended validator is not a candidate one. |
+| `EInvalidStakeAmount` | `11` | Stake amount is invalid or wrong. |
+| `ECalledDuringNonGenesis` | `12` | Function called during non-genesis times. |
+| `ENewCapNotCreatedByValidatorItself` | `100` | New Capability is not created by the validator itself |
+| `EInvalidCap` | `101` | Capability code is not valid |
+| `EGasPriceHigherThanThreshold` | `102` | Validator trying to set gas price higher than threshold. |
+| `EInvalidProtocolPubKeyLength` | `16` | Invalid protocol public key length. |
+
+### sui_system::validator_set
+
+Defined in `crates/sui-framework/packages/sui-system/sources/validator_set.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ENonValidatorInReportRecords` | `0` |  |
+| `EInvalidStakeAdjustmentAmount` | `1` |  |
+| `EDuplicateValidator` | `2` |  |
+| `ENoPoolFound` | `3` |  |
+| `ENotAValidator` | `4` |  |
+| `EMinJoiningStakeNotReached` | `5` |  |
+| `EAlreadyValidatorCandidate` | `6` |  |
+| `EValidatorNotCandidate` | `7` |  |
+| `ENotValidatorCandidate` | `8` |  |
+| `EStakingBelowThreshold` | `10` |  |
+| `EValidatorAlreadyRemoved` | `11` |  |
+| `ENotAPendingValidator` | `12` |  |
+| `EValidatorSetEmpty` | `13` |  |
+| `EInvalidCap` | `101` |  |
+| `EInvalidValidatorSelector` | `14` |  |
+| `EAlreadyValidator` | `15` |  |
+
+### sui_system::validator_wrapper
+
+Defined in `crates/sui-framework/packages/sui-system/sources/validator_wrapper.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `EInvalidVersion` | `0` |  |
+
+### sui_system::voting_power
+
+Defined in `crates/sui-framework/packages/sui-system/sources/voting_power.move`.
+
+| Constant | Abort code | Message |
+| --- | --- | --- |
+| `ETotalPowerMismatch` | `1` |  |
+| `ERelativePowerMismatch` | `2` |  |
+| `EVotingPowerOverThreshold` | `3` |  |
+| `EInvalidVotingPower` | `4` |  |
