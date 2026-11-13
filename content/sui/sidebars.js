@@ -368,6 +368,17 @@ export default {
       },
       {
         type: 'category',
+        label: 'Agentic Payments',
+        link: { type: 'doc', id: 'onchain-finance/agentic-payments/index' },
+        items: [
+          'onchain-finance/agentic-payments/x402-on-sui',
+          'onchain-finance/agentic-payments/agent-wallets',
+          'onchain-finance/agentic-payments/settlement-verification',
+          'onchain-finance/agentic-payments/production-hardening',
+        ],
+      },
+      {
+        type: 'category',
         label: 'Example Asset Patterns',
         link: { type: 'doc', id: 'onchain-finance/examples-patterns/index' },
         items: [

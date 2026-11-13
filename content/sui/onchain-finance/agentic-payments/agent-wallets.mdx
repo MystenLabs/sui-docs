@@ -1,0 +1,226 @@
+---
+title: Setting Up Agent Wallets and Signers
+sidebar_label: Agent Wallets
+description: >-
+  Create, store, and rotate a headless key pair for an AI agent or backend
+  service that signs Sui transactions without human interaction, and fund the
+  agent through gas sponsorship and a funder-controlled allowance or escrow grant.
+keywords:
+  - agent wallet
+  - headless signer
+  - key pair management
+  - Ed25519
+  - cloud KMS
+  - AWS KMS
+  - GCP KMS
+  - "@mysten/signers"
+  - key rotation
+  - agent funding
+  - testnet faucet
+  - SuiPay
+goal:
+  description: >-
+    Reader can create a headless agent key pair, choose where to store it, sign
+    transactions from a backend, rotate the key without moving funds, and fund
+    the agent for gas and payments
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '\]\(/[^)]+\)'
+      min: 2
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+builder_paths:
+  - path_id: agentic-payments
+    path_name: Agentic Payments
+    step: Agent wallets
+    stage: Authorization
+questions:
+  - How do I create a key pair for an AI agent on Sui?
+  - Where should I store an agent's private key in production?
+  - How do I sign Sui transactions with a key in AWS KMS or GCP KMS?
+  - How do I rotate an agent's key without moving funds?
+  - How do I fund an AI agent on Sui?
+answer: >-
+  An agent wallet is a headless key pair, generated with the Sui CLI or
+  TypeScript SDK and stored in a secrets manager or cloud KMS, that signs Sui
+  transactions without a human. The funder issues an allowance or escrow grant
+  that the agent spends within limits, so rotating the key moves no funds.
+---
+
+:::info Draft
+
+This page is a draft pending review. Its content can change.
+
+:::
+
+An AI agent is a backend process that signs Sui transactions without human interaction. It needs a key pair, not a wallet interface. The agent's address is its onchain identity: an [allowance](/onchain-finance/allowances) or an [escrow grant](/onchain-finance/agentic-payments#payment-roles) names that address as the spender, and every payment the agent makes carries a signature from its key.
+
+Keep the agent's key separate from the key of the funder (or, for a SuiPay spend account, the owner). The funder holds the funds and sets the limits. The agent holds only the authority to spend within those limits, so a leaked agent key exposes at most the remaining budget, not the funder's balance.
+
+<Tabs className="tabsHeadingCentered--small">
+<TabItem value="prereq" label="Prerequisites">
+
+- [x] [Install Sui](/getting-started/onboarding/sui-install)
+- [x] Install the TypeScript SDK (`@mysten/sui`) if your agent signs from code
+
+</TabItem>
+</Tabs>
+
+## Generate an agent key pair
+
+Use Ed25519 for agent keys unless your custody setup requires another scheme. Ed25519 is the default scheme for the Sui CLI and for most SDK examples, and some payment services accept only Ed25519 delegates (see [SuiPay delegate keys](#suipay-delegate-keys)).
+
+### With the Sui CLI
+
+`sui keytool generate` creates a key pair without adding it to your local keystore. That suits a headless agent, because the key never mixes with your developer keys:
+
+```sh
+$ sui keytool generate ed25519
+```
+
+The command prints the new address, public key, key scheme, and a 12-word recovery phrase, and writes the key pair to a file named `<SUI_ADDRESS>.key` in the current directory. The file holds the key as a Base64 string of the 33-byte `flag || privkey`. Add `--json` to get machine-readable output for provisioning scripts. Other supported schemes are `secp256k1` and `secp256r1`. See [Sui Keytool CLI](/references/cli/keytool#generate-a-new-key-pair-and-store-it-in-a-file) for the full command reference.
+
+Most tools, including the TypeScript SDK, load keys in the Bech32 format that starts with `suiprivkey`. Convert the Base64 value from the `.key` file:
+
+```sh
+$ sui keytool convert <BASE64_PRIVATE_KEY>
+```
+
+Move the converted secret into your secrets store, then delete the `.key` file and clear the recovery phrase from your terminal scrollback and any captured logs. The recovery phrase gives full control of the key, so store it with the same protection as the private key or do not keep it at all.
+
+### With the TypeScript SDK
+
+The TypeScript SDK in `@mysten/sui` provides the same operations in code:
+
+- `Ed25519Keypair.generate()` creates a new random key pair.
+- `getSecretKey()` returns the secret as a `suiprivkey` Bech32 string.
+- `toSuiAddress()` returns the address that allowances and grants name as the spender.
+- `Ed25519Keypair.fromSecretKey()` loads a key pair from a `suiprivkey` string, and rejects a string encoded for a different scheme.
+- `Ed25519Keypair.deriveKeypair()` restores a key pair from a recovery phrase.
+
+SuiPay generates an agent's delegate key and derives the address that the owner authorizes:
+
+<ImportContent source="apps/docs/src/snippets/agent-keypair.ts" org="MystenLabs" repo="suipay" mode="code" />
+
+The SuiPay gateway loads a stored `suiprivkey` secret into a signer that never exports the key:
+
+<ImportContent source="apps/gateway/src/chain/sui.ts" org="MystenLabs" repo="suipay" mode="code" fun="suiWalletFromSecretKey" />
+
+See [Keypairs](https://sdk.mystenlabs.com/sui/cryptography/keypairs) in the TypeScript SDK documentation for details.
+
+## Store the agent key
+
+Never store a private key in source code, in a config file under version control, or in an unencrypted file on a shared host. Use separate agent keys for Testnet and Mainnet, and hold the funder's or owner's key, which funds and revokes the agent, in a [multisig](/develop/transactions/transaction-auth/multisig) address or hardware wallet. For more information, see [Security Best Practices](/develop/security/best-practices#user-and-operator-key-management).
+
+Choose a storage option based on the environment:
+
+| **Option** | **Where the key lives** | **Use for** |
+|---|---|---|
+| Environment variable | Process environment, as a `suiprivkey` string | Local development and Testnet only |
+| Secrets manager | An encrypted store such as AWS Secrets Manager, Google Secret Manager, or HashiCorp Vault, loaded into memory at startup | Production agents that need an in-process key |
+| Cloud KMS | A key management service (KMS). The private key never leaves the KMS, and the service returns signatures | Production agents that hold meaningful budgets |
+
+### Environment variables for development
+
+An environment variable is the fastest way to give a local agent its key. Read the key without echoing it, so it does not land in your shell history:
+
+```sh
+$ read -rs AGENT_SECRET_KEY && export AGENT_SECRET_KEY
+```
+
+Environment variables leak through process listings, crash dumps, logs, and child processes. Use them only on Testnet or for local development.
+
+### Secrets manager
+
+A secrets manager encrypts the key at rest and controls which services can read it. The agent fetches the `suiprivkey` string at startup, loads it with `Ed25519Keypair.fromSecretKey()`, and keeps it only in memory. Grant read access to the agent's runtime identity alone, and enable audit logging on reads.
+
+### Cloud KMS through `@mysten/signers`
+
+With a cloud KMS, the private key never enters your process. The signer sends the data to sign to the KMS and receives the signature back. Each signer extends the same `Signer` base class as an in-process key pair, so it works anywhere a key pair does, including transaction signing and execution.
+
+The `@mysten/signers` package re-exports the Mysten Labs external signers under subpaths. Mysten Labs also publishes each signer as its own package:
+
+| **Signer** | **Subpath import** | **Standalone package** | **Key lives in** |
+|---|---|---|---|
+| `AwsKmsSigner` | `@mysten/signers/aws` | `@mysten/aws-kms-signer` | AWS KMS |
+| `GcpKmsSigner` | `@mysten/signers/gcp` | `@mysten/gcp-kms-signer` | Google Cloud KMS |
+| `LedgerSigner` | `@mysten/signers/ledger` | `@mysten/ledger-signer` | Ledger hardware wallet |
+| `WebCryptoSigner` | `@mysten/signers/webcrypto` | `@mysten/webcrypto-signer` | Browser Web Crypto store |
+
+For a backend agent, use `AwsKmsSigner` (created with `AwsKmsSigner.fromKeyId()`) or `GcpKmsSigner` (created with `GcpKmsSigner.fromOptions()`). The curve of the KMS key determines the Sui signature scheme. GCP KMS supports Secp256k1 and Secp256r1 keys. A KMS-backed agent therefore usually has a Secp256k1 or Secp256r1 address, not an Ed25519 one, so check that every service the agent pays through accepts that scheme before you choose KMS.
+
+See [Signers](https://sdk.mystenlabs.com/sui/cryptography/signers) in the TypeScript SDK documentation for setup and credentials for each signer.
+
+### SuiPay delegate keys
+
+The [SuiPay gateway](/onchain-finance/agentic-payments#payment-roles) is published as the `@mysten-incubation/suipay`, `@mysten-incubation/suipay-buyer`, and `@mysten-incubation/suipay-mcp` npm packages, and runs on Testnet only.
+
+The SuiPay gateway calls the agent's key a delegate key. SuiPay delegate keys have 2 requirements:
+
+- **The Model Context Protocol (MCP) server keeps the delegate key locally.** The `@mysten-incubation/suipay-mcp` server generates the agent's key itself and stores it in `~/.suipay/credentials.json` with file mode `0600`, in a directory with mode `0700`. The private key never leaves that process. The owner's spend account grant binds to the key's address. If the file is unreadable or malformed, the server refuses to continue rather than creating a new key. Protect this file like any other private key: anyone who reads it can spend the remaining grant budget until the owner revokes the spend account grant.
+- **x402 settlement requires an Ed25519 delegate key.** The SuiPay gateway does not support zkLogin or multisig delegate addresses for x402 settlement. If the agent pays through x402 on SuiPay, generate an Ed25519 key.
+
+## Sign transactions
+
+An agent signs transactions the same way a wallet does, but without an approval prompt. Most agents use 1 of 2 flows:
+
+- **Sign and execute:** The agent builds a transaction, signs it, and submits it to a full node through the gRPC or GraphQL API. Use this flow when the agent pays its own gas.
+- **Sign only:** The agent builds and signs the transaction bytes, then hands them to someone else to submit. Use this flow for [sponsored transactions](/develop/transaction-payment/sponsor-txn), where the sponsor adds its own signature. Also use it for x402: the agent sends the signed transaction in a payment header, and the seller or its facilitator submits it. See [Offline Signing](/develop/transactions/transaction-auth/offline-signing) for the dual-signature flow.
+
+The SuiPay buyer package uses the sign-only flow for x402. It builds the payment transaction, signs the exact bytes, and returns the transaction and signature for the payment header:
+
+<ImportContent source="packages/buyer/src/native-transfer.ts" org="MystenLabs" repo="suipay" mode="code" fun="createNativeTransferSigner" />
+
+Because nothing prompts the agent, limits must come from onchain authorization, not from the agent's own code. Spend through an [allowance](/onchain-finance/allowances) or an escrow grant so that the network enforces the cap, rate, and expiry on every payment, even if the agent misbehaves. Add offchain checks as an early warning, not as the only control. See [Production Hardening](/onchain-finance/agentic-payments/production-hardening) for kill switches and monitoring.
+
+For an agent that controls a large budget directly, consider a [multisig](/develop/transactions/transaction-auth/multisig) address that pairs the agent's key with an operator key. A 1-of-2 multisig lets the agent sign alone and lets the operator act from the same address in an emergency. Some payment services do not accept multisig spenders, including the SuiPay gateway for x402 settlement.
+
+## Rotate an agent key
+
+Rotate an agent's key on a schedule, and immediately when you suspect a leak. When the agent spends through an allowance or an escrow grant, rotation moves no funds. The funds stay in the funder's address balance or in the escrow, and only the authorization changes:
+
+1. **Generate a new key pair.** Store the new secret in your secrets manager or create a new KMS key, and derive the new address.
+2. **Authorize the new key.** The funder or owner issues a new authorization that names the new address as the spender:
+   - **Allowance:** Issue a new allowance to the new address. A direct allowance cannot change its spender, so you always issue a new one. See [Can you change the spender?](/onchain-finance/allowances/allowances-faq#can-you-change-the-spender).
+   - **Spend account grant:** The owner creates a new spend account grant on the same spend account for the new delegate key address (`spend_account::create_policy_grant`).
+3. **Switch the agent to the new key.** Deploy the agent with the new key, and confirm that a small payment succeeds.
+4. **Revoke the old authorization.** The funder revokes the old allowance (see [Revoke an allowance](/onchain-finance/allowances/using-allowances#revoke-an-allowance)), or the owner revokes the old spend account grant (`spend_account::revoke_grant`, which is terminal). Any later spend signed by the old key fails onchain.
+5. **Destroy the old key material.** Delete the old secret from the secrets manager, or schedule deletion of the old KMS key. For a SuiPay MCP agent, the local credentials file holds the old key, so replace it as well.
+
+Run the old and new authorizations side by side during steps 2 to 4 for a rotation with no downtime. Wait for any in-flight payments from the old key to finalize before you revoke.
+
+If the agent itself holds objects or balances at its address, such as a SUI balance for gas, the agent can keep its address instead: add the new key as an [address alias](/onchain-finance/asset-custody/address-aliases#how-do-i-rotate-keys-without-migrating-assets) of the existing address, then remove the old key. An alias has full authority over the address, so prefer the revoke-and-reissue flow when the agent's address holds nothing of value.
+
+## Fund an agent {#funding-an-agent}
+
+An agent needs 2 things to pay for a service: a way to pay gas, and authority to spend the funder's funds. Neither requires the agent to hold the funder's money.
+
+### Pay for gas
+
+Every transaction pays gas in SUI, except an eligible gasless stablecoin transfer. Choose who pays it:
+
+- **The agent holds a small SUI balance:** Keep enough SUI in the agent's address balance or gas coins for a few days of activity, and top it up from an operator account. This is the most straightforward option and works with any transaction. See [Gas Fees](/develop/transaction-payment/gas-in-sui).
+- **A sponsor pays gas:** With [sponsored transactions](/develop/transaction-payment/sponsor-txn), a sponsor adds the gas payment and a second signature, so the agent's address never needs SUI. In [the proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui), the facilitator can sponsor gas ([x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081), sponsored payments section). The SuiPay gateway sponsors gas for its delegate keys after the agent proves it holds the delegate key.
+- **The transfer is gasless:** A plain transfer of an allowlisted stablecoin through `balance::send_funds` qualifies for [gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers), so the network charges no gas. A payment that calls any other Move function, including a spend from an allowance or a SuiPay gateway settlement, does not qualify.
+
+### Fund the budget, not the agent
+
+Do not send the agent the money it spends. The funder or owner keeps the funds and gives the agent bounded authority over them:
+
+- **Allowance:** The funder issues an [allowance](/onchain-finance/allowances/allowances-overview) to the agent's address. Funds stay in the funder's [address balance](/onchain-finance/asset-custody/address-balances) until a spend succeeds, and the allowance caps the total, the rate, and the time window. To add budget, the funder adds funds to their own balance or issues a new allowance with a higher cap.
+- **Escrow grant:** The funder deposits funds into an escrow that a payment service controls, and grants the agent's address the right to spend from it within limits. In SuiPay, the owner funds a spend account (`spend_account::fund_account`) and creates a spend account grant for the agent's delegate key address. The delegate key cannot withdraw from the spend account, top it up, or change policies, and a spend account grant pays only the recipients that its policies list.
+
+Either way, a leaked agent key exposes only the remaining authorized budget, and the funder or owner can stop all spending by revoking.
+
+### Get Testnet funds
+
+On Testnet, get SUI for gas from the [online faucet](https://faucet.sui.io/) or the other methods in [Get SUI from Faucet](/getting-started/onboarding/get-coins). Testnet funds have no monetary value. Fund your own address, not the agent's, and then authorize the agent through an allowance or spend account grant.

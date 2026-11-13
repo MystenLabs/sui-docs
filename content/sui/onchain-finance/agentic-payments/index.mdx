@@ -1,0 +1,151 @@
+---
+title: Agentic Payments on Sui
+sidebar_label: Agentic Payments
+description: >-
+  Agents pay for APIs on Sui by answering an HTTP 402 challenge with a signed
+  transaction, using the x402 or MPP dialect and Sui features that bound and
+  fund spending.
+keywords:
+  - agentic payments
+  - autonomous agents
+  - HTTP 402
+  - x402
+  - MPP
+  - pay per call
+  - agent wallet
+  - spending limits
+  - allowances
+  - sponsored transactions
+  - gasless stablecoin transfers
+  - SuiPay
+pagination_prev: null
+goal:
+  description: >-
+    Reader understands how an agent pays for a resource on Sui, which Sui
+    features bound and fund that spending, and which guide to read next
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '\]\(/[^)]+\)'
+      min: 3
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+builder_paths:
+  - path_id: agentic-payments
+    path_name: Agentic Payments
+    step: Agentic payments overview
+    stage: Environment
+questions:
+  - What are agentic payments on Sui?
+  - How does an agent pay for an API call on Sui?
+  - What is the difference between x402 and MPP?
+  - Can an onchain limit stop an agent from overspending?
+  - Does an agent need SUI to pay for gas?
+answer: >-
+  An agent pays for a resource on Sui by answering an HTTP 402 Payment Required
+  challenge with a signed Sui transaction, encoded in the x402 or MPP dialect.
+  Onchain spending limits apply only when the agent spends through an allowance
+  or an escrow, and gas comes from the agent's SUI, a sponsor, or a gasless
+  stablecoin transfer.
+---
+
+:::info Draft
+
+This page is a draft pending review. Its content can change.
+
+:::
+
+Agentic payments are payments that software agents make without a person approving each one. An agent calls an API, the API asks for payment, and the agent pays on Sui and retries the call. The agent holds its own key, signs the payment transaction, and gets the resource once the payment settles.
+
+## Payment roles
+
+The agentic payments pages use the following terms:
+
+- **Agent:** The payer, which is software that holds its own key and signs payments. The x402 specification calls the payer the client.
+- **Seller:** The payee, which is the service that charges for a resource. The x402 specification calls the seller the resource server.
+- **Facilitator:** A service that verifies a payment and settles it for the seller. To settle a payment is to submit it to Sui and wait for finality.
+- **Funder:** The address that issues an [allowance](/onchain-finance/allowances) to the agent and holds the funds the agent spends.
+- **Escrow grant:** Permission to spend, within limits, from funds that an owner deposits in an escrow contract.
+- **SuiPay:** A managed payment gateway for agents that runs on Testnet only. In SuiPay, the owner funds a spend account and issues a spend account grant, which is an escrow grant, to the agent.
+- **Delegate key:** The agent's own key, which a spend account grant authorizes.
+
+After the seller verifies that a payment settled correctly, it delivers the resource. This order is the verify-then-deliver pattern.
+
+## How pay-per-call works
+
+The pay-per-call model reuses the HTTP status code `402 Payment Required`. A paid resource answers an unpaid request with `402` and a description of what it accepts: the amount, the asset, the recipient, and the network. The agent builds a Sui transaction that pays that amount, signs it, and sends the request again with the signed payment attached. The seller, or a facilitator it trusts, checks the payment, submits it to Sui, and returns the resource ([x402 HTTP transport](https://github.com/x402-foundation/x402/blob/main/specs/transports-v2/http.md)).
+
+Sui typically finalizes a transaction in 400 to 700 ms ([Life of a Transaction](/develop/transactions/transaction-lifecycle#how-long-does-a-sui-transaction-take-to-finalize)), so the seller can settle before it does the work and still answer quickly.
+
+## x402 and MPP dialects
+
+A dialect is the way HTTP encodes a 402 exchange. Sui payments use 2 dialects:
+
+- **x402:** The server sends its payment requirements in a `PAYMENT-REQUIRED` header, the client sends its payment in a `PAYMENT-SIGNATURE` header, and the server reports the result in a `PAYMENT-RESPONSE` header ([x402 HTTP transport](https://github.com/x402-foundation/x402/blob/main/specs/transports-v2/http.md)). [The proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui) defines what the Sui transaction must contain and how a facilitator verifies and settles it ([x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
+- **MPP:** MPP sends the challenge and the payment in HTTP authentication headers. The server sends `WWW-Authenticate: Payment`, the client answers with `Authorization: Payment`, and the server returns a `Payment-Receipt` header.
+
+Both dialects describe the same economic exchange. A server can advertise both in one `402` response, as the SuiPay gateway does, and the client picks the one it supports.
+
+## Building blocks on Sui
+
+Sui provides several features that make small, frequent, machine-initiated payments practical:
+
+- **[Address balances](/onchain-finance/asset-custody/address-balances):** Each address holds a balance per coin type with no coin objects to select, so an agent builds a payment transaction without first querying which coins it owns. SUI in an address balance can also pay gas directly.
+- **[Allowances](/onchain-finance/allowances):** A funder authorizes an agent's address to spend from the funder's address balance within a lifetime cap, a rate limit, and a time window, and revokes that permission at any time.
+- **[Gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers):** A transfer of an allowlisted stablecoin, such as USDC, from an address balance runs without gas when it meets the eligibility rules, so the sender needs no SUI.
+- **[Sponsored transactions](/develop/transaction-payment/sponsor-txn):** A sponsor pays the gas for a transaction that another address sends, so the agent can pay in a stablecoin and hold no SUI.
+
+For other payment patterns, such as registry-based payments with duplicate protection, see [Payment Kit](/onchain-finance/payment-kit).
+
+## What an agent needs
+
+A payment agent, and the seller it pays, need 4 capabilities:
+
+### A wallet the agent can use
+
+The agent needs a key pair it can sign with programmatically, stored securely and rotatable without downtime. The agent's address holds the funds it spends, or it is the spender on an allowance or escrow grant that a funder or owner funds. See [Setting Up Agent Wallets and Signers](/onchain-finance/agentic-payments/agent-wallets).
+
+The agent pays gas in SUI for every transaction it sends, unless a sponsor pays the gas or the transaction is an eligible [gasless stablecoin transfer](/develop/transaction-payment/gasless-stablecoin-transfers#what-gasless-stablecoin-transfers-dont-cover). The spender also pays gas when it spends from an allowance ([Allowances](/onchain-finance/allowances/allowances-overview#how-allowances-work)).
+
+### Spending limits
+
+The funder or owner decides what the agent can spend, to whom, and for how long. Where that limit lives determines whether the chain enforces it:
+
+- **Allowance or escrow grant:** The limit is onchain. A Sui [allowance](/onchain-finance/allowances/allowances-overview#limits-you-can-set) enforces its caps and time window on every spend, and the funder can revoke it. An escrow contract, such as a SuiPay spend account, enforces its own policies in Move. The agent cannot exceed these limits, even if someone steals its key.
+- **Coins the agent owns:** No onchain limit applies. Whoever holds the agent's key can spend everything at the agent's address. Any limit is offchain policy in the agent's own code, so keep only a small working balance at that address.
+
+### Settlement verification by the seller
+
+The seller confirms that each payment is final and pays the right recipient the right amount before it delivers the resource. A Sui transaction either fully succeeds or has no effect, and its effects record the balance change at each address. The seller therefore checks the recipient's balance change rather than trusting the agent's claim ([x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081), effects check). See [Verifying Payment Settlement for Agents](/onchain-finance/agentic-payments/settlement-verification).
+
+### Production safety
+
+Kill switches, idempotent retries, duplicate-settlement protection, and monitoring stop runaway spending. They also let the agent recover from timeouts and failures without paying twice. See [Hardening Payment Agents for Production](/onchain-finance/agentic-payments/production-hardening).
+
+## Where SuiPay fits
+
+A seller registers a paid service with the SuiPay gateway, and the gateway answers unpaid requests with a `402` that can carry the MPP dialect, the x402 dialect, or both, from one offer. Settlement runs through the `suipay` Move package:
+
+- `payment::settle` settles a direct payment that the agent funds from coins it owns.
+- `spend_account` holds an owner-funded account. The owner sets spending policies and issues a spend account grant to the agent's delegate key, and `spend_account::settle_policy` enforces the policy and grant limits on every payment. The owner can pause or revoke the account, a policy, or a grant.
+- `subscription` holds a prepaid escrow that a recipient can charge a fixed amount at most once per billing period, and `refund_vault` holds proceeds during an optional refund window.
+
+SuiPay ships as 3 npm packages:
+
+- `@mysten-incubation/suipay`: An embeddable client that quotes and pays a 402 from a spend account grant.
+- `@mysten-incubation/suipay-buyer`: The buyer SDK, with `createPayer`.
+- `@mysten-incubation/suipay-mcp`: A Model Context Protocol (MCP) server that lets an agent pay with its own delegate key.
+
+The SuiPay gateway's x402 dialect does not yet follow the proposed x402 `exact` scheme for Sui. For the differences, see [SuiPay and the `exact` scheme](/onchain-finance/agentic-payments/x402-on-sui#suipay-and-the-exact-scheme).
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
