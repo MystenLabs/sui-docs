@@ -1,0 +1,235 @@
+---
+title: Getting Started with the Verify SDK
+description: >-
+  Install the Verify SDKs from a clone, run a local Verify SDK server, create an
+  agent token, record your first receipt from Python or TypeScript, and verify
+  it as a proof bundle.
+keywords:
+  - verify sdk
+  - getting started
+  - install verify sdk
+  - verify sdk python
+  - verify sdk typescript
+  - agent token
+  - first receipt
+  - proof bundle
+goal:
+  description: >-
+    Reader installs the Verify SDK, runs a local server, records a receipt from Python
+    or TypeScript, and verifies it offline
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '```'
+      min: 1
+      label: Has code examples
+    - pattern: '\]\(/[^)]+\)'
+      min: 2
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+questions:
+  - How do I install the Verify SDK?
+  - How do I run a local Verify SDK server?
+  - How do I record my first Verify SDK receipt?
+  - What is the difference between a Verify SDK tenant key and an agent token?
+answer: >-
+  Install the Verify SDKs from a clone of the repository, start a local server
+  with wallog-server, create a tenant, and record a receipt with
+  agent.record() in Python or TypeScript. A local server uses an in-memory
+  stand-in for Sui and Walrus, so you verify its receipts offline as a proof
+  bundle.
+---
+
+The [Verify SDK](/sui-stack/verify-sdk) records a signed receipt for each action an AI agent takes. To try it, you run a local Verify SDK server, record a receipt from Python or TypeScript, and verify it as a proof bundle.
+
+A local server uses an in-memory stand-in for Sui and [Walrus](/sui-stack/walrus). It runs the whole pipeline, and its receipts verify as proof bundles. The stand-in proves nothing about time, because its checkpoints are made up ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+
+<Tabs className="tabsHeadingCentered--small">
+<TabItem value="prereq" label="Prerequisites">
+
+- [x] Install [Python](https://www.python.org/downloads/) 3.10 or later.
+
+- [x] Install [Rust](https://rust-lang.org/tools/install/) 1.91 or later.
+
+- [x] Install [Node.js](https://nodejs.org/) 18 or later, if you use the TypeScript SDK or the MCP programs.
+
+- [x] Clone the [Verify SDK repository](https://github.com/MystenLabs/wallog).
+
+</TabItem>
+</Tabs>
+
+These versions come from the [Verify SDK README](https://github.com/MystenLabs/wallog/blob/main/README.md). An older Python stops the install. pip before 21.3 reports `File "setup.py" or "setup.cfg" not found`, and a newer pip reports that the package `requires a different Python`.
+
+## Install from a clone
+
+The Verify SDK packages are not on PyPI or npm, so you install them from your clone ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)). Run the following commands from the root of the clone.
+
+Create a virtual environment and install the `wallog` package. The `wallog` command that later sections use comes from this package, so install it even if your agent uses TypeScript:
+
+```sh
+$ python3 -m venv .venv
+$ . .venv/bin/activate
+$ pip install -e sdks/python
+```
+
+<Tabs groupId="language">
+<TabItem value="python" label="Python">
+
+The `wallog` package you installed is the Python SDK. No other step is needed.
+
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
+
+Build `@wallog/verify`, `@wallog/sdk`, and `@wallog/mcp`:
+
+```sh
+$ cd sdks/typescript
+$ npm ci
+$ npm run build
+```
+
+To use the packages in another project, pack them and install the tarballs in 1 command. `@wallog/sdk` depends on the exact version of `@wallog/verify` from the same clone, and npm looks for it in the registry unless its tarball is part of the same command ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)):
+
+```sh
+$ mkdir -p /tmp/wallog-packages
+$ npm pack -w @wallog/verify -w @wallog/sdk -w @wallog/mcp --pack-destination /tmp/wallog-packages
+$ cd YOUR_PROJECT_DIRECTORY
+$ npm install /tmp/wallog-packages/*.tgz
+```
+
+The packages are ES modules only. In a CommonJS project, load the SDK with a dynamic `import()` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)).
+
+</TabItem>
+</Tabs>
+
+From the root of the clone, install the reference verifier and the server with Cargo. This places `wallog-verify` and `wallog-server` in `~/.cargo/bin` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
+
+```sh
+$ cargo install --path crates/wallog-verify --locked
+$ cargo install --path crates/wallog-server --locked
+```
+
+## Run a local server
+
+Create a tenant. The command prints a tenant key, which starts with `wlt_`, once ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)). Run this command and the next one from the same directory, because the server keeps its database in `wallog.db` in the working directory unless `DATABASE_URL` is set ([source](https://github.com/MystenLabs/wallog/blob/main/crates/wallog-server/src/config.rs)):
+
+```sh
+$ wallog-server create-tenant acme
+```
+
+Start the server. The 2 settings make a local run quick: a batch closes every second, and the server stores a segment 2 seconds later. Without them, a batch closes every 30 seconds and the server stores a segment after an hour ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)):
+
+```sh
+$ WALLOG_BATCH_INTERVAL_SECS=1 WALLOG_SEGMENT_MAX_AGE_SECS=2 wallog-server
+```
+
+The server listens on `http://127.0.0.1:8080`. Open `http://127.0.0.1:8080/dashboard` to watch receipts move from `signed` to `on_sui` to `on_walrus` ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+
+:::caution
+
+The stand-in chain lives in memory and starts empty on every run. When you stop the server, delete its database file `wallog.db` and create the tenant again before you restart, or the server refuses to start ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+
+:::
+
+## Create an agent token
+
+The Verify SDK has 2 kinds of credential ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+
+- **Tenant key (`wlt_`):** Manages the tenant, including its agents, policies, API keys, and webhooks.
+- **Agent token (`wla_`):** Records receipts for 1 agent, for the actions you allow, and reads that agent's receipts and proof bundle. It cannot reach another agent or a management route.
+
+Give each agent its own agent token, not the tenant key. In the terminal where you work, set the tenant key and create a token for an agent named `billing-bot`:
+
+```sh
+$ export WALLOG_API_KEY=wlt_YOUR_TENANT_KEY
+$ wallog keys create "billing bot" --scope agent --agent billing-bot --action 'db:*' --action 'email:**'
+```
+
+The command creates the agent when it does not exist, which registers the agent's key on Sui, so the agent's first receipt does not wait for that step. The token prints once. Keep it out of any file you commit to version control ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+Set the agent token and the server URL in the environment of your agent:
+
+```sh
+$ export WALLOG_API_KEY=wla_YOUR_AGENT_TOKEN
+$ export WALLOG_URL=http://127.0.0.1:8080
+```
+
+`WALLOG_URL` defaults to `http://127.0.0.1:8080`. When the URL uses `http://` for a host that is not your machine, the SDKs warn that the key travels in clear text. Use `https://` for a remote server ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+## Record your first receipt
+
+An `Agent` is 1 agent name and 1 chain of receipts. `agent.record()` hashes the input in your process and sends only its digest, so the input never leaves your machine ([source](https://github.com/MystenLabs/wallog/blob/main/examples/python/quickstart.py)).
+
+<Tabs groupId="language">
+<TabItem value="python" label="Python">
+
+<ImportContent source="examples/python/quickstart.py" mode="code" org="MystenLabs" repo="wallog" branch="b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6" lines="7-12" />
+
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
+
+<ImportContent source="examples/typescript/quickstart.ts" mode="code" org="MystenLabs" repo="wallog" branch="b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6" lines="4-10" />
+
+</TabItem>
+</Tabs>
+
+The returned receipt has an `id`, a `url` to a page that shows the receipt, and a `status`. The status starts as `signed`, becomes `on_sui` once the receipt's batch is on Sui, and becomes `on_walrus` once the manifest is stored in a segment ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). To wait for a status, call `wait_on_sui()` or `wait_on_walrus()` in Python, or `waitOnSui()` or `waitOnWalrus()` in TypeScript.
+
+To run the complete quickstart from the root of the clone, use the following command:
+
+<Tabs groupId="language">
+<TabItem value="python" label="Python">
+
+```sh
+$ python examples/python/quickstart.py
+```
+
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
+
+Run it after `npm ci` and `npm run build` in `sdks/typescript` ([source](https://github.com/MystenLabs/wallog/blob/main/examples/typescript/quickstart.ts)):
+
+```sh
+$ npm i --no-save ./sdks/typescript/packages/verify ./sdks/typescript/packages/sdk
+$ npx tsx examples/typescript/quickstart.ts
+```
+
+</TabItem>
+</Tabs>
+
+:::caution
+
+The rest of the quickstart file records a `before` and `after` step without fully acting on the policy ruling. The Python file ignores the ruling, and the TypeScript file handles only `deny`. Do not copy that part into an agent that has policies. See [Act on a ruling](/sui-stack/verify-sdk/recording-actions#act-on-a-ruling) for the pattern that respects `deny` and `needs_approval`.
+
+:::
+
+## Verify the receipts
+
+Download a proof bundle for the agent and verify it with the reference verifier ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)):
+
+```sh
+$ wallog bundle download billing-bot --out billing-bot.zip
+$ wallog-verify bundle verify billing-bot.zip
+```
+
+The verifier prints a line for each receipt, with its verdict and the earliest and latest times the receipt could have been made:
+
+```text
+billing-bot: receipts 1 to 3
+  1      note      db:query                 PROVEN  2026-11-02T01:42:23.612Z to 2026-11-02T01:42:24.626Z
+  2      before    email:send               PROVEN  2026-11-02T01:42:23.612Z to 2026-11-02T01:42:24.626Z
+  3      after     email:send               PROVEN  2026-11-02T01:42:23.612Z to 2026-11-02T01:42:24.626Z
+OK: 3 of 3 receipts are proven (on-chain facts as recorded in the bundle)
+```
+
+If the output shows `INCOMPLETE` with `manifest for height N not supplied`, the segment is not stored yet. Wait a few seconds and download the bundle again ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+
+Do not use `wallog-verify receipt --url` against a local server. That command reads a real Sui node, so it ends with `INCOMPLETE (evidence missing)` for a stand-in receipt ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)). To verify receipts from a real deployment, see [Verifying Receipts](/sui-stack/verify-sdk/verifying-receipts).

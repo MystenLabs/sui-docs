@@ -1,0 +1,108 @@
+---
+title: Choosing a Verify SDK Integration
+description: >-
+  Compare the ways to record AI agent actions with the Verify SDK: the Python and
+  TypeScript SDKs, the LangChain and OpenAI Agents integrations, the Claude Code
+  hooks, the MCP gateway and MCP server, and the HTTP API. Learn which ones can
+  stop an action when recording fails.
+keywords:
+  - verify sdk
+  - verify sdk integration
+  - claude code hooks
+  - mcp gateway
+  - mcp server
+  - langchain
+  - openai agents
+  - fail closed
+  - fail open
+goal:
+  description: >-
+    Reader picks the Verify SDK integration that matches how much of the agent's code
+    they control and understands what each integration can guarantee
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '\]\(/[^)]+\)'
+      min: 2
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+questions:
+  - Which Verify SDK integration should I use?
+  - Can the Verify SDK record an agent without code changes?
+  - Which Verify SDK integrations fail closed?
+  - What is the difference between wallog-gateway and wallog-mcp?
+answer: >-
+  Use the Python or TypeScript SDK when you write the agent's code, because only
+  the SDK can stop an action when its receipt cannot be recorded. Use the
+  LangChain or OpenAI Agents integration, the Claude Code hooks, or
+  wallog-gateway when you cannot change the agent's code. These record on a best
+  effort basis and never stop a tool.
+---
+
+The [Verify SDK](/sui-stack/verify-sdk) offers several ways to record what an agent does. The right one depends on how much of the agent's code you control, and on whether an action must stop when the integration cannot record its receipt.
+
+## Compare the options
+
+| **You have** | **Use** | **Effort** |
+|---|---|---|
+| The agent's Python or TypeScript code | The SDK: `agent.record()`, `agent.step()`, or `agent.traced()` | 1 line per action |
+| A LangChain or OpenAI Agents app | The callback handler or the trace processor | 1 line at setup |
+| Claude Code | `wallog hooks install claude-code` | 1 command |
+| Any MCP host | `wallog-gateway` in front of a tool server, or `wallog-mcp` | 1 entry in the host configuration |
+| Anything that can make an HTTP request | `POST /v1/receipts` | See the [HTTP API reference](https://github.com/MystenLabs/wallog/blob/main/docs/API.md) |
+
+This table comes from the [Verify SDK integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md). For the integrations that need no change to the agent's code, see [Recording Without Code Changes](/sui-stack/verify-sdk/recording-without-code-changes).
+
+## Decide whether recording must block the action
+
+The integrations differ in what happens when they cannot record a receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+
+- **Fail closed:** The action does not run when the SDK cannot record its `before` receipt. `agent.step()` and `agent.traced()` in the SDKs fail closed.
+- **Fail open:** The action runs, its receipt is missing, and the failure goes to the error output or the log. The Claude Code hooks, `wallog-gateway`, and the LangChain and OpenAI Agents integrations fail open.
+
+| **Integration** | **When recording fails** | **Acts on policy rulings** |
+|---|---|---|
+| SDK `agent.record()` | Raises an error. Your code decides whether the action goes on. | No. Your code reads the ruling. |
+| SDK `agent.step()` | The `before` fails closed. The `after` of an action that ran is best effort. | No. Your code reads the ruling. |
+| SDK `agent.traced()` | The `before` fails closed. The `after` is best effort. | Yes. It refuses on `deny` and waits for approval on `needs_approval`. |
+| Claude Code hooks | Fails open, with 1 line on stderr. | No. The tool runs. |
+| `wallog-gateway` | Fails open. It waits at most 5 seconds for a `before` receipt. | No. It forwards the call. |
+| LangChain, OpenAI Agents | Fails open, unless you set `raise_errors=True`. | No. |
+
+Sources: [Integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md), [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), and [TypeScript SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md).
+
+If recording is mandatory for you, so that there is no action without a receipt, use `agent.step()` or `agent.traced()`, or check the `before` receipt before you act. A hook or the gateway cannot give you that guarantee ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+:::info
+
+A receipt that was never recorded leaves no gap in the agent's chain. An action that a fail-open integration did not record cannot be found later ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+:::
+
+## Choose between the gateway and the MCP server
+
+`@wallog/mcp` provides 2 programs for Model Context Protocol (MCP) hosts, and they record different things ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)):
+
+- `wallog-gateway`: A proxy in front of an MCP tool server. It records a `before` and an `after` for every `tools/call` that passes through it. The model does not know the gateway is there.
+- `wallog-mcp`: An MCP server whose tools, `record_action` and `record_ruling`, the model can call. It records only what the model asks it to record.
+
+`wallog-mcp` is not a way to record every tool call. When the model records, and what it records, depends on the system prompt and the host's policy. To record every call, put `wallog-gateway` in front of the tool server.
+
+`record_action` also has a `disclose` argument that no host setting turns off. The model, or a prompt injected into it, can send an input in plain text even when `WALLOG_DISCLOSE` is off. If you must guarantee that only digests leave the host, use the gateway or the SDK, not `wallog-mcp` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)).
+
+## Choose between the Python and TypeScript SDKs
+
+Both SDKs call the same HTTP API, hold no signing keys, and hash inputs the same way for JSON values ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)). Pick the one that matches the language of your agent:
+
+- **Python:** The `wallog` package. It also provides the `wallog` command, the Claude Code hooks, and the base for the LangChain and OpenAI Agents integrations. See the [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md).
+- **TypeScript:** `@wallog/sdk`. It requires Node.js 18 or later and is an ES module only. See the [TypeScript SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md).
+
+Each SDK converts a value that is not JSON, such as a set, a date, bytes, or an object of your own class, in its own way, and the 2 SDKs do not agree. Pass JSON values when both SDKs record the same input on 1 tenant ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). For every difference, see [Using both SDKs on one tenant](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdk-interoperability.md).

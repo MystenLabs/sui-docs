@@ -1,0 +1,130 @@
+---
+title: Handling Recording Failures
+description: >-
+  Handle Verify SDK recording failures in an AI agent. Learn how the Python and
+  TypeScript SDKs retry, how long a failing call can block, which errors they
+  raise, how idempotency keys protect retries, and how to set timeouts for a
+  request handler.
+keywords:
+  - verify sdk
+  - retries
+  - timeouts
+  - idempotency
+  - NetworkError
+  - WallogNetworkError
+  - fail closed
+  - fail open
+  - verify sdk server down
+goal:
+  description: >-
+    Reader configures timeouts and retries so that a slow or unreachable Verify SDK
+    server does not block the agent longer than intended, and handles the errors
+    each SDK raises
+  requires:
+    - has_frontmatter:
+        - title
+        - description
+        - keywords
+      label: Has required frontmatter fields
+    - min_words: 300
+      label: Needs more content depth
+    - pattern: '\]\(/[^)]+\)'
+      min: 2
+      label: Links to related documentation
+    - has_questions: true
+      label: Needs questions for AI search visibility
+    - has_answer: true
+      label: Needs answer summary for AI citation
+questions:
+  - What happens when the Verify SDK server is down?
+  - How long can a Verify SDK call block?
+  - How do I set Verify SDK timeouts and retries?
+  - Which errors do the Verify SDKs raise?
+answer: >-
+  The Verify SDKs retry a request that got no answer, a 429, or a 5xx up to 3
+  times, reusing the same idempotency key, and then raise NetworkError or
+  APIError in Python, or WallogNetworkError or WallogApiError in TypeScript.
+  With the defaults, a call against a server that does not answer can block
+  about 42 seconds, or about 482 seconds until an agent object records its
+  first receipt. Set a short timeout and fewer retries in request handlers.
+---
+
+Recording must not take your agent down, and it must not fail silently. The [Verify SDKs](/sui-stack/verify-sdk) retry failed requests within a time budget, and you can bound that budget for each call. For how each integration reacts to a failure, see [Choosing a Verify SDK Integration](/sui-stack/verify-sdk/choosing-an-integration#decide-whether-recording-must-block-the-action).
+
+## How the SDKs retry
+
+Both SDKs retry a request that got no answer, a `429`, or a `5xx` response up to 3 times, with a growing pause, about 1 to 2.5 seconds in all ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). In Python, the pause before retry n is `min(backoff * 2**(n - 1), 5)` seconds times a random factor between 0.5 and 1, and `backoff` defaults to 0.25 ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+- **Receipts and reads:** Retried after connection errors, timeouts, `5xx`, and `429`. A retry of a receipt carries the same idempotency key, so a lost answer cannot create 2 receipts.
+- `create_policy`, `create_api_key`, `rotate_key`, `revoke_key`: Retried only after a `429` or a connection that could not open. After a `5xx` or a lost answer they raise, so list what exists before you try again.
+- **Never retried:** Other `4xx` responses and redirects. The SDKs never follow a redirect, so the key cannot travel to another host.
+- `Retry-After`: A valid value replaces the pause, up to 30 seconds.
+
+Sources: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md) and [Integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md). The 2 SDKs differ in some of these settings. For a side-by-side list, see [Using both SDKs on one tenant](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdk-interoperability.md).
+
+## Per-attempt timeouts
+
+| **Call** | **Timeout per attempt** |
+|---|---|
+| Most calls, including a receipt once the agent object recorded one | 10 seconds |
+| A receipt before the agent object has recorded one successfully, `create_agent`, `approve`, `rotate_key`, `revoke_key` | 120 seconds, because they can wait for a transaction on Sui |
+| A proof bundle | 240 seconds |
+
+Sources: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), [Python client source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py), and [TypeScript agent source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/agent.ts). Passing `timeout=` in Python or `timeoutMs` in TypeScript replaces all of these.
+
+Each agent object tracks whether it has recorded a receipt. Until 1 succeeds, every receipt it records gets the 120-second allowance, not only the first one ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py)).
+
+## How long a failing call can block
+
+Against a server that accepts the connection and then does not answer, such as a frozen process, the defaults add up to the following totals. A server that refuses the connection costs only the pauses, about 1 to 2.5 seconds ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+| **Call** | **Total** |
+|---|---|
+| A receipt, once the agent object recorded one; `get`, `previous`, `list` | About 42 seconds |
+| Every receipt of an agent object that has not yet recorded one; `create_agent`, `approve` | About 482 seconds |
+| `rotate_key`, `revoke_key` | 120 seconds |
+| A proof bundle | 240 seconds |
+| A call answered with `429` and `Retry-After: 30` | 90 seconds |
+| The `after` that `traced()` or a failed step records by itself | 2 seconds |
+
+Sources: [Integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md) and [Python client source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py).
+
+The `after` that the SDK records by itself once the action ran gets 2 seconds from its start, so a frozen server holds the caller for that long and no longer. The `before` keeps the whole budget, because the action must not run without it ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+:::caution
+
+If the server is unreachable when your process starts, every receipt of a new agent object can block about 482 seconds, not only the first. This applies to the LangChain and OpenAI Agents integrations too, which record inside the framework's callbacks ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py)).
+
+:::
+
+## Bound the delay in a request handler
+
+In a request handler, 42 seconds is too long. Set the timeout and the retries yourself ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+
+| **SDK** | **Example settings** |
+|---|---|
+| Python | `timeout=3, max_retries=1` |
+| TypeScript | `timeoutMs: 3000, maxRetries: 1` |
+
+Create the `Agent` once per process and reuse it. Each new `Agent` object allows 120 seconds per attempt until it records a receipt, so a command that starts a new process for each receipt, such as `wallog record`, has that allowance every time ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+For the Python sync `Client`, `timeout=` applies to the connect and to each read of the socket, so 1 attempt can take 2 or 3 times as long. Use `AsyncClient` when a hard bound matters ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+## Errors the SDKs raise
+
+After the last attempt, a call raises an error ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+
+| **Python** | **TypeScript** | **Raised for** |
+|---|---|---|
+| `NetworkError` | `WallogNetworkError` | No answer after the retries: refused, DNS, reset, or timeout. |
+| `APIError` | `WallogApiError` | The server answered with an error status, or with an answer the SDK cannot use. |
+| `DeniedError` | `WallogDeniedError` | A policy ruled `deny` on the `before` of a `traced` function. |
+| `WaitTimeout` | `WallogTimeoutError` | A wait, such as for an approval or for `on_sui`, ran out of time. |
+
+Sources: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md) and [TypeScript SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md). In Python, all of these derive from `wallog.WallogError`. In TypeScript, they derive from `WallogSdkError` ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/errors.ts)). A request that the SDK refuses before it sends anything, such as a step called twice, raises the built-in `ValueError` or `TypeError`, which `except wallog.WallogError` does not catch ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+
+## Retry a receipt by hand
+
+If you repeat a `record` after it raised, pass the same `idempotency_key` both times. The repeat then returns the first receipt when the first call did reach the server ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+
+Do not retry `step.before()` or `step.after()` blindly after a timeout. Each call creates a new idempotency key, so if the server recorded the first call before the answer was lost, the retry records a second receipt, and a retried `before` can create a second policy ruling ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py)).

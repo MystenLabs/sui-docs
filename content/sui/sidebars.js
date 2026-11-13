@@ -671,6 +671,24 @@ suiStackSidebar: [
     },
     {
       type: 'category',
+      label: 'Verify SDK',
+      link: { type: 'doc', id: 'sui-stack/verify-sdk/index' },
+      items: [
+        'sui-stack/verify-sdk/getting-started',
+        'sui-stack/verify-sdk/choosing-an-integration',
+        'sui-stack/verify-sdk/recording-actions',
+        'sui-stack/verify-sdk/recording-without-code-changes',
+        'sui-stack/verify-sdk/handling-failures',
+        'sui-stack/verify-sdk/verifying-receipts',
+        {
+          type: 'link',
+          label: 'GitHub Repo',
+          href: 'https://github.com/MystenLabs/wallog',
+        },
+      ],
+    },
+    {
+      type: 'category',
       label: 'SuiNS',
       link: { type: 'doc', id: 'sui-stack/suins/index' },
       items: [
