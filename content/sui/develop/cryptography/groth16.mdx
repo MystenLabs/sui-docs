@@ -198,6 +198,6 @@ public fun groth16_bn254_test() {
 The native verifier behind `verify_groth16_proof` can abort with `EInvalidCurve`, `ETooManyPublicInputs`, or `EInvalidVerifyingKey`:
 
 - `EInvalidCurve`: the curve ID is not BLS12-381 or BN254. The public API only builds valid curves with `bls12381()` and `bn254()`, so this does not occur in normal use.
-- `EInvalidVerifyingKey`: the prepared verifying key is malformed. From protocol version 141, this includes a `vk_gamma_abc` that does not hold exactly `n + 1` G1 elements for `n` public inputs. On earlier protocol versions, such a key makes `verify_groth16_proof` return `false`.
+- `EInvalidVerifyingKey`: the prepared verifying key is malformed. From protocol version 142, this includes a `vk_gamma_abc` that does not hold exactly `n + 1` G1 elements for `n` public inputs. On earlier protocol versions, such a key makes `verify_groth16_proof` return `false`.
 
 `prepare_verifying_key` can also abort with `EInvalidVerifyingKey`, `EInvalidCurve`, or `ETooManyPublicInputs` (when the key is for more than 8 public inputs).
