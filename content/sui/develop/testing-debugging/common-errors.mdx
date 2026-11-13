@@ -461,6 +461,82 @@ The sender address either has insufficient SUI balance or the gas coin already s
 
 ---
 
+#### `The type of the value does not match the expected type`
+
+A `TypeMismatch` means the type of a value you pass does not match the type that the receiving function or command expects. Sui checks types while it types a [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks), then checks them again as an invariant during execution. For each argument, the type checker compares the type of the value against the parameter type and reports `argument type mismatch. Expected {param:?}, got {ty:?}` when they differ.
+
+##### Solution
+
+To fix the error, compare the expected and actual types in the message and check the following:
+
+1. **Struct identity:** For a struct type, the address, module, and struct name of your value must all match the parameter. A struct with the same name from a different package or module is a different type.
+2. **Type arguments:** The number of type arguments must match, and Sui compares each type argument recursively. For example, a vector argument only matches when its element type matches.
+3. **Reference mutability:** When a parameter takes a reference, the mutability of the borrow must match the parameter. A mismatch reports `borrowed location mutability mismatch`.
+4. **Copy usage:** If you reuse a value by copy, the expected type must have the `copy` ability. Otherwise the check reports `expected type does not have copy`.
+5. **Pure literals:** When you simulate a transaction through the gRPC API, Sui resolves each literal against the parameter type. A `bool` parameter accepts `true`, `false`, or the strings `"true"` and `"false"`, but it rejects a number, a null, a list, or any other string. Pass literals in the form the parameter type expects. If Sui cannot infer the type of a literal, it returns `unable to determine type of literal`.
+
+Dynamic fields have a related check. When you call `borrow`, `borrow_mut`, or `remove` with a `Value` type that differs from the stored type, the transaction aborts with `EFieldTypeMismatch` (abort code 2). Pass the same type parameters you used when you added the field. To check the value type before access, use `exists_with_type`.
+
+**Resources**
+
+- [Dynamic Fields](/develop/objects/dynamic-fields)
+
+---
+
+#### `Invalid command argument at {...}. {...}`
+
+A `CommandArgumentError` means one argument to a command in your [programmable transaction block](/develop/transactions/ptbs/prog-txn-blocks) is not valid for that command. The error message starts with `Invalid command argument at`, followed by the position of the failing argument within the command and a kind that names the problem. Find the argument at that position, then fix it based on the kind:
+
+- `TypeMismatch`: The type of the value does not match the type the command expects. Pass a value of the parameter type.
+- `InvalidBCSBytes`: The runtime cannot deserialize the pure argument into the specified type. Serialize the value with the exact type of the parameter.
+- `InvalidUsageOfPureArg`: You passed a `Pure` argument for a non-primitive parameter type. Pass objects as object inputs, not raw bytes.
+- `IndexOutOfBounds` or `SecondaryIndexOutOfBounds`: The argument points to an input or result that does not exist. Reference only existing inputs and results of earlier commands.
+- `InvalidResultArity` or `InvalidArgumentArity`: A result returns no values or multiple values where the command expects 1. Select a single nested result instead.
+- `InvalidGasCoinUsage`: You can take the gas coin by value only with `TransferObjects`.
+- `InvalidValueUsage`: You used a value after the runtime moved it, or you borrowed a value in a conflicting way. The transaction fails if you use an argument in any form after the runtime moves it.
+- `InvalidObjectByValue` or `InvalidObjectByMutRef`: You cannot pass immutable objects by value or by mutable reference. Pass them by `&T`.
+- `SharedObjectOperationNotAllowed`: You cannot wrap, freeze, or convert a shared object to owned.
+- `InvalidTransferObject`: The object passed to `TransferObjects` lacks the `store` ability.
+- `InvalidArgumentToPrivateEntryFunction`: Private entry functions cannot take arguments from other Move functions. Pass a transaction input instead of a command result.
+- `InvalidTxContext`: Use `TxContext` only by reference, and never return it from a Move call.
+
+If an argument has `copy` and does not have `drop`, the runtime infers its last usage as a move, so the last usage must be by value.
+
+**Resources**
+
+- [What is a PTB?](/develop/transactions/ptbs/prog-txn-blocks)
+
+---
+
+#### `Could not find the referenced object {...} at version {...}`
+
+`ObjectNotFound` is a user input error with the message `Could not find the referenced object {} at version {:?}`. The version in the message is optional, and whether it is present tells you what went wrong.
+
+Transactions specify object inputs through [object references](/develop/sui-architecture/object-model), which are (ID, version, object digest) triples. Sui raises `ObjectNotFound` in these cases:
+
+- **Version is `Some(...)`:** You passed an owned or immutable object at a fixed version, and Sui cannot find the object at that version. A past-object lookup also returns this form when the object exists but not at the version you asked for.
+- **Version is `None`:** Sui cannot find the object at all. This happens when the object does not exist, or when a shared object input cannot be found. Shared object inputs carry no version because consensus assigns their version at scheduling time.
+
+##### Solution
+
+To fix the error:
+
+1. Read the object ID in the error message and confirm it is the object you intended to pass.
+2. If the message shows a version, fetch the current object reference and rebuild the transaction with it. For owned inputs, the caller supplies the version, so a stale version from an earlier read causes this error.
+3. If the message shows `None`, confirm the object exists. For a shared object, check that you pass the correct ID.
+4. If the input is a package rather than an object, expect `DependentPackageNotFound` instead, and confirm the package ID.
+
+Two related errors point to the same root cause, a reference that does not match the object's current state:
+
+- **`ObjectSequenceNumberTooHigh`:** The version you asked for is higher than the latest version of the object.
+- **`ObjectDeleted`:** The object was deleted at the reference in the message.
+
+**Resources**
+
+- [Object Model](/develop/sui-architecture/object-model)
+
+---
+
 ## How do I fix SDK and RPC errors?
 
 Errors in this section relate to the TypeScript SDK, RPC responses, and transaction construction.
