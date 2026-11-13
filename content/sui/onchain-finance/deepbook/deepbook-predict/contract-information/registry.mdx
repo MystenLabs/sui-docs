@@ -25,7 +25,7 @@ keywords:
   - set_builder_fee_cap
   - set_template_fee_bands
 last_verified: 2026-11-12
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet cadence table, cadence terms, and no_trade_window_ms re-read 2026-11-12 at watermark 5, Mainnet cadence terms read 2026-11-12 at watermark 4 (TBD-DBU-1166 Mainnet re-read after the cutover)
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet cadence table and no_trade_window_ms re-read 2026-11-12 and its cadence terms 2026-11-13, at watermark 5, Mainnet cadence terms read 2026-11-13 at watermark 4 (TBD-DBU-1166 Mainnet re-read after the cutover)
 goal:
   description: >-
     Reader can look up markets and cadence terms in the Predict Registry, and
@@ -146,12 +146,12 @@ Read the terms with the accessors rather than by field:
 	noComments
 />
 
-`cadence_enabled` reads no stored flag: a cadence counts as enabled exactly when its window size is greater than zero. Both deployments register one underlying, BTC. Each network's registry enables its own cadences. Both enable the 1m and 5m cadences with the same terms and leave the 15m cadence disabled (TBD-DBU-1166: verify on Mainnet after the cutover):
+`cadence_enabled` reads no stored flag: a cadence counts as enabled exactly when its window size is greater than zero. Both deployments register one underlying, BTC. Each network's registry enables its own cadences. Both enable the 1m and 5m cadences, each with the same terms on both networks, and leave the 15m cadence disabled (TBD-DBU-1166: verify on Mainnet after the cutover):
 
 | **Cadence** | **Enabled** | **`tick_size`** | **`admission_tick_size`** | **`max_expiry_allocation`** | **`initial_expiry_cash`** | **`window_size`** |
 | --- | --- | --- | --- | --- | --- | --- |
 | `0` 1m | Yes | `10000000` (0.01 USD) | `1000000000` (1 USD) | `500000000` (500 USDC) | `500000000` (500 USDC) | `2` |
-| `1` 5m | Yes | `10000000` (0.01 USD) | `1000000000` (1 USD) | `500000000` (500 USDC) | `500000000` (500 USDC) | `2` |
+| `1` 5m | Yes | `10000000` (0.01 USD) | `1000000000` (1 USD) | `1000000000` (1,000 USDC) | `1000000000` (1,000 USDC) | `2` |
 | `2` 1h, `3` 1d, `4` 1w, `5` 1mo, `6` 15m | No | `0` | `0` | `0` | `0` | `0` |
 
 A window size of `2` means the registry can hold 2 open markets per enabled cadence at once, so each network's 2 enabled cadences hold 4 in total. When 2 enabled cadences could create the same expiry, the one with the longer period owns it and the shorter one skips it, even before the owner has created it: if the 15m cadence were enabled alongside 1m and 5m, quarter hours would go to 15m, other 5-minute marks to 5m, and every other minute to 1m. These are mutable protocol state: `CadenceConfigUpdated` fired once per cadence at deployment on each network, and a later update changes the grid for markets created afterward. Read them onchain before sizing a strike. The same table with the underlying and oracle IDs is on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#cadences).

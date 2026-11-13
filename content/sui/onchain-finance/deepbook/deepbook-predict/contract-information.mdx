@@ -26,7 +26,7 @@ keywords:
   - protocol version 5
   - cadence table
 last_verified: 2026-11-12
-verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 TBD-DBU-1166 Mainnet Sessions record), each Testnet package and every Mainnet package except sessions read on chain on 2026-11-12 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, cadence terms, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12; Mainnet cadence terms, strike-exposure template, no_trade_window_ms, and SVI store read 2026-11-12 at watermarks 4, 1, and 3; TBD-DBU-1166 Mainnet re-read after the cutover
+verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 TBD-DBU-1166 Mainnet Sessions record), each Testnet package and every Mainnet package except sessions read on chain on 2026-11-12 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12, and its cadence terms re-read 2026-11-13; Mainnet strike-exposure template, no_trade_window_ms, and SVI store read 2026-11-12 at watermarks 4, 1, and 3, and its cadence terms read 2026-11-13 at watermark 4; TBD-DBU-1166 Mainnet re-read after the cutover
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -341,12 +341,12 @@ The values below are each network's current configuration. Configuration is muta
 
 ### Cadences
 
-Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences with the same terms, and both register a 15m cadence at ID 6 and leave it disabled (TBD-DBU-1166: verify on Mainnet after the cutover):
+Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences, each with the same terms on both networks, and both register a 15m cadence at ID 6 and leave it disabled (TBD-DBU-1166: verify on Mainnet after the cutover):
 
 | **ID** | **Name** | **Period (ms)** | **Enabled** | **Tick size** | **Admission tick size** | **Maximum expiry allocation** | **Initial expiry cash** | **Window size** |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0 | 1m | `60000` | Yes | `10000000` | `1000000000` | `500000000` | `500000000` | `2` |
-| 1 | 5m | `300000` | Yes | `10000000` | `1000000000` | `500000000` | `500000000` | `2` |
+| 1 | 5m | `300000` | Yes | `10000000` | `1000000000` | `1000000000` | `1000000000` | `2` |
 | 2 | 1h | `3600000` | No | `0` | `0` | `0` | `0` | `0` |
 | 3 | 1d | `86400000` | No | `0` | `0` | `0` | `0` | `0` |
 | 4 | 1w | `604800000` | No | `0` | `0` | `0` | `0` | `0` |
@@ -357,8 +357,8 @@ Read each column as follows:
 
 - **Tick size:** The price-axis resolution, in fixed-point price units. Every enabled cadence uses `10000000`, which is 0.01 USD.
 - **Admission tick size:** The coarser grid a finite position boundary must land on, also in fixed-point price units. Every enabled cadence uses `1000000000`, which is 1 USD, or every 100 ticks. A boundary tick must be a multiple of `admission_tick_size / tick_size` ticks.
-- **Maximum expiry allocation:** The cadence cap on cash allocated to one expiry market, in USDC base units: 500 USDC. This same value also scales the market's inventory-impact curve.
-- **Initial expiry cash:** The cash the vault seeds a new market with, in USDC base units: 500 USDC. From protocol version 5 an enabled cadence takes any positive value up to the maximum expiry allocation.
+- **Maximum expiry allocation:** The cadence cap on cash allocated to one expiry market, in USDC base units: 500 USDC on 1m and 1,000 USDC on 5m. This same value also scales the market's inventory-impact curve.
+- **Initial expiry cash:** The cash the vault seeds a new market with, in USDC base units: 500 USDC on 1m and 1,000 USDC on 5m. From protocol version 5 an enabled cadence takes any positive value up to the maximum expiry allocation.
 - **Window size:** How many expiries of this cadence can be live at once, so 2 markets of each enabled cadence are live at any time. Zero disables the cadence.
 
 When 2 enabled cadences could create the same expiry, the one with the longer period owns it, so if the 15m cadence were enabled alongside 1m and 5m, quarter hours would go to 15m, other 5-minute marks to 5m, and every other minute to 1m.
@@ -381,8 +381,8 @@ The only finite boundary a market admits off its admission grid is its own refer
 | Protocol reserve profit share | `0` | `0` | |
 | Referral fee rate | `100000000` | `100000000` | 10 percent |
 | Fee incentive subsidy rate | `200000000` | `200000000` | The subsidy covers 20 percent of each trading fee, while the market's incentive balance lasts |
-| Fee incentive live target rate | `200000000` | `200000000` | A live market's incentive balance tops up to 20 percent of its maximum expiry allocation, 100 USDC at a 500 USDC allocation |
-| Fee incentive lifetime cap rate | `200000000` | `200000000` | A market receives at most 20 percent of its maximum expiry allocation over its life, 100 USDC at a 500 USDC allocation |
+| Fee incentive live target rate | `200000000` | `200000000` | A live market's incentive balance tops up to 20 percent of its maximum expiry allocation, 100 USDC for a 1m market at 500 USDC and 200 USDC for a 5m market at 1,000 USDC |
+| Fee incentive lifetime cap rate | `200000000` | `200000000` | A market receives at most 20 percent of its maximum expiry allocation over its life, 100 USDC for a 1m market and 200 USDC for a 5m market |
 | Builder fee cap | `50000000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `50000000` | A builder fee charges at most 5 cents per contract, the default |
 | Fee bands | None (TBD-DBU-1166: verify on Mainnet after the cutover) | None | Every contract price pays 1x the trading fee |
 | Exponentially weighted moving average (EWMA) congestion penalty | Retired | Retired | Protocol version 4 retires the surcharge |
