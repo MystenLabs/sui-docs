@@ -26,7 +26,7 @@ keywords:
   - protocol version 5
   - cadence table
 last_verified: 2026-11-12
-verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 TBD-DBU-1166 Mainnet Sessions record), each Testnet package and every Mainnet package except sessions read on chain on 2026-11-12 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12, and its cadence terms re-read 2026-11-13; Mainnet strike-exposure template, no_trade_window_ms, and SVI store read 2026-11-12 at watermarks 4, 1, and 3, and its cadence terms read 2026-11-13 at watermark 4; TBD-DBU-1166 Mainnet re-read after the cutover
+verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 TBD-DBU-1166 Mainnet Sessions record), each Testnet package and every Mainnet package except sessions read on chain on 2026-11-12 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12, and its cadence terms and max_lp_pool_value re-read 2026-11-13; Mainnet strike-exposure template, no_trade_window_ms, and SVI store read 2026-11-12 at watermarks 4, 1, and 3, and its cadence terms and max_lp_pool_value read 2026-11-13 at watermark 4; TBD-DBU-1166 Mainnet re-read after the cutover
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -374,7 +374,7 @@ The only finite boundary a market admits off its admission grid is its own refer
 | Block Scholes SVI freshness | `10000` ms | `10000` ms | The stochastic volatility inspired (SVI) surface changes more slowly |
 | `no_trade_window_ms` | `15000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `15000` | A queued order's price instant must not fall inside the last 15 seconds before expiry, the contract maximum. Every market reads the live value, so a change applies to all of them at once |
 | `max_valuation_window_ms` | `300000` | `300000` | A pool flush must finish within 5 minutes of its snapshot, or a cap holder restarts it |
-| `max_lp_pool_value` | `20000000000` | `500000000000` | The pool accepts at most 20,000 USDC of liquidity on Mainnet and 500,000 USDC on Testnet |
+| `max_lp_pool_value` | `15000000000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `500000000000` | The pool accepts at most 15,000 USDC of liquidity on Mainnet and 500,000 USDC on Testnet |
 | `lp_request_limit_flush_attempts` | `1` | `1` | The first flush whose mark misses a queued request's floor cancels and refunds it |
 | PLP supply fee | `0` | `0` | |
 | PLP withdraw fee | `2000000` | `2000000` | 0.2 percent |
