@@ -3,8 +3,8 @@ title: Accounts and Custody
 sidebar_label: Accounts and Custody
 description: >-
   Reference for the DeepBook Predict account and custody layer: the shared
-  AccountWrapper, the embedded Account, the Auth hot potato, deposits and
-  withdrawals, the account SDK subpath, and the per-account Predict data slot
+  AccountWrapper, the embedded Account, the Auth hot potato, deposits,
+  withdrawals, and coin receipt, the account SDK subpath, and the per-account Predict data slot
   that holds positions.
 keywords:
   - account wrapper
@@ -13,6 +13,7 @@ keywords:
   - account registry
   - auth
   - deposit funds
+  - receive_coin
   - withdraw funds
   - predict data
   - position key
@@ -49,8 +50,8 @@ answer: >-
   same transaction, or with AccountContract from the deepbook-v3 account
   subpath. A single-use Auth hot potato gates access, and Predict keeps
   positions in a PredictData slot attached to the Account.
-last_verified: 2026-10-13
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 29117434 (Testnet predict protocol version 4)
+last_verified: 2026-11-06
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 and account version 2 on both networks, the Mainnet account v2 0x3dbf966f and Testnet account v2 0x4401eae9 read on chain as the latest of their families)
 ---
 
 DeepBook Predict has no `PredictManager` and no `predict_manager` module. Custody and identity moved into a standalone `account` package, where each trader owns one shared `AccountWrapper` holding an embedded `Account`. Predict attaches its own per-account data to that `Account` rather than storing positions itself.
@@ -92,7 +93,7 @@ flowchart LR
 | Create | `account_registry::new` then `account::share` | Claims both derived IDs for the sender and shares a new `AccountWrapper`. |
 | Deposit | `account::deposit_funds<T>` | Settles pending accumulator funds, then adds a whole `Coin<T>` to stored balance. |
 | Mint | `queue::enqueue_exact_quantity`, `queue::enqueue_exact_amount`, `queue::enqueue_exact_cost` | Debits the budget and the order fee into the order's escrow. A fill keeps the position in the market's queue as an Open record. |
-| Redeem | `queue::enqueue_redeem_open` and the queue's settlement walk for queued positions, and `expiry_market::redeem_settled` or `redeem_settled_permissionless` for a position held in the account from before the cutover | Removes or replaces the position and credits the payout. |
+| Redeem | `queue::enqueue_redeem_open`, or the queue's settlement walk at expiry | Removes or replaces the position and pays the proceeds to the account's receive address. |
 | Withdraw | `account::withdraw_funds<T>` | Settles pending funds, debits stored balance, and returns a `Coin<T>`. |
 
 Every stage shares 3 properties:
@@ -141,7 +142,7 @@ Creating an account twice for the same owner aborts with `EAccountAlreadyExists`
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="new,new_with_referrer"
 	noComments
 />
@@ -171,7 +172,7 @@ That determinism removes the 2-transaction sequence the old manager required. Yo
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="derived_address,derived_wrapper_address,derived_exists,derived_wrapper_exists"
 	noComments
 />
@@ -217,7 +218,7 @@ Field order in the table is declaration order. Creation writes the 2 referrer fi
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="AccountWrapper,Account"
 />
 
@@ -242,7 +243,7 @@ Owner authority comes from 2 constructors, and app authority from 1 package-issu
 |---|---|---|
 | `account::generate_auth(ctx: &mut TxContext): Auth` | `ctx.sender()` | An address-owned account. This is the ordinary path. |
 | `account::generate_auth_as_object(uid: &mut UID): Auth` | The object's address | An account created with `new_self_owned`, opened by the owning object. |
-| `account_registry::generate_auth_as_app<App>` | The app witness | Requires a `Permit<App>` plus registry authorization, so only the app's own package can call it. Predict uses it for `redeem_settled_permissionless`. |
+| `account_registry::generate_auth_as_app<App>` | The app witness | Requires a `Permit<App>` plus registry authorization, so only the app's own package can call it. Sessions uses it inside its trading wrappers. Predict used it for `redeem_settled_permissionless` through protocol version 4, and no Predict call uses it from protocol version 5. |
 
 `load_account_mut(wrapper, auth)` consumes the value and returns `&mut Account`. Owner authority must match the stored `owner`, otherwise the call aborts with `EInvalidOwner`. App authority carries no owner restriction, which is why the allowlist behind it is admin-controlled and revocable with `deauthorize_app`.
 
@@ -254,7 +255,7 @@ Owner authority comes from 2 constructors, and app authority from 1 package-issu
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="Auth"
 />
 
@@ -263,7 +264,7 @@ Owner authority comes from 2 constructors, and app authority from 1 package-issu
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="generate_auth,generate_auth_as_object,share,load_account_mut"
 	noComments
 />
@@ -272,7 +273,7 @@ Owner authority comes from 2 constructors, and app authority from 1 package-issu
 
 ## Balances and custody {#quote-balances}
 
-Funds reach an account in 2 ways. Some arrive as stored balance directly: a deposit, and a redemption payout, which Predict credits to the account inside the redeeming transaction. The rest arrive at the wrapper address through Sui's fund accumulator, which is how builder fees, referral shares, and filled liquidity requests arrive, and a settling call has to fold them into stored balance before the account can spend them. The functions on this page that read or settle those accumulator funds take the accumulator's root as a `root: &AccumulatorRoot` argument.
+Funds reach an account in 2 ways. Some arrive as stored balance directly, such as a deposit or a coin the account receives. The rest arrive at the wrapper address through Sui's fund accumulator, which is how referral shares, queued-order payouts and refunds, and filled liquidity requests arrive, and a settling call has to fold them into stored balance before the account can spend them. The functions on this page that read or settle those accumulator funds take the accumulator's root as a `root: &AccumulatorRoot` argument.
 
 `settle` does that folding and is permissionless:
 
@@ -313,7 +314,7 @@ Predict's own trading functions settle USDC through the wrapper before they pric
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="deposit_funds,withdraw_funds,settle"
 	noComments
 />
@@ -331,6 +332,18 @@ This has 2 consequences. You can always retrieve funds that you have not committ
 `deposit_funds` consumes a whole `Coin<T>`, so split the exact amount off a larger coin first. `withdraw_funds` takes an amount and returns a `Coin<T>` that the transaction must consume, by transferring it or by sending it to an address balance.
 
 Both take an `Auth`, and both abort with `EInvalidOwner` when owner authority does not match the stored owner. `withdraw_funds` aborts with `EBalanceTooLow` when the amount exceeds stored balance or when the account has never held that coin type.
+
+Account version 2 adds 2 permissionless calls that fold a `Coin<T>` sent to the account as an owned object into stored balance, for a sender that can only transfer a coin to an address:
+
+```move title='packages/account/sources/account.move'
+public fun receive_coin<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
+public fun receive_coin_at_account_id<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
+```
+
+- **`receive_coin`:** Receives a coin sent to the wrapper address, the account's `receive_address`. It takes no `Auth`, because value only enters the account, and only the wrapper the coin was addressed to can receive it. The wrapper address derives from the owner, so a coin can arrive before the account exists and wait until the owner creates it, and the creating transaction can receive it before sharing the wrapper.
+- **`receive_coin_at_account_id`:** Receives a coin sent to the canonical account ID instead. Send to the wrapper address when you can, because `balance::send_funds` reaches only that one.
+
+A `Receiving` cannot reveal its owner, so pick the function from the coin's owner, and the wrong one aborts. The coin must already exist when the transaction is built, so a coin's creation and its receipt take 2 transactions. Both emit `Deposited`. Call them through the account version 2 call target on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#packages), and in the SDK through `AccountContract.receiveCoin` and `receiveCoinAtAccountId`, which version 2.10.0 adds.
 
 The SDK's `client.predict.tx.deposit(owner, amountUsdc)` sources the quote coin from coin objects or the address balance and can create the account in the same block with `{ create: true }`. Its `client.predict.tx.withdraw(owner, amountUsdc)` sends the result to the owner's address balance by default, or returns a coin object with `{ toCoinObject: true }`.
 
@@ -354,7 +367,7 @@ Because it includes unsettled funds, it does not go stale between a payout and t
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="owner,receive_address,account_id,balance,referrer_account_id,referrer_receive_address"
 	noComments
 />
@@ -368,7 +381,7 @@ Predict does not store positions in its own objects. It attaches a `PredictData`
 | **Struct** | **Field** | **Type** | **Description** |
 |---|---|---|---|
 | `PredictData` | `positions` | `Table<PositionKey, Position>` | Open positions, scoped by expiry market. |
-| `PredictData` | `builder_code_id` | `Option<ID>` | Sticky builder-code attribution applied to future trades. |
+| `PredictData` | `builder_code_id` | `Option<ID>` | Builder code that `set_builder_code` attached. No fee reads it from protocol version 5. |
 | `PositionKey` | `expiry_market_id` | `ID` | The market that minted the order. |
 | `PositionKey` | `order_id` | `u256` | The packed order ID. |
 | `Position` | `root_id` | `u256` | Original mint's order ID, carried forward across partial-close replacements. |
@@ -388,7 +401,7 @@ An order ID alone does not identify a position. It carries the quantity and the 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="PositionKey,Position,PredictData"
 />
 
@@ -411,7 +424,7 @@ To value a position, pass its order ID to the market: `expiry_market::live_order
 
 ### How do you set or unset a builder code? {#builder-codes}
 
-An account can carry one builder code, which adds a builder fee to each mint and live close the account makes:
+An account can carry one builder code, which these 2 calls attach and remove:
 
 ```move title='packages/predict/sources/predict_account.move'
 public fun set_builder_code(
@@ -424,7 +437,7 @@ public fun set_builder_code(
 public fun unset_builder_code(wrapper: &mut AccountWrapper, auth: Auth, ctx: &mut TxContext)
 ```
 
-Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::builder_code_events`, with `builder_code_id` set on one and absent on the other. Attribution is sticky: it applies to trades made after the call, not retroactively. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design) covers what the fee is and how the code's owner collects it. The SDK exposes `client.predict.tx.setBuilderCode(owner, builderCodeId)` and `client.predict.tx.unsetBuilderCode(owner)`.
+Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::builder_code_events`, with `builder_code_id` set on one and absent on the other. Through protocol version 4 the attached code charged a builder fee on the account's later trades. From protocol version 5 no fee reads it: an order pays a builder fee only when it names a code, as [Name a builder fee](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees) describes. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) covers the fee and how the code's owner collects it. The SDK exposes `client.predict.tx.setBuilderCode(owner, builderCodeId)` and `client.predict.tx.unsetBuilderCode(owner)`.
 
 <details>
 <summary>Predict account function source</summary>
@@ -434,7 +447,7 @@ Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::bu
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="has_position,builder_code_id,set_builder_code,unset_builder_code"
 	noComments
 />
@@ -476,6 +489,8 @@ public fun deposit<T>(self: &mut Account, coin: Coin<T>)
 public fun withdraw<T>(self: &mut Account, amount: u64, ctx: &mut TxContext): Coin<T>
 public fun deposit_funds<T>(wrapper: &mut AccountWrapper, auth: Auth, coin: Coin<T>, root: &AccumulatorRoot, clock: &Clock)
 public fun withdraw_funds<T>(wrapper: &mut AccountWrapper, auth: Auth, amount: u64, root: &AccumulatorRoot, clock: &Clock, ctx: &mut TxContext): Coin<T>
+public fun receive_coin<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
+public fun receive_coin_at_account_id<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
 ```
 
 ```move title='packages/predict/sources/predict_account.move'
@@ -570,7 +585,7 @@ The module declares 2 further events, `AppAuthorized` and `AppDeauthorized`, whi
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="AccountCreated,Deposited,Withdrawn,FundsSettled"
 />
 

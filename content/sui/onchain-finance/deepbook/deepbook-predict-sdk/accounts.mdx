@@ -56,8 +56,8 @@ answer: >-
   returns it with no chain read, even before the account exists.
   client.predict.tx.withdraw sends USDC to the owner's address balance by
   default, and { toCoinObject: true } transfers a coin object instead.
-last_verified: 2026-10-13
-verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 4 on both networks (Mainnet after its cutover), publication records at deepbookv3 29117434; earlier recipes checked against 2.6.1 (ts-sdks 56d51645); referred-account recipe type-checked against ts-sdks 56d51645 and simulated on Testnet 2026-09-28; builder-code recipe type-checked against @mysten/deepbook-v3 2.6.6 and simulated on Testnet 2026-10-01'
+last_verified: 2026-11-06
+verified_against: '@mysten/deepbook-v3 2.7.0 (ts-sdks 26f6fdfa) and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); predict protocol version 5 and account version 2 on both networks (Mainnet after its Version 5 cutover), publication records at deepbookv3 046ffd1e; AccountContract.receiveCoin and the queueMoveCalls builder entrypoints read from the 2.10.0 and 2.11.0 npm packages, whose configurations record the account version 2 call target for Testnet only; earlier recipes checked against 2.6.1 (ts-sdks 56d51645); referred-account recipe type-checked against ts-sdks 56d51645 and simulated on Testnet 2026-09-28; builder-code recipe type-checked against @mysten/deepbook-v3 2.6.6 and simulated on Testnet 2026-10-01'
 ---
 
 The account functions create a trader's shared `AccountWrapper`, move USDC in and out of it, and attach a builder code, and the `/account` subpath exposes the account primitive underneath for transactions you compose yourself. [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) explains the custody mechanism: the wrapper, the `Auth` hot potato, settlement, and the account events.
@@ -190,11 +190,11 @@ The returned `number` is a display value, and above `2^53` raw units it loses pr
 
 ## Builder code functions {#builder-codes}
 
-A builder code adds a builder fee to each mint and live close the account makes after you set it, and the fee collects at the code's address for its owner to claim. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) explains the fee and who earns it. Both builders mint an `Auth` from the sender, so the account owner must sign, and both emit `BuilderCodeSet`. [Builder codes](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) covers the Move functions and the event.
+Through protocol version 4, a builder code attached to the account added a builder fee to the account's later trades. From protocol version 5 no fee reads the attachment: an order pays a builder fee only when it names a code, as [Name a builder fee](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees) describes, and the 2 builders below only attach and clear the code. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) explains the fee and who earns it. Both builders mint an `Auth` from the sender, so the account owner must sign, and both emit `BuilderCodeSet`. [Builder codes](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) covers the Move functions and the event.
 
 ### `tx.setBuilderCode` {#set-builder-code}
 
-Use `tx.setBuilderCode` to attach a builder code to the account. It returns a `Transaction` that calls `predict_account::set_builder_code`, which lives in the Predict package rather than in the account package. Attribution is sticky and applies only to trades the account makes after the call.
+Use `tx.setBuilderCode` to attach a builder code to the account. It returns a `Transaction` that calls `predict_account::set_builder_code`, which lives in the Predict package rather than in the account package. No fee reads the attachment from protocol version 5.
 
 It takes these parameters:
 
@@ -205,7 +205,7 @@ It takes these parameters:
 
 ### `tx.unsetBuilderCode` {#unset-builder-code}
 
-Use `tx.unsetBuilderCode` to clear the account's builder code, so trades after the call carry no builder attribution. It returns a `Transaction` that calls `predict_account::unset_builder_code`.
+Use `tx.unsetBuilderCode` to clear the account's builder code. It returns a `Transaction` that calls `predict_account::unset_builder_code`.
 
 It takes this parameter:
 
@@ -217,7 +217,7 @@ Decode either result with [`decode.builderCode`](#decode-builder-code).
 
 ## How do I create a builder code and claim its fees? {#operate-builder-code}
 
-The functions above are for the account that carries a code. On Mainnet, create codes with version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The setters and the fee claim have no version gate, so they also work through an older release. Nothing in `client.predict` serves the code's owner: no facade builder creates a code or claims its fees. Compose both from the generated bindings that the `/predict` subpath exports, `registryMoveCalls` and `builderCodeMoveCalls`, with `toGeneratedConfig` supplying the shared objects:
+The functions above are for the account that carries a code. On Mainnet, create codes with version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The setters and the fee claim have no version gate, so they also work through an older release. Nothing in `client.predict` serves the code's owner: no facade builder creates a code or claims its fees. Compose both from the generated bindings that the `/predict` subpath exports, `registryMoveCalls` and `builderCodeMoveCalls`, with `toGeneratedConfig` supplying the shared objects:
 
 ```ts
 import {
@@ -263,7 +263,7 @@ The 3 functions do the following:
 - **`createBuilderCode`** creates a code owned by the transaction sender. Choose an index that the sender has not used yet, because reusing one aborts. Read the new ID from the `BuilderCodeCreated` event, or compute it with `builderCodeIdFor`.
 - **`claimBuilderFees`** collects every settled fee and transfers the coin to `owner`. The code's owner must sign, because the contract aborts with `ENotOwner`, abort code `0`, for any other sender.
 
-To read the balance before you claim, simulate `builderCodeMoveCalls.claimableBuilderFees` with the code's ID and read the `u64` it returns. Accounts then attach the code with [`tx.setBuilderCode`](#set-builder-code), using the ID that `builderCodeIdFor` returns.
+To read the balance before you claim, simulate `builderCodeMoveCalls.claimableBuilderFees` with the code's ID and read the `u64` it returns. To charge the fee, name the code on each order through the `_with_builder` entrypoints. No facade builder places one: the generated `queueMoveCalls.enqueueExactQuantityWithBuilder` and its 3 siblings build them, and `sessionsMoveCalls` carries the session forms. Their call targets support builder fees from version 2.10.0 on Testnet and version TBD-DBU-1166: SDK release on Mainnet.
 
 ## Account decoders {#decode}
 
@@ -436,6 +436,18 @@ It takes these parameters:
 - `coinType`: The fully qualified type of that coin.
 
 <ImportContent source="packages/deepbook-v3/src/account.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="56d51645cd231010e39d96dd23583056c5266426" lines="160-160" />
+
+### `AccountContract.receiveCoin` {#account-contract-receive-coin}
+
+Use `receiveCoin` to move a `Coin<T>` that a sender transferred to the account's wrapper address into the account's stored balance, through account version 2's permissionless `receive_coin`. Anyone can submit it, because value only enters the account the coin was addressed to, and the coin can arrive before the account exists. `receiveCoinAtAccountId` does the same for a coin sent to the canonical account ID, and calling the wrong one for where the coin sits aborts with `EUnableToReceiveObject`.
+
+It takes these parameters:
+
+- `wrapperId`: The account's wrapper ID.
+- `coin`: The received coin's object ID, or a `Receiving` input.
+- `coinType`: The fully qualified type of that coin.
+
+Both throw when the configuration has no `accountPackageIdLatest`, the account version 2 call target. Versions 2.10.0 and 2.11.0 record it for Testnet only, and Mainnet needs version TBD-DBU-1166: SDK release or later. [Balances and custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#deposit-and-withdraw) covers the Move calls.
 
 ### `AccountContract.withdrawFunds` {#account-contract-withdraw-funds}
 

@@ -4,8 +4,8 @@ description: >-
   Reference for DeepBook Predict delegated trading sessions: the authority a
   session key holds, granting and revoking grants on a canonical account,
   enumerating stored grants, and the Predict and DeepBook spot wrappers a
-  session can call, including the queued-order wrappers of sessions protocol
-  version 3.
+  session can call, including the queued-order wrappers, builder approvals,
+  and the spot pool allowlist of sessions protocol version 4.
 keywords:
   - deepbook predict sessions
   - session key
@@ -19,8 +19,12 @@ keywords:
   - deauthorize app
   - enqueue_exact_cost
   - queued order
-last_verified: 2026-10-13
-verified_against: deepbookv3 29117434 (sessions protocol version 3 on both networks; Mainnet after its cutover); both SessionsConfig objects read 2026-10-18 (watermark 3 on Testnet, 1 on Mainnet until the cutover transaction raises it to 3), Mainnet sessions v3 0xfd9ef53c read on chain 2026-10-18 with the same public functions as Testnet's, and both DeepBook registries read 2026-10-15 for DeepbookCoreAccountApp; '@mysten/deepbook-v3' 2.7.0 and 2.8.0 (ts-sdks 82a8cdb6, which changes only the Mainnet config); queued session example simulated on Testnet 2026-10-13, and both DeepBook registry authorizations re-read after Mainnet's reopen
+  - approve_session_builder
+  - allowed_pools
+  - admin_allow_pool
+  - EPoolNotAllowed
+last_verified: 2026-11-12
+verified_against: deepbookv3 046ffd1e (sessions protocol version 4 on both networks, linking predict protocol version 5; Mainnet after its Version 5 cutover); Testnet sessions v9 0x3bb8b2db read on chain as the latest of its family, Testnet SessionsConfig re-read 2026-11-12 at watermark 4 with a 7-pool spot allowlist, Mainnet sessions read the same day at its third publish (TBD-DBU-1166 Mainnet sessions v4, SessionsConfig, and allowlist re-read after the cutover); both DeepBook registries read for DeepbookCoreAccountApp; queued session example simulated on Testnet
 goal:
   description: >-
     Reader understands how much authority a DeepBook Predict session key holds,
@@ -59,14 +63,14 @@ Sessions is an account app. It stores grants in the account's app-local data slo
 
 The surface spans 2 modules:
 
-- `deepbook_sessions::sessions`: Grant storage, the lifecycle calls, and every trading wrapper ([source](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/sessions/sources/sessions.move)).
-- `deepbook_sessions::session_config`: The shared `SessionsConfig` object and the package version floor ([source](https://github.com/MystenLabs/deepbookv3/blob/2911743402372d3e79ab5d48a0f9ed64f1a32159/packages/sessions/sources/session_config.move)).
+- `deepbook_sessions::sessions`: Grant storage, the lifecycle calls, and every trading wrapper ([source](https://github.com/MystenLabs/deepbookv3/blob/046ffd1e2af6ae511146a0fcb92f5eb8a7e843af/packages/sessions/sources/sessions.move)).
+- `deepbook_sessions::session_config`: The shared `SessionsConfig` object and the package version floor ([source](https://github.com/MystenLabs/deepbookv3/blob/046ffd1e2af6ae511146a0fcb92f5eb8a7e843af/packages/sessions/sources/session_config.move)).
 
-Sui Mainnet and Sui Testnet each run a separate deployment of the package, and the Move snippets on this page pin DeepBookV3 at `29117434`. Both networks run `sessions` protocol version 3, which adds the [queued-order wrappers](#queued-wrappers) and links Predict protocol version 4, where the immediate trade wrappers abort. Because of an upgrade, the package carries a call target and an original ID that differ, and the following table gives both. In TypeScript, `getSessionsConfig(network)` from `@mysten/deepbook-v3/sessions` returns the package call target and its original ID, the shared config, the account registry that authorizes the app, the Predict protocol config, and the 2 extra IDs the DeepBook spot wrappers take. Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The full tables are on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#packages):
+Sui Mainnet and Sui Testnet each run a separate deployment of the package, and the Move snippets on this page pin DeepBookV3 at `046ffd1e`. Both networks run `sessions` protocol version 4, which links Predict protocol version 5, keeps the [queued-order wrappers](#queued-wrappers) that protocol version 3 added, and adds [builder approvals](#queued-wrappers) and the [spot pool allowlist](#spot-wrappers). The immediate trade wrappers and the `redeem_settled` wrapper abort through Predict. Because of an upgrade, the package carries a call target and an original ID that differ, and the following table gives both. In TypeScript, `getSessionsConfig(network)` from `@mysten/deepbook-v3/sessions` returns the package call target and its original ID, the shared config, the account registry that authorizes the app, the Predict protocol config, and the 2 extra IDs the DeepBook spot wrappers take. Mainnet needs version TBD-DBU-1166: Sessions v4 SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The full tables are on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#packages):
 
 | **Object** | **Mainnet** | **Testnet** |
 |---|---|---|
-| `sessions` package, call target (`moveCall` target) | `0xfd9ef53ca443517d6a3a4d8742e00eaa1e7f35b0997697caab8c3e62870c0ce5` | `0x25cfc04f97ef75c530872e630c1b3e21845e615a5a68d185291372e196cbd3de` |
+| `sessions` package, call target (`moveCall` target) | `TBD-DBU-1166: Mainnet sessions v4 call target` | `0x3bb8b2db2727bcb401c922ea79456d2b454c149a7f67013c26499ccb00e6d951` |
 | `sessions` package, original ID (`SessionGrant` and dynamic-field key types) | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | `0x1908eee49d7a08d74a537d7f23766b363a145517fe0d3e0d85635d1682831ffd` |
 | `SessionsConfig` | `0xb2fba483748aac7508676020d4e691d68239b66f8bf7c5e7634dd1a76a329317` | `0xc096b97289821b27badfdf758d614bbbfa386f93d3faa409ecc1fcc6075d1186` |
 
@@ -80,7 +84,7 @@ A session key is trading authority over the whole account. It is not a scoped pe
 
 :::danger
 
-A session key can trade the account's entire balance. Nothing caps notional, restricts which pools or markets are reachable, or bounds loss to adverse pricing. Fund an account that hands out ephemeral session keys with only what you are willing to put at risk, and treat the key material with the same care as the owner key for everything except withdrawal.
+A session key can trade the account's entire balance. Nothing caps notional, restricts which Predict markets are reachable, or bounds loss to adverse pricing. Fund an account that hands out ephemeral session keys with only what you are willing to put at risk, and treat the key material with the same care as the owner key for everything except withdrawal.
 
 :::
 
@@ -90,9 +94,10 @@ What a session can and cannot do:
 
 | **A session can** | **A session cannot** |
 |---|---|
-| Mint and redeem Predict positions on any market, at any size the balance covers, with caller-chosen price bounds. | Withdraw funds to an address. Value leaving the account still needs owner authority. |
-| Place and cancel DeepBook spot orders in any pool, with a caller-chosen `price_limit`. | Grant a session, revoke a session, or extend its own expiry. |
+| Place queued Predict orders on any market, at any size the balance covers, with caller-chosen limits. | Withdraw funds to an address. Value leaving the account still needs owner authority. |
+| Place DeepBook spot orders in the pools on the spot pool allowlist, with a caller-chosen `price_limit`, and cancel orders in any pool. | Grant a session, revoke a session, or extend its own expiry. |
 | Sweep settled spot proceeds back into account custody. | Outlive its expiration timestamp. |
+| Name a builder fee, within the code and maximum fee the owner approved for that session. | Name a builder, or a higher fee, that the owner did not approve. |
 
 The spot wrappers are the widest surface. Each one takes a caller-chosen `Pool` and routes into `deepbook_core_account`, which first settles the account's pending accumulator funds for the pool's base asset, quote asset, and DEEP, then withdraws the account's whole balance of all 3 into the embedded balance manager for the duration of the call, and finally sweeps free balances back. The trade sits between those 2 steps, so a single session-signed spot order reaches everything the account holds in those coin types, stored plus unsettled, at whatever `price_limit` the caller supplies.
 
@@ -111,7 +116,7 @@ Each trading wrapper resolves authority through one private helper before it tou
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="generate_auth_as_session"
 />
 
@@ -134,7 +139,7 @@ The following account registry source shows `deauthorize_app`, which removes the
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="deauthorize_app,generate_auth_as_app"
 />
 
@@ -149,7 +154,7 @@ The whole lifecycle takes 3 calls. Owner authority derives from the transaction 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="session_expiration_ms,authorize_session,revoke_session"
 	noComments
 />
@@ -174,7 +179,7 @@ The way the contract applies those bounds has 4 consequences:
 
 ### The transaction result cannot confirm a revocation {#revocation-is-silent}
 
-`revoke_session` removes a stored grant whether it is active or already expired, frees its slot, and emits `SessionRevoked`. Revoking an address that holds no grant is a silent no-op: the call does not abort and emits no event, so a successful transaction proves nothing about whether the call removed a grant or none was there.
+`revoke_session` removes a stored grant whether it is active or already expired, frees its slot, removes the session's builder approval, and emits `SessionRevoked`. Revoking an address that holds no grant is a silent no-op: the call does not abort and emits no event, so a successful transaction proves nothing about whether the call removed a grant or none was there.
 
 Read before and after when the difference matters. `session_expiration_ms` returns the stored expiration for a known address and `none` for one the owner never authorized or has since revoked. It does not classify the timestamp as active or expired, so compare it with the current time yourself.
 
@@ -191,7 +196,7 @@ There is no bulk onchain read. `session_expiration_ms` answers one address at a 
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="SessionsApp,SessionsData"
 />
 
@@ -201,17 +206,17 @@ Nothing prunes expired grants. Time passing executes no Move code, so a dead gra
 
 ## Predict wrappers {#predict-wrappers}
 
-An active session can call 4 queued Predict wrappers and the settled redeem. The immediate wrappers `mint_exact_quantity`, `mint_exact_amount`, `mint_exact_cost`, and `redeem_live` keep their signatures and abort, as [Retired immediate trades](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) describes. The 5 wrappers that work are:
+An active session can call 4 queued Predict wrappers and their 4 `_with_builder` versions. The immediate wrappers `mint_exact_quantity`, `mint_exact_amount`, `mint_exact_cost`, and `redeem_live` keep their signatures and abort, as [Retired immediate trades](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#mint-a-position) describes, and so does `redeem_settled`, which Predict protocol version 5 retires, as [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. The 8 wrappers that work are:
 
-| **Wrapper** | **Predict call** | **Returns** | **Available** |
+| **Wrapper** | **Predict call** | **Returns** | **Added in** |
 |---|---|---|---|
-| `redeem_settled` | `expiry_market::redeem_settled` | Nothing. | Both networks |
-| `enqueue_exact_quantity` | `queue::enqueue_exact_quantity` | The new queue record ID, as `u64`. | Both networks, `sessions` v3 |
-| `enqueue_exact_amount` | `queue::enqueue_exact_amount` | The new queue record ID, as `u64`. | Both networks, `sessions` v3 |
-| `enqueue_exact_cost` | `queue::enqueue_exact_cost` | The new queue record ID, as `u64`. | Both networks, `sessions` v3 |
-| `enqueue_redeem_open` | `queue::enqueue_redeem_open` | The new queue record ID, as `u64`. | Both networks, `sessions` v3 |
+| `enqueue_exact_quantity` | `queue::enqueue_exact_quantity` | The new queue record ID, as `u64`. | `sessions` v3 |
+| `enqueue_exact_amount` | `queue::enqueue_exact_amount` | The new queue record ID, as `u64`. | `sessions` v3 |
+| `enqueue_exact_cost` | `queue::enqueue_exact_cost` | The new queue record ID, as `u64`. | `sessions` v3 |
+| `enqueue_redeem_open` | `queue::enqueue_redeem_open` | The new queue record ID, as `u64`. | `sessions` v3 |
+| `enqueue_exact_quantity_with_builder`, `enqueue_exact_amount_with_builder`, `enqueue_exact_cost_with_builder`, `enqueue_redeem_open_with_builder` | The `queue` function of the same name | The new queue record ID, as `u64`. | `sessions` v4 |
 
-Each one validates the package version and the session against the supplied account, generates app authorization internally, and passes it straight into the Predict or order-flow function of the same name. Every market parameter stays caller-selected, and Predict performs all of the validation it normally would, including the gates a session caller cannot see from this package: a queued order whose price instant would fall inside the last `no_trade_window_ms` before expiry, 10,000 ms on both networks, aborts at placement, and the queued and settled wrappers abort with `ESnapshotInProgress` if you compose them into the transaction that snapshots a pool flush. `redeem_settled` is outside the trade window, so a session can always close a settled position. Compared with the owner-signed Predict call, the wrapper takes no `Auth` argument and adds `account_registry` and `sessions_config`.
+Each one validates the package version and the session against the supplied account, generates app authorization internally, and passes it straight into the Predict or order-flow function of the same name. Every market parameter stays caller-selected, and Predict performs all of the validation it normally would, including the gates a session caller cannot see from this package: a queued order whose price instant would fall inside the last `no_trade_window_ms` before expiry, which Predict reads live from `ProtocolConfig` and [The no-trade window](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window) lists per network, aborts at placement, and the queued wrappers abort with `ESnapshotInProgress` if you compose them into the transaction that snapshots a pool flush. The queue's settlement walk pays every filled position at expiry, so a session never needs to claim one. Compared with the owner-signed Predict call, the wrapper takes no `Auth` argument and adds `account_registry` and `sessions_config`.
 
 The queued wrappers take no `pricer`, because placement reads the oracle objects itself.
 
@@ -227,14 +232,14 @@ The `@mysten/deepbook-v3/sessions` queued builders require their bounds: a queue
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="mint_exact_quantity,mint_exact_amount,mint_exact_cost,redeem_live,redeem_settled"
 	noComments
 />
 
 </details>
 
-[Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions#trade) shows how to queue orders and claim as a session key with the TypeScript SDK.
+[Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions#trade) shows how to queue orders as a session key with the TypeScript SDK.
 
 ### Queued-order wrappers {#queued-wrappers}
 
@@ -265,7 +270,7 @@ public fun enqueue_exact_cost(
 
 `enqueue_redeem_open` sells an Open record, a filled order that stays in its market's queue, by its record ID. After placement, calls that need no session or account authority commit the order, fill or refund it, and pay it at settlement, so a queued order placed through a session still fills or refunds after the session ends. [Queued orders](/onchain-finance/deepbook/deepbook-predict/contract-information/predict) covers the order's life, its limits, and the order fee.
 
-A Sessions package runs the Predict version it linked at publication. Before Predict's watermark retires that version, Sessions needs a relink and an upgrade, because an unrelinked Sessions package's queued wrappers abort once the watermark passes it, while placing orders directly through `deepbook_predict_orders` keeps working. Each network's `SessionsConfig` watermark is 3, so the earlier Sessions packages neither authorize sessions nor trade on either network, and that includes the [DeepBook spot wrappers](#spot-wrappers). Their calls abort with `session_config::EPackageVersionDisabled`. Call Sessions version 3 directly, or through the SDK, where Mainnet needs version 2.8.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+A Sessions package runs the Predict version it linked at publication. Before Predict's watermark retires that version, Sessions needs a relink and an upgrade, because an unrelinked Sessions package's queued wrappers abort once the watermark passes it, while placing orders directly through `deepbook_predict_orders` keeps working. Each network's `SessionsConfig` watermark is 4, so Sessions packages that compile version 3 or lower neither authorize sessions nor trade on either network, and that includes the [DeepBook spot wrappers](#spot-wrappers). Their calls abort with `session_config::EPackageVersionDisabled`. Call the Sessions call target on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#packages) directly, or go through the SDK, where Mainnet needs version TBD-DBU-1166: Sessions v4 SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
 <details>
 <summary>Queued-order wrapper source</summary>
@@ -275,8 +280,45 @@ A Sessions package runs the Predict version it linked at publication. Before Pre
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="enqueue_exact_quantity,enqueue_exact_amount,enqueue_exact_cost,enqueue_redeem_open"
+	noComments
+/>
+
+</details>
+
+Sessions protocol version 4 adds a `_with_builder` version of each queued wrapper, which takes `code: &BuilderCode` and `builder_fee_per_contract: u64` after the Block Scholes stores, like the `queue` call it wraps, as [Name a builder fee](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees) describes. A session names a builder only within the approval the account owner gave that session:
+
+```move title='packages/sessions/sources/sessions.move'
+public fun approve_session_builder(
+    wrapper: &mut AccountWrapper,
+    sessions_config: &SessionsConfig,
+    session: address,
+    code_id: ID,
+    max_fee_per_contract: u64,
+    ctx: &mut TxContext,
+)
+
+public fun session_builder(wrapper: &AccountWrapper, session: address): Option<SessionBuilder>
+```
+
+- **Approval:** `approve_session_builder` takes owner authority from the transaction sender, like `authorize_session`, and works only for a session already authorized, aborting with `ESessionNotAuthorized` otherwise, so an app calls it right after `authorize_session` in the same transaction. It stores one builder code ID and a maximum fee per contract, in 1e9 scaling of the 1 USDC payout, replaces any earlier approval for that session, and emits `SessionBuilderApproved`. It aborts with `EBuilderApprovalsNotEnabled` until the `SessionsConfig` watermark reaches 4.
+- **Checks:** Each `_with_builder` wrapper runs the session checks, then requires the trade's code to be the approved one (`EBuilderNotApproved`) and its fee to be at or below the approved maximum (`EBuilderFeeAboveApproved`). Predict then caps the fee at `builder_fee_cap`. A session trade that names no builder uses the plain wrappers and pays no builder fee.
+- **Lifetime:** `revoke_session` removes the approval with the grant, so a session re-authorized after a revocation needs a new approval. Re-authorizing a session that was not revoked keeps its approval, including an expired one, because expiry does not remove a session. A new grant for an address that holds no grant clears any approval left on it. Each removal emits `SessionBuilderCleared`.
+- **Reads:** `session_builder` returns a session's approval, or `none`, and `approved_code_id` and `approved_max_fee_per_contract` read it.
+
+An approval caps the fee per contract, not the number of trades, so approve only a builder you trust, at the lowest fee you accept.
+
+<details>
+<summary>Builder wrapper and approval source</summary>
+
+<ImportContent
+	source="packages/sessions/sources/sessions.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="enqueue_exact_quantity_with_builder,enqueue_exact_amount_with_builder,enqueue_exact_cost_with_builder,enqueue_redeem_open_with_builder,approve_session_builder,session_builder,approved_code_id,approved_max_fee_per_contract"
 	noComments
 />
 
@@ -285,7 +327,7 @@ A Sessions package runs the Predict version it linked at publication. Before Pre
 <details>
 <summary>Queue an order as a session key with the SDK</summary>
 
-<ImportContent source="examples/deepbook-predict/src/sessions-queue.ts" mode="code" org="MystenLabs" repo="sui" branch="1974d916378e9b3e4758adc80a8e22550d29a9d8" tag="sessions-queue" />
+<ImportContent source="examples/deepbook-predict/src/sessions-queue.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="sessions-queue" />
 
 </details>
 
@@ -293,23 +335,53 @@ A Sessions package runs the Predict version it linked at publication. Before Pre
 
 An active session can also call 5 DeepBook spot wrappers that route through `deepbook_core_account`: `place_limit_order`, `place_market_order`, `cancel_live_order`, `cancel_live_orders`, and `withdraw_settled_amounts`. Order parameters stay caller-selected, and the account wrapper and DeepBook core validate them. This package does not duplicate the permissionless settled-amount withdrawal, because it needs no session authority.
 
-The DeepBook admin-cap owner must authorize `DeepbookCoreAccountApp` in the supplied DeepBook registry before spot order placement works, separately from the `SessionsApp` authorization these wrappers already require. Both DeepBook registries authorize it, Testnet's `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`, so the spot wrappers execute on both networks. They run only through Sessions version 3, because each network's `SessionsConfig` watermark is 3.
+From Sessions protocol version 4, `place_limit_order` and `place_market_order` also require the pool to be on the spot pool allowlist in `SessionsConfig`, and abort with `session_config::EPoolNotAllowed` otherwise. `cancel_live_order`, `cancel_live_orders`, and `withdraw_settled_amounts` work on any pool, so a session can still clear its orders on a pool that was removed from the list. The `SessionsAdminCap` holder maintains the list:
+
+```move title='packages/sessions/sources/session_config.move'
+public fun allowed_pools(config: &SessionsConfig): vector<ID>
+
+public fun admin_allow_pool(
+    config: &mut SessionsConfig,
+    admin_cap: &SessionsAdminCap,
+    pool_id: ID,
+)
+
+public fun admin_disallow_pool(
+    config: &mut SessionsConfig,
+    admin_cap: &SessionsAdminCap,
+    pool_id: ID,
+)
+```
+
+`admin_allow_pool` adds a DeepBook pool ID and aborts inside `vec_set` if the pool is already listed. `admin_disallow_pool` removes one and aborts with `EPoolNotAllowed` if it is not listed. Both require the executing package version to be at or above the watermark, and they emit `SessionPoolAllowed` and `SessionPoolDisallowed`. `allowed_pools` returns the list in the order the pools were added. The list is empty until the first `admin_allow_pool`, and an empty list allows no pool. The Testnet list holds 7 pools, and the Mainnet list holds the 25 spot pools offered for session trading (TBD-DBU-1166: verify on Mainnet after the cutover). Read the live list with `allowed_pools` rather than from this page.
+
+The DeepBook admin-cap owner must authorize `DeepbookCoreAccountApp` in the supplied DeepBook registry before spot order placement works, separately from the `SessionsApp` authorization these wrappers already require. Both DeepBook registries authorize it, Testnet's `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`, so the spot wrappers execute on both networks. They run only through a Sessions package that compiles version 4, because each network's `SessionsConfig` watermark is 4.
 
 Do not read that state out of the deployment manifest. The manifest is the audited initial-deployment snapshot, and its `externalAuthorizations` entry records whether the authorization was in place when the deployment ran, not its current state. Both manifests record `authorized: false`, and both registries authorize the app. The DeepBook admin-cap owner grants it in a separate transaction after deployment, and the DeepBook registry is the live authority from that point on. Check the registry with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>` in a simulated transaction, using the `deepbookRegistry` and `deepbookCoreAccountPackageId` that `getSessionsConfig(network)` returns, rather than trusting the recorded flag or this page.
 
 The TypeScript SDK does not wrap these calls on `SessionsContract`, and [Predict Sessions SDK](/onchain-finance/deepbook/deepbook-predict-sdk/sessions) shows how to reach them through the generated `sessionsMoveCalls` bindings.
 
 <details>
-<summary>Spot wrapper signatures</summary>
+<summary>Spot wrapper signatures and the spot pool allowlist</summary>
 
 <ImportContent
 	source="packages/sessions/sources/sessions.move"
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="place_limit_order,place_market_order,cancel_live_order,cancel_live_orders,withdraw_settled_amounts"
 	signatureOnly
+/>
+
+<ImportContent
+	source="packages/sessions/sources/session_config.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="allowed_pools,admin_allow_pool,admin_disallow_pool"
+	noComments
 />
 
 </details>
@@ -323,7 +395,7 @@ Publishing the package creates a shared `SessionsConfig` at the package's compil
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	struct="SessionsConfig"
 />
 
@@ -334,7 +406,7 @@ Each package upgrade increments a compiled-in version constant. After clients mo
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
 	fun="version_watermark,bump_version_watermark"
 	noComments
 />
@@ -343,15 +415,24 @@ Advancing the watermark retires authorization and trading in older package versi
 
 ## Events {#events}
 
-The lifecycle emits 2 events. Predict and DeepBook core keep emitting their own trading events, and the wrappers do not duplicate them.
+The lifecycle emits 2 events, builder approvals emit 2 more, and the spot pool allowlist emits 2 from `session_config`. Predict and DeepBook core keep emitting their own trading events, and the wrappers do not duplicate them.
 
 <ImportContent
 	source="packages/sessions/sources/sessions.move"
 	mode="code"
 	org="MystenLabs"
 	repo="deepbookv3"
-	branch="2911743402372d3e79ab5d48a0f9ed64f1a32159"
-	struct="SessionAuthorized,SessionRevoked"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	struct="SessionAuthorized,SessionRevoked,SessionBuilderApproved,SessionBuilderCleared"
+/>
+
+<ImportContent
+	source="packages/sessions/sources/session_config.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	struct="SessionPoolAllowed,SessionPoolDisallowed"
 />
 
 `authorize_session` emits `SessionAuthorized` for a new grant and for a re-authorization alike, carrying the new `expires_at_ms` in both cases. `revoke_session` emits `SessionRevoked` only when it actually removes an existing grant. Expiration emits nothing, because nothing executes when a deadline passes, and a no-op revocation emits nothing either. An indexer that wants a current view of live grants therefore has to apply expiry itself, using the timestamps the authorization events carry.
@@ -365,8 +446,12 @@ Error numbers repeat across modules, so resolve an abort against the module name
 | `EInvalidSessionDuration` | 0 | `sessions` | `duration_ms` is zero or greater than 30 days. |
 | `ESessionNotAuthorized` | 1 | `sessions` | The sender holds no grant on the supplied account, or the current timestamp is at or past the grant's expiration. |
 | `ESessionLimitExceeded` | 2 | `sessions` | The account already stores 20 distinct addresses and the address in the call is not one of them. |
+| `EBuilderNotApproved` | 3 | `sessions` | A `_with_builder` wrapper named a code other than the session's approved one, or the session has no approval. |
+| `EBuilderFeeAboveApproved` | 4 | `sessions` | A `_with_builder` wrapper named a fee above the session's approved maximum. |
+| `EBuilderApprovalsNotEnabled` | 5 | `sessions` | `approve_session_builder` ran before the `SessionsConfig` watermark reached 4. |
 | `EPackageVersionDisabled` | 0 | `session_config` | The executing package version is below the shared configuration's watermark. |
 | `EVersionWatermarkNotAdvanced` | 1 | `session_config` | `bump_version_watermark` runs from a package whose version is not above the stored watermark. |
+| `EPoolNotAllowed` | 2 | `session_config` | A session spot order named a pool that is not on the spot pool allowlist, or `admin_disallow_pool` named a pool that is not listed. |
 | `EAppNotAuthorized` | 1 | `account_registry` | The account registry does not authorize `SessionsApp`, so no trading wrapper can generate authorization. |
 
 For the account object these grants attach to, see [Accounts and Custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager). For the market parameters the Predict wrappers forward, see [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict).
