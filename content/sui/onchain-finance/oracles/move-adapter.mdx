@@ -115,6 +115,6 @@ sui move test
 
 ## How do I add a second provider?
 
-The `Price` type and the guards name no provider, so a Switchboard reader is an additive `price_from_switchboard` that returns the same `Price` and reuses the same guards. Consumers never change. The one difference to absorb in the reader: Switchboard's `current_result` does not gate on age, so a Switchboard reader applies `assert_fresh` itself where the Pyth reader relies on `get_price_no_older_than`.
+The `Price` type and the guards name no provider, so a second provider's reader is an additive function, such as `price_from_<provider>`, that returns the same `Price` and reuses the same guards. Consumers never change. If the provider's read function does not reject stale prices, the reader applies `assert_fresh` itself where the Pyth reader relies on `get_price_no_older_than`.
 
 With the read behind a safe interface, the remaining work is deciding what each consumer additionally requires, and how to keep push feeds fresh: [Oracle safety for high-stakes consumers](/onchain-finance/oracles/oracle-safety).
