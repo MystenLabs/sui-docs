@@ -25,8 +25,8 @@ keywords:
   - delayed execution
   - protocol version 5
   - cadence table
-last_verified: 2026-11-12
-verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 TBD-DBU-1166 Mainnet Sessions record), each Testnet package and every Mainnet package except sessions read on chain on 2026-11-12 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12, and its cadence terms and max_lp_pool_value re-read 2026-11-13; Mainnet strike-exposure template, no_trade_window_ms, and SVI store read 2026-11-12 at watermarks 4, 1, and 3, and its cadence terms and max_lp_pool_value read 2026-11-13 at watermark 4; TBD-DBU-1166 Mainnet re-read after the cutover
+last_verified: 2026-11-16
+verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 at deepbookv3 4869703f), each Testnet package read on chain on 2026-11-12 and every Mainnet package on 2026-11-16 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12, and its cadence terms and max_lp_pool_value re-read 2026-11-13; Mainnet strike-exposure template, no_trade_window_ms, and SVI store read 2026-11-12 at watermarks 4, 1, and 3, and its cadence terms and max_lp_pool_value read 2026-11-13 at watermark 4; TBD-DBU-1166 Mainnet re-read after the cutover
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -66,11 +66,11 @@ answer: >-
   published address while its type tags keep its original one. Both networks
   run predict protocol version 5, deepbook_predict_orders protocol version 2,
   and sessions protocol version 4, so every trade is a queued order that can
-  name a builder fee. Version TBD-DBU-1166: SDK release or later of the
+  name a builder fee. Version 2.13.0 or later of the
   @mysten/deepbook-v3 SDK returns both networks' identifiers.
 ---
 
-DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Both run `predict` protocol version 5, `deepbook_predict_orders` protocol version 2, and `sessions` protocol version 4, together with the `deepbook_predict_math`, `propbook`, `account`, and `deepbook_core_account` versions they link, so every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) and the 2 networks expose the same entrypoints. Version TBD-DBU-1166: SDK release or later of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) returns the identifiers on this page from `getConfig`, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+DeepBook Predict runs on Sui Mainnet and Sui Testnet as 2 separate deployments, `deepbook-predict-mainnet` and `deepbook-predict-testnet`. Both run `predict` protocol version 5, `deepbook_predict_orders` protocol version 2, and `sessions` protocol version 4, together with the `deepbook_predict_math`, `propbook`, `account`, and `deepbook_core_account` versions they link, so every trade is a [queued order](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#queued-orders) and the 2 networks expose the same entrypoints. Version 2.13.0 or later of [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@mysten/deepbook-v3) returns the identifiers on this page from `getConfig`, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
 The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://github.com/MystenLabs/deepbookv3/tree/7b169bde2c2a25fee3ac9aa4686e346309bfe570/packages/predict), and the original Testnet publish from source commit [`4d752fb8`](https://github.com/MystenLabs/deepbookv3/tree/4d752fb82d909a821c85bcc5d3963725efb546f4/packages/predict), whose Move sources are byte-identical to the Mainnet ones. Both networks then took the same 4 upgrades:
 
@@ -101,7 +101,7 @@ Two different numbers share the name version, and they have come apart. Protocol
 | --- | --- | --- |
 | Mainnet `predict` | 5 | 5 |
 | Mainnet `predictOrders` | 2 | 2 |
-| Mainnet `sessions` | 4 (TBD-DBU-1166: Mainnet Sessions v4 upgrade) | 4 |
+| Mainnet `sessions` | 4 | 4 |
 | Testnet `predict` | 10 | 5 |
 | Testnet `predictOrders` | 5 | 2 |
 | Testnet `sessions` | 9 | 4 |
@@ -129,7 +129,7 @@ A Move package upgrade publishes at a new address and keeps its original one. Th
 
 A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` version that introduced them: the Testnet version 5 address `0x0654ecbe…` and the Mainnet version 4 address `0x98235c58…`. The types that protocol version 5 added, such as `config_events::FeeBandsUpdated`, carry the Mainnet version 5 call target, `0xb0aaafe0…`, while Testnet introduced them across several rehearsal publishes. The version numbers do not line up across networks, so check the defining ID on each one.
 
-The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. A Mainnet integration needs version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. A Mainnet integration needs version 2.13.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
 The distinction is easy to get wrong in the direction that fails silently rather than loudly. A call sent to an original ID reaches the version 1 code, which the version gate refuses for every gated function, because each network's watermark is 5. Only the few ungated calls, such as the builder-code setters and the fee claim, still run there. A type tag built from a call target, in turn, names a type that does not exist at all.
 
@@ -151,10 +151,10 @@ The deployment manifest is the stable identity record. It names the chain, the s
 | Network | Mainnet |
 | Chain ID | `35834a8a` |
 | Deployment source commit | `7b169bde2c2a25fee3ac9aa4686e346309bfe570` |
-| Upgrade source commits | `8d7d42a0f48bc6434bc282d45d2403809b4e492c`, `9a32854c`, `98128174`, then for Version 5 `705b7c06` (`propbook`, `predictMath`), `b199c598` (`account`), `046ffd1e` (`predict`), `8fcba9d6` (`predictOrders`), and TBD-DBU-1166: build commit of sessions |
+| Upgrade source commits | `8d7d42a0f48bc6434bc282d45d2403809b4e492c`, `9a32854c`, `98128174`, then for Version 5 `705b7c06` (`propbook`, `predictMath`), `b199c598` (`account`), `046ffd1e` (`predict`), `8fcba9d6` (`predictOrders`), and `43dbc952` (`sessions`) |
 | `predict` publishes / protocol version | 5 / 5 |
 | `predictOrders` publishes / protocol version | 2 / 2 |
-| `sessions` publishes / protocol version | 4 / 4 (TBD-DBU-1166: Mainnet Sessions v4 upgrade) |
+| `sessions` publishes / protocol version | 4 / 4 |
 | `predictMath`, `propbook`, and `account` publishes | 2 each |
 | `deepbookCoreAccount` publishes | 1 |
 | Version watermarks | `ProtocolConfig` 5, `OrderDesk` 2, `SessionsConfig` 4 (TBD-DBU-1166: verify on Mainnet after the cutover) |
@@ -173,7 +173,7 @@ Predict is 9 packages rather than one. Move call targets, event type prefixes, a
 | `account` | `0x3dbf966f4d02a3ae4b996f5d2e81603164b598f9ff5db2bd8a2bf03ffebb4316` | `0x4e1dd01465713c9d832313fed5f45c222a4d5c62a533d6da96764c8b2a245d58` | Account custody, balances, the `Auth` authorization type, and coin receipt |
 | `fixedMath` | `0x52ec2d263bb9ad545d1be1c00f6779cc577ed7c0408cdea8d589c2664adc22db` | Same | Fixed-point arithmetic used by the pricing math |
 | `deepbookCoreAccount` | `0xd71b5a341dc8dc7e187517849edf61e54670b60fe496e07186c09a65fa7afdb7` | Same | DeepBook core account app type |
-| `sessions` | `TBD-DBU-1166: Mainnet sessions v4 call target` | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | Session support, including the queued-order wrappers |
+| `sessions` | `0x6069298c3d0d2e435e6621a19669f66b242baeaaaed27365943d53dc6c1d9b42` | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | Session support, including the queued-order wrappers |
 | `usdc` | `0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7` | Same | Circle native USDC, linked as an existing dependency |
 
 Every upgrade kept its original ID, so every object, position, account, and session grant created before them stays valid, and the PLP coin type below is unchanged. The delayed-execution types and events that `predict` protocol version 4 introduced carry the version 4 call target, `0x98235c58…`, as their defining ID, and the types protocol version 5 introduced carry the version 5 call target, `0xb0aaafe0…`.
@@ -533,7 +533,7 @@ The SDK carries both deployments' identifiers, so keep them in a single network-
 The 2 deployments run the same protocol versions, but they are separate deployments with separate configuration. What differs is:
 
 - **Quote asset and funding:** Testnet quotes in a test coin you can request for free, and Testnet SUI is free. Mainnet quotes in native USDC, there is no faucet, and any top-up path that assumes free replenishment needs replacing.
-- **SDK release:** Testnet works from version 2.10.0 of the SDK, and Mainnet needs version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+- **SDK release:** Testnet works from version 2.10.0 of the SDK, and Mainnet needs version 2.13.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 - **Cadences and activity:** Each network's registry enables its own cadences, so read `registry::cadence_configs` rather than assuming either network's set. `read.markets()` lists live-and-unsettled markets, which includes an expired market nobody has settled, so check each entry's expiry before you quote against it.
 - **Read services:** None exists for either current deployment as of 2026-09-14.
 - **DeepBook core authorization:** Both deployment manifests record the DeepBook core registry as not having authorized `DeepbookCoreAccountApp`, yet both registries authorize it. Read the registry rather than the manifest before relying on the session spot wrappers, per [App authorization](#app-authorization).

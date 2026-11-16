@@ -217,7 +217,7 @@ Decode either result with [`decode.builderCode`](#decode-builder-code).
 
 ## How do I create a builder code and claim its fees? {#operate-builder-code}
 
-The functions above are for the account that carries a code. On Mainnet, create codes with version TBD-DBU-1166: SDK release or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The setters and the fee claim have no version gate, so they also work through an older release. Nothing in `client.predict` serves the code's owner: no facade builder creates a code or claims its fees. Compose both from the generated bindings that the `/predict` subpath exports, `registryMoveCalls` and `builderCodeMoveCalls`, with `toGeneratedConfig` supplying the shared objects:
+The functions above are for the account that carries a code. On Mainnet, create codes with version 2.13.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains. The setters and the fee claim have no version gate, so they also work through an older release. Nothing in `client.predict` serves the code's owner: no facade builder creates a code or claims its fees. Compose both from the generated bindings that the `/predict` subpath exports, `registryMoveCalls` and `builderCodeMoveCalls`, with `toGeneratedConfig` supplying the shared objects:
 
 ```ts
 import {
@@ -263,7 +263,7 @@ The 3 functions do the following:
 - **`createBuilderCode`** creates a code owned by the transaction sender. Choose an index that the sender has not used yet, because reusing one aborts. Read the new ID from the `BuilderCodeCreated` event, or compute it with `builderCodeIdFor`.
 - **`claimBuilderFees`** collects every settled fee and transfers the coin to `owner`. The code's owner must sign, because the contract aborts with `ENotOwner`, abort code `0`, for any other sender.
 
-To read the balance before you claim, simulate `builderCodeMoveCalls.claimableBuilderFees` with the code's ID and read the `u64` it returns. To charge the fee, name the code on each order through the `_with_builder` entrypoints. No facade builder places one: the generated `queueMoveCalls.enqueueExactQuantityWithBuilder` and its 3 siblings build them, and `sessionsMoveCalls` carries the session forms. Their call targets support builder fees from version 2.10.0 on Testnet and version TBD-DBU-1166: SDK release on Mainnet.
+To read the balance before you claim, simulate `builderCodeMoveCalls.claimableBuilderFees` with the code's ID and read the `u64` it returns. To charge the fee, name the code on each order through the `_with_builder` entrypoints. No facade builder places one: the generated `queueMoveCalls.enqueueExactQuantityWithBuilder` and its 3 siblings build them, and `sessionsMoveCalls` carries the session forms. Their call targets support builder fees from version 2.10.0 on Testnet and version 2.13.0 on Mainnet.
 
 ## Account decoders {#decode}
 
@@ -447,7 +447,7 @@ It takes these parameters:
 - `coin`: The received coin's object ID, or a `Receiving` input.
 - `coinType`: The fully qualified type of that coin.
 
-Both throw when the configuration has no `accountPackageIdLatest`, the account version 2 call target. Versions 2.10.0 and 2.11.0 record it for Testnet only, and Mainnet needs version TBD-DBU-1166: SDK release or later. [Balances and custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#deposit-and-withdraw) covers the Move calls.
+Both throw when the configuration has no `accountPackageIdLatest`, the account version 2 call target. Versions 2.10.0 and 2.11.0 record it for Testnet only, so on Mainnet use version 2.13.0 or later. [Balances and custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#deposit-and-withdraw) covers the Move calls.
 
 ### `AccountContract.withdrawFunds` {#account-contract-withdraw-funds}
 
