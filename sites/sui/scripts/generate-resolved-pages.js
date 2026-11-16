@@ -43,8 +43,14 @@ const utils = require(path.join(
 const readText = (p) =>
   fs.existsSync(p) ? fs.readFileSync(p, "utf8").replace(/\r\n?/g, "\n") : null;
 
+// A fence opens and closes at the start of a line. Matching any three
+// backticks paired a quoted "```" in frontmatter (derived-objects.mdx has
+// `pattern: '```'`) with the page's first real fence, so every tag after it
+// read as fenced and 62 of 154 pages were never resolved.
+const FENCE_RE = /^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*\1[ \t]*$/gm;
+
 function stripFencedCode(md) {
-  return md.replace(/```[\s\S]*?```/g, "");
+  return md.replace(FENCE_RE, "");
 }
 
 /** Parse JSX-style attributes from the inner portion of an <ImportContent …/> tag. */
@@ -203,7 +209,7 @@ function resolveImportContent(mdxContent, depth = 0) {
   if (depth > MAX_DEPTH) return mdxContent;
 
   const regions = [];
-  const fenceRe = /```[\s\S]*?```/g;
+  const fenceRe = new RegExp(FENCE_RE.source, FENCE_RE.flags);
   let lastIndex = 0;
   let m;
 

@@ -53,9 +53,11 @@ Sui includes a built-in test framework for Move smart contracts. You write tests
 
 A unit test is a Move function annotated with `#[test]`. The test runner executes each test function in isolation. If the function completes without aborting, the test passes.
 
+Name a test for the behavior it checks, without a `test_` prefix. The `#[test]` attribute and the test module already mark it as a test, so `sword_create_works` reads better than `test_sword_create`. See the [Move Book code quality checklist](https://move-book.com/guides/code-quality-checklist).
+
 ```move
 #[test]
-fun test_sword_create() {
+fun sword_create_works() {
     let mut ctx = tx_context::dummy();
 
     let sword = Sword {
@@ -113,7 +115,7 @@ Use `#[expected_failure]` to verify that a function aborts under specific condit
 ```move
 // Test that a specific abort code is raised
 #[test, expected_failure(abort_code = my_module::ENotAuthorized)]
-fun test_unauthorized_mint() {
+fun unauthorized_mint_aborts() {
     // Call a function that should abort because the sender lacks permission
     let mut ctx = tx_context::dummy();
     my_module::restricted_action(&mut ctx);
@@ -134,7 +136,7 @@ Unit tests execute in a single transaction context. Real Sui transactions involv
 
 ```move
 #[test]
-fun test_sword_transactions() {
+fun sword_moves_between_owners() {
     use sui::test_scenario;
 
     let initial_owner = @0xCAFE;
@@ -203,7 +205,7 @@ Example using `std::unit_test::destroy` to clean up an object without writing a 
 use std::unit_test;
 
 #[test]
-fun test_with_cleanup() {
+fun create_and_destroy_works() {
     let mut ctx = tx_context::dummy();
     let obj = my_module::create(&mut ctx);
 
@@ -225,8 +227,8 @@ The output shows each test, its pass/fail status, and a summary:
 
 ```
 Running Move unit tests
-[ PASS    ] 0x0::example::test_sword_create
-[ PASS    ] 0x0::example::test_sword_transactions
+[ PASS    ] 0x0::example::sword_create_works
+[ PASS    ] 0x0::example::sword_moves_between_owners
 Test result: OK. Total tests: 2; passed: 2; failed: 0
 ```
 

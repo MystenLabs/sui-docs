@@ -281,8 +281,8 @@ public fun add_liquidity_and_transfer<CoinX, CoinY, LpCoin>(pool: &mut Pool, coi
 // wrong
 public fun impure_add_liquidity<CoinX, CoinY, LpCoin>(pool: &mut Pool, coin_x: Coin<CoinX>, coin_y: Coin<CoinY>, ctx: &mut TxContext): Coin<LpCoin> {
     let (lp_coin, coin_x, coin_y) = add_liquidity<CoinX, CoinY, LpCoin>(pool, coin_x, coin_y);
-    transfer::public_transfer(coin_x, tx_context::sender(ctx));
-    transfer::public_transfer(coin_y, tx_context::sender(ctx));
+    transfer::public_transfer(coin_x, ctx.sender());
+    transfer::public_transfer(coin_y, ctx.sender());
 
     lp_coin
 }
@@ -323,7 +323,7 @@ To maintain composability, use capability objects instead of arrays of addresses
 For privileged functions:
 
 - Take an explicit capability parameter rather than relying on sender-only authorization.
-- Only use `tx_context::sender()` as the authorization check where the signer is genuinely the only valid actor.
+- Only use `ctx.sender()` as the authorization check where the signer is genuinely the only valid actor.
 - When a capability grants rights over a specific object, validate the relationship between the capability and the object (for example, match an ID stored in the capability).
 - Design in a revocation or rotation path from the start.
 - Emit events for privileged actions so they are auditable.
@@ -363,7 +363,7 @@ public fun withdraw(state: &mut State, account: &mut Account, ctx: &mut TxContex
 
 // wrong -> this is less composable.
 public fun wrong_withdraw(state: &mut State, ctx: &mut TxContext): Coin<SUI> {
-    let sender = tx_context::sender(ctx);
+    let sender = ctx.sender();
 
     let authorized_balance = table::borrow_mut(&mut state.accounts, sender);
     let value = *authorized_balance;
