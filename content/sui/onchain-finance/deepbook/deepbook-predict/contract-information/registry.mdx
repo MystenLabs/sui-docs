@@ -24,8 +24,8 @@ keywords:
   - create_and_share_expiry_market_with_band
   - set_builder_fee_cap
   - set_template_fee_bands
-last_verified: 2026-11-12
-verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet cadence table and no_trade_window_ms re-read 2026-11-12 and its cadence terms 2026-11-13, at watermark 5, Mainnet cadence terms read 2026-11-13 at watermark 4 (TBD-DBU-1166 Mainnet re-read after the cutover)
+last_verified: 2026-11-17
+verified_against: deepbook-predict-mainnet 7b169bde; deepbook-predict-testnet 4d752fb8; deepbookv3 046ffd1e (predict protocol version 5 on both networks; Mainnet after its Version 5 cutover); Testnet cadence table and no_trade_window_ms re-read 2026-11-12 and its cadence terms 2026-11-13, at watermark 5, and Mainnet's cadence table, cadence terms, and no_trade_window_ms re-read 2026-11-17 at watermark 5 after its Version 5 cutover
 goal:
   description: >-
     Reader can look up markets and cadence terms in the Predict Registry, and
@@ -109,7 +109,7 @@ A cadence is one market schedule for one underlying. Cadence IDs index the regis
 | `4` | 1w | 1 week |
 | `5` | 1mo | 30 days |
 
-An admin appends more with `add_cadence`, up to 16 in all, so each network's table also holds a 15-minute cadence at ID `6`, registered disabled (TBD-DBU-1166: verify on Mainnet after the cutover). A cadence ID outside the table aborts with `EInvalidCadence`. Read the periods, indexed by cadence ID, with `cadence_periods`, and one cadence's terms or all of them with `cadence_config` and `cadence_configs`:
+An admin appends more with `add_cadence`, up to 16 in all, so each network's table also holds a 15-minute cadence at ID `6`, registered disabled. A cadence ID outside the table aborts with `EInvalidCadence`. Read the periods, indexed by cadence ID, with `cadence_periods`, and one cadence's terms or all of them with `cadence_config` and `cadence_configs`:
 
 <ImportContent
 	source="packages/predict/sources/registry/registry.move"
@@ -146,7 +146,7 @@ Read the terms with the accessors rather than by field:
 	noComments
 />
 
-`cadence_enabled` reads no stored flag: a cadence counts as enabled exactly when its window size is greater than zero. Both deployments register one underlying, BTC. Each network's registry enables its own cadences. Both enable the 1m and 5m cadences, each with the same terms on both networks, and leave the 15m cadence disabled (TBD-DBU-1166: verify on Mainnet after the cutover):
+`cadence_enabled` reads no stored flag: a cadence counts as enabled exactly when its window size is greater than zero. Both deployments register one underlying, BTC. Each network's registry enables its own cadences. Both enable the 1m and 5m cadences, each with the same terms on both networks, and leave the 15m cadence disabled:
 
 | **Cadence** | **Enabled** | **`tick_size`** | **`admission_tick_size`** | **`max_expiry_allocation`** | **`initial_expiry_cash`** | **`window_size`** |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -362,7 +362,7 @@ An order names a code through the `_with_builder` queued entrypoints, as [Name a
 
 | **Setter** | **Field** | **Bounds** | **Deployed** | **Blocked during a flush** | **Abort** |
 | --- | --- | --- | --- | --- | --- |
-| `set_no_trade_window_ms` | `no_trade_window_ms` | `0` to `15000` ms, where `0` disables the window | `15000` on both networks, the maximum (TBD-DBU-1166: verify on Mainnet after the cutover), over a compiled default of `2000` | No | `config_constants::EInvalidNoTradeWindowMs` (`24`) |
+| `set_no_trade_window_ms` | `no_trade_window_ms` | `0` to `15000` ms, where `0` disables the window | `15000` on both networks, the maximum, over a compiled default of `2000` | No | `config_constants::EInvalidNoTradeWindowMs` (`24`) |
 | `set_max_valuation_window_ms` | `max_valuation_window_ms` | 1 minute to 4 hours | `300000` | Yes, with `EValuationInProgress` | `config_constants::EInvalidMaxValuationWindowMs` (`23`) |
 
 `no_trade_window_ms` is the interval before each expiry in which no queued order's price instant might fall. [Predict](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#no-trade-window) covers it. A flush deliberately does not block it, matching `set_trading_paused`, so a stalled flush cannot trap a safety control. A change emits `NoTradeWindowUpdated`. `max_valuation_window_ms` is the deadline after which an in-flight flush can no longer finish and the operator must restart it, as [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#valuation-window) explains. The setter aborts while a flush is in flight, so no one can move a started flush's deadline under it.

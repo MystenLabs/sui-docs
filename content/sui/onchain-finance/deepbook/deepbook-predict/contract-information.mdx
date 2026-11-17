@@ -25,8 +25,8 @@ keywords:
   - delayed execution
   - protocol version 5
   - cadence table
-last_verified: 2026-11-16
-verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 at deepbookv3 4869703f), each Testnet package read on chain on 2026-11-12 and every Mainnet package on 2026-11-16 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12, and its cadence terms and max_lp_pool_value re-read 2026-11-13; Mainnet strike-exposure template, no_trade_window_ms, and SVI store read 2026-11-12 at watermarks 4, 1, and 3, and its cadence terms and max_lp_pool_value read 2026-11-13 at watermark 4; TBD-DBU-1166 Mainnet re-read after the cutover
+last_verified: 2026-11-17
+verified_against: publication records at deepbookv3 43dbc952 (Testnet predict publish 10, predict_orders 5, sessions 9, deepbook_core_account 2, propbook 3, account 2, predict_math 2; Mainnet propbook, predict_math, and account publish 2, predict publish 5, and predict_orders publish 2; Mainnet sessions publish 4 at deepbookv3 4869703f), each Testnet package read on chain on 2026-11-12 and every Mainnet package on 2026-11-16 as the latest of its family, with Mainnet deepbook_core_account still at its first publish; Testnet ProtocolConfig, OrderDesk, and SessionsConfig at watermarks 5, 2, and 4, its cadence table, strike-exposure template, no_trade_window_ms, SVI store decimals, and session pool allowlist re-read 2026-11-12, and its cadence terms and max_lp_pool_value re-read 2026-11-13; Mainnet ProtocolConfig, OrderDesk, and SessionsConfig re-read 2026-11-17 after its Version 5 cutover at watermarks 5, 2, and 4, with its cadence table and terms, strike-exposure template, no_trade_window_ms, max_lp_pool_value, builder fee cap, fee-band template, SVI store decimals, and 25-pool session allowlist
 goal:
   description: >-
     Reader can identify every package ID, shared object ID, coin type, unit
@@ -157,7 +157,7 @@ The deployment manifest is the stable identity record. It names the chain, the s
 | `sessions` publishes / protocol version | 4 / 4 |
 | `predictMath`, `propbook`, and `account` publishes | 2 each |
 | `deepbookCoreAccount` publishes | 1 |
-| Version watermarks | `ProtocolConfig` 5, `OrderDesk` 2, `SessionsConfig` 4 (TBD-DBU-1166: verify on Mainnet after the cutover) |
+| Version watermarks | `ProtocolConfig` 5, `OrderDesk` 2, `SessionsConfig` 4 |
 | Indexing start checkpoint | `321804009` |
 
 ### Mainnet packages {#packages}
@@ -302,7 +302,7 @@ One underlying is live on each network. Oracle data lives in the separate `propb
 | `PythFeed` | `0x4c5d2b4c8238f04b7687c3a8df915b69c50d5f4d291fc49aea44bdb6b52e1a20` | `0x8ef99c3d14e57612d09a67bcc9b5bff568a80992df6beca2bfcd922973192faa` |
 | `BlockScholesValueStore` | `0xe83f843b15ae63045b2cea445fb8ea7ad85c5fc2a05f66db122a511e1f2c67bc` | `0x1e5142471311505a7428b072230c9ffe8a747b3b9392720e39246af4aea08216` |
 | `BlockScholesSVIStore` | `0xfdd447be39d847747caf18ecf3355031bb33979c472581f1a5481375d3748bfb` | `0x0f1cbefd1dd2ba08ae700a7067c32e0718edf926fa18cea80bd231c02d509ece` |
-| SVI decimals of the SVI store | `18` (TBD-DBU-1166: verify on Mainnet after the cutover) | `18` |
+| SVI decimals of the SVI store | `18` | `18` |
 
 Passing an oracle object that is not the current canonical binding aborts rather than pricing against the wrong feed, so resolve the 3 oracle IDs from `OracleRegistry` at runtime instead of trusting a cached copy. See [Oracle](/onchain-finance/deepbook/deepbook-predict/contract-information/oracle) for the binding accessors, the freshness windows, and which call needs which object.
 
@@ -331,7 +331,7 @@ Predict mixes 2 scales, and confusing them is the fastest way to misprice a trad
 
 A probability of `500000000` is 0.5. A price of `110000000000000` is 110,000.00. An amount of `1000000` is 1 USDC. A position quantity of `10000` is one lot, 0.01 contracts.
 
-The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `750000000` on both networks (TBD-DBU-1166: verify on Mainnet after the cutover). The smallest quantity such a market accepts is therefore about 1.34 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
+The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `750000000` on both networks. The smallest quantity such a market accepts is therefore about 1.34 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
 
 Read every quantity that arrives as a JSON string with decimal or bigint tooling. Postgres `NUMERIC` columns serialize as strings, and `parseFloat` silently loses precision on them.
 
@@ -341,7 +341,7 @@ The values below are each network's current configuration. Configuration is muta
 
 ### Cadences
 
-Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences, each with the same terms on both networks, and both register a 15m cadence at ID 6 and leave it disabled (TBD-DBU-1166: verify on Mainnet after the cutover):
+Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences, each with the same terms on both networks, and both register a 15m cadence at ID 6 and leave it disabled:
 
 | **ID** | **Name** | **Period (ms)** | **Enabled** | **Tick size** | **Admission tick size** | **Maximum expiry allocation** | **Initial expiry cash** | **Window size** |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -372,9 +372,9 @@ The only finite boundary a market admits off its admission grid is its own refer
 | Pyth spot freshness | `2000` ms | `2000` ms | Live pricing falls back to the Block Scholes forward on an older observation |
 | Block Scholes price freshness | `2000` ms | `2000` ms | Spot and forward |
 | Block Scholes SVI freshness | `10000` ms | `10000` ms | The stochastic volatility inspired (SVI) surface changes more slowly |
-| `no_trade_window_ms` | `15000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `15000` | A queued order's price instant must not fall inside the last 15 seconds before expiry, the contract maximum. Every market reads the live value, so a change applies to all of them at once |
+| `no_trade_window_ms` | `15000` | `15000` | A queued order's price instant must not fall inside the last 15 seconds before expiry, the contract maximum. Every market reads the live value, so a change applies to all of them at once |
 | `max_valuation_window_ms` | `300000` | `300000` | A pool flush must finish within 5 minutes of its snapshot, or a cap holder restarts it |
-| `max_lp_pool_value` | `15000000000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `500000000000` | The pool accepts at most 15,000 USDC of liquidity on Mainnet and 500,000 USDC on Testnet |
+| `max_lp_pool_value` | `15000000000` | `500000000000` | The pool accepts at most 15,000 USDC of liquidity on Mainnet and 500,000 USDC on Testnet |
 | `lp_request_limit_flush_attempts` | `1` | `1` | The first flush whose mark misses a queued request's floor cancels and refunds it |
 | PLP supply fee | `0` | `0` | |
 | PLP withdraw fee | `2000000` | `2000000` | 0.2 percent |
@@ -383,8 +383,8 @@ The only finite boundary a market admits off its admission grid is its own refer
 | Fee incentive subsidy rate | `200000000` | `200000000` | The subsidy covers 20 percent of each trading fee, while the market's incentive balance lasts |
 | Fee incentive live target rate | `200000000` | `200000000` | A live market's incentive balance tops up to 20 percent of its maximum expiry allocation, 100 USDC for a 1m market at 500 USDC and 200 USDC for a 5m market at 1,000 USDC |
 | Fee incentive lifetime cap rate | `200000000` | `200000000` | A market receives at most 20 percent of its maximum expiry allocation over its life, 100 USDC for a 1m market and 200 USDC for a 5m market |
-| Builder fee cap | `50000000` (TBD-DBU-1166: verify on Mainnet after the cutover) | `50000000` | A builder fee charges at most 5 cents per contract, the default |
-| Fee bands | None (TBD-DBU-1166: verify on Mainnet after the cutover) | None | Every contract price pays 1x the trading fee |
+| Builder fee cap | `50000000` | `50000000` | A builder fee charges at most 5 cents per contract, the default |
+| Fee bands | None | None | Every contract price pays 1x the trading fee |
 | Exponentially weighted moving average (EWMA) congestion penalty | Retired | Retired | Protocol version 4 retires the surcharge |
 
 On both networks the [delayed-execution policy](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#delayed-execution-policy) on the `OrderDesk` adds its own values: an 800 ms delay on Pyth Lazer's 200 ms channel, so an order prices 600 to 800 ms after it is placed, a 5-second stall timeout, an order fee of 0.02 USDC, and capacities of 100 mints and 100 sells per market with at most 5 waiting orders per account.
@@ -393,13 +393,13 @@ The strike-exposure template is the policy each new market snapshots at creation
 
 | **Term** | **Mainnet** | **Testnet** |
 | --- | --- | --- |
-| Base fee | `232000000`, 23.2 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `232000000`, 23.2 percent |
-| Minimum fee | `49000000`, 4.9 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `49000000`, 4.9 percent |
-| Entry probability band | `150000000` to `750000000`, 15 to 75 percent (TBD-DBU-1166: verify on Mainnet after the cutover) | `150000000` to `750000000`, 15 to 75 percent |
+| Base fee | `232000000`, 23.2 percent | `232000000`, 23.2 percent |
+| Minimum fee | `49000000`, 4.9 percent | `49000000`, 4.9 percent |
+| Entry probability band | `150000000` to `750000000`, 15 to 75 percent | `150000000` to `750000000`, 15 to 75 percent |
 | Backing buffer lambda | `310000000`, 0.31 | `310000000`, 0.31 |
 | Inventory impact rate | `0` | `0` |
 | Expiry fee window | `60000` ms | `60000` ms |
-| Expiry fee maximum multiplier | `1500000000`, 1.5x (TBD-DBU-1166: verify on Mainnet after the cutover) | `1500000000`, 1.5x |
+| Expiry fee maximum multiplier | `1500000000`, 1.5x | `1500000000`, 1.5x |
 
 The contract charges the fee, and applies its minimum, separately at each finite boundary of a range, so a two-sided range pays at least twice the minimum fee. It also applies the entry-probability band to each finite boundary as well as to the range. The lifecycle-cap holder can give a new market a band narrower than the template, never wider. A market keeps the template it snapshotted for its whole life, so read a live market's own values with the SDK's `read.feePolicy` rather than from the template. [Design](/onchain-finance/deepbook/deepbook-predict/design) explains the fee.
 

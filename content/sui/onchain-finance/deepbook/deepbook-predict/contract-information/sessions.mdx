@@ -23,8 +23,8 @@ keywords:
   - allowed_pools
   - admin_allow_pool
   - EPoolNotAllowed
-last_verified: 2026-11-16
-verified_against: deepbookv3 046ffd1e (sessions protocol version 4 on both networks, linking predict protocol version 5; Mainnet after its Version 5 cutover); Testnet sessions v9 0x3bb8b2db read on chain as the latest of its family, Testnet SessionsConfig re-read 2026-11-12 at watermark 4 with a 7-pool spot allowlist, Mainnet sessions read 2026-11-16 at its fourth publish, recorded at deepbookv3 4869703f, with SessionsConfig still at watermark 3 (TBD-DBU-1166 Mainnet SessionsConfig and allowlist re-read after the cutover); both DeepBook registries read for DeepbookCoreAccountApp; queued session example simulated on Testnet
+last_verified: 2026-11-17
+verified_against: deepbookv3 046ffd1e (sessions protocol version 4 on both networks, linking predict protocol version 5; Mainnet after its Version 5 cutover); Testnet sessions v9 0x3bb8b2db read on chain as the latest of its family, Testnet SessionsConfig re-read 2026-11-12 at watermark 4 with a 7-pool spot allowlist, Mainnet sessions read 2026-11-16 at its fourth publish, recorded at deepbookv3 4869703f, and its SessionsConfig re-read 2026-11-17 after the Version 5 cutover at watermark 4 with a 25-pool spot allowlist, the same 25 pools that @mysten/deepbook-v3 2.13.0 lists for Mainnet; both DeepBook registries read for DeepbookCoreAccountApp; queued session example simulated on Testnet
 goal:
   description: >-
     Reader understands how much authority a DeepBook Predict session key holds,
@@ -353,7 +353,7 @@ public fun admin_disallow_pool(
 )
 ```
 
-`admin_allow_pool` adds a DeepBook pool ID and aborts inside `vec_set` if the pool is already listed. `admin_disallow_pool` removes one and aborts with `EPoolNotAllowed` if it is not listed. Both require the executing package version to be at or above the watermark, and they emit `SessionPoolAllowed` and `SessionPoolDisallowed`. `allowed_pools` returns the list in the order the pools were added. The list is empty until the first `admin_allow_pool`, and an empty list allows no pool. The Testnet list holds 7 pools, and the Mainnet list holds the 25 spot pools offered for session trading (TBD-DBU-1166: verify on Mainnet after the cutover). Read the live list with `allowed_pools` rather than from this page.
+`admin_allow_pool` adds a DeepBook pool ID and aborts inside `vec_set` if the pool is already listed. `admin_disallow_pool` removes one and aborts with `EPoolNotAllowed` if it is not listed. Both require the executing package version to be at or above the watermark, and they emit `SessionPoolAllowed` and `SessionPoolDisallowed`. `allowed_pools` returns the list in the order the pools were added. The list is empty until the first `admin_allow_pool`, and an empty list allows no pool. The Testnet list holds 7 pools, and the Mainnet list holds the 25 spot pools offered for session trading. Read the live list with `allowed_pools` rather than from this page.
 
 The DeepBook admin-cap owner must authorize `DeepbookCoreAccountApp` in the supplied DeepBook registry before spot order placement works, separately from the `SessionsApp` authorization these wrappers already require. Both DeepBook registries authorize it, Testnet's `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`, so the spot wrappers execute on both networks. They run only through a Sessions package that compiles version 4, because each network's `SessionsConfig` watermark is 4.
 
