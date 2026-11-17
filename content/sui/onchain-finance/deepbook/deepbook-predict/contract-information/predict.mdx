@@ -84,7 +84,7 @@ answer: >-
   signatures and always abort with EDelayedExecutionRequired. Settlement is the
   permissionless try_settle.
 last_verified: 2026-11-17
-verified_against: deepbookv3 046ffd1e (predict protocol version 5, deepbook_predict_orders protocol version 2, and sessions protocol version 4, the source Testnet runs and Mainnet's Version 5 upgrade builds); Testnet ProtocolConfig, OrderDesk, and SessionsConfig re-read 2026-11-12 at watermarks 5, 2, and 4, with no fee-band template, the default builder fee cap, and a 0.15 to 0.75 template entry band; both OrderDesk policies read and identical; Mainnet ProtocolConfig, OrderDesk, and SessionsConfig re-read 2026-11-17 after its Version 5 cutover at watermarks 5, 2, and 4, with the same fee-band template, builder fee cap, template entry band, and no_trade_window_ms as Testnet; queued-order examples at MystenLabs/sui 11eda3e7 type-checked against @mysten/deepbook-v3 2.11.0, and again against 2.13.0 with @mysten/sui 2.39.1 on 2026-11-16 (strike selection reads each market's own entry band)
+verified_against: deepbookv3 046ffd1e (predict protocol version 5, deepbook_predict_orders protocol version 2, and sessions protocol version 4, the source Testnet runs and Mainnet's Version 5 upgrade builds); Testnet ProtocolConfig, OrderDesk, and SessionsConfig re-read 2026-11-12 at watermarks 5, 2, and 4, with no fee-band template, the default builder fee cap, and a 0.15 to 0.75 template entry band; both OrderDesk policies read and identical; Mainnet ProtocolConfig, OrderDesk, and SessionsConfig re-read 2026-11-17 after its Version 5 cutover at watermarks 5, 2, and 4, with the same fee-band template, builder fee cap, template entry band, and no_trade_window_ms as Testnet; queued-order examples at MystenLabs/sui 856527de type-checked against @mysten/deepbook-v3 2.11.0, and again against 2.13.0 with @mysten/sui 2.39.1 on 2026-11-16 (strike selection reads each market's own entry band)
 ---
 
 Trading on DeepBook Predict runs through the `deepbook_predict::expiry_market` module and, from protocol version 4, through the `queue` module of the `deepbook_predict_orders` package. One shared `ExpiryMarket` object exists per underlying and expiry, and it owns that expiry's USDC custody, strike exposure index, congestion estimator, mint pause flag, and flush stamp. Every call on this page is a `public fun` that you invoke from a programmable transaction block with a `moveCall`. Several of them take values only another command in the same block can produce, a transaction-local `Pricer` and a single-use account `Auth`, so plan the whole flow as one block.
@@ -834,14 +834,14 @@ The TypeScript SDK, [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@myste
 <details>
 <summary>Queue a mint and follow it</summary>
 
-<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="queue-mint" />
+<ImportContent source="examples/deepbook-predict/src/queue-mint.ts" mode="code" org="MystenLabs" repo="sui" branch="856527de62f5bbf609634a28037cc6a061002f81" tag="queue-mint" />
 
 </details>
 
 <details>
 <summary>Sell an Open record, refund an overdue order, and read a settled result</summary>
 
-<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="11eda3e76472f6478b5242b7fdfa8636e844d331" tag="queue-sell" />
+<ImportContent source="examples/deepbook-predict/src/queue-sell.ts" mode="code" org="MystenLabs" repo="sui" branch="856527de62f5bbf609634a28037cc6a061002f81" tag="queue-sell" />
 
 </details>
 
