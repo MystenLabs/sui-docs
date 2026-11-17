@@ -49,6 +49,7 @@ questions:
   - How do I get SUI tokens from the faucet?
   - How do I request Testnet or Devnet SUI tokens?
   - How do I verify my SUI token balance?
+  - Why does sui client gas show no coins after I use the faucet?
 answer: >-
   To perform transactions on a Sui network, you need SUI tokens to pay for gas
   and storage.
@@ -147,6 +148,27 @@ You should have a balance of SUI tokens:
 ```
 
 If you do not have a balance, repeat the [request SUI tokens from faucet](#online-faucet) steps, or use an [alternative faucet method](#alternative-faucets).
+
+### Faucet SUI is an address balance {#address-balance}
+
+The faucet credits the SUI to your address balance rather than creating a coin object. The Sui CLI pays gas from an address balance, so publishing and calling packages work as usual, but `sui client gas` lists no coins for a wallet funded only by the faucet:
+
+```
+$ sui client gas --json
+{
+  "gasCoins": [],
+  "addressMistBalance": 1000000000,
+  "addressSuiBalance": "1.00"
+}
+```
+
+Tools that pay from coin objects cannot spend an address balance. The Walrus client through version 1.60 is one: on a wallet funded only by the faucet, `walrus get-wal` and `walrus store` fail with `could not find SUI coins with sufficient balance` even though `sui client balance` shows the SUI. To create a coin object, split one off your address balance with a programmable transaction block, replacing `YOUR_ADDRESS` with your active address:
+
+```sh
+$ sui client ptb --split-coins gas "[600000000]" --assign coin --transfer-objects "[coin]" @YOUR_ADDRESS --gas-budget 20000000
+```
+
+This creates a `Coin<SUI>` object worth 0.6 SUI and leaves the rest in your address balance. Run `sui client gas` again to confirm the coin is listed, then retry the tool. See [Using address balances](/onchain-finance/asset-custody/address-balances/using-address-balances) for how address balances work.
 
 ### Return unused Testnet SUI
 
