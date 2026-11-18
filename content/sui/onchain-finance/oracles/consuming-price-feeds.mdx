@@ -2,22 +2,19 @@
 title: Consuming Price Feeds
 sidebar_label: Consuming Price Feeds
 description: >-
-  Read Pyth and Switchboard price feeds on Sui: fetch a signed update, apply it
+  Read Pyth price feeds on Sui: fetch a signed update, apply it
   onchain, and read it in one transaction, with working Testnet TypeScript and
   the stale-price rejection.
 keywords:
   - pyth
-  - switchboard
   - price feed
   - hermes
   - priceinfoobject
-  - aggregator
   - pull oracle
   - testnet
 goal:
   description: >-
-    Reader fetches and reads a Pyth price feed on Testnet in one transaction,
-    and understands the Switchboard on-demand variant.
+    Reader fetches and reads a Pyth price feed on Testnet in one transaction.
   requires:
     - has_frontmatter:
         - title
@@ -39,15 +36,12 @@ goal:
 questions:
   - How do I read a Pyth price feed on Sui?
   - How do I update a Pyth price before reading it?
-  - How do I read a Switchboard feed on Sui?
   - What happens when a price feed is stale?
 answer: >-
   Fetch a signed update from Hermes, apply it to the feed's PriceInfoObject with
   the Pyth SDK, and read it with get_price_no_older_than in the same
   transaction. Reading a feed that has not been updated recently aborts with a
-  staleness error. Switchboard is on-demand: pull a fresh response into the
-  Aggregator with fetchUpdateTx, then read current_result and check the
-  timestamps yourself.
+  staleness error.
 builder_paths:
   - path_id: oracle-integration
     path_name: Oracle Integration
@@ -55,7 +49,7 @@ builder_paths:
     stage: Oracles
 ---
 
-Both Pyth and Switchboard on Sui are pull oracles: the consumer pulls the price update it needs into its own transaction. Your client fetches a fresh signed update offchain, then a single transaction applies it onchain and reads it, in that order. This walkthrough reads a Pyth feed end to end on Testnet, then shows the Switchboard on-demand variant.
+Pyth on Sui is a pull oracle: the consumer pulls the price update it needs into its own transaction. Your client fetches a fresh signed update offchain, then a single transaction applies it onchain and reads it, in that order. This walkthrough reads a Pyth feed end to end on Testnet.
 
 :::caution
 
@@ -114,15 +108,5 @@ A price that nobody has updated recently is stale. Reading it with a tight maxim
 The preceding sample is the exported `checkStale` function, a separate code path from the update-and-read flow. It never applies an update. It looks up the feed's existing `PriceInfoObject`, calls the Pyth staleness-checked reader with your `maxAgeSecs`, and runs the transaction as a read-only simulation. It returns an object with the simulation `status` and, when the read aborts, the `error` string. It throws `no PriceInfoObject for feed` followed by the feed ID if the feed has no onchain object.
 
 **Observe:** with a one-second bound on a feed nobody just updated, the call fails with a `MoveAbort` in `pyth::check_price_is_fresh` (error code `3`, stale price). This is the single most important behavior for a high-stakes consumer to rely on. [Oracle safety](/onchain-finance/oracles/oracle-safety) covers it in depth.
-
-Switchboard's `current_result` does not gate on age, so there is no equivalent staleness abort to dev-inspect; your consumer checks the timestamps itself, as the Switchboard section of this page describes.
-
-## How do I read a Switchboard feed on Sui?
-
-Switchboard is also pull, with a different shape. Instead of a shared price object you update, you hold an `Aggregator` feed and pull a fresh oracle response into your transaction with `fetchUpdateTx`, which must be the first action in the [programmable transaction block (PTB)](/develop/transactions/ptbs/prog-txn-blocks). A PTB runs its commands in order within one transaction, so the fresh response lands before your consumer reads it. Your Move consumer then reads `switchboard::aggregator::current_result`.
-
-<ImportContent source="examples/oracle-adapter/ts/src/switchboard.ts" mode="code" tag="switchboard" />
-
-`current_result` returns a `CurrentResult` exposing the median `result()` (a `Decimal`) along with `min_timestamp_ms()` and `max_timestamp_ms()`. Unlike Pyth's `get_price_no_older_than`, it does not gate on age, so the consumer checks the timestamps against the clock itself. See the [Switchboard Sui docs](https://docs.switchboard.xyz/product-documentation/data-feeds/sui) for feed creation and the on-demand flow.
 
 Next, wrap a provider read behind a single internal interface with the safety checks built in: [The Move adapter pattern](/onchain-finance/oracles/move-adapter).
