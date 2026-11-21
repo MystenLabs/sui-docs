@@ -229,7 +229,7 @@ Not every API response includes all headers. The API includes a header only when
 
 Interact with gRPC by using [`grpcurl`](https://github.com/fullstorydev/grpcurl). 
 
-The examples on this page use `<FULL_NODE_URL>` as a placeholder for the full node host name, such as `fullnode.<network>.sui.io`, without a scheme or port. The Buf CLI examples add the `https://` scheme, and the TypeScript, Go, and Python examples add port `443`.
+The examples on this page use `<FULL_NODE_URL>` as a placeholder for the full node host name, such as `fullnode.<network>.sui.io`, without a scheme or port. The Buf CLI examples add the `https://` scheme, and the TypeScript, Go, and Python examples add port `443`. The `ListOwnedObjects` and `ListDynamicFields` examples omit pagination fields for brevity: add a `page_size` field to the request to control how many items it returns, and a `page_token` field, taken from the previous response's `next_page_token`, to continue from where the last page ended. See [How to paginate gRPC responses](#pagination).
 
 ### List available gRPC services
 

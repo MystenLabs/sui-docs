@@ -209,7 +209,7 @@ Custody keys and privileged capabilities are the highest-value assets in an exch
 
 ## SUI staking
 
-The Sui blockchain uses a delegated proof-of-stake (DPoS) mechanism. SUI token holders stake to a validator's staking pool. When a user stakes, the network locks those tokens for the duration of the epoch in which the user adds the stake. New staking requests become active at the start of the next epoch. A user can request a withdrawal at any time. A stake withdrawal returns funds in the same transaction that requests it, during the current epoch; because the payout uses the previous epoch's exchange rate, it includes the principal plus rewards accumulated through the previous epoch. The withdrawn stake stops contributing starting the next epoch.
+The Sui blockchain uses a delegated proof-of-stake (DPoS) mechanism. SUI token holders stake to a validator's staking pool. When a user stakes, the network locks those tokens for the duration of the epoch in which the user adds the stake. New staking requests become active at the start of the next epoch. A user can request a withdrawal at any time. A stake withdrawal returns funds in the same transaction that requests it, so you do not wait for an epoch boundary to receive the funds; see [When do stake withdrawals settle?](#when-do-stake-withdrawals-settle) for the exchange rate and rewards details. The withdrawn stake stops contributing starting the next epoch.
 
 SUI holders who stake to validators earn rewards for helping secure the Sui network. Sui determines staking rewards based on stake performance and distributes them at the end of each epoch.
 
