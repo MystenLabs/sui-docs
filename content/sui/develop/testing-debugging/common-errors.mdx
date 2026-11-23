@@ -237,6 +237,70 @@ Ensure the resource's value is zero. For coins or tokens, split or burn the valu
 
 ---
 
+#### `For when T does not belong to the package `Publisher`.`
+
+`ENotOwner` is abort code `0` in the `sui::display` module. It means the type `T` of the display does not belong to the package of the `Publisher` object you passed.
+
+A `Publisher` records the package and module of the One-Time Witness (OTW) that claimed it. The `sui::package` module compares a type against that record. A type belongs to a publisher when the original package address of the type matches the package stored in the `Publisher`:
+
+```move
+/// Check whether type belongs to the same package as the publisher object.
+public fun from_package<T>(self: &Publisher): bool {
+    type_name::with_original_ids<T>().address_string() == self.package
+}
+```
+
+##### Solution
+
+To fix the error:
+
+1. Find the package that defines `T`.
+2. Use the `Publisher` that package claimed in its `init` function with `package::claim` and its OTW. A `Publisher` from a different package, such as one you published to hold your app logic, does not work for types in another package.
+3. If you do not own the package that defines `T`, you cannot create a display for `T`. Only the holder of that package's `Publisher` can.
+
+Creation of Display V1 is no longer available. It aborts with `ENoLongerSupported` (abort code `2`). Create a V2 display with `display_registry::new_with_publisher<T>` and pass the `Publisher` of the package that defines `T`. In V2, a publisher mismatch aborts with `display_registry::ENotValidPublisher`, which reports that the publisher is not valid for the supplied type. Apply the same fix: pass the `Publisher` from the package that defines `T`.
+
+**Resources**
+
+- [What is Object Display?](/develop/objects/display/display-overview)
+- [Framework abort codes](/references/errors/framework-abort-codes)
+
+---
+
+#### `Trying to add an extension while not being the owner of the Kiosk.`
+
+The Kiosk extension module aborts with `ENotOwner` (abort code `0`) when the `KioskOwnerCap` you pass does not grant access to the `Kiosk` you are modifying. Only the kiosk owner can install an extension, and the owner proves ownership with the `KioskOwnerCap`.
+
+The `add` function checks the capability before it stores the extension:
+
+```move
+public fun add<Ext: drop>(
+    _ext: Ext,
+    self: &mut Kiosk,
+    cap: &KioskOwnerCap,
+    permissions: u128,
+    ctx: &mut TxContext,
+) {
+    assert!(self.has_access(cap), ENotOwner);
+```
+
+The same `has_access` check guards `disable`, `enable`, and `remove`, so any of these calls aborts with `ENotOwner` if the capability does not match the kiosk.
+
+##### Solution
+
+To fix the error:
+
+1. Confirm that the transaction sender owns the `KioskOwnerCap` for the target kiosk.
+2. Pass the capability that belongs to that kiosk, not a capability from another kiosk. Call `cap.kiosk()` to read the `for` field of a `KioskOwnerCap` and compare it with the ID of the kiosk you pass.
+3. Install the extension through the app's own `add` function, which creates the app witness and forwards your kiosk and capability.
+
+The `sui::kiosk` module also defines an `ENotOwner` constant with abort code `0`, which means the sender tried to withdraw profits without owning the kiosk. Check the module in the abort location to tell the 2 errors apart.
+
+**Resources**
+
+- [Kiosk Apps](/onchain-finance/kiosk/kiosk-apps)
+
+---
 
 ## How do I fix system errors?
 
