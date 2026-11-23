@@ -164,7 +164,7 @@ OnlyFins uses `SealClient` in standalone mode. The `createSealClient` factory in
 />
 
 :::info
-Some code examples in this guide use older Sui transports: OnlyFins uses `SuiClient` from `@mysten/sui/client`, and the seal-demo standalone script uses `SuiJsonRpcClient` from `@mysten/sui/jsonRpc`, which is deprecated. `SuiGrpcClient` from `@mysten/sui/grpc` is the recommended transport for all new integrations. All `SealClient` constructor, encrypt, and decrypt APIs are identical regardless of which transport you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
+Some code examples in this guide use older Sui transports: OnlyFins uses `SuiClient` from `@mysten/sui/client` version 1, and the seal-demo standalone script uses `SuiJsonRpcClient` from `@mysten/sui/jsonRpc`. `@mysten/sui` 3.0 removed the JSON-RPC client, and the current `@mysten/seal` release requires `@mysten/sui` 3.0 as a peer dependency, so use `SuiGrpcClient` from `@mysten/sui/grpc` in new integrations. The `SealClient` constructor, encrypt, and decrypt APIs are the same with any transport. See the [Sui SDK 2.0 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) and the [Sui SDK 3.0 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-3.0) for upgrade instructions.
 :::
 
 The key server object IDs come from `constants.ts`. These IDs point to onchain `KeyServer` objects that always hold the latest URL as the source of truth. See the [Seal documentation](/sui-stack/seal/pricing) for the full list of verified key servers and their modes (open or permissioned).

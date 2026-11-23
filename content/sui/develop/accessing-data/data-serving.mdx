@@ -96,14 +96,14 @@ Choose the RPC interface based on the client you are building and the data acces
 | Client type | Frontends, dashboards, developer tools, scripts, and apps in dynamic languages. | Backends, indexers, exchanges, low-latency services, and apps in typed systems languages. |
 | Query patterns | Flexible, nested, filtered, or historical queries that combine transactions, objects, events, balances, and checkpoints in one request. | Point lookups, transaction execution, simulation, or workflows where the client is already modeled around protobuf messages. |
 | Historical access | GraphQL can use configured Archival Service backends for supported historical lookups and supports filtered pagination over historical transactions and events. | Full node gRPC is limited by the node's retention. For higher retention, query the [Archival Service](/develop/accessing-data/archival-store) gRPC endpoint directly. |
-| Streaming needs | Use for query flexibility. Subscription support is not yet available on GraphQL. | Use gRPC when you need live checkpoint subscriptions or other streaming workflows. |
+| Streaming needs | GraphQL serves subscriptions for checkpoints, transactions, and events over server-sent events. The TypeScript SDK reads them with `SuiGraphQLClient.subscribe` and the resumable stream methods. | Use gRPC when you need live checkpoint subscriptions or other streaming workflows. |
 | Consistency | GraphQL scopes queries to checkpoints and can return read-after-write data from execution- or simulation-attached query scopes when fields do not require indexed history. | Use gRPC for low-latency full node reads, then wait or retry when subsequent reads depend on data being indexed elsewhere. |
 
 A good default is GraphQL for frontends, tools, and flexible query workloads, and gRPC for backend systems, indexers, streaming, and performance-sensitive typed clients. You can use both interfaces in one application when different components have different requirements.
 
 To apply the table as rules, check these conditions in order and use the first one that matches:
 
-- If you need live checkpoint subscriptions or other streaming workflows, use gRPC. Subscription support is not yet available on GraphQL.
+- If you need live checkpoint subscriptions or other streaming workflows, use gRPC. GraphQL also serves subscriptions for checkpoints, transactions, and events, so a GraphQL-based app can stream without adding a gRPC client.
 - If you need historical data beyond a full node's retention, use GraphQL with Archival configured by the operator, or query an Archival Service gRPC endpoint directly.
 - If you need flexible, nested, or filtered queries that combine transactions, objects, events, balances, and checkpoints in one request, use GraphQL.
 - If you need generated typed clients, low-latency point lookups, or protobuf-based workflows, use gRPC.

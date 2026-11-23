@@ -53,7 +53,7 @@ Pyth on Sui is a pull oracle: the consumer pulls the price update it needs into 
 
 :::caution
 
-The `examples/oracle-adapter` samples pin version 2 of the Pyth Sui SDK (`@pythnetwork/pyth-sui-js`), which takes the legacy `SuiClient` from `@mysten/sui` version 1. Current Sui full nodes do not serve the API that client calls, so the samples fail against them. Version 4 of the Pyth Sui SDK accepts any `@mysten/sui` version 2 client that exposes the `.core` API, so pass a `SuiGrpcClient` to `SuiPythClient` instead. The `SuiPythClient` and `SuiPriceServiceConnection` methods the samples call keep the same signatures in version 4. The `checkStale` sample also calls `devInspectTransactionBlock`. On `SuiGrpcClient`, use `simulateTransaction` instead.
+The `examples/oracle-adapter` samples pin version 2 of the Pyth Sui SDK (`@pythnetwork/pyth-sui-js`), which takes the legacy `SuiClient` from `@mysten/sui` version 1. Current Sui full nodes do not serve the API that client calls, so the samples fail against them. Version 4 of the Pyth Sui SDK accepts any `@mysten/sui` version 2 client that exposes the `.core` API, so pass a `SuiGrpcClient` to `SuiPythClient` instead. Version 4 declares `@mysten/sui` `^2.7.0` as its peer dependency, so pair it with `@mysten/sui` 2.x until Pyth publishes a release for `@mysten/sui` 3.0. The `SuiPythClient` and `SuiPriceServiceConnection` methods the samples call keep the same signatures in version 4. The `checkStale` sample also calls `devInspectTransactionBlock`. On `SuiGrpcClient`, use `simulateTransaction` instead.
 
 :::
 

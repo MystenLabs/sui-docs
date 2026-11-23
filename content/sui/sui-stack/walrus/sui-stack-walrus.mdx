@@ -260,7 +260,7 @@ const client = new SuiGrpcClient({
 The [Walrus SDK documentation](https://sdk.mystenlabs.com/walrus) is the single source of truth for all SDK patterns, options, and examples.
 
 :::info
-Some code examples in this guide use `SuiClient` from `@mysten/sui/client` rather than `SuiGrpcClient` from `@mysten/sui/grpc`. `SuiGrpcClient` is the recommended transport for new integrations. In current SDK versions, all Walrus SDK and transaction APIs are identical regardless of which client you use. See the [Sui SDK v2 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) for upgrade instructions.
+Some code examples in this guide use `SuiClient` from `@mysten/sui/client` version 1 rather than `SuiGrpcClient` from `@mysten/sui/grpc`. The current `@mysten/walrus` release requires `@mysten/sui` 3.0 as a peer dependency, so use `SuiGrpcClient` in new integrations. `SuiGrpcClient` and `SuiGraphQLClient` implement the same core API, so the Walrus SDK and transaction APIs are the same with either client. See the [Sui SDK 2.0 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-2.0) and the [Sui SDK 3.0 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-3.0) for upgrade instructions.
 :::
 
 For React apps, wrap your component tree with a context provider that initializes the client once and makes it available throughout the app. The [walrus-pocs](https://github.com/MystenLabs/walrus-pocs) repo includes focused examples for each SDK operation that show this pattern in a clean Node.js context. For a React-specific provider, initialize `SuiGrpcClient.$extend(walrus())` in your app's root and pass the result through React context using the same pattern as the client setup example in [TS SDK](#ts-sdk).

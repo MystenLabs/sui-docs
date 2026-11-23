@@ -217,9 +217,11 @@ Not all tools in the Sui ecosystem require manual migration:
 
 - **Sui CLI**: No changes needed. The CLI already uses gRPC internally. The `rpc` field in `~/.sui/sui_config/client.yaml` points at the same `fullnode.*.sui.io:443` URLs, which serve gRPC.
 
-- **dApp Kit**: Use `@mysten/dapp-kit-react` (or `@mysten/dapp-kit-core` outside React). Its `createDAppKit` accepts a `SuiGrpcClient` from `createClient`, so a frontend on it can move to gRPC by changing that factory. The deprecated `@mysten/dapp-kit` package (no suffix) only accepts `SuiJsonRpcClient`. Do not pass it a `SuiGrpcClient`; migrate the app to `@mysten/dapp-kit-react` instead ([dApp Kit docs](https://sdk.mystenlabs.com/dapp-kit)).
+- **TypeScript SDK** (`@mysten/sui`): Version 3.0 removed the JSON-RPC client. The `@mysten/sui/jsonRpc` entry point still loads, but `SuiJsonRpcClient`, `JsonRpcHTTPTransport`, and `getJsonRpcFullnodeUrl` throw. Pass a full node URL such as `https://fullnode.mainnet.sui.io:443` directly to the `baseUrl` of `SuiGrpcClient` ([Sui SDK 3.0 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-3.0)).
 
-- **Kiosk SDK** (`@mysten/kiosk`): Continue using a supported JSON-RPC or GraphQL client for Kiosk object and event queries. The currently published Kiosk SDK does not accept `SuiGrpcClient`; migrate only after a Kiosk release explicitly adds gRPC support.
+- **dApp Kit**: Use `@mysten/dapp-kit-react` (or `@mysten/dapp-kit-core` outside React). Its `createDAppKit` accepts a `SuiGrpcClient` from `createClient`, so a frontend on it can move to gRPC by changing that factory. The deprecated `@mysten/dapp-kit` package (no suffix) only accepts `SuiJsonRpcClient`, which `@mysten/sui` 3.0 removed. Migrate the app to `@mysten/dapp-kit-react` before you upgrade to `@mysten/sui` 3.0 ([dApp Kit docs](https://sdk.mystenlabs.com/dapp-kit), [Sui SDK 3.0 migration guide](https://sdk.mystenlabs.com/sui/migrations/sui-3.0)).
+
+- **Kiosk SDK** (`@mysten/kiosk`): Version 2.0 and later accept `SuiGrpcClient`. Register the SDK as a client extension with `new SuiGrpcClient({ network, baseUrl }).$extend(kiosk())`, then call the Kiosk methods on `client.kiosk`. Version 2.0 types `TransferPolicy.owner` as `SuiClientTypes.ObjectOwner` instead of the removed JSON-RPC `ObjectOwner` type, so update code that narrows on the JSON-RPC owner shape.
 
 - **Walrus site-builder**: The site-builder manages its own Sui connection through `sites-config.yaml`. Check the [Walrus documentation](https://docs.wal.app/) for gRPC migration status, because the Walrus team controls the transport.
 

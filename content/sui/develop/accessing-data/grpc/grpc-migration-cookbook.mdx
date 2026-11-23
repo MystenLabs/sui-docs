@@ -445,7 +445,7 @@ ws.onmessage = (msg) => console.log(JSON.parse(msg.data));
 </TabItem>
 <TabItem value="grpc-proto" label="gRPC (proto client)">
 
-The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeEvents` through the proto client at `client.subscriptionService.subscribeEvents()`. The gRPC (Buf CLI) tab shows the raw protobuf JSON request shape.
+The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeEvents` through the proto client at `client.subscriptionService.subscribeEvents()`. The gRPC (Buf CLI) tab shows the raw protobuf JSON request shape. From version 3.0, `client.streamEvents()` wraps this subscription with history replay from a starting checkpoint, automatic reconnection, and resume tokens. See [Resumable Ledger Streams](https://sdk.mystenlabs.com/sui/clients/streaming).
 
 ```ts
 // Use the generated proto client directly
@@ -580,6 +580,8 @@ while (true) {
 </TabItem>
 <TabItem value="grpc-sdk" label="gRPC (TypeScript SDK)">
 
+From `@mysten/sui` 3.0, `client.streamCheckpoints()` replays checkpoints from a starting point, follows new ones, reconnects automatically, and returns a resume token with each checkpoint. See [Resumable Ledger Streams](https://sdk.mystenlabs.com/sui/clients/streaming). The following example uses the lower-level proto client:
+
 ```ts
 const { responses } = client.subscriptionService.subscribeCheckpoints({
   readMask: {
@@ -619,7 +621,7 @@ The gRPC stream differs from the JSON-RPC polling pattern in the following ways:
 
 Use `SubscriptionService.SubscribeTransactions` for a real-time, filtered stream of transactions. This replaces both JSON-RPC WebSocket subscriptions and polling patterns.
 
-The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeTransactions` through the proto client at `client.subscriptionService.subscribeTransactions()`. The gRPC (Buf CLI) tab shows the raw protobuf JSON request shape.
+The `@mysten/sui` TypeScript SDK (v2.23.1+) exposes `SubscribeTransactions` through the proto client at `client.subscriptionService.subscribeTransactions()`. The gRPC (Buf CLI) tab shows the raw protobuf JSON request shape. From version 3.0, `client.streamTransactions()` wraps this subscription with history replay from a starting checkpoint, automatic reconnection, and resume tokens. See [Resumable Ledger Streams](https://sdk.mystenlabs.com/sui/clients/streaming).
 
 <Tabs groupId="transport">
 <TabItem value="buf-cli" label="gRPC (Buf CLI)">

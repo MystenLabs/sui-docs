@@ -133,7 +133,7 @@ gRPC provides 3 ways to access events:
 - `SubscriptionService.SubscribeEvents`: Live streaming of events matching an `EventFilter`. Use this for real-time event-driven applications. Subscriptions start at the current tip of the chain.
 - `LedgerService.GetTransaction`: Retrieve events for a specific transaction by digest.
 
-To combine historical and real-time data, open a `SubscribeEvents` stream first, note the first `Watermark` you receive, then backfill with `ListEvents` up to that watermark. Once the backfill is complete, begin consuming from the already-open subscription. This avoids missing data between the final list response and the subscription start. See the [event indexer example app](https://github.com/MystenLabs/sui-move-bootcamp/tree/main/K1) for a worked example.
+To combine historical and real-time data, open a `SubscribeEvents` stream first, note the first `Watermark` you receive, then backfill with `ListEvents` up to that watermark. Once the backfill is complete, begin consuming from the already-open subscription. This avoids missing data between the final list response and the subscription start. See the [event indexer example app](https://github.com/MystenLabs/sui-move-bootcamp/tree/main/K1) for a worked example. In TypeScript, `streamEvents` handles the backfill and the switch to live events for you, as [How do I stream events with the TypeScript SDK?](#streaming-events-typescript) describes.
 
 :::info
 Use `client.listEvents()` (v2.23.1+) for common paginated event queries. For checkpoint-bounded `ListEvents` queries, use the proto client (`client.ledgerService.listEvents()`) as shown below. The `GetTransaction` example uses the SDK's `client.core.getTransaction()` method.
@@ -218,6 +218,25 @@ Event connection
 ```
 
 </details>
+
+### How do I stream events with the TypeScript SDK? {#streaming-events-typescript}
+
+From `@mysten/sui` 3.0, `streamEvents` reads event history from a starting checkpoint and then follows new events, so you do not need to combine a subscription with a backfill yourself. It works the same on `SuiGrpcClient` and `SuiGraphQLClient`, reconnects after transient failures, and gives each frame a `resumeToken`. Store the token with the work you did for that event, then pass it back as `start` to resume after a restart ([source](https://sdk.mystenlabs.com/sui/clients/streaming)):
+
+```ts
+for await (const frame of client.streamEvents({
+	filter: { eventType: '0x123::example::Created' },
+	start: savedToken ? { resumeToken: savedToken } : { checkpoint: 1000 },
+	signal: controller.signal,
+})) {
+	await database.transaction(async (db) => {
+		await db.processEvent(frame.event);
+		await db.saveResumeToken(frame.resumeToken);
+	});
+}
+```
+
+`streamCheckpoints` and `streamTransactions` work the same way. Resume on the same transport, chain, method, filter, and order, or the stream throws `SuiStreamError` with code `IncompatibleToken`.
 
 ### Querying events in Rust
 
