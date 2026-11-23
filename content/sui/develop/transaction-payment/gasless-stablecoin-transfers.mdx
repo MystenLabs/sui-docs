@@ -112,7 +112,7 @@ You can monitor transactions for gasless stablecoin transfers through SuiVision,
 
 Sui gasless stablecoin transfers are an extension of the [Address Balances](/onchain-finance/asset-custody/address-balances/using-address-balances) feature. You enable them by calling the Address Balances Move API `send_funds()` with `gas=0` and `gas_budget=0`.
 
-The TypeScript SDK automatically detects gasless stablecoin transfers when using the gRPC or GraphQL transports. [Learn more in the TypeScript SDK documentation](https://sdk.mystenlabs.com/sui/transactions/coins-and-balances#sdk-support-grpc-and-graphql). With the JSON-RPC transport, the SDK cannot detect eligibility, so you set the gas price and payment yourself. See [JSON-RPC fallback](#json-rpc-fallback).
+The TypeScript SDK automatically detects gasless stablecoin transfers when using the gRPC or GraphQL transports. [Learn more in the TypeScript SDK documentation](https://sdk.mystenlabs.com/sui/transactions/coins-and-balances#sdk-support-grpc-and-graphql). `@mysten/sui` 3.0 removed the JSON-RPC transport, so build these transfers with `SuiGrpcClient` or `SuiGraphQLClient`.
 
 Gasless stablecoin transfers are limited to the allowlisted Move functions in [What gasless stablecoin transfers don't cover](#what-gasless-stablecoin-transfers-dont-cover). You cannot use gasless stablecoin transfers to write any object.
 
@@ -162,28 +162,6 @@ const bytes = await tx.build({ client: grpcClient });
 ```
 
 `SuiGraphQLClient` works the same way as gRPC for this flow.
-
-### JSON-RPC fallback
-
-If you must use `SuiJsonRpcClient`, the SDK cannot detect eligibility for you. Set the price and payment yourself, but only after confirming the coin type is on the allowlist:
-
-```tsx
-const tx = new Transaction();
-tx.setSender(senderAddress);
-
-// Manually set gas price to 0.  Only do this when you know the coin type is on the allow list
-tx.setGasPrice(0);
-tx.setGasPayment([]);
-tx.setGasBudget(0);
-
-tx.moveCall({
-	target: '0x2::balance::send_funds',
-	typeArguments: [USDC],
-	arguments: [tx.balance({ type: USDC, balance: 1_000_000n }), tx.pure.address(recipient)],
-});
-```
-
-If the coin type isn't allowlisted or the PTB shape isn't eligible, the transaction fails at validation.
 
 ## Compliance considerations
 

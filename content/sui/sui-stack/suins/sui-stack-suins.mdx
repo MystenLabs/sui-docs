@@ -447,7 +447,7 @@ const extendedClient = new SuiClient({ url: 'https://fullnode.testnet.sui.io:443
   );
 ```
 
-This example targets `@mysten/messaging` 0.3.0, which depends on `@mysten/sui` 1.x and its `SuiClient`. Do not mix it with the `SuiGrpcClient` from `@mysten/sui` 2.x. Check the versions your app resolves before combining these packages.
+This example targets `@mysten/messaging` 0.3.0, which depends on `@mysten/sui` 1.x and its `SuiClient`. Do not mix it with the `SuiGrpcClient` from `@mysten/sui` 2.x or 3.x. Check the versions your app resolves before combining these packages.
 
 This pattern (composing Seal, Walrus, and Messaging onto a single Sui client through `$extend`) is the standard way to build a multi-service Sui Stack app. Each extension adds its methods to the client without affecting the others. `useUserSubname` then resolves the wallet's subname independently and the UI renders it next to messages and channel entries, replacing raw addresses throughout the app.
 
