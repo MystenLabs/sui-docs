@@ -287,6 +287,31 @@ The `sui::kiosk` module also defines an `ENotOwner` constant with abort code `0`
 
 ---
 
+#### `The funds withdrawals reserved from an address in this transaction exceed its settled funds`
+
+`EInsufficientFunds` (abort code 8) means the funds withdrawals you reserved from an address in the current test transaction exceed that address's settled funds. The `withdraw_balance_from_address` helper stands in for a transaction's funds withdrawal input, and it aborts with this code when the total you reserve goes over the available balance:
+
+<ImportContent source="crates/sui-framework/packages/sui-framework/sources/test/test_scenario.move" mode="code" fun="withdraw_balance_from_address" noComments />
+
+The balance it checks against is the `Balance<T>` settled to `owner` as of the end of the previous transaction. Funds you send to `owner` in the same transaction do not count. Each call adds to what the transaction has already reserved from that owner and type, so 2 withdrawals that each fit on their own can still fail together.
+
+##### Solution
+
+To fix the abort:
+
+1. Deposit the funds to the address in an earlier transaction, then end that transaction. Ending a transaction applies its accumulator events to the settled balances and clears the reservations it took.
+2. Withdraw in the next transaction, not the one that made the deposit.
+3. Keep the sum of all withdrawals from the same owner and type in one transaction at or below the settled balance.
+4. Pass a non-zero `value`. A zero amount aborts with `EZeroWithdrawal` instead.
+
+This matches network behavior: the protocol checks a withdrawal limit against the settled balance, and unsettled deposits do not count toward it. A related abort, `EUnbackedWithdrawal` (code 11), means a transaction withdrew more than an owner had through a withdrawal you did not reserve against those funds, for example one you kept from an earlier transaction. Create a fresh withdrawal in the transaction that uses it.
+
+**Resources**
+
+- [Address Balances](/onchain-finance/asset-custody/address-balances)
+
+---
+
 ## How do I fix system errors?
 
 Errors in this section relate to the system.
@@ -507,6 +532,33 @@ The sender address either has insufficient SUI balance or the gas coin already s
 **Resources**
 
 - [Get SUI from Faucet](/getting-started/onboarding/get-coins)
+
+---
+
+#### `The argument specified cannot be used as a reference argument in the Move call. Either the argument is a mutable reference and it conflicts with another argument to the call, or the argument is mutable and another reference extends it and will be used in a later command.`
+
+A programmable transaction block (PTB) fails with `InvalidReferenceArgument` when the runtime cannot borrow an argument as a reference for a Move call. The error has 2 causes:
+
+- **Conflicting mutable reference:** The argument is passed as a mutable reference, and it conflicts with another argument to the same call.
+- **Extended mutable reference:** The argument is mutable, and another reference extends it and a later command still uses that reference.
+
+How the runtime borrows an argument depends on the function signature. If the signature expects an `&mut T`, the runtime checks that the argument has type `T` and then mutably borrows it. If the signature expects an `&T`, the runtime immutably borrows it. Mutably borrowed values require unique usage, and immutably borrowed values cannot be borrowed mutably.
+
+##### Solution
+
+To fix the first cause:
+
+1. Check the `arguments` of the failing `MoveCall` command for the same `Input`, `Result`, or `NestedResult` index appearing more than once, or the `GasCoin` appearing alongside another use of it.
+2. Make sure any argument in an `&mut` position does not also appear in another position of the same call.
+3. If the function needs to operate on the value more than once, split the work into separate commands so each call borrows the value only once.
+
+To fix the second cause, look for a Move call that returns a reference derived from the mutable argument. For mutable references, the runtime treats the mutable reference arguments as the parents of the returned reference. While a later command still uses that returned reference, you cannot pass the parent argument mutably. Reorder the commands so the PTB finishes using the returned reference before it passes the parent argument mutably again, or drop the later use of the returned reference. The runtime infers unused results and drops them, which allows reuse of parent references.
+
+A related error, `CannotWriteToExtendedReference`, occurs when a command writes to an argument location that is still borrowed by such an extended reference. The same reordering fixes it.
+
+**Resources**
+
+- [What is a PTB?](/develop/transactions/ptbs/prog-txn-blocks)
 
 ---
 
