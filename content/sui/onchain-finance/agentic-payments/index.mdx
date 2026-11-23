@@ -90,7 +90,7 @@ Sui typically finalizes a transaction in 400 to 700 ms ([Life of a Transaction](
 A dialect is the way HTTP encodes a 402 exchange. Sui payments use 2 dialects:
 
 - **x402:** The server sends its payment requirements in a `PAYMENT-REQUIRED` header, the client sends its payment in a `PAYMENT-SIGNATURE` header, and the server reports the result in a `PAYMENT-RESPONSE` header ([x402 HTTP transport](https://github.com/x402-foundation/x402/blob/main/specs/transports-v2/http.md)). [The proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui) defines what the Sui transaction must contain and how a facilitator verifies and settles it ([x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
-- **MPP:** MPP sends the challenge and the payment in HTTP authentication headers. The server sends `WWW-Authenticate: Payment`, the client answers with `Authorization: Payment`, and the server returns a `Payment-Receipt` header.
+- **MPP:** MPP sends the challenge and the payment in HTTP authentication headers. The server sends `WWW-Authenticate: Payment`, the client answers with `Authorization: Payment`, and the server returns a `Payment-Receipt` header. {/* TODO: Citation needed - link the public MPP specification */}
 
 Both dialects describe the same economic exchange. A server can advertise both in one `402` response, as the SuiPay gateway does, and the client picks the one it supports.
 

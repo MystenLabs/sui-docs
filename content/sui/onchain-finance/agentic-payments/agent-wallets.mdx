@@ -107,13 +107,13 @@ The TypeScript SDK in `@mysten/sui` provides the same operations in code:
 - `Ed25519Keypair.fromSecretKey()` loads a key pair from a `suiprivkey` string, and rejects a string encoded for a different scheme.
 - `Ed25519Keypair.deriveKeypair()` restores a key pair from a recovery phrase.
 
-SuiPay generates an agent's delegate key and derives the address that the owner authorizes:
+SuiPay generates an agent's delegate key with `new Ed25519Keypair()`, which also creates a random key pair, and derives the address that the owner authorizes with `getPublicKey().toSuiAddress()`.
 
-<ImportContent source="apps/docs/src/snippets/agent-keypair.ts" org="MystenLabs" repo="suipay" mode="code" />
+{/* TODO: Import code from MystenLabs/suipay/apps/docs/src/snippets/agent-keypair.ts (repo private) */}
 
-The SuiPay gateway loads a stored `suiprivkey` secret into a signer that never exports the key:
+The SuiPay gateway loads a stored `suiprivkey` secret into a signer that never exports the key, in `suiWalletFromSecretKey`.
 
-<ImportContent source="apps/gateway/src/chain/sui.ts" org="MystenLabs" repo="suipay" mode="code" fun="suiWalletFromSecretKey" />
+{/* TODO: Import code from MystenLabs/suipay/apps/gateway/src/chain/sui.ts: suiWalletFromSecretKey (repo private) */}
 
 See [Keypairs](https://sdk.mystenlabs.com/sui/cryptography/keypairs) in the TypeScript SDK documentation for details.
 
@@ -156,7 +156,7 @@ The `@mysten/signers` package re-exports the Mysten Labs external signers under 
 | `LedgerSigner` | `@mysten/signers/ledger` | `@mysten/ledger-signer` | Ledger hardware wallet |
 | `WebCryptoSigner` | `@mysten/signers/webcrypto` | `@mysten/webcrypto-signer` | Browser Web Crypto store |
 
-For a backend agent, use `AwsKmsSigner` (created with `AwsKmsSigner.fromKeyId()`) or `GcpKmsSigner` (created with `GcpKmsSigner.fromOptions()`). The curve of the KMS key determines the Sui signature scheme. GCP KMS supports Secp256k1 and Secp256r1 keys. A KMS-backed agent therefore usually has a Secp256k1 or Secp256r1 address, not an Ed25519 one, so check that every service the agent pays through accepts that scheme before you choose KMS.
+For a backend agent, use `AwsKmsSigner` (created with `AwsKmsSigner.fromKeyId()`) or `GcpKmsSigner` (created with `GcpKmsSigner.fromOptions()`). The curve of the KMS key determines the Sui signature scheme. AWS KMS supports Ed25519, Secp256k1, and Secp256r1 keys. GCP KMS supports only Secp256k1 and Secp256r1 keys, so a GCP-backed agent has a Secp256k1 or Secp256r1 address. Check that every service the agent pays through accepts that scheme before you choose a KMS.
 
 See [Signers](https://sdk.mystenlabs.com/sui/cryptography/signers) in the TypeScript SDK documentation for setup and credentials for each signer.
 
@@ -167,7 +167,7 @@ The [SuiPay gateway](/onchain-finance/agentic-payments#payment-roles) is publish
 The SuiPay gateway calls the agent's key a delegate key. SuiPay delegate keys have 2 requirements:
 
 - **The Model Context Protocol (MCP) server keeps the delegate key locally.** The `@mysten-incubation/suipay-mcp` server generates the agent's key itself and stores it in `~/.suipay/credentials.json` with file mode `0600`, in a directory with mode `0700`. The private key never leaves that process. The owner's spend account grant binds to the key's address. If the file is unreadable or malformed, the server refuses to continue rather than creating a new key. Protect this file like any other private key: anyone who reads it can spend the remaining grant budget until the owner revokes the spend account grant.
-- **x402 settlement requires an Ed25519 delegate key.** The SuiPay gateway does not support zkLogin or multisig delegate addresses for x402 settlement. If the agent pays through x402 on SuiPay, generate an Ed25519 key.
+- **x402 from a spend account requires an Ed25519 delegate key.** On the experimental spend account path for x402, the SuiPay gateway binds only Ed25519 delegate addresses and does not support zkLogin or multisig delegates. If the agent pays through x402 from a SuiPay spend account, generate an Ed25519 key.
 
 ## Sign transactions
 
@@ -176,13 +176,13 @@ An agent signs transactions the same way a wallet does, but without an approval 
 - **Sign and execute:** The agent builds a transaction, signs it, and submits it to a full node through the gRPC or GraphQL API. Use this flow when the agent pays its own gas.
 - **Sign only:** The agent builds and signs the transaction bytes, then hands them to someone else to submit. Use this flow for [sponsored transactions](/develop/transaction-payment/sponsor-txn), where the sponsor adds its own signature. Also use it for x402: the agent sends the signed transaction in a payment header, and the seller or its facilitator submits it. See [Offline Signing](/develop/transactions/transaction-auth/offline-signing) for the dual-signature flow.
 
-The SuiPay buyer package uses the sign-only flow for x402. It builds the payment transaction, signs the exact bytes, and returns the transaction and signature for the payment header:
+The SuiPay buyer package uses the sign-only flow for x402. Its `createNativeTransferSigner` function builds the payment transaction, signs the exact bytes, and returns the transaction and signature for the payment header.
 
-<ImportContent source="packages/buyer/src/native-transfer.ts" org="MystenLabs" repo="suipay" mode="code" fun="createNativeTransferSigner" />
+{/* TODO: Import code from MystenLabs/suipay/packages/buyer/src/native-transfer.ts: createNativeTransferSigner (repo private) */}
 
 Because nothing prompts the agent, limits must come from onchain authorization, not from the agent's own code. Spend through an [allowance](/onchain-finance/allowances) or an escrow grant so that the network enforces the cap, rate, and expiry on every payment, even if the agent misbehaves. Add offchain checks as an early warning, not as the only control. See [Production Hardening](/onchain-finance/agentic-payments/production-hardening) for kill switches and monitoring.
 
-For an agent that controls a large budget directly, consider a [multisig](/develop/transactions/transaction-auth/multisig) address that pairs the agent's key with an operator key. A 1-of-2 multisig lets the agent sign alone and lets the operator act from the same address in an emergency. Some payment services do not accept multisig spenders, including the SuiPay gateway for x402 settlement.
+For an agent that controls a large budget directly, consider a [multisig](/develop/transactions/transaction-auth/multisig) address that pairs the agent's key with an operator key. A 1-of-2 multisig lets the agent sign alone and lets the operator act from the same address in an emergency. Some payment paths do not accept multisig spenders, including SuiPay's spend account path for x402.
 
 ## Rotate an agent key
 

@@ -91,9 +91,9 @@ A successful submission response means a full node accepted the bytes. It does n
 
 To wait for finality and read the result, look up the transaction digest with gRPC `LedgerService.GetTransaction` or the GraphQL `Query.transaction` field ([Life of a Transaction](/develop/transactions/transaction-lifecycle#how-do-i-resend-or-verify-a-pending-transaction)). In the TypeScript SDK, `client.waitForTransaction` and `client.getTransaction` wrap the same lookup. Request the effects and the balance changes explicitly. With gRPC, include `effects` and `balance_changes` in the read mask ([Querying Data with gRPC](/develop/accessing-data/grpc/using-grpc#field-path-reference)). The [proposed x402 `exact` scheme for Sui](/onchain-finance/agentic-payments/x402-on-sui) makes the same requirement for facilitators: ask for balance changes when the RPC returns them only on request, and treat a missing set as a failure, not a match (Effects check section of [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
 
-SuiPay looks up a transaction by digest over gRPC and treats a not-found response as pending rather than failed:
+SuiPay looks up a transaction by digest over gRPC in `fetchGrpcTransaction`, and treats a not-found response as pending rather than failed. Its default lookup requests effects, events, and the transaction but not balance changes, so request balance changes as well when you verify a payment.
 
-<ImportContent source="packages/core/src/chain/grpc-finality.ts" org="MystenLabs" repo="suipay" mode="code" fun="fetchGrpcTransaction" />
+{/* TODO: Import code from MystenLabs/suipay/packages/core/src/chain/grpc-finality.ts: fetchGrpcTransaction (repo private) */}
 
 ## Check the execution status
 
@@ -153,7 +153,7 @@ So a not-found or timed-out transaction is not safe to retry with a new payment.
 
 To make these retries safe across crashes and concurrent workers, record each payment under an idempotency key before you submit it. See [Hardening Payment Agents for Production](/onchain-finance/agentic-payments/production-hardening#safe-retries-with-idempotency-keys).
 
-The `exact` scheme follows the same rule. When a facilitator's submission was acknowledged but it cannot establish finality, it returns `settlement_pending` with the digest, which allows the [resource server](/onchain-finance/agentic-payments/x402-on-sui#roles) a single automatic retry of the same signed transaction, not a new one (Settlement section of [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
+The `exact` scheme follows the same rule. When a facilitator's submission was acknowledged but it cannot establish finality, it can return `settlement_pending` with the digest, so the [resource server](/onchain-finance/agentic-payments/x402-on-sui#roles) can reconcile onchain before it retries the same signed transaction, never a new one (Settlement section of [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081)).
 
 ### Confirm that a pending transaction can no longer execute {#when-a-pending-transaction-can-no-longer-execute}
 

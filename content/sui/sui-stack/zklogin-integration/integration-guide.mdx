@@ -292,8 +292,6 @@ The service returns the salt as a decimal string. The SDK functions `jwtToAddres
 
 The salt's purpose is to disconnect the OAuth identifier (`sub`) from the onchain Sui address. Leaking the salt enables linking Web2 and Web3 identities but does not compromise fund control.
 
-{/* DRAFT: from sui#27423, pending review */}
-
 :::danger Do not keep salts only in browser storage in production
 
 Many zkLogin examples store the salt in browser `localStorage` for convenience. If the user clears site data, switches browsers or devices, or signs in from a private browsing window, the salt is gone and so is access to the address and every asset it holds. For production apps, keep the salt in a backend salt service (database mapping) or derive it from a master seed, and treat any browser copy as a cache only.
@@ -614,8 +612,6 @@ Cache the ephemeral key pair and zero-knowledge proof for the duration of the se
 - **Use session storage, not local storage** on browsers. Session storage clears automatically when the browser session ends.
 - **Never persist them** in an insecure location on any platform.
 - If an attacker compromises both the ephemeral private key and the zero-knowledge proof, the attacker can sign transactions on the user's behalf.
-
-{/* DRAFT: from sui#27423, pending review */}
 
 ## How do I renew a session before `maxEpoch`?
 

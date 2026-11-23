@@ -99,9 +99,9 @@ Pausing is reversible, so it is the right response while you investigate. Revoki
 
 Choose the narrowest level that contains the problem. Pause the grant when 1 agent key misbehaves, the policy when 1 service is the problem, and the account when you do not yet know the cause.
 
-The grant-level functions in the `spend_account` module check that the caller is the owner before they change the grant:
+The grant-level functions in the `spend_account` module (`pause_grant`, `resume_grant`, and `revoke_grant`) check that the caller is the owner before they change the grant.
 
-<ImportContent source="move/suipay/sources/spend_account.move" org="MystenLabs" repo="suipay" mode="code" fun="pause_grant,resume_grant,revoke_grant" />
+{/* TODO: Import code from MystenLabs/suipay/move/suipay/sources/spend_account.move: pause_grant, resume_grant, revoke_grant (repo private) */}
 
 ## Safe retries with idempotency keys
 

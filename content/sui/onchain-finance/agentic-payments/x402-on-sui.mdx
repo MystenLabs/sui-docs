@@ -197,9 +197,9 @@ The client builds one Sui transaction that credits `payTo` with exactly `amount`
 
 Verification looks only at the result. In the TypeScript SDK, `tx.balance()` chooses between the address balance and coins automatically ([Gasless stablecoin transfers](/develop/transaction-payment/gasless-stablecoin-transfers#how-txbalance-funds-a-transfer)).
 
-The SuiPay buyer package builds this transaction from the payment requirements. It splits exactly `amount` of `asset` from the payer's coins, transfers the result to `payTo`, and then inspects the built bytes before it returns them:
+The SuiPay buyer package builds a native transfer in `buildNativeTransferBytes` for SuiPay's own x402 dialect, not for the `exact` scheme. It splits `amount` from the payer's coins (from the gas coin for SUI), transfers it to `payTo`, and inspects the built bytes. It sets no expiration, so a facilitator that follows the `exact` scheme rejects it. See [SuiPay and the `exact` scheme](#suipay-and-the-exact-scheme).
 
-<ImportContent source="packages/buyer/src/native-transfer.ts" org="MystenLabs" repo="suipay" mode="code" fun="buildNativeTransferBytes" />
+{/* TODO: Import code from MystenLabs/suipay/packages/buyer/src/native-transfer.ts: buildNativeTransferBytes (repo private) */}
 
 ### Set the expiration {#expiration}
 
@@ -235,16 +235,16 @@ To use the facilitator's sponsor, the client builds the transaction with:
 
 The client signs as sender. At settlement, the facilitator co-signs the same bytes as gas owner and submits them with both signatures. The client does not contact the sponsor before signing: the requirements name the sponsor, and the gas payment is empty, so the sponsor selects no coins. For background on gas owners and sponsor signatures, see [Sponsored Transactions](/develop/transaction-payment/sponsor-txn).
 
-Whenever the gas owner is one of the facilitator's sponsors, the facilitator checks the following at verify and again at settle:
+Whenever the gas owner is one of the facilitator's sponsors and not the sender, whether or not the requirements name it, the facilitator checks the following at verify and again at settle:
 
 - The gas payment is empty, so the transaction cannot name the sponsor's coins.
-- The gas budget is at most `extra.maxGasBudget`.
+- The gas budget is at most the facilitator's own ceiling, the value it advertises as `extra.maxGasBudget`. The facilitator does not take the ceiling from the requirements, which the resource server builds.
 - No command uses `GasCoin`, which would spend the sponsor's funds.
 - No withdrawal draws from the sponsor, either as `Sponsor` or as `SenderAllowance` with the sponsor as funder.
 
 These checks apply only to sponsored payments. A payer that covers its own gas can use `GasCoin`.
 
-A sponsored transaction that Sui rejects for lack of funds costs the sponsor nothing. One that fails during execution costs up to its gas budget, so the sponsor should rate-limit each sender. The sponsor address should hold no other roles or permissions, because Move code can read `tx_context::sponsor()`.
+A sponsored transaction that Sui rejects for lack of funds costs the sponsor nothing. One that fails during execution costs up to its gas budget, so the sponsor should rate-limit each sender. The sponsor also pays storage for any objects the transaction creates, and the storage rebate goes to whoever later deletes them, so the sponsor should bound the storage it funds, for example by rejecting object creation. The sponsor address should hold no other roles or permissions, because Move code can read `tx_context::sponsor()`.
 
 ## Verify a payment
 
@@ -274,12 +274,12 @@ At settlement, the facilitator:
 1. Reruns the offline checks (verification steps 1 to 5).
 2. Checks that the current epoch is within `[minEpoch, maxEpoch]`. A full node returns the cached result of an executed transaction without checking its expiration again, so without this check the facilitator would have to keep its claim forever.
 3. Claims the transaction digest. If the digest is already claimed, it returns `duplicate_settlement`.
-4. Submits the transaction and waits for finality. For a sponsored payment, the sponsor co-signs first, or declines with `sponsor_rejected`.
+4. Submits the transaction and waits for finality. Unless this is a retry of its own pending submission, the facilitator first looks the digest up and rejects an executed transaction with `invalid_exact_sui_payload_already_executed`. For a sponsored payment, the sponsor co-signs first, or declines with `sponsor_rejected`.
 5. Requires a successful execution status and passes the effects check on the executed balance changes.
 
 On success, the facilitator returns a `SettlementResponse` with the digest as `transaction`, the `network`, and the `payer`.
 
-If submitting or waiting for finality fails, the facilitator looks the transaction up by digest and reports what actually happened. If the lookup also fails, it releases the claim and returns the digest in `transaction` so the resource server can follow up. When Sui acknowledged the submission but the facilitator could not establish finality, the facilitator returns `settlement_pending`, which allows the resource server one automatic retry of the same signed transaction. When the submission itself failed without an acknowledgment, it returns `transaction_failed`.
+If submitting or waiting for finality fails, the facilitator looks the transaction up by digest and reports what actually happened. If the outcome still cannot be established, the transaction might yet execute, so the facilitator can return `settlement_pending` with the digest in `transaction`, and the resource server reconciles onchain before it retries. The facilitator records the transaction as its own pending submission so it recognizes the retry.
 
 ### Settlement deduplication
 
@@ -290,7 +290,7 @@ Sui executes a transaction at most once, but submitting an executed transaction 
 - Checking and recording a claim is atomic across concurrent settle requests.
 - The facilitator keeps the claim only if settlement succeeds. A transaction that executed and failed returns the same failure when submitted again, so releasing its claim is safe.
 - A successful claim is kept until at least 1 epoch after `maxEpoch` ends.
-- When several processes serve settlement, they share one claim store. A facilitator whose settle endpoint can be called without verify should use a durable claim store.
+- When several processes serve settlement, they share one claim store. Claims should survive restarts for as long as they are kept.
 
 `duplicate_settlement` means the payment has already settled, or a settlement for it is in progress. Funds are not reserved between verify and settle, so if the payer spends them elsewhere in between, settlement fails even if the resource was already served.
 
@@ -300,12 +300,12 @@ Sui executes a transaction at most once, but submitting an executed transaction 
 | --- | --- | --- |
 | `invalid_exact_sui_payload_invalid_expiration` | verify, settle | Expiration missing or malformed, span exceeds 1 epoch, or (at settle) the current epoch is outside the window. |
 | `invalid_exact_sui_payload_sponsorship_rejected` | verify, settle | A sponsored transaction fails the sponsorship checks. |
-| `invalid_exact_sui_payload_already_executed` | verify | The transaction has already executed. |
+| `invalid_exact_sui_payload_already_executed` | verify, settle | The transaction has already executed. |
 | `invalid_exact_sui_payload_transfer_mismatch` | verify | Simulated effects do not credit `payTo` with exactly `amount`. |
 | `sponsor_rejected` | settle | The sponsor declined the transaction. |
 | `duplicate_settlement` | settle | The transaction has already settled, or a settlement for it is in progress. |
-| `settlement_pending` | settle | Submission was acknowledged, but finality could not be established and the lookup failed. |
-| `transaction_failed` | settle | Execution failed or the outcome is unknown. |
+| `settlement_pending` | settle | The outcome of a submitted transaction could not be established. |
+| `transaction_failed` | settle | Execution failed, balance changes are missing, or a signature check or RPC call errored. |
 | `settlement_effects_mismatch` | settle | Executed effects do not credit `payTo` with exactly `amount`. |
 
 For the full list, see the reason code appendix in [x402 PR #3081](https://github.com/x402-foundation/x402/pull/3081).
