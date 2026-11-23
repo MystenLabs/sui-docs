@@ -335,15 +335,21 @@ Both take an `Auth`, and both abort with `EInvalidOwner` when owner authority do
 
 Account version 2 adds 2 permissionless calls that fold a `Coin<T>` sent to the account as an owned object into stored balance, for a sender that can only transfer a coin to an address:
 
-```move title='packages/account/sources/account.move'
-public fun receive_coin<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
-public fun receive_coin_at_account_id<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
-```
+<ImportContent
+	source="packages/account/sources/account.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="receive_coin,receive_coin_at_account_id"
+	signatureOnly
+	noComments
+/>
 
-- **`receive_coin`:** Receives a coin sent to the wrapper address, the account's `receive_address`. It takes no `Auth`, because value only enters the account, and only the wrapper the coin was addressed to can receive it. The wrapper address derives from the owner, so a coin can arrive before the account exists and wait until the owner creates it, and the creating transaction can receive it before sharing the wrapper.
+- **`receive_coin`:** Receives a coin sent to the wrapper address, the account's `receive_address`. It takes no `Auth`, because value only enters the account, and only the wrapper that the sender addressed the coin to can receive it. The wrapper address derives from the owner, so a coin can arrive before the account exists and wait until the owner creates it, and the creating transaction can receive it before sharing the wrapper.
 - **`receive_coin_at_account_id`:** Receives a coin sent to the canonical account ID instead. Send to the wrapper address when you can, because `balance::send_funds` reaches only that one.
 
-A `Receiving` cannot reveal its owner, so pick the function from the coin's owner, and the wrong one aborts. The coin must already exist when the transaction is built, so a coin's creation and its receipt take 2 transactions. Both emit `Deposited`. Call them through the account version 2 call target on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#packages), and in the SDK through `AccountContract.receiveCoin` and `receiveCoinAtAccountId`, which version 2.10.0 adds.
+A `Receiving` cannot reveal its owner, so pick the function from the coin's owner, and the wrong one aborts. The coin must already exist when you build the transaction, so a coin's creation and its receipt take 2 transactions. Both emit `Deposited`. Call them through the account version 2 call target on [Contract Information](/onchain-finance/deepbook/deepbook-predict/contract-information#packages), and in the SDK through `AccountContract.receiveCoin` and `receiveCoinAtAccountId`, which version 2.10.0 adds.
 
 The SDK's `client.predict.tx.deposit(owner, amountUsdc)` sources the quote coin from coin objects or the address balance and can create the account in the same block with `{ create: true }`. Its `client.predict.tx.withdraw(owner, amountUsdc)` sends the result to the owner's address balance by default, or returns a coin object with `{ toCoinObject: true }`.
 
@@ -381,13 +387,13 @@ Predict does not store positions in its own objects. It attaches a `PredictData`
 | **Struct** | **Field** | **Type** | **Description** |
 |---|---|---|---|
 | `PredictData` | `positions` | `Table<PositionKey, Position>` | Open positions, scoped by expiry market. |
-| `PredictData` | `builder_code_id` | `Option<ID>` | Builder code that `set_builder_code` attached. No fee reads it from protocol version 5. |
+| `PredictData` | `builder_code_id` | `Option<ID>` | Builder code that `set_builder_code` attached. Starting with protocol version 5, no fee reads it. |
 | `PositionKey` | `expiry_market_id` | `ID` | The market that minted the order. |
 | `PositionKey` | `order_id` | `u256` | The packed order ID. |
 | `Position` | `root_id` | `u256` | Original mint's order ID, carried forward across partial-close replacements. |
 | `Position` | `opened_at_ms` | `u64` | Onchain time at which the position opened, also carried forward. |
 
-Every trade is a queued order, and a queued fill never enters this table. The filled position stays in the market's `MarketQueue` as an Open record owned by the account, so `has_position` and `read.positions` do not see it, and the account follows it by its queue record ID instead. Positions that immediate mints recorded in the table before the delayed-execution cutover stay there. `redeem_settled` paid them through protocol version 4, and protocol version 5 retires it, as [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. [Open records and early sells](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#open-records) covers the queue side.
+Every trade is a queued order, and a queued fill never enters this table. The filled position stays in the market's `MarketQueue` as an Open record owned by the account, so `has_position` and `read.positions` do not see it, and the account follows it by its queue record ID instead. Positions that immediate mints recorded in the table before the delayed-execution cutover stay there. `redeem_settled` paid them through protocol version 4, and protocol version 5 retires it, as [Retired settled redemption](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. [Open records and early sells](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#open-records) covers the queue side.
 
 An order ID alone does not identify a position. It carries the quantity and the tick range but not the market, so only the `(expiry_market_id, order_id)` pair binds a position to its market. Never infer market facts from an order ID.
 

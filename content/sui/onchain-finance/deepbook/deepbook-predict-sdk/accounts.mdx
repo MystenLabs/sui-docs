@@ -190,11 +190,11 @@ The returned `number` is a display value, and above `2^53` raw units it loses pr
 
 ## Builder code functions {#builder-codes}
 
-Through protocol version 4, a builder code attached to the account added a builder fee to the account's later trades. From protocol version 5 no fee reads the attachment: an order pays a builder fee only when it names a code, as [Name a builder fee](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees) describes, and the 2 builders below only attach and clear the code. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) explains the fee and who earns it. Both builders mint an `Auth` from the sender, so the account owner must sign, and both emit `BuilderCodeSet`. [Builder codes](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager) covers the Move functions and the event.
+Through protocol version 4, a builder code attached to the account added a builder fee to the account's later trades. Starting with protocol version 5, no fee reads the attachment: an order pays a builder fee only when it names a code, as [Name a builder fee](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees) describes, and the 2 builders below only attach and clear the code. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) explains the fee and who earns it. Both builders mint an `Auth` from the sender, so the account owner must sign, and both emit `BuilderCodeSet`. [Set or unset a builder code](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#builder-codes) covers the Move functions and the event.
 
 ### `tx.setBuilderCode` {#set-builder-code}
 
-Use `tx.setBuilderCode` to attach a builder code to the account. It returns a `Transaction` that calls `predict_account::set_builder_code`, which lives in the Predict package rather than in the account package. No fee reads the attachment from protocol version 5.
+Use `tx.setBuilderCode` to attach a builder code to the account. It returns a `Transaction` that calls `predict_account::set_builder_code`, which lives in the Predict package rather than in the account package. Starting with protocol version 5, no fee reads the attachment.
 
 It takes these parameters:
 
@@ -439,7 +439,7 @@ It takes these parameters:
 
 ### `AccountContract.receiveCoin` {#account-contract-receive-coin}
 
-Use `receiveCoin` to move a `Coin<T>` that a sender transferred to the account's wrapper address into the account's stored balance, through account version 2's permissionless `receive_coin`. Anyone can submit it, because value only enters the account the coin was addressed to, and the coin can arrive before the account exists. `receiveCoinAtAccountId` does the same for a coin sent to the canonical account ID, and calling the wrong one for where the coin sits aborts with `EUnableToReceiveObject`.
+Use `receiveCoin` to move a `Coin<T>` that a sender transferred to the account's wrapper address into the account's stored balance, through account version 2's permissionless `receive_coin`. Anyone can submit it, because value only enters the account that the sender addressed the coin to, and the coin can arrive before the account exists. `receiveCoinAtAccountId` does the same for a coin sent to the canonical account ID, and calling the wrong one for where the coin sits aborts with `EUnableToReceiveObject`.
 
 It takes these parameters:
 
@@ -447,7 +447,7 @@ It takes these parameters:
 - `coin`: The received coin's object ID, or a `Receiving` input.
 - `coinType`: The fully qualified type of that coin.
 
-Both throw when the configuration has no `accountPackageIdLatest`, the account version 2 call target. Versions 2.10.0 and 2.11.0 record it for Testnet only, so on Mainnet use version 2.13.0 or later. [Balances and custody](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#deposit-and-withdraw) covers the Move calls.
+Both throw when the configuration has no `accountPackageIdLatest`, the account version 2 call target. Versions 2.10.0 and 2.11.0 record it for Testnet only, so on Mainnet use version 2.13.0 or later. [Deposit and withdraw](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#deposit-and-withdraw) covers the Move calls.
 
 ### `AccountContract.withdrawFunds` {#account-contract-withdraw-funds}
 

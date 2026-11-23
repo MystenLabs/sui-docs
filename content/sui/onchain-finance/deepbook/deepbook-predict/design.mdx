@@ -104,7 +104,7 @@ Both the wrapper and the account address derive from the owner address through t
 
 The 2 derived addresses are not interchangeable, and each surface takes exactly one of them. Every Move call takes the shared `AccountWrapper` object, so the wrapper ID is the onchain handle. The canonical account ID is the identity everything else keys on: app data hangs off it, event payloads carry it as `account_id`, and indexed read services accept it and nothing else. `client.predict.wrapperIdFor(owner)` derives the first, and `SessionsContract.deriveAccountId(owner)` on the `@mysten/deepbook-v3/sessions` subpath derives the second.
 
-Predict attaches its own state to that account under the `PredictApp` namespace: a table of open positions keyed by the pair of expiry market ID and order ID, plus a builder code that `set_builder_code` attaches, which no fee reads from protocol version 5. Positions are not standalone objects, so read them from the account with `read.positions`. From protocol version 4, a queued fill never enters that table: the position stays in the market's queue as an Open record owned by the account, so follow it by its queue record ID instead.
+Predict attaches its own state to that account under the `PredictApp` namespace: a table of open positions keyed by the pair of expiry market ID and order ID, plus a builder code that `set_builder_code` attaches. Starting with protocol version 5, no fee reads that code. Positions are not standalone objects, so read them from the account with `read.positions`. From protocol version 4, a queued fill never enters that table: the position stays in the market's queue as an Open record owned by the account, so follow it by its queue record ID instead.
 
 Account mutation runs on an `Auth` value that `load_account_mut` consumes, and that value comes from one of 2 sources:
 
@@ -150,7 +150,7 @@ Minting returns one packed `u256` order ID that encodes the quantity in lots, bo
 
 Pricing is transaction-local. `expiry_market::load_live_pricer` takes the protocol configuration, the propbook registry, and the 3 oracle objects, then returns a pricer bound to that one market. The pricer has no `store` ability, so every transaction that quotes, mints, or redeems live builds a fresh one. The pool flush is the one place a pricer outlives its transaction, and it does so as a `FrozenPricer` that only the `plp` module can create or read.
 
-The pricer resolves a forward, then reads each range's probability off the SVI curve as the difference between its 2 strike boundaries. While `use_pyth_spot_for_forward` is on, which is the shipped default, a fresh usable Pyth spot anchors the forward and the Block Scholes basis scales it. The basis is the latest Block Scholes forward for that expiry divided by the Block Scholes spot that carries the same source timestamp, which the pricer looks up among the 10 most recent spots the value store retains. When no retained spot matches, live pricing aborts with `EBlockScholesPriceUnavailable`, whichever forward source is active. A missing, stale, or unusable Pyth spot falls back to the Block Scholes forward for that expiry. A position's live value is its quantity multiplied by its range probability, and a winning position settles at its full quantity. Mint admission holds the quoted range probability inside a per-market band, which each market copies from the protocol template at creation, or narrower when the market's creator asks for a narrower band, and for a two-sided range it also holds the probability that settlement ends above the lower strike and the probability that it ends at or below the higher strike inside that band. It also requires a minimum premium, so a quote at the extreme edge of the distribution fails rather than rounding. A mint whose all-in cost would exceed its own maximum payout aborts with `EMintCostAboveMaxPayout`.
+The pricer resolves a forward, then reads each range's probability off the SVI curve as the difference between its 2 strike boundaries. While `use_pyth_spot_for_forward` is on, which is the shipped default, a fresh usable Pyth spot anchors the forward and the Block Scholes basis scales it. The basis is the latest Block Scholes forward for that expiry divided by the Block Scholes spot that carries the same source timestamp, which the pricer looks up among the 10 most recent spots the value store retains. When no retained spot matches, live pricing aborts with `EBlockScholesPriceUnavailable`, whichever forward source is active. A missing, stale, or unusable Pyth spot falls back to the Block Scholes forward for that expiry. A position's live value is its quantity multiplied by its range probability, and a winning position settles at its full quantity. Mint admission holds the quoted range probability inside a per-market band. Each market copies that band from the protocol template at creation, or takes a narrower one when the market's creator asks for it. For a two-sided range, admission also holds 2 more probabilities inside that band: the probability that settlement ends above the lower strike, and the probability that it ends at or below the higher strike. It also requires a minimum premium, so a quote at the extreme edge of the distribution fails rather than rounding. A mint whose all-in cost would exceed its own maximum payout aborts with `EMintCostAboveMaxPayout`.
 
 Live trading has a hard stop before expiry. `no_trade_window_ms` sets a window, 15 seconds on both deployments. No queued order's price instant might fall inside it, and with the queue's own margin new orders stop about 16 seconds before expiry. Live pricing aborts once the expiry itself has passed, and settlement and reference tick recording ignore the window. In a market's final seconds the entry probability converges hard, so the window removes trades that would fill at a converged price.
 
@@ -186,7 +186,7 @@ An admin sets fee bands with `protocol_config::set_template_fee_bands`, which ta
 - **The price:** The band reads the price of the contract being traded, the range probability that sets its premium or redeem value, not the probabilities of its legs.
 - **What it multiplies:** The whole trading fee, after the per-unit floor and the expiry ramp, on mints and early sells alike, at the order's committed tick.
 - **What follows from it:** The referral share and the sponsor subsidy grow with the larger fee, the subsidy only up to the reserve the order's commit set aside, and on a mint the larger fee counts toward the rule that the all-in cost cannot exceed the quantity. An early sell's fee stays capped at its redeem value.
-- **Which markets:** Each market copies the template when it is created, like the rest of its fee policy, so a change reaches only markets created afterwards. A market created before any table was set pays 1x at every price.
+- **Which markets:** Each market copies the template at creation, like the rest of its fee policy, so a change reaches only markets created afterwards. A market created before an admin set any table pays 1x at every price.
 
 No public function returns a market's copy, and `MarketCreated` does not carry it, so a market's bands are the table of the last `FeeBandsUpdated` before its creation. Neither network has a table set, so every market pays 1x.
 
@@ -285,7 +285,7 @@ A referred account's mint that names a builder pays both independently. [Builder
 
 A builder code lets an app, wallet, or bot that builds orders for Predict traders earn a fee on the orders it builds. The app names its code and a fee per contract on each order, the order pays that fee on top of the trading fee when it fills, and the fee collects at the code's own address until the code's owner claims it. Placement caps the fee and records the code and the capped fee in the order's receipt, so the fill charges exactly what placement recorded.
 
-Builder codes and referrals answer different needs. A referral pays out of protocol fees at no cost to the trader, and it is fixed when the account is created. A builder fee is an extra charge the trader pays, only on the orders that name the code. [Referrals, builder codes, and DeepBook spot referrals](#referrals-vs-builder-codes) compares the two.
+Builder codes and referrals answer different needs. A referral pays out of protocol fees at no cost to the trader, and it never changes after the account's creation. A builder fee is an extra charge the trader pays, only on the orders that name the code. [Referrals, builder codes, and DeepBook spot referrals](#referrals-vs-builder-codes) compares them.
 
 ### Create a code {#builder-code-create}
 
@@ -301,7 +301,7 @@ Each queued entrypoint has a `_with_builder` version that takes the `BuilderCode
 
 A session key names a builder only within the approval the account owner gave that session: one code and a maximum fee per contract, as [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#queued-wrappers) describes.
 
-`predict_account::set_builder_code` and `predict_account::unset_builder_code` still attach a code to an account and remove it, and they still emit `BuilderCodeSet`, but no fee reads the attached code from protocol version 5. An account is shared by every app its owner uses, so the code that pays is the one each order names. [Builder codes](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#builder-codes) gives both signatures.
+`predict_account::set_builder_code` and `predict_account::unset_builder_code` still attach a code to an account and remove it, and they still emit `BuilderCodeSet`, but starting with protocol version 5, no fee reads the attached code. An account is shared by every app its owner uses, so the code that pays is the one each order names. [Set or unset a builder code](/onchain-finance/deepbook/deepbook-predict/contract-information/predict-manager#builder-codes) gives both signatures.
 
 ### What the builder earns {#builder-fee}
 
@@ -311,7 +311,7 @@ On each fill of an order that names a code, the protocol charges:
 builder_fee = floor(quantity * min(builder_fee_per_contract, builder_fee_cap) / 1e9)
 ```
 
-The order names `builder_fee_per_contract`, a fraction of a contract's 1 USDC payout in 1e9 scaling, so 5 cents is `50_000_000`. `builder_fee_cap` on `ProtocolConfig` caps it for every order. It defaults to 5 cents per contract, an admin can set it anywhere from 0 to the whole payout with `protocol_config::set_builder_fee_cap`, and each change emits `BuilderFeeCapUpdated`. A fee above the cap is charged at the cap rather than refused. Admission reads the cap, so a change reaches the next order, and an order already waiting keeps the fee it was admitted with. Read the live value with `protocol_config::builder_fee_cap`.
+The order names `builder_fee_per_contract`, a fraction of a contract's 1 USDC payout in 1e9 scaling, so 5 cents is `50_000_000`. `builder_fee_cap` on `ProtocolConfig` caps it for every order. It defaults to 5 cents per contract, an admin can set it anywhere from 0 to the whole payout with `protocol_config::set_builder_fee_cap`, and each change emits `BuilderFeeCapUpdated`. Admission lowers a fee above the cap to the cap rather than refusing the order. Admission reads the cap, so a change reaches the next order, and an order already waiting keeps the fee its admission recorded. Read the live value with `protocol_config::builder_fee_cap`.
 
 Three details decide what a trade pays:
 
@@ -319,7 +319,7 @@ Three details decide what a trade pays:
 - **It does not depend on the trading fee.** Neither the sponsor subsidy nor a fee band changes it, and it enters neither the referral basis nor the pool.
 - **An early sell has a second cap.** The builder fee on a sell cannot exceed the redeem value left after the trading fee, so a sell of a nearly worthless position can return nothing and still fill.
 
-A settlement payout and a refund pay no builder fee, because the fee is charged only when an order fills.
+A settlement payout and a refund pay no builder fee, because the protocol charges the fee only when an order fills.
 
 For example, an order that names 2 cents per contract on a 100-contract mint pays 2 USDC of builder fee, whatever its trading fee. An order that names 10 cents pays 5 USDC while the cap is 5 cents.
 
@@ -339,12 +339,12 @@ Five events cover a code's life:
 | **Event** | **Fields** | **Emitted** |
 | --- | --- | --- |
 | `builder_code_events::BuilderCodeCreated` | `builder_code_id`, `owner`, `builder_code_index` | Once, when the code is created. |
-| `builder_code_events::BuilderCodeSet` | `account_id`, `owner`, `builder_code_id` | On each attach and each removal. `owner` is the account's owner, and `builder_code_id` is `none` after a removal. No fee reads the attachment from protocol version 5. |
+| `builder_code_events::BuilderCodeSet` | `account_id`, `owner`, `builder_code_id` | On each attach and each removal. `owner` is the account's owner, and `builder_code_id` is `none` after a removal. Starting with protocol version 5, no fee reads the attachment. |
 | `order_events::OrderMinted` | `builder_fee`, `builder_code_id` | On each mint fill. |
 | `order_events::LiveOrderRedeemed` | `builder_fee`, `builder_code_id` | On each early sell fill. |
 | `builder_code_events::BuilderFeesClaimed` | `builder_code_id`, `owner`, `amount` | On each claim that collects a non-zero amount. |
 
-On the 2 order events, `builder_code_id` names the code the order named, and it is `none` when the order named none. From protocol version 5 it is present even when `builder_fee` is 0, so attribution covers apps that charge nothing. Through protocol version 4 it named the code charged and was `none` whenever `builder_fee` was 0. To total what a code has earned, sum `builder_fee` over the order events whose `builder_code_id` is that code. That sum counts fees charged rather than fees delivered, on protocol version 5 as on version 4: a fill never sends USDC to an address on USDC's deny list, or to any address while USDC is globally paused, so a builder fee owed to a denied address stays in the market's cash while the events still report it, and the same holds for a referral fee. Referral attribution behaves differently: `OrderMinted.referrer_account_id` is present even when the referral payment is 0.
+On the 2 order events, `builder_code_id` names the code the order named, and it is `none` when the order named none. From protocol version 5 it is present even when `builder_fee` is 0, so attribution covers apps that charge nothing. Through protocol version 4 it named the code charged and was `none` whenever `builder_fee` was 0. To total what a code has earned, sum `builder_fee` over the order events whose `builder_code_id` is that code. That sum counts fees charged rather than fees delivered, on protocol version 5 as on version 4. A fill never sends USDC to an address on USDC's deny list, or to any address while USDC is globally paused. A builder fee owed to a denied address therefore stays in the market's cash while the events still report it, and the same holds for a referral fee. Referral attribution behaves differently: `OrderMinted.referrer_account_id` is present even when the referral payment is 0.
 
 In the SDK, `MintReceipt` and `RedeemReceipt` carry `builderCodeId` and `fees.builder`, with the exact integer in `raw.builderFee`, and `decode.builderCode` reads `BuilderCodeSet`.
 

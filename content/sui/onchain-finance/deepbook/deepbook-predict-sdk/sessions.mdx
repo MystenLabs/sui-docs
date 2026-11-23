@@ -292,7 +292,7 @@ Both networks run Predict protocol version 5 and Sessions protocol version 4, so
 
 ### Queue orders as the session key {#queue-as-session}
 
-4 builders place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3 or later. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
+The SDK has 4 builders that place queued orders as the session key: `enqueueExactQuantity`, `enqueueExactAmount`, `enqueueExactCost`, and `enqueueRedeemOpen`. Each returns a `(tx: Transaction) => TransactionResult` function whose result is the new queue record ID, a `u64`, and each needs Sessions protocol version 3 or later. None takes a pricer, because placement reads the oracle objects itself, and every amount is a raw onchain integer, as for the immediate builders.
 
 Each takes a `SessionsQueuedOrderTarget` that names the market, the owner's wrapper, the order-flow package's `orderDesk` and `queueRegistry`, the Predict `protocolConfig`, the `oracleRegistry`, and the market's 3 oracle objects. Take the order-flow IDs from `client.predict.cfg.objects` and the oracle objects from `client.predict.cfg.underlyings`. `queueId` defaults to the ID derived from `queueRegistry` and the market.
 
@@ -321,7 +321,7 @@ To name a builder fee as the session key, call the generated `sessionsMoveCalls.
 
 ### `redeemSettled` {#redeem-settled}
 
-`redeemSettled` builds the session `redeem_settled` wrapper, which aborts through Predict on protocol version 5, because Predict retires settled redemption, as [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. The queue's settlement walk pays every filled position, so a session never needs to claim one. It returns a `(tx: Transaction) => void` function and took no pricer and no quantity.
+`redeemSettled` builds the session `redeem_settled` wrapper, which aborts through Predict on protocol version 5, because Predict retires settled redemption, as [Retired settled redemption](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. The queue's settlement walk pays every filled position, so a session never needs to claim one. It returns a `(tx: Transaction) => void` function and takes no pricer and no quantity.
 
 It takes these parameters:
 
@@ -373,7 +373,7 @@ The following example builds an owner-signed revocation, reads a session's expir
 - `cancelLiveOrders`: Cancels several DeepBook spot orders.
 - `withdrawSettledAmounts`: Sweeps settled DeepBook spot proceeds into account custody.
 
-They need Sessions version 4, which both networks run. On Mainnet, use version 2.13.0 or later of the SDK. `placeLimitOrder` and `placeMarketOrder` also need the pool on the spot pool allowlist, and abort with `session_config::EPoolNotAllowed` otherwise, while the cancels and the settled withdrawal work on any pool. The generated `sessionConfigMoveCalls.allowedPools` reads the list. Whether they succeed also depends on a DeepBook registry authorization, which both networks' registries hold, and [the Sessions page](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
+They need Sessions version 4, which both networks run. On Mainnet, use version 2.13.0 or later of the SDK. `placeLimitOrder` and `placeMarketOrder` also need the pool on the spot pool allowlist, and abort with `session_config::EPoolNotAllowed` otherwise, while the cancels and the settled withdrawal work on any pool. The generated `sessionConfigMoveCalls.allowedPools` reads the list. Whether they succeed also depends on a DeepBook registry authorization, which both networks' registries hold, and [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) covers how to check it.
 
 Each generated function takes an options object with these fields:
 

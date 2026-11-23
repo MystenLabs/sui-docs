@@ -195,7 +195,7 @@ The following sample sells an Open record early, offers a manual refund only for
 
 ### `read.quoteMint` {#quote-mint}
 
-Use `read.quoteMint` to quote an exact payout quantity. It returns a `Promise<MintQuote>`, priced through `quote_mint_for_account`, which charges no builder fee on protocol version 5. An exact-quantity quote is not capped by the account's balance. It takes the `owner`, the market descriptor `m`, and an object with the payout `quantity`, a whole lot of 0.01 USDC.
+Use `read.quoteMint` to quote an exact payout quantity. It returns a `Promise<MintQuote>`, priced through `quote_mint_for_account`, which charges no builder fee on protocol version 5. The account's balance does not cap an exact-quantity quote. It takes the `owner`, the market descriptor `m`, and an object with the payout `quantity`, a whole number of 0.01 USDC lots.
 
 <ImportContent source="packages/deepbook-v3/src/predict/client.ts" mode="code" org="MystenLabs" repo="ts-sdks" branch="26f6fdfae9604d08f27ebe150f1533fb95800422" lines="2261-2265" />
 
@@ -238,9 +238,9 @@ For a preview that costs no chain call at all, [Predict Cost SDK](/onchain-finan
 
 ### `tx.claimSettled` {#claim-settled}
 
-`tx.claimSettled` builds the owner-authorized `redeem_settled` for a position held in the account, which only an immediate mint from before the delayed-execution cutover created. Protocol version 5 retires `redeem_settled`, so the transaction it builds aborts with `EDelayedExecutionRequired` on both networks, as [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. Through protocol version 4 it worked this way, and it returns a `Promise<Transaction>`. A settled claim always closes the order in full, so the builder takes no quantity, and the order ID identifies the position, so it takes no side or strike. The payout is the full quantity when the settlement price lands inside the position's range and 0 otherwise. It does not pay a queued fill, which the queue's settlement walk pays instead.
+`tx.claimSettled` builds the owner-authorized `redeem_settled` for a position held in the account, which only an immediate mint from before the delayed-execution cutover created. Protocol version 5 retires `redeem_settled`, so the transaction it builds aborts with `EDelayedExecutionRequired` on both networks, as [Retired settled redemption](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position) describes. Through protocol version 4 it worked this way, and it returns a `Promise<Transaction>`. A settled claim always closes the order in full, so the builder takes no quantity, and the order ID identifies the position, so it takes no side or strike. The payout is the full quantity when the settlement price lands inside the position's range and 0 otherwise. It does not pay a queued fill, which the queue's settlement walk pays instead.
 
-Before settlement the claim aborted with `EMarketNotSettled`, and expiry alone does not settle a market. Settlement runs through the permissionless `expiry_market::try_settle`, which the SDK does not build.
+Through protocol version 4, a claim before settlement aborted with `EMarketNotSettled`, and expiry alone does not settle a market. Settlement runs through the permissionless `expiry_market::try_settle`, which the SDK does not build.
 
 It takes these parameters:
 

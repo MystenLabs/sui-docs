@@ -84,7 +84,7 @@ The Mainnet publish comes from DeepBookV3 source commit [`7b169bde`](https://git
 An integration built for protocol version 4 meets these differences:
 
 - **Builder fees:** An order pays a builder fee only when it names a `BuilderCode` and a fee per contract through a `_with_builder` entrypoint, capped at `builder_fee_cap`. A code attached to the account no longer affects fees, and the account quotes charge no builder fee. See [Name a builder fee](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#builder-fees).
-- **Settled redemption:** `redeem_settled`, `redeem_settled_permissionless`, and the Sessions `redeem_settled` wrapper always abort, and the settled-redeem keeper allowlist setters abort with `ESettledRedeemRetired`. See [Redeem a position](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position).
+- **Settled redemption:** `redeem_settled`, `redeem_settled_permissionless`, and the Sessions `redeem_settled` wrapper always abort, and the settled-redeem keeper allowlist setters abort with `ESettledRedeemRetired`. See [Retired settled redemption](/onchain-finance/deepbook/deepbook-predict/contract-information/predict#redeem-a-position).
 - **Fees:** A market created after an admin sets fee bands charges a multiple of the trading fee inside them. See [Fee bands](/onchain-finance/deepbook/deepbook-predict/design#fee-bands).
 - **Cadences:** Cadence IDs index a table that `registry::add_cadence` can extend past the 6 built-in cadences, so read the periods with `registry::cadence_periods` rather than hardcoding 6. See [Registry](/onchain-finance/deepbook/deepbook-predict/contract-information/registry#cadence-configuration).
 - **Entry bands:** A market's entry band can be narrower than the template, so read each market's own band. See [Market creation](/onchain-finance/deepbook/deepbook-predict/contract-information/registry#market-creation).
@@ -127,11 +127,11 @@ A Move package upgrade publishes at a new address and keeps its original one. Th
 - **Call target:** the latest published address. Every `moveCall` target, and every `Auth` or capability argument resolved against the package, uses it.
 - **Original ID:** the address of the package's first publish. Every type tag keeps it forever, so struct types, event type prefixes, the PLP coin type, and dynamic-field keys all derive from the original ID, never from the call target.
 
-A type that a later version introduced is the exception: its type tag carries the defining ID of the version that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` version that introduced them: the Testnet version 5 address `0x0654ecbe…` and the Mainnet version 4 address `0x98235c58…`. The types that protocol version 5 added, such as `config_events::FeeBandsUpdated`, carry the Mainnet version 5 call target, `0xb0aaafe0…`, while Testnet introduced them across several rehearsal publishes. The version numbers do not line up across networks, so check the defining ID on each one.
+A type that a later publish introduced is the exception: its type tag carries the defining ID of the publish that introduced it. The types and events that protocol version 4 added to `predict`, such as `config_events::OrderFlowUpdated`, carry the address of the `predict` publish that introduced them: the address of Testnet publish 5, `0x0654ecbe…`, and of Mainnet publish 4, `0x98235c58…`. The types that protocol version 5 added, such as `config_events::FeeBandsUpdated`, carry the address of Mainnet publish 5, `0xb0aaafe0…`, while Testnet introduced them across several rehearsal publishes. The publish numbers do not line up across networks, so check the defining ID on each one.
 
-The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` version that defines the delayed-execution types. A Mainnet integration needs version 2.13.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
+The SDK carries both: `packages.predict` and `sessionsPackageId` are the call targets, `packages.predictV1` and `sessionsPackageIdV1` the original IDs, and `packages.predictDelayedExecution` is the `predict` publish that defines the delayed-execution types. A Mainnet integration needs version 2.13.0 or later, as [DeepBook Predict SDK](/onchain-finance/deepbook/deepbook-predict-sdk#client) explains.
 
-The distinction is easy to get wrong in the direction that fails silently rather than loudly. A call sent to an original ID reaches the version 1 code, which the version gate refuses for every gated function, because each network's watermark is 5. Only the few ungated calls, such as the builder-code setters and the fee claim, still run there. A type tag built from a call target, in turn, names a type that does not exist at all.
+Mixing up the 2 IDs is an easy mistake, and one direction of it fails without an error. A call sent to an original ID reaches the version 1 code, which the version gate refuses for every gated function, because each network's watermark is 5. Only the few ungated calls, such as the builder-code setters and the fee claim, still run there. A type tag built from a call target, in turn, names a type that does not exist at all.
 
 :::caution
 
@@ -162,7 +162,7 @@ The deployment manifest is the stable identity record. It names the chain, the s
 
 ### Mainnet packages {#packages}
 
-Predict is 9 packages rather than one. Move call targets, event type prefixes, and the PLP coin type all derive from these IDs. Every package except `fixedMath`, `deepbookCoreAccount`, and `usdc` has been upgraded here, so each carries 2 addresses: call the **call target**, and build every type tag from the **original ID**. For `fixedMath`, `deepbookCoreAccount`, and `usdc` the 2 columns coincide. The `usdc` entry is Circle's native USDC package, which Predict links against rather than publishes:
+Predict is 9 packages rather than 1. Move call targets, event type prefixes, and the PLP coin type all derive from these IDs. Every package except `fixedMath`, `deepbookCoreAccount`, and `usdc` has an upgrade on this network, so each carries 2 addresses: call the **call target**, and build every type tag from the **original ID**. For `fixedMath`, `deepbookCoreAccount`, and `usdc` the 2 columns coincide. The `usdc` entry is Circle's native USDC package, which Predict links against rather than publishes:
 
 | **Package** | **Call target** | **Original ID** | **Contents** |
 | --- | --- | --- | --- |
@@ -176,7 +176,7 @@ Predict is 9 packages rather than one. Move call targets, event type prefixes, a
 | `sessions` | `0x6069298c3d0d2e435e6621a19669f66b242baeaaaed27365943d53dc6c1d9b42` | `0x9a068beffa019ae756f4a6d2611e9899d3c6dd888812dd9eca87535d2ac55e2a` | Session support, including the queued-order wrappers |
 | `usdc` | `0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7` | Same | Circle native USDC, linked as an existing dependency |
 
-Every upgrade kept its original ID, so every object, position, account, and session grant created before them stays valid, and the PLP coin type below is unchanged. The delayed-execution types and events that `predict` protocol version 4 introduced carry the version 4 call target, `0x98235c58…`, as their defining ID, and the types protocol version 5 introduced carry the version 5 call target, `0xb0aaafe0…`.
+Every upgrade kept its original ID, so every object, position, account, and session grant created before them stays valid, and the PLP coin type below is unchanged. The delayed-execution types and events that `predict` protocol version 4 introduced carry the address of publish 4, `0x98235c58…`, as their defining ID, and the types protocol version 5 introduced carry the address of publish 5, `0xb0aaafe0…`, the current call target.
 
 ### Mainnet shared objects {#shared-objects}
 
@@ -234,7 +234,7 @@ The PLP type carries `predict`'s original ID, `0x89aea622…`, not its current c
 
 On Testnet the `usdc` entry is a test coin that Predict publishes itself. It shares the `usdc::USDC` module path with native USDC, displays with the symbol DUSDC and the name `DeepBook USDC`, and is mintable.
 
-Every package except `fixedMath` and `usdc` has been upgraded here, so each carries 2 addresses. Call the **call target**, and build every type tag from the **original ID**. For `fixedMath` and `usdc` the 2 columns coincide:
+Every package except `fixedMath` and `usdc` has an upgrade on this network, so each carries 2 addresses. Call the **call target**, and build every type tag from the **original ID**. For `fixedMath` and `usdc` the 2 columns coincide:
 
 | **Package** | **Call target** | **Original ID** | **Contents** |
 | --- | --- | --- | --- |
@@ -248,7 +248,7 @@ Every package except `fixedMath` and `usdc` has been upgraded here, so each carr
 | `sessions` | `0x3bb8b2db2727bcb401c922ea79456d2b454c149a7f67013c26499ccb00e6d951` | `0x1908eee49d7a08d74a537d7f23766b363a145517fe0d3e0d85635d1682831ffd` | Session support, including the queued-order wrappers |
 | `usdc` | `0xc028557a1ed49e42ed091e115aedefd70a442b184c18fbec5c48d5b6c0b8c184` | Same | Test USDC, which the deployment publishes |
 
-Every upgrade kept its original ID, so the lineage is unchanged and every object, position, and account created before an upgrade stays valid. The delayed-execution types and events that `predict` protocol version 4 introduced carry the version 5 call target, `0x0654ecbe…`, as their defining ID. Testnet rehearsed protocol version 5 over publishes 6 to 10, so its newer types carry the defining ID of whichever publish introduced each one.
+Every upgrade kept its original ID, so the lineage is unchanged and every object, position, and account created before an upgrade stays valid. The delayed-execution types and events that `predict` protocol version 4 introduced carry the address of publish 5, `0x0654ecbe…`, as their defining ID. Testnet rehearsed protocol version 5 over publishes 6 to 10, so its newer types carry the defining ID of whichever publish introduced each one.
 
 ### Testnet shared objects
 
@@ -312,7 +312,7 @@ The `deepbookCoreAccount` package declares the `account_data::DeepbookCoreAccoun
 
 On both networks, the `AccountRegistry` authorizes `PredictApp`, `SessionsApp`, and `DeepbookCoreAccountApp`. That is live registry state, so read it with `account_registry::is_app_authorized<App>` rather than assuming it.
 
-The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Sessions protocol version 4 also requires each pool to be on the `SessionsConfig` spot pool allowlist, as [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) describes. Both DeepBook registries authorize `DeepbookCoreAccountApp`, Testnet's `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`, so the spot wrappers run on both networks. Both deployment manifests still record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`, because neither registry had authorized the app when its deployment was verified. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and that administrator can grant or revoke it in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers what that authorization gates.
+The DeepBook core registry is a separate authorization, and it is the one that gates the session spot wrappers. Sessions protocol version 4 also requires each pool to be on the `SessionsConfig` spot pool allowlist, as [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#spot-wrappers) describes. Both DeepBook registries authorize `DeepbookCoreAccountApp`, Testnet's `0x7c256edbda983a2cd6f946655f4bf3f00a41043993781f8674a7046e8c0e11d1` and Mainnet's `0xaf16199a2dff736e9f07a845f23c5da6df6f756eddb631aed9d24a93efc4549d`, so the spot wrappers run on both networks. Both deployment manifests still record `externalAuthorizations.deepbookCoreAccount.authorized` as `false`, because neither registry had authorized the app when the deployment ran. A manifest records only the state at deployment time, the authorization belongs to that registry's administrator rather than to Predict, and that administrator can grant or revoke it in a transaction of its own. Check it with `deepbook::registry::assert_app_is_authorized<DeepbookCoreAccountApp>`, which aborts when the app is not authorized. [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions) covers what that authorization gates.
 
 ## Units and constants
 
@@ -331,7 +331,7 @@ Predict mixes 2 scales, and confusing them is the fastest way to misprice a trad
 
 A probability of `500000000` is 0.5. A price of `110000000000000` is 110,000.00. An amount of `1000000` is 1 USDC. A position quantity of `10000` is one lot, 0.01 contracts.
 
-The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and on protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `750000000` on both networks. The smallest quantity such a market accepts is therefore about 1.34 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
+The lot size is the granularity of a quantity, not a tradable minimum. `strike_exposure_config::assert_mint_admission` rejects a mint whose premium falls below `1000000` base units, which is 1 USDC, with abort code `3`, `EPremiumBelowMinimum`, and from protocol version 4 the same rule refunds or refuses a queued order. The premium is the quantity multiplied by the quoted entry probability, and each market's `max_entry_probability` caps that probability, at `750000000` on both networks. The smallest quantity such a market accepts is therefore about 1.34 contracts, and the floor rises as the strike moves further out of the money. Size a mint by the rule that predicts admission: `quantity` multiplied by the quoted `entryProbability` must reach 1 USDC. A quantity of 1 is below the floor on every live market.
 
 Read every quantity that arrives as a JSON string with decimal or bigint tooling. Postgres `NUMERIC` columns serialize as strings, and `parseFloat` silently loses precision on them.
 
@@ -341,7 +341,7 @@ The values below are each network's current configuration. Configuration is muta
 
 ### Cadences
 
-Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set from `registry::cadence_configs` rather than from this page. Both networks enable the 1m and 5m cadences, each with the same terms on both networks, and both register a 15m cadence at ID 6 and leave it disabled:
+Cadence IDs index the registry's cadence table, which starts with 6 built-in cadences, IDs 0 to 5, and grows when an admin appends a length with `registry::add_cadence`. Read the periods with `registry::cadence_periods` rather than assuming 6. A cadence counts as enabled when its window size is greater than zero. An admin can enable or disable a cadence at any time, so read each network's enabled set live from `registry::cadence_configs`. Both networks enable the 1m and 5m cadences, each with the same terms on both networks, and both register a 15m cadence at ID 6 and leave it disabled:
 
 | **ID** | **Name** | **Period (ms)** | **Enabled** | **Tick size** | **Admission tick size** | **Maximum expiry allocation** | **Initial expiry cash** | **Window size** |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -573,7 +573,7 @@ Stream events directly from a full node when a client needs them as they land, a
 | `vault_events::FlushExecuted` | The flush drains the liquidity queues at one frozen net asset value (NAV) |
 | `vault_events::FlushRestarted` | A new pool valuation supersedes one that never finished |
 | `builder_code_events::BuilderCodeCreated` | A caller creates a derived `BuilderCode` |
-| `builder_code_events::BuilderCodeSet` | An account attaches or removes a builder code, which no fee reads from protocol version 5 |
+| `builder_code_events::BuilderCodeSet` | An account attaches or removes a builder code, which, starting with protocol version 5, no fee reads |
 | `builder_code_events::BuilderFeesClaimed` | A builder code owner claims accumulated builder fees |
 
 The `SupplyFilled` and `WithdrawFilled` payloads name their quote amounts `usdc_amount`, `fee_usdc`, and `usdc_remaining`, and `WithdrawRequested` carries `min_usdc_out`.

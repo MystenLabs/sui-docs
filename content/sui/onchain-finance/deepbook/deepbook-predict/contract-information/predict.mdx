@@ -93,7 +93,7 @@ The module lives at [`packages/predict/sources/expiry_market.move`](https://gith
 
 :::info
 
-Both networks run Predict protocol version 5. Every trade is a queued order placed through the `deepbook_predict_orders` package, which [Queued orders](#queued-orders) covers. The immediate mint, live-redeem, and settled-redeem functions keep their signatures and always abort with `EDelayedExecutionRequired`, as [Retired immediate trades](#mint-a-position) and [Redeem a position](#redeem-a-position) describe.
+Both networks run Predict protocol version 5. Every trade is a queued order placed through the `deepbook_predict_orders` package, which [Queued orders](#queued-orders) covers. The immediate mint, live-redeem, and settled-redeem functions keep their signatures and always abort with `EDelayedExecutionRequired`, as [Retired immediate trades](#mint-a-position) and [Retired settled redemption](#redeem-a-position) describe.
 
 :::
 
@@ -371,7 +371,7 @@ Predict protocol version 4 compiles `constants::current_version!()` as `4`, and 
 - **The immediate trades always abort.** `mint_exact_quantity`, `mint_exact_amount`, `mint_exact_cost`, and `redeem_live` keep their signatures and abort with `EDelayedExecutionRequired`, at any watermark. Their Sessions wrappers abort through them. [Retired immediate trades](#mint-a-position) covers them.
 - **The mint quotes price a queued fill.** `quote_mint`, `quote_mint_for_account`, and `quote_mint_exact_cost_for_account` keep their signatures and price the order like a queued fill at the current clock. See [Quotes from protocol version 4](#quotes-v4).
 - **The congestion surcharge is gone.** `set_ewma_params` and `set_ewma_enabled` abort with `EEwmaRetired`, and every fill and quote reports `penalty_fee` as 0.
-- **Settled redemption served only account positions.** `redeem_settled` paid positions that immediate mints left in accounts before the cutover, and a queued fill never enters an account. Protocol version 5 retires it and `redeem_settled_permissionless`, as [Redeem a position](#redeem-a-position) describes.
+- **Settled redemption served only account positions.** `redeem_settled` paid positions that immediate mints left in accounts before the cutover, and a queued fill never enters an account. Protocol version 5 retires it and `redeem_settled_permissionless`, as [Retired settled redemption](#redeem-a-position) describes.
 - **Only flush operators finish a pool flush.** `plp::finish_flush` aborts with `ENotFlushOperator` unless the sender is on an admin-managed allowlist. See [Vault](/onchain-finance/deepbook/deepbook-predict/contract-information/vault#finish-stage).
 
 ### Who calls what {#roles}
@@ -486,40 +486,26 @@ Every queued mint requires a finite `max_cost`: zero and `std::u64::max_value!()
 
 An app that builds orders for its users earns a builder fee by naming its `BuilderCode` and a fee per contract on each order. Each of the 4 entrypoints has a `_with_builder` version, `enqueue_exact_quantity_with_builder`, `enqueue_exact_amount_with_builder`, `enqueue_exact_cost_with_builder`, and `enqueue_redeem_open_with_builder`, which takes 2 more arguments after the Block Scholes stores:
 
-```move title='packages/predict_orders/sources/queue.move'
-public fun enqueue_exact_quantity_with_builder(
-    queue: &mut MarketQueue,
-    market: &mut ExpiryMarket,
-    wrapper: &mut AccountWrapper,
-    auth: Auth,
-    desk: &OrderDesk,
-    config: &ProtocolConfig,
-    propbook_registry: &OracleRegistry,
-    pyth: &PythFeed,
-    bs_values: &BlockScholesValueStore,
-    bs_svi: &BlockScholesSVIStore,
-    code: &BuilderCode,
-    builder_fee_per_contract: u64,
-    lower_tick: u64,
-    higher_tick: u64,
-    quantity: u64,
-    max_cost: u64,
-    max_probability: u64,
-    root: &AccumulatorRoot,
-    clock: &Clock,
-    ctx: &mut TxContext,
-): u64
-```
+<ImportContent
+	source="packages/predict_orders/sources/queue.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="enqueue_exact_quantity_with_builder"
+	signatureOnly
+	noComments
+/>
 
 The fee follows these rules:
 
 - **The amount:** `builder_fee_per_contract` is a fraction of a contract's 1 USDC payout, scaled by 1e9, so 5 cents is `50000000`. The fill pays `quantity * builder_fee_per_contract`, rounded down, to the code's address, on top of the trading fee.
-- **The cap:** Admission caps the fee at `protocol_config::builder_fee_cap(config)`, which defaults to 5 cents per contract, and records the capped fee in the order's receipt. A higher fee is charged at the cap rather than refused, and the fill charges what the receipt records, so a later cap change does not reach an order already waiting.
+- **The cap:** Admission caps the fee at `protocol_config::builder_fee_cap(config)`, which defaults to 5 cents per contract, and records the capped fee in the order's receipt. Admission lowers a higher fee to the cap rather than refusing the order, and the fill charges what the receipt records, so a later cap change does not reach an order already waiting.
 - **The trader's limits:** `max_cost` or `min_proceeds` bounds the builder fee like any other charge. On a mint it counts toward the rule that the all-in cost cannot exceed the quantity, so a builder fee can make an exact-quantity mint on a likely range fail admission or make an exact-cost mint size down. On an early sell it stops at the redeem value left after the trading fee, so a sell never costs the trader more than it returns.
 - **No name, no fee:** An order placed through a plain entrypoint pays no builder fee, whatever code the account carries from `set_builder_code`. Refunds and settlement payouts pay none either.
-- **The cutover:** An order that names a builder aborts with `protocol_config::EBuilderFeeCutoverNotReached` until `ProtocolConfig.version_watermark` reaches 5. An order that names none is not gated.
+- **The cutover:** An order that names a builder aborts with `protocol_config::EBuilderFeeCutoverNotReached` until `ProtocolConfig.version_watermark` reaches 5. The gate does not apply to an order that names no builder.
 
-`queue::builder_fee_per_contract(queue, record_id)` returns the capped fee a waiting order pays, and `OrderMinted` and `LiveOrderRedeemed` report the named code in `builder_code_id` even when the fee is 0. Anyone can create a code, so an app that names its own code pays the fee to itself. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) covers creating a code and claiming its fees, and [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#queued-wrappers) covers the builder a session key may name.
+`queue::builder_fee_per_contract(queue, record_id)` returns the capped fee a waiting order pays, and `OrderMinted` and `LiveOrderRedeemed` report the named code in `builder_code_id` even when the fee is 0. Anyone can create a code, so an app that names its own code pays the fee to itself. [Builder codes](/onchain-finance/deepbook/deepbook-predict/design#builder-codes) covers creating a code and claiming its fees, and [Sessions](/onchain-finance/deepbook/deepbook-predict/contract-information/sessions#queued-wrappers) covers the builder a session key can name.
 
 <details>
 <summary>Builder enqueue source</summary>
@@ -595,7 +581,7 @@ public fun resolve(
 
 - **Past the deadline:** Refunded with reason 5, never filled.
 - **Receive address denied:** Refunded with reason 9 before anything is priced. See [Denied recipients](#denied-recipients).
-- **Committed:** Filled at its committed price. Predict rebuilds a pricer from the order's own volatility snapshot, re-anchored on the committed Pyth price and rolled to the committed tick, so the trading fee, with its expiry ramp and fee band, is charged at the tick rather than at the resolve transaction's clock. The snapshot keeps the SVI `a` and `b` at 1e9, so when the SVI store signs at 18 decimals, the fill takes the full-precision values its admission recorded in the market's SVI cache.
+- **Committed:** Filled at its committed price. Predict rebuilds a pricer from the order's own volatility snapshot, re-anchored on the committed Pyth price and rolled to the committed tick, so the fill charges the trading fee, with its expiry ramp and fee band, at the tick rather than at the resolve transaction's clock. The snapshot keeps the SVI `a` and `b` at 1e9, so when the SVI store signs at 18 decimals, the fill takes the full-precision values its admission recorded in the market's SVI cache.
 - **Fails at its tick:** Refunded with the reason it failed on, before anything moves.
 - **More than the market's cash covers:** Refunded with reason 8 and the order fee returned. Fills never draw on the pool.
 
@@ -847,7 +833,7 @@ The TypeScript SDK, [`@mysten/deepbook-v3`](https://www.npmjs.com/package/@myste
 
 ## Retired immediate trades {#mint-a-position}
 
-Protocol version 4 retires the immediate trades: `mint_exact_quantity`, `mint_exact_amount`, and `mint_exact_cost`, which opened a position inside the trader's own transaction, and `redeem_live`, which closed one live. All 4 keep their signatures, so the upgrade stays compatible, and each aborts with `EDelayedExecutionRequired` at any watermark. Their `sessions` wrappers abort through them. Mint with `enqueue_exact_quantity`, `enqueue_exact_amount`, or `enqueue_exact_cost`, and sell early with `enqueue_redeem_open`, as [Place an order](#place-an-order) describes. Protocol version 5 also retires `redeem_settled`, which paid the positions immediate mints recorded in accounts, as [Redeem a position](#redeem-a-position) describes.
+Protocol version 4 retires the immediate trades: `mint_exact_quantity`, `mint_exact_amount`, and `mint_exact_cost`, which opened a position inside the trader's own transaction, and `redeem_live`, which closed one live. All 4 keep their signatures, so the upgrade stays compatible, and each aborts with `EDelayedExecutionRequired` at any watermark. Their `sessions` wrappers abort through them. Mint with `enqueue_exact_quantity`, `enqueue_exact_amount`, or `enqueue_exact_cost`, and sell early with `enqueue_redeem_open`, as [Place a queued order](#place-an-order) describes. Protocol version 5 also retires `redeem_settled`, which paid the positions immediate mints recorded in accounts, as [Retired settled redemption](#redeem-a-position) describes.
 
 The queued entrypoints keep the 3 sizing shapes of the immediate entrypoints: an exact payout quantity, a premium budget, and an all-in budget. One rule changed: the immediate `mint_exact_quantity` accepted `std::u64::max_value!()` as no cost cap, and every queued mint needs a finite `max_cost`.
 
@@ -883,42 +869,11 @@ Trading stops shortly before each expiry. `ProtocolConfig.no_trade_window_ms` de
 
 The window does not apply to the quotes, `try_settle`, `set_reference_tick`, `load_live_pricer`, or any read accessor. A position still open when the window closes is therefore neither stranded nor force-closed: it settles at expiry, and the queue's settlement walk pays it.
 
-Read the live value with `protocol_config::no_trade_window_ms(config): u64`. A window of `0` disables the gate, and an admin can move the value between `0` and `15000` ms at any time, including while a flush is in flight, because nothing in a flush reads it. A change emits `NoTradeWindowUpdated`. The examples on these pages skip any market with less than 30 seconds to run, which clears the window and the cutoff with margin.
+Read the live value with `protocol_config::no_trade_window_ms(config): u64`. A window of `0` disables the gate, and an admin can move the value between `0` and `15000` ms at any time, including while a flush is in flight, because nothing in a flush reads it. A change emits `NoTradeWindowUpdated`. The Predict examples skip any market with less than 30 seconds to run, which clears the window and the cutoff by about 14 seconds.
 
-## Redeem a position {#redeem-a-position}
+## Retired settled redemption {#redeem-a-position}
 
-A position from a queued fill is an Open record. It is sold early with `enqueue_redeem_open` and paid at settlement by the queue's settlement walk, with no claim, as [Open records and early sells](#open-records) describes. The 2 functions below closed a position recorded in an account, which only an immediate mint from before the delayed-execution cutover created. Protocol version 5 retires both:
-
-```move title='packages/predict/sources/expiry_market.move'
-public fun redeem_settled(
-    _market: &mut ExpiryMarket,
-    _wrapper: &mut AccountWrapper,
-    _auth: Auth,
-    _config: &ProtocolConfig,
-    _order_id: u256,
-    _root: &AccumulatorRoot,
-    _clock: &Clock,
-    _ctx: &mut TxContext,
-)
-
-public fun redeem_settled_permissionless(
-    _market: &mut ExpiryMarket,
-    _account_registry: &AccountRegistry,
-    _wrapper: &mut AccountWrapper,
-    _config: &ProtocolConfig,
-    _order_id: u256,
-    _root: &AccumulatorRoot,
-    _clock: &Clock,
-    _ctx: &mut TxContext,
-)
-```
-
-Both keep their signatures, so the upgrade stays compatible, and each aborts with `EDelayedExecutionRequired` at any watermark. A queued fill never enters an account, because settlement pays its Open record, so no position a queued order opened needs them. The Sessions `redeem_settled` wrapper aborts through Predict once Sessions links protocol version 5. `redeem_live`, the live close, retired with protocol version 4, as [Retired immediate trades](#mint-a-position) describes.
-
-Through protocol version 4, `redeem_settled` closed a settled position for its terminal payout, the full quantity when the settlement price lay inside `(lower_tick, higher_tick]` and zero otherwise, and `redeem_settled_permissionless` performed the same close for a sender on an admin allowlist of keepers. That allowlist retires with it: `protocol_config::add_settled_redeem_keeper` and `remove_settled_redeem_keeper` keep their signatures, always abort with `ESettledRedeemRetired`, and emit nothing. A set that an earlier version stored stays in its dynamic field, and nothing reads it.
-
-<details>
-<summary>Redeem source</summary>
+A position from a queued fill is an Open record. You sell it early with `enqueue_redeem_open`, and the queue's settlement walk pays it at settlement, with no claim, as [Open records and early sells](#open-records) describes. The 2 functions below closed a position recorded in an account, which only an immediate mint from before the delayed-execution cutover created. Protocol version 5 retires both:
 
 <ImportContent
 	source="packages/predict/sources/expiry_market.move"
@@ -930,7 +885,9 @@ Through protocol version 4, `redeem_settled` closed a settled position for its t
 	noComments
 />
 
-</details>
+Both keep their signatures, so the upgrade stays compatible, and each aborts with `EDelayedExecutionRequired` at any watermark. A queued fill never enters an account, because settlement pays its Open record, so no position a queued order opened needs them. The Sessions `redeem_settled` wrapper aborts through Predict once Sessions links protocol version 5. `redeem_live`, the live close, retired with protocol version 4, as [Retired immediate trades](#mint-a-position) describes.
+
+Through protocol version 4, `redeem_settled` closed a settled position for its terminal payout, the full quantity when the settlement price lay inside `(lower_tick, higher_tick]` and zero otherwise, and `redeem_settled_permissionless` performed the same close for a sender on an admin allowlist of keepers. That allowlist retires with it: `protocol_config::add_settled_redeem_keeper` and `remove_settled_redeem_keeper` keep their signatures, always abort with `ESettledRedeemRetired`, and emit nothing. A set that an earlier version stored stays in its dynamic field, and nothing reads it.
 
 The SDK's `client.predict.tx.claimSettled` builds `redeem_settled`, so a transaction it builds aborts on protocol version 5.
 
@@ -1074,7 +1031,7 @@ The SDK's `client.predict.read.markets`, `read.market`, and `read.pricer` cover 
 
 Error numbers repeat across modules, so read the module out of the abort location before you look a number up in any table in this section.
 
-`expiry_market` declares 22 abort codes. Codes `2`, `3`, and `6` to `8` belong to the retired immediate trades, and no live path raises them. Code `12` is unused from protocol version 5, which retired the keeper path that raised it:
+`expiry_market` declares 22 abort codes. Codes `2`, `3`, and `6` to `8` belong to the retired immediate trades, and no live path raises them. Starting with protocol version 5, code `12` is unused, because that version retired the keeper path that raised it:
 
 | **Code** | **Constant** | **Cause** |
 |---|---|---|
