@@ -237,6 +237,56 @@ Ensure the resource's value is zero. For coins or tokens, split or burn the valu
 
 ---
 
+#### `` For when T does not belong to the package `Publisher`. ``
+
+`ENotOwner` is abort code `0` in the `sui::display` module. It means the type `T` of the display does not belong to the package of the `Publisher` object you passed. Only the Display V1 creation functions in earlier framework versions raise it. In the current framework, `sui::display` marks `ENotOwner` as unused, and every Display V1 creation function aborts with `ENoLongerSupported` (abort code `2`) instead.
+
+Display V2 runs the same check and reports a mismatch as `display_registry::ENotValidPublisher`, with the message `The publisher is not valid for the supplied type.` A `Publisher` records the package of the One-Time Witness (OTW) that claimed it. A type belongs to a publisher when the original package address of the type matches the package stored in the `Publisher`:
+
+<ImportContent source="crates/sui-framework/packages/sui-framework/sources/package.move" mode="code" fun="from_package" noComments />
+
+##### Solution
+
+To fix the error:
+
+1. Create the display with Display V2, `display_registry::new_with_publisher<T>`, instead of a Display V1 function.
+2. Find the package that defines `T`.
+3. Pass the `Publisher` that package claimed in its `init` function with `package::claim` and its OTW. A `Publisher` from a different package, such as one you published to hold your app logic, does not work for types in another package.
+4. If you do not own the package that defines `T`, you cannot create a display for `T`. Only the holder of that package's `Publisher` can.
+
+**Resources**
+
+- [What is Object Display?](/develop/objects/display/display-overview)
+- [Framework abort codes](/references/errors/framework-abort-codes)
+
+---
+
+#### `Trying to add an extension while not being the owner of the Kiosk.`
+
+The Kiosk extension module aborts with `ENotOwner` (abort code `0`) when the `KioskOwnerCap` you pass does not grant access to the `Kiosk` you are modifying. Only the kiosk owner can install an extension, and the owner proves ownership with the `KioskOwnerCap`.
+
+The `add` function checks the capability before it stores the extension:
+
+<ImportContent source="crates/sui-framework/packages/sui-framework/sources/kiosk/kiosk_extension.move" mode="code" fun="add" noComments />
+
+The same `has_access` check guards `disable`, `enable`, and `remove`, so any of these calls aborts with `ENotOwner` if the capability does not match the kiosk.
+
+##### Solution
+
+To fix the error:
+
+1. Confirm that the transaction sender owns the `KioskOwnerCap` for the target kiosk.
+2. Pass the capability that belongs to that kiosk, not a capability from another kiosk. Call `cap.kiosk()` to read the `for` field of a `KioskOwnerCap` and compare it with the ID of the kiosk you pass.
+3. Install the extension through the app's own `add` function, which creates the app witness and forwards your kiosk and capability.
+
+The `sui::kiosk` module also defines an `ENotOwner` constant with abort code `0`, which means the sender tried to withdraw profits without owning the kiosk. Check the module in the abort location to tell the 2 errors apart.
+
+**Resources**
+
+- [Kiosk Apps](/onchain-finance/kiosk/kiosk-apps)
+
+---
+
 #### `The funds withdrawals reserved from an address in this transaction exceed its settled funds`
 
 `EInsufficientFunds` (abort code 8) means the funds withdrawals you reserved from an address in the current test transaction exceed that address's settled funds. The `withdraw_balance_from_address` helper stands in for a transaction's funds withdrawal input, and it aborts with this code when the total you reserve goes over the available balance:
