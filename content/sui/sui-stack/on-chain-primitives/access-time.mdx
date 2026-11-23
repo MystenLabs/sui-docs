@@ -85,7 +85,7 @@ The next example presents a basic test that creates a `Clock` object, increments
 
 ## How do I read the time without a `Clock` parameter?
 
-From protocol version 141, the Sui framework provides `sui::clock::borrow`, which returns a `&Clock` without the `Clock` being a transaction input. It is the same `Clock`, at the same timestamp, as one passed into the same transaction, so `timestamp_ms` returns the same value either way.
+From protocol version 142, the Sui framework provides `sui::clock::borrow`, which returns a `&Clock` without the `Clock` being a transaction input. It is the same `Clock`, at the same timestamp, as one passed into the same transaction, so `timestamp_ms` returns the same value either way.
 
 <ImportContent source="crates/sui-framework/packages/sui-framework/sources/clock.move" mode="code" fun="borrow" noComments />
 

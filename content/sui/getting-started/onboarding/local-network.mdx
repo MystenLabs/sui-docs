@@ -157,6 +157,13 @@ The following is a list of possible options and flags to pass to `sui start`. Us
           
           Note that GraphQL requires a running indexer and consistent store,
           which will be enabled by default even if those flags are not set.
+          
+          GraphQL subscriptions are served at `/graphql/subscriptions`,
+          streaming checkpoints from the local fullnode. Paginated
+          `transactions` and `events` queries are also served by the fullnode
+          instead of the indexer's Postgres tables, matching how public GraphQL
+          services run. GraphQL starts once the indexer has caught up with the
+          fullnode.
 
       --fullnode-rpc-port <FULLNODE_RPC_PORT>
           Port to start the Fullnode RPC server on. Default port is 9000
@@ -189,32 +196,32 @@ The following is a list of possible options and flags to pass to `sui start`. Us
 
 If you stop and start the network without passing the `--force-regenesis` flag, Sui preserves all history and keeps it accessible.
 
+When you pass `--with-graphql`, the local full node keeps its full history instead of pruning it, so paginated `transactions` and `events` queries and GraphQL subscriptions can reach back to genesis. The override applies in memory only, and `sui start` does not write it to a persisted `fullnode.yaml`. The full node database grows without bound on a long-running network, and the full node does not restore history that a run without `--with-graphql` already pruned. To restore it, delete the network's `full_node_db` directory so the full node resyncs from the validators. On a persisted network that enables GraphQL for the first time, startup waits for the indexer to catch up with the full node before GraphQL and the faucet begin serving.
+
 By default, `sui start` uses an existing genesis and network configuration if the `~/.sui/sui_config` folder exists and includes a `genesis.blob` file. If the folder does not exist, it creates the folder and generates a new genesis configuration. If you pass `--network.config`, the command checks for the network configuration file and tries to load the genesis blob as per the network configuration file.
 
 To generate a custom genesis, use the `sui genesis` command and pass the desired custom values. For more information about possible flags and options, run `sui genesis --help`.
 
 To start the network from a configuration directory that `sui genesis` generated, pass that directory with `--network.config`. The `-f` flag of `sui genesis` overwrites an existing configuration directory, so use it with caution.
 
-To view the transaction history for your local network, use the following command to retrieve the local total transaction count:
+To check the transaction history for your local network, request the latest checkpoint from the local full node's gRPC API and read its total transaction count. The example uses [`grpcurl`](https://github.com/fullstorydev/grpcurl):
 
 ```sh
-$ curl --location --request POST 'http://127.0.0.1:9000' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "sui_getTotalTransactionBlocks",
-  "params": []
-}'
+$ grpcurl -plaintext -d '{
+  "read_mask": { "paths": ["sequence_number", "summary.total_network_transactions"] }
+}' 127.0.0.1:9000 sui.rpc.v2.LedgerService/GetCheckpoint
 ```
 
 If successful, the response resembles the following:
 
 ```json
 {
-	"jsonrpc": "2.0",
-	"result": 168,
-	"id": 1
+  "checkpoint": {
+    "sequenceNumber": "42",
+    "summary": {
+      "totalNetworkTransactions": "168"
+    }
+  }
 }
 ```
 
