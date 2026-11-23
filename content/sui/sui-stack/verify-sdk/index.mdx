@@ -44,17 +44,17 @@ answer: >-
   could have been made, and that nobody changed or removed anything around it.
 ---
 
-The Verify SDK is a tamper-evident audit log for AI agents. Each action an agent takes gets a signed receipt. Later, anyone can check who made a receipt, the earliest and latest times it could have been made, and that nobody changed or removed anything around it. You need no Verify SDK account to check a receipt, and the 2 times come from Sui, not from the Verify SDK server ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+The Verify SDK is a tamper-evident audit log for AI agents. Each action an agent takes gets a signed receipt. Later, anyone can check who made a receipt, the earliest and latest times it could have been made, and that nobody changed or removed anything around it. You need no Verify SDK account to check a receipt, and the 2 times come from Sui, not from the Verify SDK server ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/README.md)).
 
 :::info
 
-The Verify SDK is in development. The SDKs and integrations are not on PyPI or npm, so you install them from a clone of the [Verify SDK repository](https://github.com/MystenLabs/wallog). A reference deployment has its package, log, and registry on Sui Testnet for development, and that package can still be upgraded ([source](https://github.com/MystenLabs/wallog/blob/main/deploy/README.md)).
+The Verify SDK is in development. The Python SDK and the integrations are not on PyPI, and npm has only an older 0.0.1 development release of the TypeScript packages, so install everything from a clone of the [Verify SDK repository](https://github.com/MystenLabs/wallog). A reference deployment has its package, log, and registry on Sui Testnet for development, and that package can still be upgraded ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/deploy/README.md)).
 
 :::
 
 ## Why an agent log needs a public witness
 
-A signature shows who wrote a log entry, but not when. A log that its owner keeps can also be rewritten. The Verify SDK uses Sui as the clock and as the witness for its log ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)):
+A signature shows who wrote a log entry, but not when. A log that its owner keeps can also be rewritten. The Verify SDK uses Sui as the clock and as the witness for its log ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/README.md)):
 
 | **Question** | **How the Verify SDK answers it** |
 |---|---|
@@ -67,28 +67,28 @@ A signature shows who wrote a log entry, but not when. A log that its owner keep
 
 ## How a receipt moves through the system
 
-An agent records an action through an SDK, a framework integration, or a plugin. The SDKs hold no signing keys. The Verify SDK server signs every receipt and chains it to the agent's previous receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)). The server then does the following:
+An agent records an action through an SDK, a framework integration, or a plugin. The SDKs hold no signing keys. The Verify SDK server signs every receipt and chains it to the agent's previous receipt ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/sdks.md)). The server then does the following:
 
 1. Signs the receipt and returns it with the status `signed`.
 1. Closes a batch every 30 seconds and writes its Merkle root to the Verify SDK log object on Sui. The receipt status becomes `on_sui`.
 1. Stores the batch manifests in a segment on Walrus about once an hour. The receipt status becomes `on_walrus`.
 
-The status values are what the server reports. They are not a proof. The proof is the verdict of a verifier that reads Sui and Walrus itself, or that checks a proof bundle ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)). For how to run a verifier, see [Verifying Receipts](/sui-stack/verify-sdk/verifying-receipts).
+The status values are what the server reports. They are not a proof. The proof is the verdict of a verifier that reads Sui and Walrus itself, or that checks a proof bundle ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/sdks.md)). For how to run a verifier, see [Verifying Receipts](/sui-stack/verify-sdk/verifying-receipts).
 
 ## What a receipt does not prove
 
 A receipt is evidence about a log entry, not about the action itself. Consider the following limits when you rely on a receipt:
 
-- **The server signs on the agent's behalf:** The server holds the agents' signing keys, so it can sign a receipt that the agent never asked for. The 2 times still come from Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
-- **A missing receipt leaves no gap:** A receipt that nobody recorded leaves no gap in the agent's chain, so an action that an integration failed to record cannot be detected later ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
-- **A policy ruling does not stop the agent:** The server records a ruling, but acting on it is the job of your code ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). See [Recording Agent Actions](/sui-stack/verify-sdk/recording-actions).
-- **A digest has no salt:** Anyone who can guess an input can confirm the guess against the digest in a receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+- **The server signs on the agent's behalf:** The server holds the agents' signing keys, so it can sign a receipt that the agent never asked for. The 2 times still come from Sui ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/README.md)).
+- **A missing receipt leaves no gap:** A receipt that nobody recorded leaves no gap in the agent's chain, so an action that an integration failed to record cannot be detected later ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
+- **A policy ruling does not stop the agent:** The server records a ruling, but acting on it is the job of your code ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)). See [Recording Agent Actions](/sui-stack/verify-sdk/recording-actions).
+- **A digest has no salt:** Anyone who can guess an input can confirm the guess against the digest in a receipt ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
-For the full list of claims and non-claims, see the [Verify SDK threat model](https://github.com/MystenLabs/wallog/blob/main/docs/THREAT_MODEL.md).
+For the full list of claims and non-claims, see the [Verify SDK threat model](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/THREAT_MODEL.md).
 
 ## Verify SDK components
 
-The Verify SDK repository contains the following packages ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/sdks.md)):
+The Verify SDK repository contains the following packages ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/sdks.md)):
 
 | **Package** | **What it is** |
 |---|---|
@@ -100,7 +100,7 @@ The Verify SDK repository contains the following packages ([source](https://gith
 | `wallog-verify` | The reference verifier, a Rust command-line tool. It is the only verifier that reads Sui and Walrus. |
 | `wallog-server` | The service that signs, chains, batches, and anchors receipts. |
 
-The server reads and writes Sui through [gRPC](/develop/accessing-data/grpc) ([source](https://github.com/MystenLabs/wallog/blob/main/docs/ROADMAP.md)), and `wallog-verify` takes a gRPC endpoint for the Sui network it checks against ([source](https://github.com/MystenLabs/wallog/blob/main/crates/wallog-verify/src/main.rs)).
+The server reads and writes Sui through [gRPC](/develop/accessing-data/grpc) ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/ROADMAP.md)), and `wallog-verify` takes a gRPC endpoint for the Sui network it checks against ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/crates/wallog-verify/src/main.rs)).
 
 import DocCardList from '@theme/DocCardList';
 

@@ -56,7 +56,7 @@ The [Verify SDK](/sui-stack/verify-sdk) records each action as 1 or more receipt
 
 ## Receipt kinds
 
-Each receipt has a kind ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md), [source](https://github.com/MystenLabs/wallog/blob/main/docs/FORMAT.md)):
+Each receipt has a kind ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md), [source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/FORMAT.md)):
 
 | **Moment** | **Kind** | **Carries** |
 |---|---|---|
@@ -66,11 +66,11 @@ Each receipt has a kind ([source](https://github.com/MystenLabs/wallog/blob/main
 | Anything else | `note` | Whatever is worth keeping. |
 | A person approved a ruling | `approval` | Recorded in the approver's chain by `Client.approve`. |
 
-The receipts of 1 action share `action.run`. `agent.step()` and `agent.traced()` set it for you ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+The receipts of 1 action share `action.run`. `agent.step()` and `agent.traced()` set it for you ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
 ## Record a note
 
-`agent.record()` records a `note` unless you pass another kind. It returns a receipt handle with the following fields ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)):
+`agent.record()` records a `note` unless you pass another kind. It returns a receipt handle with the following fields ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)):
 
 - `id`
 - `url`
@@ -84,11 +84,11 @@ The quickstart records a note:
 
 <ImportContent source="examples/python/quickstart.py" mode="code" org="MystenLabs" repo="wallog" branch="b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6" lines="9-12" />
 
-`agent.record()` raises when the receipt cannot be recorded. Catch the error and decide whether the action goes on ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+`agent.record()` raises when the receipt cannot be recorded. Catch the error and decide whether the action goes on ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
 ## Pair the receipts of an action with a step
 
-A step is 1 action. Its `before`, its ruling, and its `after` share 1 `run` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)). Use a step as follows:
+A step is 1 action. Its `before`, its ruling, and its `after` share 1 `run` ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/typescript-sdk.md)). Use a step as follows:
 
 1. Call `step.before()` ahead of the action. If the `before` cannot be recorded, it raises, and the action must not run.
 1. Read the ruling on the returned receipt, and act on it as [Act on a ruling](#act-on-a-ruling) describes.
@@ -97,17 +97,17 @@ A step is 1 action. Its `before`, its ruling, and its `after` share 1 `run` ([so
 
 {/* TODO: Import code from MystenLabs/wallog: a Python and a TypeScript example of agent.step() that proceeds only when the ruling is absent or allow, refuses on deny, and waits on needs_approval. No such example exists in the repository yet. examples/python/quickstart.py ignores the ruling, and examples/typescript/quickstart.ts and examples/demo/guarded_delete.py each handle only 1 of the 2 outcomes. */}
 
-In Python, a step is a `with` block. If the block raises, the step records an `after` with `labels.error` set to the exception type, and the exception goes on ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). In TypeScript, call `step.failed(error)` when the action throws ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/typescript-sdk.md)).
+In Python, a step is a `with` block. If the block raises, the step records an `after` with `labels.error` set to the exception type, and the exception goes on ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)). In TypeScript, call `step.failed(error)` when the action throws ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/typescript-sdk.md)).
 
-A step accepts 1 successful `before` and 1 successful `after`. A second call raises an error. A call that raised does not count toward that limit, so you can call it again ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)). Each call creates a new idempotency key, so if a call raised after the server already recorded it, calling it again records a second receipt ([source](https://github.com/MystenLabs/wallog/blob/main/sdks/python/wallog/client.py)).
+A step accepts 1 successful `before` and 1 successful `after`. A second call raises an error. A call that raised does not count toward that limit, so you can call it again ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)). Each call creates a new idempotency key, so if a call raised after the server already recorded it, calling it again records a second receipt ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/sdks/python/wallog/client.py)).
 
 ## Act on a ruling
 
-A policy matches an action name with a pattern, where `*` matches within 1 part between colons and `**` matches across parts. A policy gives 1 of 3 outcomes: `allow`, `deny`, or `needs_approval`. The most restrictive match wins. The server evaluates policies on each `before` and writes a `ruling` receipt directly behind it ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+A policy matches an action name with a pattern, where `*` matches within 1 part between colons and `**` matches across parts. A policy gives 1 of 3 outcomes: `allow`, `deny`, or `needs_approval`. The most restrictive match wins. The server evaluates policies on each `before` and writes a `ruling` receipt directly behind it ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
 :::danger
 
-A ruling does not stop the agent. The server only records it. Acting on the ruling is your code's job, and an agent that ignores it runs a denied action or an action that still needs approval ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+A ruling does not stop the agent. The server only records it. Acting on the ruling is your code's job, and an agent that ignores it runs a denied action or an action that still needs approval ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
 :::
 
@@ -121,32 +121,32 @@ When you use a step, read the ruling from the `before` receipt and handle every 
 | `needs_approval` | Wait for a person to approve, then run the action and pass the approvals' receipt hashes in `approved_by` (TypeScript: `approvedBy`) on the `after`. If nobody approves in time, do not run the action. |
 | Any other outcome | Do not run the action. A newer server might add an outcome. |
 
-Sources: [Integration guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md) and [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md).
+Sources: [Integration guide](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md) and [Python SDK guide](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md).
 
-`ruling.needs_approval` (TypeScript: `ruling.needsApproval`) is true for a ruling that waits, and `ruling.wait_approved()` (TypeScript: `ruling.waitApproved()`) returns the approvals once a person approves. It waits 600 seconds by default ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md), [source](https://github.com/MystenLabs/wallog/blob/main/sdks/typescript/packages/sdk/src/issued.ts)). The outcome itself is in the ruling's body, at `ruling.body["ruling"]["outcome"]` in Python and `before.ruling?.body.ruling?.outcome` in TypeScript ([source](https://github.com/MystenLabs/wallog/blob/main/examples/demo/guarded_delete.py)).
+`ruling.needs_approval` (TypeScript: `ruling.needsApproval`) is true for a ruling that waits, and `ruling.wait_approved()` (TypeScript: `ruling.waitApproved()`) returns the approvals once a person approves. It waits 600 seconds by default ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md), [source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/sdks/typescript/packages/sdk/src/issued.ts)). The outcome itself is in the ruling's body, at `ruling.body["ruling"]["outcome"]` in Python and `before.ruling?.body.ruling?.outcome` in TypeScript ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/examples/demo/guarded_delete.py)).
 
 ### Let `traced` act on the ruling
 
-`agent.traced()` wraps a function in a step and acts on the ruling for you, in both SDKs ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)):
+`agent.traced()` wraps a function in a step and acts on the ruling for you, in both SDKs ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)):
 
 - **On `deny`:** It does not call the function, records no `after`, and raises `wallog.DeniedError` in Python or `WallogDeniedError` in TypeScript.
 - **On `needs_approval`:** It waits for an approval before the call, for 600 seconds unless `approval_timeout` (seconds, Python) or `approvalTimeoutMs` (TypeScript) sets another limit. If nobody approves in time, it raises `WaitTimeout` in Python or `WallogTimeoutError` in TypeScript, and does not call the function.
 - **After approval:** It calls the function and records the `after` with the approvals' receipt hashes in `approved_by`.
 - **On a ruling it cannot read:** It does not call the function and raises an API error, so a new outcome from a newer server stops the function instead of letting it run.
 
-Use `traced` for functions that return a value. In Python, a generator function runs its body only when it is iterated, so `traced` records the `after` before the body runs. Wrap the loop in a step instead ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+Use `traced` for functions that return a value. In Python, a generator function runs its body only when it is iterated, so `traced` records the `after` before the body runs. Wrap the loop in a step instead ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
 {/* TODO: Import code from MystenLabs/wallog: a Python and a TypeScript example of agent.traced() around a function under a deny or needs_approval policy. The closest existing sample is in docs/guides/python-sdk.md, section Approvals, policies, keys, webhooks, which is Markdown and not an importable source file. */}
 
 ### Approvals are receipts
 
-An approval is a receipt in the approver's chain, so a reader can find who approved a ruling and when. The `approved_by` list on the agent's `after` is the agent's own claim. The server checks that each entry is a receipt hash, not that it is an approval of this action, and no verifier looks the hashes up. If you rely on an approval, compare the hash with the approver's receipt ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+An approval is a receipt in the approver's chain, so a reader can find who approved a ruling and when. The `approved_by` list on the agent's `after` is the agent's own claim. The server checks that each entry is a receipt hash, not that it is an approval of this action, and no verifier looks the hashes up. If you rely on an approval, compare the hash with the approver's receipt ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
-Policies and approvals need a tenant key. An agent token that calls them gets an HTTP 403 error ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+Policies and approvals need a tenant key. An agent token that calls them gets an HTTP 403 error ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
 ## Control what leaves your process
 
-By default, the SDK hashes the input in your process and sends only the digest (SHA-256 and byte length) and a hint if you give one. The SDK never sends the output, only its digest ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+By default, the SDK hashes the input in your process and sends only the digest (SHA-256 and byte length) and a hint if you give one. The SDK never sends the output, only its digest ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
 | **Data** | **Sent to the server** |
 |---|---|
@@ -157,36 +157,36 @@ By default, the SDK hashes the input in your process and sends only the digest (
 | Output | Its digest, when you pass an output. Never the output itself. |
 | Idempotency key | Always. |
 
-Source: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md). Everything sent in plain text, except the idempotency key, is part of the signed receipt. A tenant with public pages, which is the default, shows it on its public receipt pages. Agent names are also on the key registry on Sui ([source](https://github.com/MystenLabs/wallog/blob/main/README.md)).
+Source: [Python SDK guide](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md). Everything sent in plain text, except the idempotency key, is part of the signed receipt. A tenant with public pages, which is the default, shows it on its public receipt pages. Agent names are also on the key registry on Sui ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/README.md)).
 
 :::caution
 
-A digest has no salt. Anyone who can guess an input can confirm the guess against its digest, and anyone can quickly confirm a name, an account number, or a yes or no answer. Add a random member to any input that must stay secret, and keep the input yourself ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+A digest has no salt. Anyone who can guess an input can confirm the guess against its digest, and anyone can quickly confirm a name, an account number, or a yes or no answer. Add a random member to any input that must stay secret, and keep the input yourself ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
 :::
 
-With `disclose=True` on the agent or on 1 call, the server receives the input, computes the digest itself, and stores the input encrypted for your tenant. You can delete a stored input with `DELETE /v1/receipts/{id}/input`, and the receipt and its digest stay ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+With `disclose=True` on the agent or on 1 call, the server receives the input, computes the digest itself, and stores the input encrypted for your tenant. You can delete a stored input with `DELETE /v1/receipts/{id}/input`, and the receipt and its digest stay ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
-To prove later what a digest covers, keep the input. Every receipt your process records keeps the normalized input and output it hashed, in `receipt.input` and `receipt.output` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+To prove later what a digest covers, keep the input. Every receipt your process records keeps the normalized input and output it hashed, in `receipt.input` and `receipt.output` ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
 ### Pass JSON values
 
-Digests are computed over canonical JSON, which holds integers only. Both SDKs turn `1.0` into `1` and `12.5` into the string `"12.5"` before hashing ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)). If you compute digests yourself, follow the conventions in the [Verify SDK format specification](https://github.com/MystenLabs/wallog/blob/main/docs/FORMAT.md).
+Digests are computed over canonical JSON, which holds integers only. Both SDKs turn `1.0` into `1` and `12.5` into the string `"12.5"` before hashing ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)). If you compute digests yourself, follow the conventions in the [Verify SDK format specification](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/FORMAT.md).
 
 ## Add your own data with labels
 
-Put any other data you want signed in `labels`, for example a ticket number. The Verify SDK gives labels no meaning. Labels are part of the signed body, so the SDK sends them in plain text and they appear on public receipt pages. Do not put the content of an input or an output in a label ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+Put any other data you want signed in `labels`, for example a ticket number. The Verify SDK gives labels no meaning. Labels are part of the signed body, so the SDK sends them in plain text and they appear on public receipt pages. Do not put the content of an input or an output in a label ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
-The server signs labels as they are, without normalizing them. They hold integers only, so write a fraction as a string such as `"0.5"`. Labels can be at most 16,384 bytes of canonical JSON and nested at most 32 levels ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+The server signs labels as they are, without normalizing them. They hold integers only, so write a fraction as a string such as `"0.5"`. Labels can be at most 16,384 bytes of canonical JSON and nested at most 32 levels ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
 ## Use idempotency keys
 
-Every `POST /v1/receipts` carries an idempotency key, either yours (`idempotency_key=` in Python) or a random one. A retry after a lost answer sends the same key and gets the first receipt back, with `receipt.replayed` set to `True` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+Every `POST /v1/receipts` carries an idempotency key, either yours (`idempotency_key=` in Python) or a random one. A retry after a lost answer sends the same key and gets the first receipt back, with `receipt.replayed` set to `True` ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
-If you repeat a `record` by hand after it raised, pass the same `idempotency_key` both times. Then the repeat returns the first receipt when the first call did reach the server ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/integrating.md)).
+If you repeat a `record` by hand after it raised, pass the same `idempotency_key` both times. Then the repeat returns the first receipt when the first call did reach the server ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/integrating.md)).
 
-The server does not compare the body of a repeated key with the first body. A key that you reuse for another action returns the first receipt, and no receipt records the second action. Give each action its own key, and check `receipt.replayed` where it matters ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+The server does not compare the body of a repeated key with the first body. A key that you reuse for another action returns the first receipt, and no receipt records the second action. Give each action its own key, and check `receipt.replayed` where it matters ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
 
 ## Order of concurrent receipts
 
-The server gives the next index in an agent's chain to each request when it reaches the agent's turn. Calls made one after another, each waiting for its answer, get rising indexes. Calls made at the same time from threads, tasks, or processes get indexes in no defined order. If the order of overlapping calls matters, put your own sequence number in `labels` ([source](https://github.com/MystenLabs/wallog/blob/main/docs/guides/python-sdk.md)).
+The server gives the next index in an agent's chain to each request when it reaches the agent's turn. Calls made one after another, each waiting for its answer, get rising indexes. Calls made at the same time from threads, tasks, or processes get indexes in no defined order. If the order of overlapping calls matters, put your own sequence number in `labels` ([source](https://github.com/MystenLabs/wallog/blob/b71dcdd71a8bc3f24dc79dfef77736ebc14e65f6/docs/guides/python-sdk.md)).
