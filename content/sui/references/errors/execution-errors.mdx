@@ -44,15 +44,15 @@ Every error the Sui execution layer and the transaction input checks can return,
 | `ArityMismatch` | `Arity mismatch for Move function. The number of arguments does not match the number of parameters` |  |
 | `TypeArityMismatch` | `Type arity mismatch for Move function. Mismatch between the number of actual versus expected type arguments.` |  |
 | `NonEntryFunctionInvoked` | `Non Entry Function Invoked. Move Call must start with an entry function` |  |
-| `CommandArgumentError` | `Invalid command argument at {...}. {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors), [Execution errors](/references/errors/execution-errors) |
-| `TypeArgumentError` | `Error for type argument at index {...}: {...}` | [Execution errors](/references/errors/execution-errors) |
+| `CommandArgumentError` | `Invalid command argument at {...}. {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `TypeArgumentError` | `Error for type argument at index {...}: {...}` |  |
 | `UnusedValueWithoutDrop` | `Unused result without the drop ability. Command result {...}, return value {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors), [Staking Rewards](/onchain-finance/examples-patterns/staking-rewards) |
 | `InvalidPublicFunctionReturnType` | `Invalid public Move function signature. Unsupported return type for return value {...}` |  |
 | `InvalidTransferObject` | `Invalid Transfer Object, object does not have public transfer.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `EffectsTooLarge` | `Effects of size {...} bytes too large. Limit is {...} bytes` |  |
 | `PublishUpgradeMissingDependency` | `Publish/Upgrade Error, Missing dependency. A dependency of a published or upgraded package has not been assigned an on-chain address.` |  |
 | `PublishUpgradeDependencyDowngrade` | `Publish/Upgrade Error, Dependency downgrade. Indirect (transitive) dependency of published or upgraded package has been assigned an on-chain version that is less than the version required by one of the package's transitive dependencies.` |  |
-| `PackageUpgradeError` | `Invalid package upgrade. {...}` | [Execution errors](/references/errors/execution-errors) |
+| `PackageUpgradeError` | `Invalid package upgrade. {...}` |  |
 | `WrittenObjectsTooLarge` | `Written objects of {...} bytes too large. Limit is {...} bytes` |  |
 | `CertificateDenied` | `Certificate is on the deny list` |  |
 | `SuiMoveVerificationTimedout` | `Sui Move Bytecode Verification Timeout. Please run the Sui Move Verifier for more information.` |  |
