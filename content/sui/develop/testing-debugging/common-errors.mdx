@@ -237,28 +237,22 @@ Ensure the resource's value is zero. For coins or tokens, split or burn the valu
 
 ---
 
-#### `For when T does not belong to the package `Publisher`.`
+#### `` For when T does not belong to the package `Publisher`. ``
 
-`ENotOwner` is abort code `0` in the `sui::display` module. It means the type `T` of the display does not belong to the package of the `Publisher` object you passed.
+`ENotOwner` is abort code `0` in the `sui::display` module. It means the type `T` of the display does not belong to the package of the `Publisher` object you passed. Only the Display V1 creation functions in earlier framework versions raise it. In the current framework, `sui::display` marks `ENotOwner` as unused, and every Display V1 creation function aborts with `ENoLongerSupported` (abort code `2`) instead.
 
-A `Publisher` records the package and module of the One-Time Witness (OTW) that claimed it. The `sui::package` module compares a type against that record. A type belongs to a publisher when the original package address of the type matches the package stored in the `Publisher`:
+Display V2 runs the same check and reports a mismatch as `display_registry::ENotValidPublisher`, with the message `The publisher is not valid for the supplied type.` A `Publisher` records the package of the One-Time Witness (OTW) that claimed it. A type belongs to a publisher when the original package address of the type matches the package stored in the `Publisher`:
 
-```move
-/// Check whether type belongs to the same package as the publisher object.
-public fun from_package<T>(self: &Publisher): bool {
-    type_name::with_original_ids<T>().address_string() == self.package
-}
-```
+<ImportContent source="crates/sui-framework/packages/sui-framework/sources/package.move" mode="code" fun="from_package" noComments />
 
 ##### Solution
 
 To fix the error:
 
-1. Find the package that defines `T`.
-2. Use the `Publisher` that package claimed in its `init` function with `package::claim` and its OTW. A `Publisher` from a different package, such as one you published to hold your app logic, does not work for types in another package.
-3. If you do not own the package that defines `T`, you cannot create a display for `T`. Only the holder of that package's `Publisher` can.
-
-Creation of Display V1 is no longer available. It aborts with `ENoLongerSupported` (abort code `2`). Create a V2 display with `display_registry::new_with_publisher<T>` and pass the `Publisher` of the package that defines `T`. In V2, a publisher mismatch aborts with `display_registry::ENotValidPublisher`, which reports that the publisher is not valid for the supplied type. Apply the same fix: pass the `Publisher` from the package that defines `T`.
+1. Create the display with Display V2, `display_registry::new_with_publisher<T>`, instead of a Display V1 function.
+2. Find the package that defines `T`.
+3. Pass the `Publisher` that package claimed in its `init` function with `package::claim` and its OTW. A `Publisher` from a different package, such as one you published to hold your app logic, does not work for types in another package.
+4. If you do not own the package that defines `T`, you cannot create a display for `T`. Only the holder of that package's `Publisher` can.
 
 **Resources**
 
@@ -273,16 +267,7 @@ The Kiosk extension module aborts with `ENotOwner` (abort code `0`) when the `Ki
 
 The `add` function checks the capability before it stores the extension:
 
-```move
-public fun add<Ext: drop>(
-    _ext: Ext,
-    self: &mut Kiosk,
-    cap: &KioskOwnerCap,
-    permissions: u128,
-    ctx: &mut TxContext,
-) {
-    assert!(self.has_access(cap), ENotOwner);
-```
+<ImportContent source="crates/sui-framework/packages/sui-framework/sources/kiosk/kiosk_extension.move" mode="code" fun="add" noComments />
 
 The same `has_access` check guards `disable`, `enable`, and `remove`, so any of these calls aborts with `ENotOwner` if the capability does not match the kiosk.
 
