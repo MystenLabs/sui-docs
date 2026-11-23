@@ -175,7 +175,7 @@ const tx = new Transaction();
 
   tx.transferObjects(
     [upgradeCap],
-    tx.pure(signer.getPublicKey().toSuiAddress(), "address")
+    tx.pure.address(signer.getPublicKey().toSuiAddress())
   );
 ...
 ```
