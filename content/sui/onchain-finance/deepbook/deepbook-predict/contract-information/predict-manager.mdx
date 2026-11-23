@@ -464,47 +464,38 @@ Both consume an `Auth` and both emit `BuilderCodeSet` from `deepbook_predict::bu
 
 Complete public signatures for the account layer. Copy them as written when you generate calls or bindings. Every one is a `public fun` you invoke with a `moveCall`.
 
-```move title='packages/account/sources/account_registry.move'
-public fun derived_address(registry: &AccountRegistry, owner: address): address
-public fun derived_wrapper_address(registry: &AccountRegistry, owner: address): address
-public fun derived_exists(registry: &AccountRegistry, owner: address): bool
-public fun derived_wrapper_exists(registry: &AccountRegistry, owner: address): bool
-public fun new(registry: &mut AccountRegistry, ctx: &mut TxContext): AccountWrapper
-public fun new_with_referrer(registry: &mut AccountRegistry, referrer: &AccountWrapper, ctx: &mut TxContext): AccountWrapper
-public fun new_self_owned(registry: &mut AccountRegistry, owner_uid: &mut UID, ctx: &mut TxContext): AccountWrapper
-public fun is_app_authorized<App>(registry: &AccountRegistry): bool
-public fun assert_app_is_authorized<App>(registry: &AccountRegistry)
-```
+<ImportContent
+	source="packages/account/sources/account_registry.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="derived_address,derived_wrapper_address,derived_exists,derived_wrapper_exists,new,new_with_referrer,new_self_owned,is_app_authorized,assert_app_is_authorized"
+	signatureOnly
+	noComments
+/>
 
-```move title='packages/account/sources/account.move'
-public fun id(self: &AccountWrapper): ID
-public fun load_account(self: &AccountWrapper): &Account
-public fun owner(self: &Account): address
-public fun account_id(self: &Account): ID
-public fun receive_address(self: &Account): address
-public fun referrer_account_id(self: &Account): Option<ID>
-public fun referrer_receive_address(self: &Account): Option<address>
-public fun balance<T>(self: &Account, root: &AccumulatorRoot, clock: &Clock): u64
-public fun has_data<App>(self: &Account): bool
-public fun generate_auth(ctx: &mut TxContext): Auth
-public fun generate_auth_as_object(uid: &mut UID): Auth
-public fun share(self: AccountWrapper)
-public fun load_account_mut(self: &mut AccountWrapper, auth: Auth): &mut Account
-public fun settle<T>(wrapper: &mut AccountWrapper, root: &AccumulatorRoot, clock: &Clock)
-public fun deposit<T>(self: &mut Account, coin: Coin<T>)
-public fun withdraw<T>(self: &mut Account, amount: u64, ctx: &mut TxContext): Coin<T>
-public fun deposit_funds<T>(wrapper: &mut AccountWrapper, auth: Auth, coin: Coin<T>, root: &AccumulatorRoot, clock: &Clock)
-public fun withdraw_funds<T>(wrapper: &mut AccountWrapper, auth: Auth, amount: u64, root: &AccumulatorRoot, clock: &Clock, ctx: &mut TxContext): Coin<T>
-public fun receive_coin<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
-public fun receive_coin_at_account_id<T>(wrapper: &mut AccountWrapper, coin: Receiving<Coin<T>>)
-```
+<ImportContent
+	source="packages/account/sources/account.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="id,load_account,owner,account_id,receive_address,referrer_account_id,referrer_receive_address,balance,has_data,generate_auth,generate_auth_as_object,share,load_account_mut,settle,deposit,withdraw,deposit_funds,withdraw_funds,receive_coin,receive_coin_at_account_id"
+	signatureOnly
+	noComments
+/>
 
-```move title='packages/predict/sources/predict_account.move'
-public fun has_position(account: &Account, expiry_market_id: ID, order_id: u256): bool
-public fun builder_code_id(account: &Account): Option<ID>
-public fun set_builder_code(wrapper: &mut AccountWrapper, auth: Auth, code: &BuilderCode, ctx: &mut TxContext)
-public fun unset_builder_code(wrapper: &mut AccountWrapper, auth: Auth, ctx: &mut TxContext)
-```
+<ImportContent
+	source="packages/predict/sources/predict_account.move"
+	mode="code"
+	org="MystenLabs"
+	repo="deepbookv3"
+	branch="046ffd1e2af6ae511146a0fcb92f5eb8a7e843af"
+	fun="has_position,builder_code_id,set_builder_code,unset_builder_code"
+	signatureOnly
+	noComments
+/>
 
 The `account.move` block lists custody functions at 2 layers. `deposit_funds` and `withdraw_funds` are the outer layer: they take the `AccountWrapper` and an `Auth` directly and settle before they act. `deposit` and `withdraw` are the inner layer: they take a `&mut Account`, which only `load_account_mut` produces, so reaching them still costs an `Auth`. `authorize_app` and `deauthorize_app` need the `AccountAdminCap`, and `generate_auth_as_app` needs a `Permit<App>`, so none of the 3 is an integrator call.
 
