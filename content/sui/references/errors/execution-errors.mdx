@@ -15,13 +15,13 @@ keywords:
 
 <!-- generated: error_pages.py -->
 
-Generated from the Sui source ([MystenLabs/sui](https://github.com/MystenLabs/sui) at commit [`e25770145`](https://github.com/MystenLabs/sui/tree/e25770145e7379b0eb62ca64ecc4c7f75c77550c)) on 2026-11-16 by `error_pages.py` in [MystenLabs/docs-data-dashboard](https://github.com/MystenLabs/docs-data-dashboard). Do not edit this page by hand: the weekly run regenerates it from the source. To change a message, edit the `#[error(...)]` attribute on the variant in `crates/sui-types/src/error.rs` or `crates/sui-types/src/execution_status.rs`.
+Generated from the Sui source ([MystenLabs/sui](https://github.com/MystenLabs/sui) at commit [`fba5bce52`](https://github.com/MystenLabs/sui/tree/fba5bce52becbd9090a747877ac4309123729ca9)) on 2026-11-23 by `error_pages.py` in [MystenLabs/docs-data-dashboard](https://github.com/MystenLabs/docs-data-dashboard). Do not edit this page by hand: the weekly run regenerates it from the source. To change a message, edit the `#[error(...)]` attribute on the variant in `crates/sui-types/src/error.rs` or `crates/sui-types/src/execution_status.rs`.
 
 Every error the Sui execution layer and the transaction input checks can return, as the `ExecutionErrorKind`, `CommandArgumentError`, `PackageUpgradeError`, `TypeArgumentError`, and `UserInputError` enums in `crates/sui-types` define them, with the message each one renders. A placeholder in a message, shown as `{...}`, is filled in with the value at the time. The last column links the page that explains the error, when one does. For the most common failures and their fixes, see [Troubleshooting common errors](/develop/testing-debugging/common-errors).
 
 ## ExecutionErrorKind
 
-42 variants, defined in `crates/sui-types/src/execution_status.rs`.
+43 variants, defined in `crates/sui-types/src/execution_status.rs`.
 
 | Error | Message | Explained on |
 | --- | --- | --- |
@@ -44,11 +44,11 @@ Every error the Sui execution layer and the transaction input checks can return,
 | `ArityMismatch` | `Arity mismatch for Move function. The number of arguments does not match the number of parameters` |  |
 | `TypeArityMismatch` | `Type arity mismatch for Move function. Mismatch between the number of actual versus expected type arguments.` |  |
 | `NonEntryFunctionInvoked` | `Non Entry Function Invoked. Move Call must start with an entry function` |  |
-| `CommandArgumentError` | `Invalid command argument at {...}. {...}` |  |
+| `CommandArgumentError` | `Invalid command argument at {...}. {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `TypeArgumentError` | `Error for type argument at index {...}: {...}` |  |
 | `UnusedValueWithoutDrop` | `Unused result without the drop ability. Command result {...}, return value {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors), [Staking Rewards](/onchain-finance/examples-patterns/staking-rewards) |
 | `InvalidPublicFunctionReturnType` | `Invalid public Move function signature. Unsupported return type for return value {...}` |  |
-| `InvalidTransferObject` | `Invalid Transfer Object, object does not have public transfer.` |  |
+| `InvalidTransferObject` | `Invalid Transfer Object, object does not have public transfer.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `EffectsTooLarge` | `Effects of size {...} bytes too large. Limit is {...} bytes` |  |
 | `PublishUpgradeMissingDependency` | `Publish/Upgrade Error, Missing dependency. A dependency of a published or upgraded package has not been assigned an on-chain address.` |  |
 | `PublishUpgradeDependencyDowngrade` | `Publish/Upgrade Error, Dependency downgrade. Indirect (transitive) dependency of published or upgraded package has been assigned an on-chain version that is less than the version required by one of the package's transitive dependencies.` |  |
@@ -56,7 +56,7 @@ Every error the Sui execution layer and the transaction input checks can return,
 | `WrittenObjectsTooLarge` | `Written objects of {...} bytes too large. Limit is {...} bytes` |  |
 | `CertificateDenied` | `Certificate is on the deny list` |  |
 | `SuiMoveVerificationTimedout` | `Sui Move Bytecode Verification Timeout. Please run the Sui Move Verifier for more information.` |  |
-| `SharedObjectOperationNotAllowed` | `The shared object operation is not allowed.` |  |
+| `SharedObjectOperationNotAllowed` | `The shared object operation is not allowed.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `InputObjectDeleted` | `Certificate cannot be executed due to a dependency on a deleted shared object or an object that was transferred out of consensus` |  |
 | `ExecutionCancelledDueToSharedObjectCongestion` | `Certificate is cancelled due to congestion on shared objects: {...}` |  |
 | `AddressDeniedForCoin` | `Address {...} is denied for coin {...}` |  |
@@ -67,6 +67,7 @@ Every error the Sui execution layer and the transaction input checks can return,
 | `InvalidLinkage` | `A valid linkage was unable to be determined for the transaction` |  |
 | `InsufficientFundsForWithdraw` | `Insufficient funds for funds accumulator withdrawal` |  |
 | `NonExclusiveWriteInputObjectModified` | `Non-exclusive write input object {...} has been modified` |  |
+| `TransactionExpired` | `Transaction expired: the consensus commit timestamp is after its max_timestamp` |  |
 
 ## CommandArgumentError
 
@@ -74,26 +75,26 @@ Every error the Sui execution layer and the transaction input checks can return,
 
 | Error | Message | Explained on |
 | --- | --- | --- |
-| `TypeMismatch` | `The type of the value does not match the expected type` |  |
-| `InvalidBCSBytes` | `The argument cannot be deserialized into a value of the specified type` |  |
-| `InvalidUsageOfPureArg` | `The argument cannot be instantiated from raw bytes` |  |
-| `InvalidArgumentToPrivateEntryFunction` | `Invalid argument to private entry function. These functions cannot take arguments from other Move functions` |  |
-| `IndexOutOfBounds` | `Out of bounds access to input or result vector {...}` |  |
-| `SecondaryIndexOutOfBounds` | `Out of bounds secondary access to result vector {...} at secondary index {...}` |  |
-| `InvalidResultArity` | `Invalid usage of result {...}, expected a single result but found either no return values or multiple.` |  |
-| `InvalidGasCoinUsage` | `Invalid taking of the Gas coin. It can only be used by-value with TransferObjects` |  |
-| `InvalidValueUsage` | `Invalid usage of value. Mutably borrowed values require unique usage. Immutably borrowed values cannot be taken or borrowed mutably. Taken values cannot be used again.` |  |
-| `InvalidObjectByValue` | `Immutable objects cannot be passed by-value.` |  |
-| `InvalidObjectByMutRef` | `Immutable objects cannot be passed by mutable reference, &mut.` |  |
-| `SharedObjectOperationNotAllowed` | `Shared object operations such a wrapping, freezing, or converting to owned are not allowed.` |  |
-| `InvalidArgumentArity` | `Invalid argument arity. Expected a single argument but found a result that expanded to multiple arguments.` |  |
-| `InvalidTransferObject` | `` Object passed to TransferObject does not have public transfer, i.e. the `store` ability `` |  |
+| `TypeMismatch` | `The type of the value does not match the expected type` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidBCSBytes` | `The argument cannot be deserialized into a value of the specified type` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidUsageOfPureArg` | `The argument cannot be instantiated from raw bytes` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidArgumentToPrivateEntryFunction` | `Invalid argument to private entry function. These functions cannot take arguments from other Move functions` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `IndexOutOfBounds` | `Out of bounds access to input or result vector {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `SecondaryIndexOutOfBounds` | `Out of bounds secondary access to result vector {...} at secondary index {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidResultArity` | `Invalid usage of result {...}, expected a single result but found either no return values or multiple.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidGasCoinUsage` | `Invalid taking of the Gas coin. It can only be used by-value with TransferObjects` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidValueUsage` | `Invalid usage of value. Mutably borrowed values require unique usage. Immutably borrowed values cannot be taken or borrowed mutably. Taken values cannot be used again.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidObjectByValue` | `Immutable objects cannot be passed by-value.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidObjectByMutRef` | `Immutable objects cannot be passed by mutable reference, &mut.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `SharedObjectOperationNotAllowed` | `Shared object operations such a wrapping, freezing, or converting to owned are not allowed.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidArgumentArity` | `Invalid argument arity. Expected a single argument but found a result that expanded to multiple arguments.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidTransferObject` | `` Object passed to TransferObject does not have public transfer, i.e. the `store` ability `` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `InvalidMakeMoveVecNonObjectArgument` | `First argument to MakeMoveVec is not an object. If no type is specified for MakeMoveVec, all arguments must be the same object type.` |  |
 | `ArgumentWithoutValue` | `Specified argument location does not have a value and cannot be used` |  |
 | `CannotMoveBorrowedValue` | `` Cannot move a borrowed value. The value's type does resulted in this argument usage being inferred as a move. This is likely due to the type not having the `copy` ability; although in rare cases, it could also be this is the last usage of a value without the `drop` ability. `` |  |
-| `CannotWriteToExtendedReference` | `Cannot write to an argument location that is still borrowed, and where that borrow is an extension of that reference. This is likely due to this argument being used in a Move call that returns a reference, and that reference is used in a later command.` |  |
-| `InvalidReferenceArgument` | `The argument specified cannot be used as a reference argument in the Move call. Either the argument is a mutable reference and it conflicts with another argument to the call, or the argument is mutable and another reference extends it and will be used in a later command.` |  |
-| `InvalidTxContext` | `` Invalid usage of TxContext in the function signature. TxContext can only be used by reference, `&TxContext` or `&mut TxContext`. If used mutably, it must be the only TxContext parameter, and TxContext can never be returned from a Move call. `` |  |
+| `CannotWriteToExtendedReference` | `Cannot write to an argument location that is still borrowed, and where that borrow is an extension of that reference. This is likely due to this argument being used in a Move call that returns a reference, and that reference is used in a later command.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidReferenceArgument` | `The argument specified cannot be used as a reference argument in the Move call. Either the argument is a mutable reference and it conflicts with another argument to the call, or the argument is mutable and another reference extends it and will be used in a later command.` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `InvalidTxContext` | `` Invalid usage of TxContext in the function signature. TxContext can only be used by reference, `&TxContext` or `&mut TxContext`. If used mutably, it must be the only TxContext parameter, and TxContext can never be returned from a Move call. `` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 
 ## PackageUpgradeError
 
@@ -125,10 +126,10 @@ Every error the Sui execution layer and the transaction input checks can return,
 | --- | --- | --- |
 | `MutableObjectUsedMoreThanOnce` | `Mutable object {...} cannot appear more than one in one transaction` |  |
 | `ObjectInputArityViolation` | `Wrong number of parameters for the transaction` |  |
-| `ObjectNotFound` | `Could not find the referenced object {...} at version {...}` |  |
+| `ObjectNotFound` | `Could not find the referenced object {...} at version {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `ObjectVersionUnavailableForConsumption` | `Transaction needs to be rebuilt because object {...} version {...} ({...}) is unavailable for consumption, current version: {...}` |  |
 | `PackageVerificationTimeout` | `Package verification failed: {...}` |  |
-| `DependentPackageNotFound` | `Dependent package not found on-chain: {...}` |  |
+| `DependentPackageNotFound` | `Dependent package not found on-chain: {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `ImmutableParameterExpectedError` | `Mutable parameter provided, immutable parameter expected` |  |
 | `SizeLimitExceeded` | `Size limit exceeded: {...} is {...}` |  |
 | `InvalidChildObjectArgument` | `Object {...} is owned by object {...}. Objects owned by other objects cannot be used as input arguments` |  |
@@ -149,8 +150,8 @@ Every error the Sui execution layer and the transaction input checks can return,
 | `GasPriceTooHigh` | `Gas price cannot exceed {...} mist` |  |
 | `InvalidGasObject` | `Object {...} is not a gas object` |  |
 | `InsufficientBalanceToCoverMinimalGas` | `Gas object does not have enough balance to cover minimal gas spend` |  |
-| `ObjectSequenceNumberTooHigh` | `Could not find the referenced object {...} as the asked version {...} is higher than the latest {...}` |  |
-| `ObjectDeleted` | `Object deleted at reference ({...}, {...}, {...})` |  |
+| `ObjectSequenceNumberTooHigh` | `Could not find the referenced object {...} as the asked version {...} is higher than the latest {...}` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
+| `ObjectDeleted` | `Object deleted at reference ({...}, {...}, {...})` | [Troubleshooting Common Errors](/develop/testing-debugging/common-errors) |
 | `InvalidBatchTransaction` | `Invalid Batch Transaction: {...}` |  |
 | `BlockedMoveFunction` | `This Move function is currently disabled and not available for call` |  |
 | `EmptyInputCoins` | `Empty input coins for Pay related transaction` |  |
