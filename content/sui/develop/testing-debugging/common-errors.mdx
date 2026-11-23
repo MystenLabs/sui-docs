@@ -588,6 +588,56 @@ Two related errors point to the same root cause, a reference that does not match
 
 ---
 
+#### `Certificate is cancelled due to congestion on shared objects: {...}`
+
+`ExecutionCancelledDueToSharedObjectCongestion` means validators cancelled your transaction because one or more [shared objects](/develop/objects/object-ownership/shared) it uses were too congested to schedule. The error message names the objects: `Certificate is cancelled due to congestion on shared objects: {congested_objects}`. When you read the error through RPC, the error details carry a `CongestedObjects` list with the ID of each congested object.
+
+When the network cannot schedule a transaction because a shared object it uses has no space left, validators defer the transaction. They hold onto it and try to schedule it with the next commit, each time ordering all waiting transactions by gas price. If the transaction stays deferred for several commits without being scheduled, validators cancel it and return this error. The cause is contention on the shared object, not a bug in your Move code or transaction inputs.
+
+To recover, do one of the following:
+
+##### Solution
+
+1. Submit the transaction again with a higher gas price, so validators prioritize it over other waiting transactions. See [Local Fee Markets](/develop/transaction-payment/local-fee-markets).
+2. Submit the transaction again at a time when the shared objects it depends on are less congested.
+
+Use the object IDs in the error to identify which shared objects are congested.
+
+**Resources**
+
+- [Object-Based Local Fee Markets](/develop/transaction-payment/local-fee-markets)
+
+---
+
+#### `Transaction needs to be rebuilt because object {...} version {...} ({...}) is unavailable for consumption, current version: {...}`
+
+`ObjectVersionUnavailableForConsumption` means your transaction references an object at a version that the network can no longer consume. The full message is `Transaction needs to be rebuilt because object {...} version {...} ({...}) is unavailable for consumption, current version: {...}`. The error carries the object reference you provided (object ID, version, and digest) and the object's current version:
+
+```rust
+    ObjectVersionUnavailableForConsumption {
+        provided_obj_ref: ObjectRef,
+        current_version: SequenceNumber,
+    },
+```
+
+An owned or immutable object input names an exact version of the object. If 2 transactions use the same version of an address-owned object, only the first in commit order acquires the lock and executes. When another transaction consumes the version you referenced first, the object moves to a newer version, and your transaction still points at the old one.
+
+##### Solution
+
+To fix the error:
+
+1. Compare the version in your transaction with the `current version` value in the error message.
+2. Rebuild the transaction so the input references the object at its current version.
+3. Sign and submit the rebuilt transaction. Resubmitting the original transaction fails again, because it still names the old version.
+
+To avoid the error, do not build 2 transactions at the same time that use the same version of the same address-owned object. Wait for the first transaction to execute, then build the next one against the object's new version.
+
+**Resources**
+
+- [Execution errors](/references/errors/execution-errors)
+
+---
+
 ## How do I fix SDK and RPC errors?
 
 Errors in this section relate to the TypeScript SDK, RPC responses, and transaction construction.
