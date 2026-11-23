@@ -40,10 +40,6 @@
       "items": { "$ref": "#/$defs/builderPath" },
       "description": "Builder path(s) this page belongs to, with per-path step/stage and eval status."
     },
-    "builder_paths_source": {
-      "type": ["string", "object", "null"],
-      "description": "Provenance for auto-generated builder_paths. Either a string marker or an object (e.g. { dashboard, snapshot })."
-    },
     "concepts": {
       "type": "array",
       "items": { "type": "string" },
