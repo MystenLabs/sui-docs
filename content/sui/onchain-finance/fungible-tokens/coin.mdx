@@ -276,3 +276,31 @@ Regulated coins freeze `RegulatedCoinMetadata` upon creation, so there are no fu
 To obtain the capability, the owner of the `TreasuryCap<T>` calls `claim_metadata_cap`, passing the `Currency<T>` and the `TreasuryCap<T>`. You can claim it only once. The call aborts if someone already claimed the `MetadataCap`.
 
 To lock the metadata permanently, call `delete_metadata_cap`. This action is irreversible: you can no longer update the `Currency` metadata, and you cannot claim a new `MetadataCap`.
+
+## How do I migrate a regulated coin to a `ComplianceCap`?
+
+The `DenyCapV2` deny list model is deprecated for regulated coins. New coins use `make_compliance_regulated` at initialization, which returns a `ComplianceCap<T>` instead of a `DenyCapV2<T>`. To move an existing regulated currency to the new model, call `migrate_to_compliance_cap` in the Coin Registry module.
+
+`migrate_to_compliance_cap` consumes your `DenyCapV2<T>` and returns a `ComplianceCap<T>` with the same object ID. It also records the new capability as the regulated state of the `Currency<T>`. The function aborts if the `Currency<T>` is unregulated.
+
+The function takes these arguments:
+
+- A mutable reference to the `Currency<T>` for your coin
+- A mutable reference to the `FreezeList`
+- A mutable reference to the `DenyList`
+- Your `DenyCapV2<T>`, which the call consumes
+- A vector of addresses to freeze under the new model
+- The transaction context
+
+:::caution
+
+After migration, the network ignores the legacy deny list for `T`. Any address on the deny list that you leave out of the address vector becomes unrestricted unless you freeze it in the same transaction. One call fits about 500 addresses. If your deny list holds more, pause `T` first.
+
+:::
+
+To migrate a legacy regulated coin:
+
+1. If your coin still uses the original `DenyCap`, migrate it to `DenyCapV2` first.
+2. Collect every address currently on the deny list for `T`.
+3. Call `migrate_to_compliance_cap` with the `Currency<T>`, the `FreezeList`, the `DenyList`, your `DenyCapV2<T>`, and the collected addresses.
+4. Store the returned `ComplianceCap<T>` where your `DenyCapV2<T>` was, because it now controls regulation for the coin.
