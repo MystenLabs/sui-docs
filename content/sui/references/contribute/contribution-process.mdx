@@ -59,49 +59,36 @@ When writing, keep these key principles in mind:
 
 If you’re new to Git or prefer a more basic workflow, you can make small edits directly in GitHub’s web interface.
 
-- **Add a new page**  
-  1. Go to the `docs/content` directory.  
-  1. Open the relevant subdirectory.  
-  1. Click **Add file** → **Create new file**.  
-  1. Write your content and commit your changes.  
+- **Add a new page**
+  1. Fork the [Sui documentation repository](https://github.com/MystenLabs/sui-docs) if you do not already have a fork.
+  1. In your fork, open the relevant subdirectory under `content/sui`.
+  1. Click **Add file**, then **Create new file**.
+  1. Name your file with the `.mdx` extension and write your content.
+- **Edit an existing page**
+  1. Click **Edit this page** at the bottom of the published documentation page to open its source on GitHub. If you are already in the repository, open the file under `content/sui` and click **Edit this file**.
+  1. Make your edits.
 
-- **Edit an existing page**  
-  1. From the documentation website, you can use the **Edit this page** link at the bottom of each documentation page.
-  1. From GitHub, navigate to the file you want to update. Click the **pencil icon** in the top-right.  
-  1. Make your edits and commit them.  
+Commit the changes to a branch on your fork, then open a PR.
 
 ## Set up a local environment {#local-environment}
 
-For larger, more significant changes to the docs, clone the documentation locally. See [Sui Environment Setup](/references/contribute/sui-environment) for instructions on forking and cloning the Sui repository. The `docs/content` directory contains the documentation.
+For larger changes, fork [MystenLabs/sui-docs](https://github.com/MystenLabs/sui-docs), clone your fork, and create a branch based on `main`. See the [repository build instructions](https://github.com/MystenLabs/sui-docs#building) for prerequisites and details about fetching sources from other repositories.
 
-1. **Install dependencies**  
-   - If you use [Visual Studio Code](https://code.visualstudio.com/), install the [Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) to keep formatting consistent.  
-1. **Make your changes**  
-   - Edit or add files in the `docs/content` directory.  
-   - Stage and commit changes:  
-     ```bash
-     git add .
-     git commit -m "Describe your changes"
-     git push
-     ```  
-1. **Preview locally**  
-   - Navigate to the `docs/site` directory.  
-   - Install dependencies (if you don’t have `pnpm` installed, see the [pnpm installation guide](https://pnpm.io/installation)):  
-     ```bash
-     pnpm install
-     ```  
-   - Start the local dev server:  
-     ```bash
-     pnpm start
-     ```  
-   - Open `http://localhost:3000` to verify your updates.  
+1. Edit or add `.mdx` files under `content/sui`.
+1. From the root of your clone, switch to `sites/sui`, install dependencies, and start the local development server.
 
+   ```bash
+   $ cd sites/sui
+   $ pnpm install
+   $ pnpm start
+   ```
+
+1. Open `http://localhost:3000` and verify that your page renders and its links work.
+1. Commit the edited files and push your branch to your fork.
 
 ## Review process {#review-process}
 
-When your changes are ready:  
-
-1. Submit a PR to the `main` branch of the Sui repository.  
-1. [Vercel](https://vercel.com) generates a preview so you can verify your changes. The preview is what you can expect to see online after your changes merge.
-1. Reviewers provide feedback. It’s your responsibility to update your PR based on their comments. Multiple reviewers might give input.  
-1. After at least one reviewer approves your PR, it merges into `main`, and your contribution goes live. Changes appear on the live website within 5-10 minutes after the PR has merged into `main`. 
+1. Open a PR against the `main` branch of [MystenLabs/sui-docs](https://github.com/MystenLabs/sui-docs). Describe the change and how you verified it. Link any related issues.
+1. If the PR includes a Vercel preview, use it to verify your changes on the rendered site.
+1. Reviewers provide feedback. It’s your responsibility to update your PR based on their comments. Multiple reviewers might give input.
+1. Approved changes appear on the documentation site after the PR merges and the site deploys.
