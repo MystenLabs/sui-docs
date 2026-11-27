@@ -208,3 +208,28 @@ A legacy currency created with `create_regulated_currency` enters the Coin Regis
 - `migrate_regulated_state_by_cap`: Pass the `DenyCapV2` for the currency. The resulting state also records whether the cap allows a global pause.
 
 If your legacy coin still uses the original `DenyCap`, migrate it to `DenyCapV2` first.
+
+## What does `deny_list::MigratedKey` do?
+
+`MigratedKey` is a dynamic field key on the `DenyList` object. It marks a coin type as migrated off the legacy deny list. The framework adds the marker with `v2_mark_migrated`, which aborts if the type already carries it, and reads it with `v2_is_migrated`, which returns whether the field exists.
+
+Both functions are `public(package)`, so your package cannot write or read `MigratedKey` directly. Instead, you migrate a regulated coin through the Coin Registry. `migrate_to_compliance_cap` takes your `DenyCapV2<T>` and returns a `ComplianceCap<T>` with the same ID, and records it as the regulated state of the `Currency<T>`:
+
+```move
+public fun migrate_to_compliance_cap<T>(
+    currency: &mut Currency<T>,
+    freeze_list: &mut FreezeList,
+    deny_list: &mut DenyList,
+    cap: DenyCapV2<T>,
+    frozen_addresses: vector<address>,
+    ctx: &mut TxContext,
+): ComplianceCap<T> {
+```
+
+Before you migrate, consider these points:
+
+- The function aborts if the `Currency<T>` is `Unregulated`.
+- After migration, the framework ignores the legacy deny list for `T`. Any denied address that you leave out of `frozen_addresses` becomes unrestricted unless you freeze it in the same transaction.
+- About 500 addresses fit in one call. If you have more, pause `T` first.
+
+For new currencies, `make_regulated` is deprecated. Call `make_compliance_regulated` on the `CurrencyInitializer<T>` instead. It takes the same `allow_global_pause` flag and returns a `ComplianceCap<T>` rather than a `DenyCapV2<T>`.
