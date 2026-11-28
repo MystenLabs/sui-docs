@@ -171,6 +171,6 @@ Each PTB command returns a reference to its result, which you can pass as input 
 
 **Key points:**
 - Results from `tx.moveCall` are `TransactionArgument` references that you can pass to any subsequent command.
-- If a Move function returns multiple values, destructure them: `const [a, b] = tx.moveCall(...)`.
+- If a Move function returns multiple values, destructure them: `const [a, b] = tx.moveCall(...)`. The kiosk `borrow_val` call shown earlier on this page is one such function: it returns the item and a `Borrow` hot potato that the same PTB must consume.
 - All commands execute in order within the same PTB. If any command fails, the entire transaction reverts.
-- You can mix `moveCall`, `splitCoins`, `transferObjects`, and other commands freely.
+- When a command returns multiple results, you can access a result at a specific index either using destructuring or array indexes, and you can mix `moveCall`, `splitCoins`, `transferObjects`, and other commands freely.

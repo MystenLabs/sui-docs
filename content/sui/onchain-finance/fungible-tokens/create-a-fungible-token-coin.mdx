@@ -139,11 +139,11 @@ You can convert coin objects into an address balance at any time by calling `coi
 
 ## What is gas smashing?
 
-When executing a transaction, you can provide multiple coins as gas payment rather than a single coin. This feature, known as gas smashing, automatically merges the provided coins into the first coin you list in the payment vector, so the order in which you supply the coins determines which coin remains. That merged coin, minus the gas budget, is then available inside the transaction for use in any command. If unused, it returns to the sender.
+When executing a transaction, you can provide multiple coins as gas payment rather than a single coin. This feature, known as gas smashing, merges the provided coins into the first coin you list when Sui executes the transaction, and the coins remain smashed whether or not execution succeeds, so the order in which you supply the coins determines which coin remains. That merged coin, minus the gas budget, is then available inside the transaction for use in any command. If unused, it returns to the sender.
 
 Gas smashing applies only to `Coin<SUI>` objects, because SUI is the only coin type accepted for gas payment.
 
-You can provide as many coins as you want (up to a maximum defined in the protocol configuration). Gas smashing is a useful tool when you need to consolidate SUI coins as part of a transaction.
+You can smash at most 256 coins in a single PTB; transactions with more than 256 gas coins fail. Gas smashing is a useful tool when you need to consolidate SUI coins as part of a transaction.
 
 :::tip
 

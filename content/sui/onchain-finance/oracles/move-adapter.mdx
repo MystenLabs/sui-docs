@@ -56,7 +56,7 @@ builder_paths:
 
 Reading a provider feed directly scatters two concerns across every call site: the provider's data shape, and the safety checks. An adapter collapses both into one module. Consumers call the adapter, never the provider, so the price shape and every guard live in one place, and swapping or adding a provider never touches a consumer.
 
-The reference module lives in `examples/oracle-adapter/move`. It builds and its tests pass against the real Pyth Testnet package with `sui move test`.
+The reference module lives in `examples/oracle-adapter/move`, with the adapter code in `sources/price_adapter.move`. It builds and its tests pass against the real Pyth Testnet package with `sui move test`.
 
 ## What price type does the adapter return?
 
@@ -86,7 +86,7 @@ Pyth reports a price with a confidence interval. A wide interval means the sourc
 
 ## How do I fall back to a second feed without aborting?
 
-Move cannot catch an abort, so a fallback cannot wrap the checked reader in a try. Instead, `price_or_fallback` works in three steps:
+A Move module cannot catch an abort, so a fallback inside the module cannot wrap the checked reader in a try. Instead, `price_or_fallback` works in three steps:
 
 1. Read the primary with the unchecked `get_price_unsafe`.
 2. Test the primary's freshness without aborting; if it is fresh, use it.
@@ -102,7 +102,7 @@ A consumer gets a fresh price or a clear abort, never a silently stale one, and 
 
 A Move test cannot mint a `PriceInfoObject`, so Testnet execution verifies the reads that touch one. Unit tests cover the guard logic and normalization on constructed prices, one test per branch: fresh and stale, confidence within and over the bound, deviation within and over, and a rejected negative and zero price.
 
-The test below covers the branch where confidence is over the bound:
+The test below, `confidence_blowout_aborts` in `tests/price_adapter_tests.move`, covers the branch where confidence is over the bound:
 
 <ImportContent source="examples/oracle-adapter/move/tests/price_adapter_tests.move" mode="code" fun="confidence_blowout_aborts" />
 

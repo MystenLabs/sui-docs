@@ -92,7 +92,7 @@ The price comes back as an integer magnitude and a signed exponent, and the expo
 
 ## Paying for a Pyth price update
 
-`updatePriceFeeds` takes only the transaction, the update data from Hermes, and the feed IDs. The samples pass no separate fee coin to it. A transaction that applies an update costs gas plus the Pyth base update fee, so plan the sender's funds and gas budget for both. The keeper sample sets an explicit gas budget after it appends the update commands:
+`updatePriceFeeds` takes only the transaction, the update data from Hermes, and the feed IDs. The samples pass no separate fee coin to it. A transaction that applies an update costs gas plus the Pyth base update fee, so fund the sender address with Testnet SUI before running the update-and-read sample and plan the sender's funds and gas budget for both. The keeper sample sets an explicit gas budget after it appends the update commands:
 
 ```typescript
 	await pyth.updatePriceFeeds(tx, updates, [feedId]);

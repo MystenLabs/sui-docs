@@ -29,9 +29,9 @@ answer: >-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Use the SuiNS SDK to interact with the Sui Name Service. Install the SDK, attach the `suins()` extension to a Sui client, then use `client.suins` to query name records and build SuiNS transactions.
+Use the SuiNS SDK to interact with the Sui Name Service. Install the SDK, attach the `suins()` extension to a Sui client, then use `client.suins` to query name records.
 
-Install the SuiNS SDK with `npm i @mysten/suins`, then attach the `suins()` extension to a Sui client with `$extend()`. SuiNS methods are then available under `client.suins`.
+Install the SuiNS SDK with `npm i @mysten/suins`, then attach the `suins()` extension to a Sui client with `$extend()`. SuiNS methods are then available under `client.suins`, which you use to query name records and build SuiNS transactions.
 
 ## How do I install the SuiNS SDK?
 
@@ -43,7 +43,7 @@ $ npm i @mysten/suins @mysten/sui
 
 ## What does the `suins` client extension do?
 
-The `suins()` extension adds SuiNS functionality to any Sui client, exposed under `client.suins`.
+The `suins()` extension adds SuiNS functionality to any Sui client, exposed under `client.suins`, which you use to query name records and build SuiNS transactions.
 
 :::info
 

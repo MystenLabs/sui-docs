@@ -90,7 +90,7 @@ import DocCardList from '@theme/DocCardList';
 
 ## What happens when a price is stale
 
-The Pyth staleness check aborts on a stale feed. Move cannot catch an abort, so the whole transaction fails instead of returning an old value. Your consumer gets a fresh price or a clear abort, never a silently stale one.
+The Pyth staleness check aborts on a stale feed. Move has no try/catch to recover from that abort onchain, and if one transaction command fails, the entire block fails and none of the effects from the commands apply, so the transaction fails instead of returning an old value. Your consumer gets a fresh price or a clear abort, never a silently stale one.
 
 To keep a transaction alive when the primary feed is stale, use a fallback feed:
 

@@ -73,7 +73,7 @@ Timestamps from `sui::clock::Clock` follow two rules:
 
 Any transaction that requires access to `sui::clock::Clock` must go through consensus because the only available instance is a shared object. As a result, this technique is not suitable for transactions that must use the single-owner fastpath. See [Epoch timestamps](#epoch-timestamps) for a single-owner-compatible source of timestamps.
 
-Transactions that use this workflow must accept it as an immutable reference, not a mutable reference or value. This prevents contention, as transactions that access `sui::clock::Clock` can only read it, so they do not need sequencing relative to each other. Validators refuse to sign transactions that do not meet this requirement. Packages that include entry functions that accept `sui::clock::Clock` or `&mut Clock` fail to publish.
+Transactions that use this workflow must accept it as an immutable reference, not a mutable reference or value. This prevents contention, as transactions that access `sui::clock::Clock` can only read it, so they do not need sequencing relative to each other. Validators refuse to sign transactions that do not meet this requirement. Packages that include entry functions that accept `sui::clock::Clock` by value (`Clock`) or as a mutable reference (`&mut Clock`) fail to publish.
 
 The following functions test `sui::clock::Clock`-dependent code by manually creating a `Clock` object and manipulating its timestamp. This is only possible in test code:
 
